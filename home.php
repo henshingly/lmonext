@@ -1,0 +1,60 @@
+<?php
+/**
+ * Project: LMOnext
+ * Filename: home.php
+ * Fileversion: 2.0.1
+ * Changelog: 2.0.1 - Projektname auf "LMOnext" umgestellt (vorher "Online-Liga-Verwaltung Board" / "OLVBoard")
+ * Changelog: 2.0.0 - Umbau auf reine Platzhalter-Templates: baut jetzt fertige
+ *                     HTML-Fragmente (aktive Ligen, Archiv-Bereich) und übergibt sie
+ *                     als Platzhalterwerte an renderTemplate(). Die .tpl.php-Dateien
+ *                     enthalten dadurch kein PHP mehr, nur noch Markup + Platzhalter.
+ * Changelog: 1.0.0 - Initiale Version: Besucher-Startseite (aktive Ligen + Archiv-Baum)
+ *
+ * PHP version 8.2
+ *
+ * @author    Dietmar Kersting <webmaster@liga-manager-online.org>
+ * @copyright 2026 Dietmar Kersting
+ * @license   GPL-3.0-only
+ */
+declare(strict_types = 1);
+
+require_once __DIR__ . '/frontend/bootstrap.php';
+
+$activeLigen         = getActiveLigenList();
+$archivByParent      = getArchivFolderTree();
+$archivLigenByFolder = getArchivedLigenByFolder();
+
+// ── Aktive Ligen: Liste oder Leer-Hinweis ────────────────────────────────────
+if (empty($activeLigen)) {
+    $aktiveLigenInhalt = '<p class="empty-msg">' . h(tf('home_no_active_ligen')) . '</p>';
+} else {
+    $items = '';
+    foreach ($activeLigen as $liga) {
+        $items .= '<li>' . renderLigaLink($liga) . '</li>';
+    }
+    $aktiveLigenInhalt = '<ul class="liga-list">' . $items . '</ul>';
+}
+
+// ── Archiv: nur anzeigen, wenn überhaupt etwas archiviert ist ────────────────
+$orphans   = $archivLigenByFolder[0] ?? [];
+$hasArchiv = !empty($archivByParent) || !empty($orphans);
+
+$archivBereich = '';
+if ($hasArchiv) {
+    $orphansHtml = '';
+    foreach ($orphans as $liga) {
+        $orphansHtml .= '<div style="padding:2px 0">' . renderLigaLink($liga) . '</div>';
+    }
+    $archivBereich = renderPartial('archiv_card', [
+        'Heading' => h(tf('home_heading_archiv')),
+        'Orphans' => $orphansHtml,
+        'Tree'    => renderArchivFolderTree($archivByParent, $archivLigenByFolder),
+    ]);
+}
+
+renderTemplate($activeTemplate, 'home', [
+    'Titel'                   => h(tf('site_title')),
+    'UeberschriftAktiveLigen' => h(tf('home_heading_active_ligen')),
+    'AktiveLigenInhalt'       => $aktiveLigenInhalt,
+    'ArchivBereich'           => $archivBereich,
+]);
