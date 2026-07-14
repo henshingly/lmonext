@@ -1,0 +1,134 @@
+<?php
+/**
+ * Project: LMOnext
+ * Filename: view_settings.php
+ * Fileversion: 1.3.1
+ * Changelog: 1.3.1 - Projektname auf "LMOnext" umgestellt (vorher "Online-Liga-Verwaltung Board" / "OLVBoard")
+ * Changelog: 1.3.0 - Neue Karte "Besucherbereich": aktives Template wählen, Template-Wechsel für Besucher erlauben
+ * Changelog: 1.2.0 - Alle Texte über t() übersetzt (war bisher übersehen, nur Sprachauswahl war übersetzt)
+ * Changelog: 1.1.4 - Standardsprache-Dropdown (speicherbar) ergänzt, wie im alten LMO
+ * Changelog: 1.1.3 - Label auf "Zeitzone"; Hilfstext aktualisiert
+ * Changelog: 1.1.2 - Vollständige Zeitzonenliste wie im alten LMO
+ * Changelog: 1.1.1 - Zeitzone-Einstellung für Import-Konvertierung
+ *
+ * PHP version 8.2
+ *
+ * @author    Dietmar Kersting <webmaster@liga-manager-online.org>
+ * @copyright 2026 Dietmar Kersting
+ * @license   GPL-3.0-only
+ *
+ */
+
+// Bekannte Zeitzonen für Dropdown
+$tzGroups = [
+    'Africa' => ['Africa/Abidjan','Africa/Accra','Africa/Addis_Ababa','Africa/Algiers','Africa/Asmara','Africa/Bamako','Africa/Bangui','Africa/Banjul','Africa/Bissau','Africa/Blantyre','Africa/Brazzaville','Africa/Bujumbura','Africa/Cairo','Africa/Casablanca','Africa/Ceuta','Africa/Conakry','Africa/Dakar','Africa/Dar_es_Salaam','Africa/Djibouti','Africa/Douala','Africa/El_Aaiun','Africa/Freetown','Africa/Gaborone','Africa/Harare','Africa/Johannesburg','Africa/Juba','Africa/Kampala','Africa/Khartoum','Africa/Kigali','Africa/Kinshasa','Africa/Lagos','Africa/Libreville','Africa/Lome','Africa/Luanda','Africa/Lubumbashi','Africa/Lusaka','Africa/Malabo','Africa/Maputo','Africa/Maseru','Africa/Mbabane','Africa/Mogadishu','Africa/Monrovia','Africa/Nairobi','Africa/Ndjamena','Africa/Niamey','Africa/Nouakchott','Africa/Ouagadougou','Africa/Porto-Novo','Africa/Sao_Tome','Africa/Tripoli','Africa/Tunis','Africa/Windhoek'],
+    'America' => ['America/Adak','America/Anchorage','America/Anguilla','America/Antigua','America/Araguaina','America/Argentina','America/Aruba','America/Asuncion','America/Atikokan','America/Bahia','America/Bahia_Banderas','America/Barbados','America/Belem','America/Belize','America/Blanc-Sablon','America/Boa_Vista','America/Bogota','America/Boise','America/Cambridge_Bay','America/Campo_Grande','America/Cancun','America/Caracas','America/Cayenne','America/Cayman','America/Chicago','America/Chihuahua','America/Ciudad_Juarez','America/Costa_Rica','America/Coyhaique','America/Creston','America/Cuiaba','America/Curacao','America/Danmarkshavn','America/Dawson','America/Dawson_Creek','America/Denver','America/Detroit','America/Dominica','America/Edmonton','America/Eirunepe','America/El_Salvador','America/Fortaleza','America/Fort_Nelson','America/Glace_Bay','America/Goose_Bay','America/Grand_Turk','America/Grenada','America/Guadeloupe','America/Guatemala','America/Guayaquil','America/Guyana','America/Halifax','America/Havana','America/Hermosillo','America/Indiana','America/Inuvik','America/Iqaluit','America/Jamaica','America/Juneau','America/Kentucky','America/Kralendijk','America/La_Paz','America/Lima','America/Los_Angeles','America/Lower_Princes','America/Maceio','America/Managua','America/Manaus','America/Marigot','America/Martinique','America/Matamoros','America/Mazatlan','America/Menominee','America/Merida','America/Metlakatla','America/Mexico_City','America/Miquelon','America/Moncton','America/Monterrey','America/Montevideo','America/Montserrat','America/Nassau','America/New_York','America/Nome','America/Noronha','America/North_Dakota','America/Nuuk','America/Ojinaga','America/Panama','America/Paramaribo','America/Phoenix','America/Port-au-Prince','America/Port_of_Spain','America/Porto_Velho','America/Puerto_Rico','America/Punta_Arenas','America/Rankin_Inlet','America/Recife','America/Regina','America/Resolute','America/Rio_Branco','America/Santarem','America/Santiago','America/Santo_Domingo','America/Sao_Paulo','America/Scoresbysund','America/Sitka','America/St_Barthelemy','America/St_Johns','America/St_Kitts','America/St_Lucia','America/St_Thomas','America/St_Vincent','America/Swift_Current','America/Tegucigalpa','America/Thule','America/Tijuana','America/Toronto','America/Tortola','America/Vancouver','America/Whitehorse','America/Winnipeg','America/Yakutat'],
+    'Antarctica' => ['Antarctica/Casey','Antarctica/Davis','Antarctica/DumontDUrville','Antarctica/Macquarie','Antarctica/Mawson','Antarctica/McMurdo','Antarctica/Palmer','Antarctica/Rothera','Antarctica/Syowa','Antarctica/Troll','Antarctica/Vostok'],
+    'Arctic' => ['Arctic/Longyearbyen'],
+    'Asia' => ['Asia/Aden','Asia/Almaty','Asia/Amman','Asia/Anadyr','Asia/Aqtau','Asia/Aqtobe','Asia/Ashgabat','Asia/Atyrau','Asia/Baghdad','Asia/Bahrain','Asia/Baku','Asia/Bangkok','Asia/Barnaul','Asia/Beirut','Asia/Bishkek','Asia/Brunei','Asia/Chita','Asia/Colombo','Asia/Damascus','Asia/Dhaka','Asia/Dili','Asia/Dubai','Asia/Dushanbe','Asia/Famagusta','Asia/Gaza','Asia/Hebron','Asia/Ho_Chi_Minh','Asia/Hong_Kong','Asia/Hovd','Asia/Irkutsk','Asia/Jakarta','Asia/Jayapura','Asia/Jerusalem','Asia/Kabul','Asia/Kamchatka','Asia/Karachi','Asia/Kathmandu','Asia/Khandyga','Asia/Kolkata','Asia/Krasnoyarsk','Asia/Kuala_Lumpur','Asia/Kuching','Asia/Kuwait','Asia/Macau','Asia/Magadan','Asia/Makassar','Asia/Manila','Asia/Muscat','Asia/Nicosia','Asia/Novokuznetsk','Asia/Novosibirsk','Asia/Omsk','Asia/Oral','Asia/Phnom_Penh','Asia/Pontianak','Asia/Pyongyang','Asia/Qatar','Asia/Qostanay','Asia/Qyzylorda','Asia/Riyadh','Asia/Sakhalin','Asia/Samarkand','Asia/Seoul','Asia/Shanghai','Asia/Singapore','Asia/Srednekolymsk','Asia/Taipei','Asia/Tashkent','Asia/Tbilisi','Asia/Tehran','Asia/Thimphu','Asia/Tokyo','Asia/Tomsk','Asia/Ulaanbaatar','Asia/Urumqi','Asia/Ust-Nera','Asia/Vientiane','Asia/Vladivostok','Asia/Yakutsk','Asia/Yangon','Asia/Yekaterinburg','Asia/Yerevan'],
+    'Atlantic' => ['Atlantic/Azores','Atlantic/Bermuda','Atlantic/Canary','Atlantic/Cape_Verde','Atlantic/Faroe','Atlantic/Madeira','Atlantic/Reykjavik','Atlantic/South_Georgia','Atlantic/St_Helena','Atlantic/Stanley'],
+    'Australia' => ['Australia/Adelaide','Australia/Brisbane','Australia/Broken_Hill','Australia/Darwin','Australia/Eucla','Australia/Hobart','Australia/Lindeman','Australia/Lord_Howe','Australia/Melbourne','Australia/Perth','Australia/Sydney'],
+    'Europe' => ['Europe/Amsterdam','Europe/Andorra','Europe/Astrakhan','Europe/Athens','Europe/Belgrade','Europe/Berlin','Europe/Bratislava','Europe/Brussels','Europe/Bucharest','Europe/Budapest','Europe/Busingen','Europe/Chisinau','Europe/Copenhagen','Europe/Dublin','Europe/Gibraltar','Europe/Guernsey','Europe/Helsinki','Europe/Isle_of_Man','Europe/Istanbul','Europe/Jersey','Europe/Kaliningrad','Europe/Kirov','Europe/Kyiv','Europe/Lisbon','Europe/Ljubljana','Europe/London','Europe/Luxembourg','Europe/Madrid','Europe/Malta','Europe/Mariehamn','Europe/Minsk','Europe/Monaco','Europe/Moscow','Europe/Oslo','Europe/Paris','Europe/Podgorica','Europe/Prague','Europe/Riga','Europe/Rome','Europe/Samara','Europe/San_Marino','Europe/Sarajevo','Europe/Saratov','Europe/Simferopol','Europe/Skopje','Europe/Sofia','Europe/Stockholm','Europe/Tallinn','Europe/Tirane','Europe/Ulyanovsk','Europe/Vaduz','Europe/Vatican','Europe/Vienna','Europe/Vilnius','Europe/Volgograd','Europe/Warsaw','Europe/Zagreb','Europe/Zurich'],
+    'Indian' => ['Indian/Antananarivo','Indian/Chagos','Indian/Christmas','Indian/Cocos','Indian/Comoro','Indian/Kerguelen','Indian/Mahe','Indian/Maldives','Indian/Mauritius','Indian/Mayotte','Indian/Reunion'],
+    'Pacific' => ['Pacific/Apia','Pacific/Auckland','Pacific/Bougainville','Pacific/Chatham','Pacific/Chuuk','Pacific/Easter','Pacific/Efate','Pacific/Fakaofo','Pacific/Fiji','Pacific/Funafuti','Pacific/Galapagos','Pacific/Gambier','Pacific/Guadalcanal','Pacific/Guam','Pacific/Honolulu','Pacific/Kanton','Pacific/Kiritimati','Pacific/Kosrae','Pacific/Kwajalein','Pacific/Majuro','Pacific/Marquesas','Pacific/Midway','Pacific/Nauru','Pacific/Niue','Pacific/Norfolk','Pacific/Noumea','Pacific/Pago_Pago','Pacific/Palau','Pacific/Pitcairn','Pacific/Pohnpei','Pacific/Port_Moresby','Pacific/Rarotonga','Pacific/Saipan','Pacific/Tahiti','Pacific/Tarawa','Pacific/Tongatapu','Pacific/Wake','Pacific/Wallis'],
+    'UTC' => ['UTC'],
+];
+$currentTz = getAdminSetting('timezone', 'Europe/Berlin');
+$tzNow     = '';
+try { $tzNow = (new DateTime('now', new DateTimeZone($currentTz)))->format('H:i T'); } catch (Throwable) {}
+
+$currentLanguage = getAdminSetting('language', DEFAULT_LANGUAGE);
+if (!array_key_exists($currentLanguage, AVAILABLE_LANGUAGES)) { $currentLanguage = DEFAULT_LANGUAGE; }
+
+// Besucherbereich: verfügbare Templates + aktuelle Einstellungen
+require_once dirname(__DIR__) . '/frontend/template_engine.php';
+$availableTemplates = getAvailableTemplates();
+$activeTemplate     = getAdminSetting('active_template', DEFAULT_TEMPLATE);
+if (!array_key_exists($activeTemplate, $availableTemplates)) { $activeTemplate = DEFAULT_TEMPLATE; }
+$allowTemplateSwitch = getAdminSetting('allow_template_switch', '0') === '1';
+
+// ── View: Einstellungen ───────────────────────────────────────────────────────
+?>
+      <div class="card" style="max-width:480px">
+        <h2><?= h(t('settings_heading_system')) ?></h2>
+        <form method="post" action="?action=save_admin_settings">
+          <div class="form-group">
+            <label><?= h(t('settings_label_language')) ?></label>
+            <select name="language" style="width:100%;background:var(--bg);border:1px solid var(--border);
+                   color:var(--text);border-radius:var(--radius);padding:8px 10px;font-size:.87rem;margin-top:4px">
+              <?php foreach (AVAILABLE_LANGUAGES as $code => $meta) { ?>
+              <option value="<?= h($code) ?>"<?= $code === $currentLanguage ? ' selected' : '' ?>><?= h($meta['flag']) ?> <?= h($meta['label']) ?></option>
+              <?php } ?>
+            </select>
+            <div style="font-size:.78rem;color:var(--muted);margin-top:4px">
+              <?= h(t('settings_hint_language')) ?>
+            </div>
+          </div>
+          <div class="form-group">
+            <label><?= h(t('settings_label_timezone')) ?></label>
+            <select name="timezone" style="width:100%;background:var(--bg);border:1px solid var(--border);
+                   color:var(--text);border-radius:var(--radius);padding:8px 10px;font-size:.87rem;margin-top:4px">
+              <?php foreach ($tzGroups as $group => $tzList) { ?>
+              <optgroup label="<?= h($group) ?>">
+                <?php foreach ($tzList as $tz) { ?>
+                <option value="<?= $tz ?>"<?= $tz === $currentTz ? ' selected' : '' ?>><?= $tz ?></option>
+                <?php } ?>
+              </optgroup>
+              <?php } ?>
+            </select>
+            <div style="font-size:.78rem;color:var(--muted);margin-top:4px">
+              <?= t('settings_current_time_line', ['time' => '<strong>'.h($tzNow).'</strong>']) ?><br>
+              <?= h(t('settings_hint_timezone')) ?>
+            </div>
+          </div>
+          <button type="submit" class="btn btn-primary"><?= h(t('common_save')) ?></button>
+        </form>
+      </div>
+      <div class="card" style="max-width:480px">
+        <h2><?= h(t('settings_heading_frontend')) ?></h2>
+        <form method="post" action="?action=save_admin_settings">
+          <div class="form-group">
+            <label><?= h(t('settings_label_active_template')) ?></label>
+            <select name="active_template" style="width:100%;background:var(--bg);border:1px solid var(--border);
+                   color:var(--text);border-radius:var(--radius);padding:8px 10px;font-size:.87rem;margin-top:4px">
+              <?php foreach ($availableTemplates as $key => $meta) { ?>
+              <option value="<?= h($key) ?>"<?= $key === $activeTemplate ? ' selected' : '' ?>>
+                <?= h($meta['name']) ?><?= $meta['description'] !== '' ? ' – '.h($meta['description']) : '' ?>
+              </option>
+              <?php } ?>
+            </select>
+            <div style="font-size:.78rem;color:var(--muted);margin-top:4px">
+              <?= h(t('settings_hint_active_template')) ?>
+            </div>
+          </div>
+          <div class="form-group">
+            <label><?= h(t('settings_label_allow_template_switch')) ?></label>
+            <select name="allow_template_switch" style="width:100%;background:var(--bg);border:1px solid var(--border);
+                   color:var(--text);border-radius:var(--radius);padding:8px 10px;font-size:.87rem;margin-top:4px">
+              <option value="1"<?= $allowTemplateSwitch ? ' selected' : '' ?>><?= h(t('common_yes')) ?></option>
+              <option value="0"<?= !$allowTemplateSwitch ? ' selected' : '' ?>><?= h(t('common_no')) ?></option>
+            </select>
+            <div style="font-size:.78rem;color:var(--muted);margin-top:4px">
+              <?= h(t('settings_hint_allow_template_switch')) ?>
+            </div>
+          </div>
+          <button type="submit" class="btn btn-primary"><?= h(t('common_save')) ?></button>
+        </form>
+      </div>
+      <div class="card" style="max-width:480px">
+        <h2><?= h(t('settings_heading_password')) ?></h2>
+        <form method="post" action="?action=change_password">
+          <div class="form-group"><label><?= h(t('settings_label_current_password')) ?></label><input type="password" name="current_password" autocomplete="current-password"></div>
+          <div class="form-group"><label><?= h(t('usr_label_new_password')) ?></label><input type="password" name="new_password" autocomplete="new-password"></div>
+          <div class="form-group"><label><?= h(t('settings_label_new_password2')) ?></label><input type="password" name="new_password2" autocomplete="new-password"></div>
+          <button type="submit" class="btn btn-primary"><?= h(t('settings_heading_password')) ?></button>
+        </form>
+      </div>
+      <div class="card" style="max-width:480px">
+        <h2><?= h(t('settings_heading_db')) ?></h2>
+        <?php
+          try { $v = getDB()->query('SELECT VERSION()')->fetchColumn(); echo '<p style="font-size:.88rem;color:var(--green)">✓ '.h(t('settings_db_connected', ['version' => $v])).'</p>'; }
+          catch (Throwable $e) { echo '<p style="font-size:.88rem;color:var(--red)">✗ '.h($e->getMessage()).'</p>'; }
+        ?>
+        <p style="font-size:.8rem;color:var(--muted);margin-top:8px"><?= t('settings_hint_db_config') ?></p>
+      </div>

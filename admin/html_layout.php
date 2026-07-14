@@ -1,0 +1,53 @@
+<?php
+/**
+ * Project: LMOnext
+ * Filename: html_layout.php
+ * Fileversion: 1.5.0
+ * Changelog: 1.5.0 - Link zur Benutzeransicht (home.php) in der Topbar ergänzt, zwischen
+ *                     Benutzername und Logout-Button, öffnet in neuem Tab (target=_blank)
+ * Changelog: 1.4.0 - Versionsnummer (aus composer.json) im Sidebar-Footer ergänzt
+ * Changelog: 1.3.1 - Projektname auf "LMOnext" umgestellt (vorher "Online-Liga-Verwaltung Board" / "OLVBoard")
+ * Changelog: 1.3.0 - Sprachauswahl-Dropdown in Topbar (zwischen Titel und Datum); Logout-Label übersetzt
+ * Changelog: 1.2.0 - Logout-Button + Benutzername in Topbar; Sidebar-Footer vereinfacht
+ *
+ * PHP version 8.2
+ *
+ * @author    Dietmar Kersting <webmaster@liga-manager-online.org>
+ * @copyright 2026 Dietmar Kersting
+ * @license   GPL-3.0-only
+ *
+ */
+
+// ── Sidebar + Main-Layout (für alle Views außer Login) ───────────────────────
+?>
+<nav class="sidebar">
+  <div class="sidebar-logo"><img src="assets/logo.svg" alt="LMOnext" style="height:34px;width:auto;display:block"></div>
+  <ul class="nav-list">
+<?php foreach ($nav as $key => $item) { ?>
+    <li>
+      <a href="?action=<?= $key ?><?= $key === 'create_liga' ? '&step=1' : '' ?>"
+         class="<?= ($action === $key || ($action === 'liga_detail' && $key === 'dashboard')) ? 'active' : '' ?>">
+        <?= $item['icon'] ?> <?= h($item['label']) ?>
+      </a>
+    </li>
+<?php } ?>
+  </ul>
+  <div class="sidebar-footer">
+    <span style="font-size:.82rem;color:var(--muted)"><?= h($_SESSION['admin_user'] ?? '') ?></span>
+    <div style="font-size:.7rem;color:var(--muted);margin-top:4px">LMOnext <?= h(getAppVersion()) ?></div>
+  </div>
+</nav>
+
+<div class="main">
+  <div class="topbar">
+    <h1><?= h($pageTitle) ?></h1>
+    <div style="display:flex;align-items:center;gap:12px">
+      <?= renderLanguageSwitcher() ?>
+      <span class="badge"><?= date('d.m.Y H:i') ?></span>
+      <span style="font-size:.82rem;color:var(--muted)"><?= h($_SESSION['admin_user'] ?? '') ?></span>
+      <a href="home.php" target="_blank" rel="noopener" class="btn btn-muted btn-sm" style="text-decoration:none"><?= h(t('topbar_visitor_link')) ?></a>
+      <a href="?action=logout" class="btn btn-danger btn-sm" style="text-decoration:none">⏻ <?= h(t('topbar_logout')) ?></a>
+    </div>
+  </div>
+  <div class="content">
+    <?= renderFlash($flash ?? null) ?>

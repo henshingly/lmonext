@@ -1,0 +1,206 @@
+<?php
+/**
+ * Project: LMOnext
+ * Filename: templates.php
+ * Fileversion: 1.2.1
+ * Changelog: 1.2.1 - Projektname auf "LMOnext" umgestellt (vorher "Online-Liga-Verwaltung Board" / "OLVBoard")
+ * Changelog: 1.2.0 - label/beschreibung/detail sind jetzt Übersetzungs-Keys (über t() aufzulösen), nicht mehr Rohtext
+ *
+ * PHP version 8.2
+ *
+ * @author    Dietmar Kersting <webmaster@liga-manager-online.org>
+ * @copyright 2026 Dietmar Kersting
+ * @license   GPL-3.0-only
+ *
+ */
+
+// ── Liga-Vorlagen ─────────────────────────────────────────────────────────────
+const LIGA_TEMPLATES = [
+
+    'cl_ligaphase' => [
+        'label'       => 'tpl_cl_ligaphase_label',
+        'icon'        => '🏆',
+        'beschreibung'=> 'tpl_cl_ligaphase_desc',
+        'detail'      => 'tpl_cl_ligaphase_detail',
+        'type'        => 0,
+        'teams_count' => 36,
+        'matches'     => 18,
+        'rounds'      => 8,
+        'options'     => [
+            'Rounds'          => '8',
+            'Matches'         => '18',
+            'Teams'           => '36',
+            'goalfaktor'      => '1',
+            'pointsfaktor'    => '1',
+            'enableGameSort'  => '1',
+            'Kegel'           => '0',
+            'HandS'           => '0',
+            'PointsForWin'    => '3',
+            'PointsForDraw'   => '1',
+            'PointsForLost'   => '0',
+            'Spez'            => '0',
+            'HideDraw'        => '0',
+            'OnRun'           => '1',
+            'MinusPoints'     => '1',
+            'Direct'          => '0',
+            'Champ'           => '0',
+            'CL'              => '8',   // Plätze 1–8 direkt Achtelfinale
+            'CK'              => '0',
+            'UC'              => '16',  // Plätze 9–24 Zwischenrunde
+            'AR'              => '0',
+            'AB'              => '12',  // Plätze 25–36 ausgeschieden
+            'namePkt'         => 'Punkte',
+            'nameTor'         => 'Tore',
+            'tableHinRueck'   => '0',
+            'tableHeimAusw'   => '0',
+            'DatC'            => '0',
+            'DatS'            => '1',
+            'DatM'            => '1',
+            'DatF'            => 'd.m. H:i',
+            'urlT'            => '0',
+            'urlB'            => '0',
+            'stats'           => '1',
+            'Plan'            => '1',
+            'Ergebnis'        => '1',
+            'mittore'         => '1',
+            'favTeam'         => '0',
+            'selTeam'         => '0',
+            'ticker'          => '0',
+            'Graph'           => '0',
+            'Kreuz'           => '0',
+            'Tabelle'         => '1',
+            'Ligastats'       => '0',
+            'kurve1'          => '0',
+            'kurve2'          => '0',
+            'Actual'          => '8',
+            'KlFin'           => '0',
+            'playdown'        => '0',
+        ],
+        'team_defaults' => [
+            'Team 01','Team 02','Team 03','Team 04',
+            'Team 05','Team 06','Team 07','Team 08',
+            'Team 09','Team 10','Team 11','Team 12',
+            'Team 13','Team 14','Team 15','Team 16',
+            'Team 17','Team 18','Team 19','Team 20',
+            'Team 21','Team 22','Team 23','Team 24',
+            'Team 25','Team 26','Team 27','Team 28',
+            'Team 29','Team 30','Team 31','Team 32',
+            'Team 33','Team 34','Team 36','Team 36',
+        ],
+        'team_mittel' => [
+            'Team 01','Team 02','Team 03','Team 04',
+            'Team 05','Team 06','Team 07','Team 08',
+            'Team 09','Team 10','Team 11','Team 12',
+            'Team 13','Team 14','Team 15','Team 16',
+            'Team 17','Team 18','Team 19','Team 20',
+            'Team 21','Team 22','Team 23','Team 24',
+            'Team 25','Team 26','Team 27','Team 28',
+            'Team 29','Team 30','Team 31','Team 32',
+            'Team 33','Team 34','Team 36','Team 36',
+        ],
+    ],
+
+    'cl_ko' => [
+        'label'       => 'tpl_cl_ko_label',
+        'icon'        => '⚔️',
+        'beschreibung'=> 'tpl_cl_ko_desc',
+        'detail'      => 'tpl_cl_ko_detail',
+        'type'        => 1,
+        'teams_count' => 24,
+        'rounds'      => 5,
+        'round_names' => ['Zwischenrunde','Achtelfinale','Viertelfinale','Halbfinale','Finale'],
+        'round_modi'  => [2, 2, 2, 2, 1],
+        'options'     => [
+            'Teams'          => '24',
+            'Type'           => '1',
+            'goalfaktor'     => '1',
+            'pointsfaktor'   => '1',
+            'enableGameSort' => '1',
+            'Actual'         => '4',
+            'KlFin'          => '0',
+            'playdown'       => '0',
+            'DatC'           => '0',
+            'DatS'           => '1',
+            'DatM'           => '1',
+            'DatF'           => 'd.m.y H:i',
+            'urlT'           => '0',
+            'urlB'           => '1',
+            'stats'          => '1',
+            'Plan'           => '1',
+            'Ergebnis'       => '1',
+            'mittore'        => '1',
+            'favTeam'        => '0',
+            'selTeam'        => '0',
+            'ticker'         => '0',
+            'Rounds'         => '5',
+        ],
+        'team_defaults' => [
+            'Team 01','Team 02','Team 03','Team 04',
+            'Team 05','Team 06','Team 07','Team 08',
+            'Team 09','Team 10','Team 11','Team 12',
+            'Team 13','Team 14','Team 15','Team 16',
+            'Team 17','Team 18','Team 19','Team 20',
+            'Team 21','Team 22','Team 23','Team 24',
+        ],
+        'team_mittel' => [
+            'Team 01','Team 02','Team 03','Team 04',
+            'Team 05','Team 06','Team 07','Team 08',
+            'Team 09','Team 10','Team 11','Team 12',
+            'Team 13','Team 14','Team 15','Team 16',
+            'Team 17','Team 18','Team 19','Team 20',
+            'Team 21','Team 22','Team 23','Team 24',
+        ],
+    ],
+
+    'bundesliga' => [
+        'label'       => 'tpl_bundesliga_label',
+        'icon'        => '🦅',
+        'beschreibung'=> 'tpl_bundesliga_desc',
+        'detail'      => 'tpl_bundesliga_detail',
+        'type'        => 0,
+        'teams_count' => 18,
+        'matches'     => 9,
+        'rounds'      => 34,
+        'options'     => [
+            'Rounds'          => '34',
+            'Matches'         => '9',
+            'Teams'           => '18',
+            'goalfaktor'      => '1',
+            'pointsfaktor'    => '1',
+            'PointsForWin'    => '3',
+            'PointsForDraw'   => '1',
+            'PointsForLost'   => '0',
+            'tableHinRueck'   => '0',
+            'tableHeimAusw'   => '0',
+            'enableGameSort'  => '1',
+            'stats'           => '1',
+            'Plan'            => '1',
+            'Ergebnis'        => '1',
+            'mittore'         => '1',
+            'Actual'          => '1',
+            'Tabelle'         => '1',
+            'namePkt'         => 'Punkte',
+            'nameTor'         => 'Tore',
+            'DatS'            => '1',
+            'DatM'            => '1',
+            'KlFin'           => '0',
+        ],
+        'team_defaults' => [
+            'Team 01','Team 02','Team 03','Team 04',
+            'Team 05','Team 06','Team 07','Team 08',
+            'Team 09','Team 10','Team 11','Team 12',
+            'Team 13','Team 14','Team 15','Team 16',
+            'Team 17','Team 18',
+        ],
+        'team_mittel' => [
+            'Team 01','Team 02','Team 03','Team 04',
+            'Team 05','Team 06','Team 07','Team 08',
+            'Team 09','Team 10','Team 11','Team 12',
+            'Team 13','Team 14','Team 15','Team 16',
+            'Team 17','Team 18',
+        ],
+    ],
+];
+
+
+

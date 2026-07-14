@@ -1,0 +1,452 @@
+<?php
+/**
+ * Project: LMOnext
+ * Filename: handler_backup.php
+ * Fileversion: 1.1.1
+ * Changelog: 1.1.1 - .htaccess-Text (Kommentare) für /store auf Englisch umgestellt, sowohl die
+ *                     Datei selbst als auch die Auto-Wiederherstellungs-Logik in backupDir()
+ * Changelog: 1.1.0 - Backups sind jetzt zwischen Installationen mit unterschiedlichem
+ *                     Tabellenprefix portabel: der beim Backup verwendete Prefix wird als
+ *                     Metadaten-Kommentar im Dump gespeichert ("-- Prefix: xyz_"); beim
+ *                     Wiederherstellen wird er bei Bedarf automatisch auf den aktuell in
+ *                     config.php konfigurierten Prefix umgeschrieben (reiner Textersatz auf
+ *                     den Backtick-Tabellenbezeichnern, bevor irgendetwas ausgeführt wird).
+ *                     Ältere Backups ohne diese Metadatenzeile laufen unverändert wie bisher
+ * Changelog: 1.0.0 - Initiale Version: Datenbank-Backup/Wiederherstellung für die neue
+ *                     Wartung-Seite (admin/view_wartung.php). Komplett ohne externe
+ *                     Bibliothek/Composer-Paket – SQL-Dump wird selbst geschrieben (analog zum
+ *                     abhängigkeitsfreien PDF-Export in frontend/pdf_export.php), Kompression
+ *                     über die PHP-Kernfunktionen gzencode()/bzcompress() (bzip2 nur wenn die
+ *                     Extension verfügbar ist, sonst wird die Option ausgeblendet).
+ *                     Backups landen in /store (Projekt-Root, per .htaccess abgesichert) und
+ *                     werden nach Anzahl begrenzt (älteste werden automatisch gelöscht,
+ *                     Einstellung "Maximale Anzahl an Backups").
+ *
+ * PHP version 8.2
+ *
+ * @author    Dietmar Kersting <webmaster@liga-manager-online.org>
+ * @copyright 2026 Dietmar Kersting
+ * @license   GPL-3.0-only
+ */
+declare(strict_types = 1);
+
+/**
+ * Eindeutiger Trenner zwischen einzelnen SQL-Anweisungen im Dump. Robuster
+ * als ein naives Split am Semikolon (das bei Textfeldern mit ";" im Inhalt
+ * brechen würde) – wir schreiben den Dump selbst und kontrollieren daher
+ * exakt, wo dieser Marker auftaucht.
+ */
+const BACKUP_STMT_DELIM = "\n-- @@LMO_STMT@@\n";
+
+/**
+ * Absoluter Pfad zum Backup-Ordner (/store im Projekt-Root). Legt den Ordner
+ * samt .htaccess-Schutz an, falls er (z.B. bei einer älteren Installation)
+ * noch fehlt.
+ */
+function backupDir() : string
+{
+    $dir = dirname(__DIR__) . '/store';
+    if (!is_dir($dir)) {
+        @mkdir($dir, 0755, true);
+    }
+    $htaccess = $dir . '/.htaccess';
+    if (!is_file($htaccess)) {
+        $htContent = "# Database backups (Maintenance > Backup) - complete access protection.\n"
+            . "# These files must only be read/written via admin.php (logged-in admin),\n"
+            . "# never directly via URL.\n\n"
+            . "# Apache 2.2\nOrder Allow,Deny\nDeny from all\n\n"
+            . "# Apache 2.4\n<IfModule mod_authz_core.c>\n    Require all denied\n</IfModule>\n\n"
+            . "# Also disable directory listing in case the deny rules\n"
+            . "# do not take effect for some reason (e.g., AllowOverride restriction)\n"
+            . "Options -Indexes\n";
+        @file_put_contents($htaccess, $htContent);
+    }
+    return $dir;
+}
+
+/**
+ * Ob die bzip2-Extension verfügbar ist. Auf manchem Shared-Hosting fehlt sie
+ * – die Option wird dann in der Backup-Ansicht ausgeblendet statt einen
+ * Fataler Fehler zu riskieren.
+ */
+function backupBzip2Available() : bool
+{
+    return function_exists('bzcompress') && function_exists('bzdecompress');
+}
+
+/**
+ * Erkennt Format + Zeitstempel aus einem Backup-Dateinamen
+ * ("backup_2026-07-12_10-13-05.sql[.gz|.bz2]"). Gibt null zurück, wenn der
+ * Dateiname nicht exakt diesem Muster entspricht (Whitelist – wichtig, damit
+ * delete/restore niemals mit einem beliebigen, ggf. von außen manipulierten
+ * Dateinamen auf das Dateisystem zugreifen).
+ *
+ * @return array{format:string,datetime:DateTime}|null
+ */
+function backupParseFilename(string $filename) : ?array
+{
+    if (!preg_match('/^backup_(\d{4}-\d{2}-\d{2})_(\d{2}-\d{2}-\d{2})\.sql(\.gz|\.bz2)?$/', $filename, $m)) {
+        return null;
+    }
+    try {
+        $dt = DateTime::createFromFormat('Y-m-d H-i-s', $m[1] . ' ' . $m[2]);
+        if ($dt === false) {
+            return null;
+        }
+    } catch (Throwable) {
+        return null;
+    }
+    $format = match ($m[3] ?? '') {
+        '.gz'  => 'gzip',
+        '.bz2' => 'bzip2',
+        default => 'text',
+    };
+    return ['format' => $format, 'datetime' => $dt];
+}
+
+/**
+ * Liste aller vorhandenen Backups (neueste zuerst) für die Wiederherstellen-
+ * Ansicht.
+ *
+ * @return array<int,array{filename:string,datetime:DateTime,format:string,size:int}>
+ */
+function backupList() : array
+{
+    $dir = backupDir();
+    $out = [];
+    foreach (glob($dir . '/backup_*.sql*') ?: [] as $path) {
+        $filename = basename($path);
+        $meta = backupParseFilename($filename);
+        if ($meta === null) {
+            continue;
+        }
+        $out[] = [
+            'filename' => $filename,
+            'datetime' => $meta['datetime'],
+            'format'   => $meta['format'],
+            'size'     => (int)(@filesize($path) ?: 0),
+        ];
+    }
+    usort($out, static fn(array $a, array $b) => $b['datetime'] <=> $a['datetime']);
+    return $out;
+}
+
+/**
+ * Löscht die ältesten Backups, bis die konfigurierte Maximalanzahl
+ * (Einstellung "backup_max_count", 0 = unbegrenzt) eingehalten ist.
+ */
+function backupEnforceMaxCount() : void
+{
+    $max = (int)getAdminSetting('backup_max_count', '10');
+    if ($max <= 0) {
+        return; // 0/leer = unbegrenzt
+    }
+    $all = backupList(); // neueste zuerst
+    if (count($all) <= $max) {
+        return;
+    }
+    $dir = backupDir();
+    foreach (array_slice($all, $max) as $old) {
+        @unlink($dir . '/' . $old['filename']);
+    }
+}
+
+/**
+ * Alle Tabellennamen mit dem konfigurierten Präfix (für die Tabellen-
+ * Auswahl in der Backup-Ansicht sowie als Default, wenn keine Auswahl
+ * getroffen wurde).
+ *
+ * @return array<int,string> Tabellennamen OHNE Präfix (wie in der Auswahl-Liste angezeigt)
+ */
+function backupAllTableNames() : array
+{
+    try {
+        $prefix = DB_PREFIX;
+        $s = getDB()->query('SHOW TABLES LIKE ' . getDB()->quote($prefix . '%'));
+        $names = [];
+        foreach ($s->fetchAll(PDO::FETCH_NUM) as $row) {
+            $full = (string)$row[0];
+            if (str_starts_with($full, $prefix)) {
+                $names[] = substr($full, strlen($prefix));
+            }
+        }
+        sort($names);
+        return $names;
+    } catch (Throwable) {
+        return [];
+    }
+}
+
+/**
+ * Escaped einen einzelnen Zellwert für eine INSERT-Anweisung.
+ */
+function backupQuoteValue(PDO $db, mixed $v) : string
+{
+    if ($v === null) {
+        return 'NULL';
+    }
+    return $db->quote((string)$v);
+}
+
+/**
+ * Baut den kompletten (unkomprimierten) SQL-Dump-Text für die übergebenen
+ * Tabellen. $type: 'complete' (DROP+CREATE+INSERT) oder 'data' (nur
+ * TRUNCATE+INSERT, Tabellen müssen beim Restore bereits existieren).
+ *
+ * @param array<int,string> $tables Tabellennamen OHNE Präfix
+ */
+function backupBuildDump(array $tables, string $type) : string
+{
+    $db = getDB();
+    $sql  = "-- LMOnext Datenbank-Backup\n";
+    $sql .= '-- Erstellt: ' . date('Y-m-d H:i:s') . "\n";
+    $sql .= '-- Typ: ' . ($type === 'complete' ? 'Komplett' : 'Nur Daten') . "\n";
+    $sql .= '-- Version: ' . getAppVersion() . "\n";
+    $sql .= '-- Prefix: ' . DB_PREFIX . "\n";
+    $sql .= "-- Zeichensatz: utf8mb4\n\n";
+    $sql .= 'SET NAMES utf8mb4' . BACKUP_STMT_DELIM;
+    $sql .= 'SET FOREIGN_KEY_CHECKS=0' . BACKUP_STMT_DELIM;
+
+    foreach ($tables as $table) {
+        $fullName = tbl($table); // bereits in Backticks, inkl. Präfix
+
+        if ($type === 'complete') {
+            $sql .= 'DROP TABLE IF EXISTS ' . $fullName . BACKUP_STMT_DELIM;
+            $createRow = $db->query('SHOW CREATE TABLE ' . $fullName)->fetch(PDO::FETCH_NUM);
+            if ($createRow !== false) {
+                $sql .= $createRow[1] . BACKUP_STMT_DELIM;
+            }
+        } else {
+            $sql .= 'TRUNCATE TABLE ' . $fullName . BACKUP_STMT_DELIM;
+        }
+
+        $stmt = $db->query('SELECT * FROM ' . $fullName);
+        $batch = [];
+        $batchSize = 0;
+        $columns = null;
+        while (($row = $stmt->fetch(PDO::FETCH_ASSOC)) !== false) {
+            if ($columns === null) {
+                $columns = array_keys($row);
+            }
+            $values = array_map(static fn($v) => backupQuoteValue($db, $v), array_values($row));
+            $batch[] = '(' . implode(',', $values) . ')';
+            $batchSize++;
+            if ($batchSize >= 200) {
+                $sql .= backupInsertStatement($fullName, $columns, $batch) . BACKUP_STMT_DELIM;
+                $batch = [];
+                $batchSize = 0;
+            }
+        }
+        if ($batch !== [] && $columns !== null) {
+            $sql .= backupInsertStatement($fullName, $columns, $batch) . BACKUP_STMT_DELIM;
+        }
+    }
+
+    $sql .= 'SET FOREIGN_KEY_CHECKS=1' . BACKUP_STMT_DELIM;
+
+    return $sql;
+}
+
+function backupInsertStatement(string $fullName, array $columns, array $rowsSql) : string
+{
+    $cols = implode(',', array_map(static fn($c) => '`' . $c . '`', $columns));
+    return 'INSERT INTO ' . $fullName . ' (' . $cols . ') VALUES ' . implode(',', $rowsSql);
+}
+
+/**
+ * Erstellt ein neues Backup, schreibt es nach /store und wendet danach das
+ * Aufräumen alter Backups an (backupEnforceMaxCount()).
+ *
+ * @param array<int,string> $tables Tabellennamen OHNE Präfix; leer = alle Tabellen
+ * @return array{ok:bool,filename?:string,error?:string}
+ */
+function backupCreate(string $type, string $format, array $tables) : array
+{
+    if (!in_array($type, ['complete', 'data'], true)) {
+        $type = 'complete';
+    }
+    if ($format === 'bzip2' && !backupBzip2Available()) {
+        $format = 'gzip';
+    }
+    if (!in_array($format, ['gzip', 'bzip2', 'text'], true)) {
+        $format = 'gzip';
+    }
+
+    $allTables = backupAllTableNames();
+    $tables = array_values(array_intersect($tables, $allTables));
+    if ($tables === []) {
+        $tables = $allTables;
+    }
+    if ($tables === []) {
+        return ['ok' => false, 'error' => t('wartung_error_no_tables')];
+    }
+
+    try {
+        $dump = backupBuildDump($tables, $type);
+    } catch (Throwable $e) {
+        return ['ok' => false, 'error' => t('flash_error_prefix', ['msg' => $e->getMessage()])];
+    }
+
+    $ext = match ($format) {
+        'gzip'  => '.sql.gz',
+        'bzip2' => '.sql.bz2',
+        default => '.sql',
+    };
+    $filename = 'backup_' . date('Y-m-d_H-i-s') . $ext;
+    $path = backupDir() . '/' . $filename;
+
+    $bytes = match ($format) {
+        'gzip'  => gzencode($dump, 6),
+        'bzip2' => bzcompress($dump, 6),
+        default => $dump,
+    };
+    if (!is_string($bytes)) {
+        return ['ok' => false, 'error' => t('wartung_error_compress')];
+    }
+
+    if (@file_put_contents($path, $bytes) === false) {
+        return ['ok' => false, 'error' => t('wartung_error_write', ['path' => 'store/' . $filename])];
+    }
+
+    backupEnforceMaxCount();
+
+    return ['ok' => true, 'filename' => $filename];
+}
+
+/**
+ * Löscht ein Backup anhand des Dateinamens (strikt gegen das Whitelist-Muster
+ * aus backupParseFilename() geprüft).
+ */
+function backupDelete(string $filename) : bool
+{
+    if (backupParseFilename($filename) === null) {
+        return false;
+    }
+    $path = backupDir() . '/' . $filename;
+    return is_file($path) && @unlink($path);
+}
+
+/**
+ * Liest + entpackt eine Backup-Datei und führt jede enthaltene SQL-
+ * Anweisung aus. ACHTUNG: überschreibt vorhandene Daten (bei "Komplett"-
+ * Backups werden die betroffenen Tabellen vorher gelöscht und neu angelegt).
+ *
+ * @return array{ok:bool,statements?:int,error?:string}
+ */
+function backupRestore(string $filename) : array
+{
+    $meta = backupParseFilename($filename);
+    if ($meta === null) {
+        return ['ok' => false, 'error' => t('wartung_error_invalid_file')];
+    }
+    $path = backupDir() . '/' . $filename;
+    if (!is_file($path)) {
+        return ['ok' => false, 'error' => t('wartung_error_file_missing')];
+    }
+
+    $raw = @file_get_contents($path);
+    if ($raw === false) {
+        return ['ok' => false, 'error' => t('wartung_error_file_missing')];
+    }
+
+    $sql = match ($meta['format']) {
+        'gzip'  => @gzdecode($raw),
+        'bzip2' => backupBzip2Available() ? bzdecompress($raw) : false,
+        default => $raw,
+    };
+    if (!is_string($sql)) {
+        return ['ok' => false, 'error' => t('wartung_error_decompress')];
+    }
+
+    // ── Portabilität zwischen Installationen mit unterschiedlichem
+    // Tabellenprefix: Das Backup enthält den Prefix, mit dem es erstellt
+    // wurde ("-- Prefix: xyz_"). Weicht der von der aktuell in config.php
+    // konfigurierten DB_PREFIX ab, werden alle Tabellenbezeichner
+    // (`{alterPrefix}...`) im Dump auf den aktuellen Prefix umgeschrieben,
+    // bevor irgendetwas ausgeführt wird. Ältere Backups ohne diese
+    // Metadatenzeile (vor diesem Feature erstellt) werden unverändert
+    // ausgeführt wie bisher.
+    $remappedPrefix = null;
+    if (preg_match('/^-- Prefix: (\S+)$/m', $sql, $pm)) {
+        $sourcePrefix = $pm[1];
+        if ($sourcePrefix !== '' && $sourcePrefix !== DB_PREFIX) {
+            $sql = str_replace('`' . $sourcePrefix, '`' . DB_PREFIX, $sql);
+            $remappedPrefix = ['from' => $sourcePrefix, 'to' => DB_PREFIX];
+        }
+    }
+
+    $statements = array_filter(array_map('trim', explode(BACKUP_STMT_DELIM, $sql)), static fn($s) => $s !== '');
+
+    $db = getDB();
+    $count = 0;
+    try {
+        foreach ($statements as $stmt) {
+            $db->exec($stmt);
+            $count++;
+        }
+    } catch (Throwable $e) {
+        return ['ok' => false, 'error' => t('flash_error_prefix', ['msg' => $e->getMessage()]), 'statements' => $count];
+    }
+
+    return ['ok' => true, 'statements' => $count, 'remappedPrefix' => $remappedPrefix];
+}
+
+// ── AJAX/POST-Actions ─────────────────────────────────────────────────────────
+
+if ($action === 'run_backup' && $_SERVER['REQUEST_METHOD'] === 'POST') {
+    requireLogin();
+    $type   = (string)($_POST['backup_type'] ?? 'complete');
+    $format = (string)($_POST['backup_format'] ?? 'gzip');
+    $tables = array_map('strval', $_POST['tables'] ?? []);
+
+    $result = backupCreate($type, $format, $tables);
+    if ($result['ok']) {
+        flash(t('wartung_flash_backup_created', ['file' => $result['filename']]));
+    } else {
+        flash($result['error'] ?? t('wartung_error_generic'), 'error');
+    }
+    redirect('?action=wartung&tab=backup');
+}
+
+if ($action === 'restore_backup' && $_SERVER['REQUEST_METHOD'] === 'POST') {
+    requireLogin();
+    $filename = (string)($_POST['filename'] ?? '');
+    $result = backupRestore($filename);
+    if ($result['ok']) {
+        $msg = t('wartung_flash_restored', ['n' => $result['statements'] ?? 0]);
+        if (!empty($result['remappedPrefix'])) {
+            $msg .= ' ' . t('wartung_flash_prefix_remapped', $result['remappedPrefix']);
+        }
+        flash($msg);
+    } else {
+        flash($result['error'] ?? t('wartung_error_generic'), 'error');
+    }
+    redirect('?action=wartung&tab=restore');
+}
+
+if ($action === 'delete_backup' && $_SERVER['REQUEST_METHOD'] === 'POST') {
+    requireLogin();
+    $filename = (string)($_POST['filename'] ?? '');
+    if (backupDelete($filename)) {
+        flash(t('wartung_flash_deleted'));
+    } else {
+        flash(t('wartung_error_generic'), 'error');
+    }
+    redirect('?action=wartung&tab=restore');
+}
+
+if ($action === 'save_backup_settings' && $_SERVER['REQUEST_METHOD'] === 'POST') {
+    requireLogin();
+    try {
+        $max = (int)($_POST['backup_max_count'] ?? 10);
+        if ($max < 0) { $max = 0; }
+        $s = getDB()->prepare('INSERT INTO '.tbl('admin_settings').' (`key`,`value`) VALUES (?,?)
+            ON DUPLICATE KEY UPDATE `value`=VALUES(`value`)');
+        $s->execute(['backup_max_count', (string)$max]);
+        backupEnforceMaxCount();
+        flash(t('wartung_flash_settings_saved'));
+    } catch (Throwable $e) {
+        flash(t('flash_error_prefix', ['msg' => $e->getMessage()]), 'error');
+    }
+    redirect('?action=wartung&tab=backup');
+}
