@@ -2,7 +2,27 @@
 /**
  * Project: LMOnext
  * Filename: bootstrap.php
- * Fileversion: 1.6.0
+ * Fileversion: 1.7.3
+ * Changelog: 1.7.3 - Logo-Ordner von assets/img/Teams auf assets/img/teams umbenannt
+ *                     (kleingeschrieben)
+ * Changelog: 1.7.2
+ * Changelog: 1.7.2 - Neues Feature "Teams (global)": Logo & Vereinslink. ensureTeamUrlSchema()
+ *                     ergänzt teams_global.url. Neue Funktionen findTeamLogoPath()/
+ *                     deleteTeamLogo()/saveTeamLogoUpload(): Team-Logos liegen als
+ *                     assets/img/teams/{team-id}.{ext} (SVG/JPG/PNG/GIF, Mindesthöhe 50px,
+ *                     Inhalts-/MIME-Prüfung statt reiner Endungs-Prüfung), keine eigene
+ *                     DB-Spalte nötig, da einfach übers Dateisystem gefunden
+ * Changelog: 1.7.1
+ * Changelog: 1.7.1 - buildScheduleForMode('none'): legt jetzt trotzdem die korrekte Anzahl
+ *                     Spieltage/Begegnungen an (wie ein normaler Rundenplan für die Teamzahl),
+ *                     nur mit Leerteam-Platzhaltern (-1, siehe createLigaInDB()) statt echter
+ *                     Paarungen – vorher wurden bei "kein Spielplan" gar keine Spieltage/
+ *                     Partien-Zeilen angelegt
+ * Changelog: 1.7.0 - Neue Funktionen getSchluesselringPattern()/buildScheduleForMode(): Spielplan
+ *                     für reguläre Ligen kann jetzt wahlweise nach dem DFB-Schlüsselring-Muster
+ *                     (siehe admin/schluesselring_data.php, für 6/8/10/12/14/16/18 Teams), per
+ *                     Zufall (bisheriges generateRoundRobin()) oder gar nicht erstellt werden
+ * Changelog: 1.6.0
  * Changelog: 1.6.0 - "Passwort vergessen"-Grundlagen ergänzt: ensurePasswordResetSchema()
  *                     (email-Spalte + admin_password_resets-Tabelle, Migration für bestehende
  *                     Installationen), getSiteBaseUrl(), sendPasswordResetEmail() (reine
@@ -269,6 +289,55 @@ function generateRoundRobin(array $teamIds) : array
     return $rounds;
 }
 
+/**
+ * Liefert das vorgefertigte DFB-Schlüsselring-Spielplanmuster für die
+ * angegebene Teamzahl, falls eines hinterlegt ist (siehe
+ * admin/schluesselring_data.php) – sonst null. Anders als die per Zufall
+ * erzeugte generateRoundRobin()-Reihenfolge folgt der Schlüsselring einer
+ * traditionellen, festen Paarungslogik, wie sie deutsche Fußballverbände
+ * für Ligen üblicher Größe verwenden.
+ */
+function getSchluesselringPattern(int $teamCount) : ?array
+{
+    return SCHLUESSELRING_PATTERNS[$teamCount] ?? null;
+}
+
+/**
+ * Baut den Spielplan für eine reguläre Liga gemäß gewähltem Modus:
+ * 'schluesselring' (falls für die Teamzahl vorhanden, sonst automatisch
+ * Rückfall auf 'random'), 'random' (bisheriges Verhalten, generateRoundRobin()
+ * mit fortlaufender Team-Reihenfolge) oder 'none' (kein Spielplan).
+ *
+ * @return array<int,array<int,array{0:int,1:int}>>
+ */
+function buildScheduleForMode(int $teamCount, string $mode) : array
+{
+    if ($mode === 'none') {
+        // Trotz "kein Spielplan" soll die Liga bereits die richtige Anzahl
+        // Spieltage/Begegnungen bekommen (wie ein normaler Rundenplan für
+        // diese Teamzahl) – nur eben mit einem Leerteam ("___", siehe
+        // getOrCreateDummyTeam()) statt echter Paarungen. So kann der Admin
+        // jede Begegnung anschließend einzeln manuell im Spieltag-Editor
+        // eintragen, ohne vorher Spieltage/Partien-Zeilen selbst anlegen zu
+        // müssen. -1 ist der von createLigaInDB() bereits unterstützte
+        // Platzhalter-Wert für "Leerteam".
+        $shape = generateRoundRobin(range(0, $teamCount - 1));
+        $blank = [];
+        foreach ($shape as $nr => $pairs) {
+            $blank[$nr] = array_fill(0, count($pairs), [-1, -1]);
+        }
+        return $blank;
+    }
+    if ($mode === 'schluesselring') {
+        $pattern = getSchluesselringPattern($teamCount);
+        if ($pattern !== null) {
+            return $pattern;
+        }
+        // Kein Muster für diese Teamzahl hinterlegt -> auf Zufall zurückfallen
+    }
+    return generateRoundRobin(range(0, $teamCount - 1));
+}
+
 // ── Routing ── (existing code continues below)
 function ensureArchivColumns() : void
 {
@@ -329,6 +398,138 @@ function ensurePasswordResetSchema() : void
             KEY `user_id` (`user_id`)
         ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci');
     } catch (Throwable) {}
+}
+
+/**
+ * Stellt sicher, dass teams_global.url existiert (Website-/Vereinslink,
+ * siehe "Teams (global)" → Logo & Link). Das Team-Logo selbst braucht keine
+ * eigene Spalte – es liegt einfach unter assets/img/teams/{id}.{ext} und
+ * wird beim Anzeigen per Dateisystem-Check gefunden (siehe
+ * findTeamLogoPath() in handler_liga.php).
+ */
+function ensureTeamUrlSchema() : void
+{
+    static $done = false; if ($done) return; $done = true;
+    try {
+        $db   = getDB();
+        $cols = $db->query('SHOW COLUMNS FROM '.tbl('teams_global'))->fetchAll(PDO::FETCH_COLUMN);
+        if (!in_array('url', $cols, true)) {
+            $db->exec('ALTER TABLE '.tbl('teams_global').' ADD COLUMN `url` VARCHAR(500) NULL DEFAULT NULL');
+        }
+    } catch (Throwable) {}
+}
+
+const TEAM_LOGO_ALLOWED_EXT  = ['svg', 'jpg', 'jpeg', 'png', 'gif'];
+const TEAM_LOGO_MIN_HEIGHT_PX = 50;
+
+/** Absoluter Dateisystempfad zum Team-Logo-Verzeichnis (wird bei Bedarf angelegt). */
+function teamLogoDir() : string
+{
+    $dir = dirname(__DIR__) . '/assets/img/teams';
+    if (!is_dir($dir)) {
+        @mkdir($dir, 0755, true);
+    }
+    return $dir;
+}
+
+/**
+ * Sucht ein hochgeladenes Logo für die angegebene Team-ID (Dateiname
+ * "{id}.{ext}", siehe TEAM_LOGO_ALLOWED_EXT). Gibt den Web-Pfad relativ zum
+ * Projekt-Root zurück (z.B. "assets/img/teams/42.png"), oder null wenn kein
+ * Logo hinterlegt ist.
+ */
+function findTeamLogoPath(int $teamId) : ?string
+{
+    $dir = teamLogoDir();
+    foreach (TEAM_LOGO_ALLOWED_EXT as $ext) {
+        if (is_file($dir . '/' . $teamId . '.' . $ext)) {
+            return 'assets/img/teams/' . $teamId . '.' . $ext;
+        }
+    }
+    return null;
+}
+
+/** Entfernt ein evtl. vorhandenes Logo (alle möglichen Endungen) für die Team-ID. */
+function deleteTeamLogo(int $teamId) : void
+{
+    $dir = teamLogoDir();
+    foreach (TEAM_LOGO_ALLOWED_EXT as $ext) {
+        $path = $dir . '/' . $teamId . '.' . $ext;
+        if (is_file($path)) {
+            @unlink($path);
+        }
+    }
+}
+
+/**
+ * Prüft und speichert ein hochgeladenes Team-Logo ($_FILES-Eintrag). Erlaubt
+ * sind SVG, JPEG/JPG, PNG und GIF, mit einer Mindesthöhe von
+ * TEAM_LOGO_MIN_HEIGHT_PX Pixeln. Bei SVG lässt sich die Höhe nicht immer
+ * zuverlässig aus der Datei auslesen (Vektorgrafik, oft ohne feste
+ * Pixelmaße) – dort wird nur geprüft, wenn width/height/viewBox tatsächlich
+ * vorhanden sind und explizit zu klein wären; ansonsten wird SVG nicht
+ * pauschal abgelehnt. Ein evtl. vorhandenes altes Logo (auch mit anderer
+ * Dateiendung) wird vorher entfernt, damit nicht mehrere Logo-Dateien für
+ * dieselbe Team-ID gleichzeitig existieren.
+ *
+ * @return array{ok:bool, error:?string}
+ */
+function saveTeamLogoUpload(int $teamId, array $file) : array
+{
+    if (($file['error'] ?? UPLOAD_ERR_NO_FILE) === UPLOAD_ERR_NO_FILE) {
+        return ['ok' => true, 'error' => null]; // nichts hochgeladen -> kein Fehler, einfach nichts tun
+    }
+    if ($file['error'] !== UPLOAD_ERR_OK) {
+        return ['ok' => false, 'error' => t('teams_logo_err_upload')];
+    }
+    $ext = strtolower(pathinfo((string)$file['name'], PATHINFO_EXTENSION));
+    if ($ext === 'jpeg') { $ext = 'jpg'; }
+    if (!in_array($ext, ['svg', 'jpg', 'png', 'gif'], true)) {
+        return ['ok' => false, 'error' => t('teams_logo_err_format')];
+    }
+
+    $tmpPath = (string)$file['tmp_name'];
+    if (!is_uploaded_file($tmpPath)) {
+        return ['ok' => false, 'error' => t('teams_logo_err_upload')];
+    }
+
+    if ($ext === 'svg') {
+        $content = (string)file_get_contents($tmpPath);
+        // Grobe Inhaltsprüfung statt reiner Endungs-Prüfung: muss ein
+        // <svg>-Wurzelelement enthalten (schützt vor umbenannten Dateien, die
+        // gar kein SVG sind).
+        if (stripos($content, '<svg') === false) {
+            return ['ok' => false, 'error' => t('teams_logo_err_invalid')];
+        }
+        // Höhe nur prüfen, wenn sie sich eindeutig aus width/height/viewBox
+        // ergibt – SVGs ohne feste Pixelmaße werden nicht abgelehnt.
+        if (preg_match('/height=["\']?([\d.]+)/i', $content, $hm)) {
+            if ((float)$hm[1] < TEAM_LOGO_MIN_HEIGHT_PX) {
+                return ['ok' => false, 'error' => t('teams_logo_err_too_small', ['min' => TEAM_LOGO_MIN_HEIGHT_PX])];
+            }
+        }
+    } else {
+        $info = @getimagesize($tmpPath);
+        if ($info === false) {
+            return ['ok' => false, 'error' => t('teams_logo_err_invalid')];
+        }
+        $detectedExt = image_type_to_extension((int)$info[2], false);
+        $detectedExt = $detectedExt === 'jpeg' ? 'jpg' : $detectedExt;
+        if ($detectedExt !== $ext) {
+            return ['ok' => false, 'error' => t('teams_logo_err_invalid')];
+        }
+        if ((int)$info[1] < TEAM_LOGO_MIN_HEIGHT_PX) {
+            return ['ok' => false, 'error' => t('teams_logo_err_too_small', ['min' => TEAM_LOGO_MIN_HEIGHT_PX])];
+        }
+    }
+
+    deleteTeamLogo($teamId); // altes Logo (ggf. andere Endung) zuerst entfernen
+    $destPath = teamLogoDir() . '/' . $teamId . '.' . $ext;
+    if (!move_uploaded_file($tmpPath, $destPath)) {
+        return ['ok' => false, 'error' => t('teams_logo_err_upload')];
+    }
+    @chmod($destPath, 0644);
+    return ['ok' => true, 'error' => null];
 }
 
 function ensureSpielstatusColumns() : void

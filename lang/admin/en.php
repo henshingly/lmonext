@@ -2,7 +2,21 @@
 /**
  * Project: LMOnext
  * Filename: lang/admin/en.php
- * Fileversion: 1.10.2
+ * Fileversion: 1.10.10
+ * Changelog: 1.10.10 - Added translations for the extended installer system checks (GD, SVG
+ *                      rasterization, team logo directory, "optional" label)
+ * Changelog: 1.10.9 - Added translation for the new "Show logo" setting
+ * Changelog: 1.10.8 - Added translations for logo & club link on "Teams (global)"
+ * Changelog: 1.10.7 - Renamed "Fixture key ring" to "Fixture plan" label (wizard, schedule
+ *                     creation mode), matching the German rename to "Schlüsselplan"
+ * Changelog: 1.10.6 - Added translations for the new schedule-creation-mode selector in the
+ *                     league wizard (fixture key ring/random/no schedule)
+ * Changelog: 1.10.5 - Added/updated translations for multi-candidate team matching during
+ *                     import: dropdown instead of a yes/no checkbox when several similar
+ *                     teams were found
+ * Changelog: 1.10.4 - Added translations for the new color pickers on the table markers
+ * Changelog: 1.10.3 - Added translation for the "Winners & losers from round..." hint text
+ *                     (final round with final + 3rd-place match)
  * Changelog: 1.10.2 - Added missing translations for the "forgot password" feature (login-page
  *                     modal, reset landing page, flash messages, email text) – the backend/
  *                     reset landing page already referenced these keys, but they were entirely
@@ -138,6 +152,11 @@ return [
     'install_check_pdo'              => 'PDO extension',
     'install_check_pdo_mysql'        => 'PDO MySQL driver',
     'install_check_mbstring'         => 'mbstring',
+    'install_check_gd'                => 'GD extension',
+    'install_check_svg_raster'        => 'SVG rasterization (Imagick/rsvg-convert)',
+    'install_check_teams_dir'         => 'Write permission (assets/img/teams/)',
+    'install_recommended_missing'     => 'not found (optional)',
+    'install_optional'                => 'optional',
     'install_available'              => 'available',
     'install_missing_ini'            => 'MISSING – enable in php.ini',
     'install_missing_pdo_mysql'      => 'MISSING – pdo_mysql extension missing',
@@ -254,6 +273,15 @@ return [
     'teams_field_name_required'  => 'Name *',
     'teams_field_mittel'         => 'Mid-name',
     'teams_field_kurz'           => 'Abbr.',
+    'teams_field_url'            => 'Club/team website',
+    'teams_field_logo'           => 'Logo',
+    'teams_logo_remove'          => 'Remove logo',
+    'teams_logo_hint'            => 'SVG, JPG, PNG or GIF, at least 50px tall.',
+    'teams_col_logo'             => 'Logo',
+    'teams_logo_err_upload'      => 'Upload failed. Please try again.',
+    'teams_logo_err_format'      => 'Invalid file format. Allowed: SVG, JPG, PNG, GIF.',
+    'teams_logo_err_invalid'     => 'The file could not be read as a valid image.',
+    'teams_logo_err_too_small'   => 'The image is too small. Minimum height: {min}px.',
     'teams_ligen_modal_default'  => 'Leagues',
     'teams_js_ligen_title'       => 'Leagues: {name}',
     'teams_js_no_ligen'          => 'No leagues found.',
@@ -279,6 +307,7 @@ return [
     'sp_pairing_label'               => 'Pairing {n}',
     'sp_tooltip_remove_pair'         => 'Remove pairing',
     'sp_only_winners_from'           => '🏆 Only winners from round {round} ({count} teams)',
+    'sp_winners_and_losers_from'     => '🏆 Winners & losers from round {round} ({count} teams) – final and 3rd-place match',
     'sp_leg_home'                    => 'First leg',
     'sp_leg_away'                    => 'Second leg',
     'sp_game_n'                      => 'Game {n}',
@@ -388,6 +417,12 @@ return [
     'wiz_template_fallback'       => 'Template',
 
     'wiz_step3_liga_heading' => 'Step 3 – Schedule (auto-generated)',
+    'wiz_schedule_mode_heading'        => 'Schedule creation',
+    'wiz_schedule_mode_schluesselring' => 'Fixture plan (DFB pattern)',
+    'wiz_schedule_mode_unavailable'    => 'not available for this number of teams',
+    'wiz_schedule_mode_random'         => 'Generate randomly',
+    'wiz_schedule_mode_none'          => 'No schedule',
+    'wiz_schedule_mode_apply'         => 'Apply',
     'wiz_step3_liga_desc'    => 'Round-robin: {days} matchdays, {matches} matches per matchday.',
     'wiz_col_hash'           => '#',
     'wiz_matchday_first_half'  => ' (first half of season)',
@@ -541,6 +576,7 @@ return [
     'ls_label_spieltagsdatum' => 'Matchday date',
     'ls_label_ergebnisse'     => 'Results',
     'ls_label_tabelle'        => 'Table',
+    'ls_label_show_logos'     => 'Show logo',
     'ls_label_kalender'       => 'Calendar',
     'ls_cb_spielplaene'       => 'Schedules',
     'ls_label_kreuztabelle'   => 'Cross table',
@@ -584,6 +620,8 @@ return [
     'ls_marker_uc'    => 'Europa League participants',
     'ls_marker_ar'    => 'Relegation play-off',
     'ls_marker_ab'    => 'Confirmed relegation',
+    'ls_marker_color_title' => 'Marker border color',
+    'ls_marker_color_hint'  => 'This color appears as a thin colored border on the left edge of the table in the visitor view.',
 
     'ls_warning_heading' => 'Warning!',
     'ls_warning_text'    => 'These settings can make an existing league unusable. Only change them if you are sure.',
@@ -684,7 +722,10 @@ return [
     // ── Import: team name matching (approximate matches before the actual import) ─
     'imp_review_heading'      => 'Team matching ({n})',
     'imp_review_intro'        => 'The following teams from the uploaded .l98 files resemble teams already in the database, but do not match exactly. Choose which ones should adopt the database name – this avoids duplicates. Unchecked teams will be created as new teams using their name from the .l98 file.',
-    'imp_review_item'         => '{import} → resembles existing team {db} (ID {id}). Adopt name from DB?',
+    'imp_review_item'         => '{import} → resembles existing team {db} (ID {id}).',
+    'imp_review_item_multi'   => '{import} → resembles {n} existing teams.',
+    'imp_review_select_label' => 'Adopt team from the DB:',
+    'imp_review_option_new'   => '– No matching team – create as new team –',
     'imp_review_db_details'   => 'Short: {kurz} · Medium: {mittel}',
     'imp_review_btn_confirm'  => 'Continue import',
     'imp_review_btn_cancel'   => 'Cancel',

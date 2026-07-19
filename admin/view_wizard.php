@@ -2,7 +2,30 @@
 /**
  * Project: LMOnext
  * Filename: view_wizard.php
- * Fileversion: 1.2.1
+ * Fileversion: 1.3.4
+ * Changelog: 1.3.4 - Vorschautabelle zeigt bei "kein Spielplan" jetzt korrekt "___" für die
+ *                     Leerteam-Platzhalter (-1) statt eines PHP-Fehlers/leerer Zelle, siehe
+ *                     bootstrap.php 1.7.1
+ * Changelog: 1.3.3 - Auf Wunsch zurückgenommen: Schlüsselplan-Option wieder wie ursprünglich
+ *                     immer sichtbar (nur ausgegraut mit "nicht verfügbar"-Hinweis) statt
+ *                     komplett zu verschwinden, wenn kein Muster zur Teamzahl passt
+ * Changelog: 1.3.2 - Umbenennung "Schlüsselring" zu "Schlüsselplan" (siehe lang-Dateien). Die
+ *                     Option erscheint jetzt komplett nicht mehr (statt nur ausgegraut mit
+ *                     "nicht verfügbar"-Hinweis), wenn für die gewählte Teamzahl kein Muster
+ *                     hinterlegt ist
+ * Changelog: 1.3.1 - Bugfix (der eigentliche Grund für "immer nur 16 Teams"): Zahlenfeld
+ *                     (Liga, freie Anzahl) und Dropdown (KO, Vorauswahl 16) hießen beide
+ *                     "team_count" gleichzeitig im DOM. Das umbenennende JS lief nur bei einer
+ *                     Änderung des Liga-Typs, nicht beim ersten Laden – blieb der Admin beim
+ *                     voreingestellten Liga-Typ (der Normalfall), sendete der Browser BEIDE
+ *                     Werte mit demselben Namen, PHP übernahm nur den letzten (das versteckte
+ *                     KO-Dropdown mit 16). Felder heißen jetzt dauerhaft unterschiedlich
+ *                     ("team_count_liga"/"team_count_ko"), keine Namensumschaltung per JS mehr nötig
+ * Changelog: 1.3.0 - Schritt 3 (reguläre Liga): neue Auswahl "Spielplan-Erstellung"
+ *                     (Schlüsselring/Zufall/kein Spielplan) oberhalb der Vorschautabelle, per
+ *                     eigenem Formular ohne die Teamnamen erneut einzugeben (siehe
+ *                     handler_wizard.php "step=3&regen=1"). Schlüsselring-Option ist
+ *                     ausgegraut, wenn für die gewählte Teamzahl kein Muster hinterlegt ist
  * Changelog: 1.2.1 - Projektname auf "LMOnext" umgestellt (vorher "Online-Liga-Verwaltung Board" / "OLVBoard")
  * Changelog: 1.2.0 - Alle Texte (PHP + JS) über t() übersetzt; Vorlagen-Texte (label/beschreibung/detail) über t($tpl[...]) aufgelöst
  * Changelog: 1.1.3 - KO-Modus-Auswahl nutzt koModusLabel() (übersetzt) statt rohem KO_MODUS-Label
@@ -65,12 +88,12 @@ $stepLabels = [t('wiz_step_label_1'), t('wiz_step_label_2'), t('wiz_step_label_3
               <!-- Liga: freie Anzahl -->
               <div class="form-group" id="field_liga_teams">
                 <label><?= h(t('wiz_label_team_count')) ?></label>
-                <input type="number" name="team_count" id="inp_liga_teams" min="2" max="256" value="18">
+                <input type="number" name="team_count_liga" id="inp_liga_teams" min="2" max="256" value="18">
               </div>
               <!-- KO: Dropdown mit 2^n + 24 -->
               <div class="form-group" id="field_ko_teams" style="display:none">
                 <label><?= h(t('wiz_label_team_count')) ?></label>
-                <select name="team_count" id="sel_ko_teams" onchange="calcKORounds()">
+                <select name="team_count_ko" id="sel_ko_teams" onchange="calcKORounds()">
                   <option value="2"><?= h(t('wiz_option_n_teams', ['n' => 2])) ?></option>
                   <option value="4"><?= h(t('wiz_option_n_teams', ['n' => 4])) ?></option>
                   <option value="8"><?= h(t('wiz_option_n_teams', ['n' => 8])) ?></option>
@@ -149,11 +172,9 @@ $stepLabels = [t('wiz_step_label_1'), t('wiz_step_label_2'), t('wiz_step_label_3
           document.getElementById('field_liga_teams').style.display  = isKO ? 'none'  : '';
           document.getElementById('field_ko_teams').style.display    = isKO ? ''      : 'none';
           document.getElementById('field_ko_rounds').style.display   = isKO ? ''      : 'none';
-          // Liga: reset name to ensure correct field used
-          document.getElementById('inp_liga_teams').name = isKO ? '' : 'team_count';
-          document.getElementById('sel_ko_teams').name   = isKO ? 'team_count' : '';
           if (isKO) calcKORounds();
         }
+        updateKOFields();
         </script>
 
 <?php
@@ -212,9 +233,31 @@ $stepLabels = [t('wiz_step_label_1'), t('wiz_step_label_2'), t('wiz_step_label_3
 
 <?php
         } elseif ($wizStepInt === 3 && $wiz && $wiz['type'] === 0) {
-            $spieltage = $wiz['spieltage'];
-            $teams     = $wiz['teams'];
-            $hinRunden = count($spieltage) / 2; ?>
+            $spieltage    = $wiz['spieltage'];
+            $teams        = $wiz['teams'];
+            $hinRunden    = count($spieltage) / 2;
+            $scheduleMode = $wiz['schedule_mode'] ?? 'schluesselring';
+            $hasSchluesselring = getSchluesselringPattern(count($teams)) !== null; ?>
+        <div class="card" style="margin-bottom:16px">
+          <h2><?= h(t('wiz_schedule_mode_heading')) ?></h2>
+          <form method="post" action="?action=create_liga&step=3&regen=1">
+            <div style="display:flex;gap:20px;flex-wrap:wrap;margin-bottom:14px;font-size:.87rem">
+              <label style="display:flex;align-items:center;gap:6px;cursor:pointer">
+                <input type="radio" name="schedule_mode" value="schluesselring"<?= $scheduleMode === 'schluesselring' ? ' checked' : '' ?><?= $hasSchluesselring ? '' : ' disabled' ?>>
+                <?= h(t('wiz_schedule_mode_schluesselring')) ?><?= $hasSchluesselring ? '' : ' <span style="color:var(--muted);font-size:.8em">(' . h(t('wiz_schedule_mode_unavailable')) . ')</span>' ?>
+              </label>
+              <label style="display:flex;align-items:center;gap:6px;cursor:pointer">
+                <input type="radio" name="schedule_mode" value="random"<?= $scheduleMode === 'random' ? ' checked' : '' ?>>
+                <?= h(t('wiz_schedule_mode_random')) ?>
+              </label>
+              <label style="display:flex;align-items:center;gap:6px;cursor:pointer">
+                <input type="radio" name="schedule_mode" value="none"<?= $scheduleMode === 'none' ? ' checked' : '' ?>>
+                <?= h(t('wiz_schedule_mode_none')) ?>
+              </label>
+            </div>
+            <button type="submit" class="btn btn-muted btn-sm"><?= h(t('wiz_schedule_mode_apply')) ?></button>
+          </form>
+        </div>
         <div class="card">
           <h2><?= h(t('wiz_step3_liga_heading')) ?></h2>
           <p class="text-muted" style="font-size:.85rem;margin-bottom:16px">
@@ -231,12 +274,14 @@ $stepLabels = [t('wiz_step_label_1'), t('wiz_step_label_2'), t('wiz_step_label_3
                   <?= h(t('sp_label_matchday')) ?> <?= $nr ?><?= $isRueck ? h(t('wiz_matchday_second_half')) : h(t('wiz_matchday_first_half')) ?>
                 </td></tr>
 <?php
-                foreach ($pairs as [$h, $g]) { ?>
+                foreach ($pairs as [$h, $g]) {
+                    $heimName = $h >= 0 ? $teams[$h]['name'] : '___';
+                    $gastName = $g >= 0 ? $teams[$g]['name'] : '___'; ?>
                 <tr>
                   <td class="text-muted" style="font-size:.8rem"><?= $nr ?></td>
-                  <td><?= h($teams[$h]['name']) ?></td>
+                  <td><?= h($heimName) ?></td>
                   <td class="text-muted" style="font-size:.8rem;text-align:center">vs</td>
-                  <td><?= h($teams[$g]['name']) ?></td>
+                  <td><?= h($gastName) ?></td>
                 </tr>
 <?php
                 }

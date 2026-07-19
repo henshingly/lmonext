@@ -1,0 +1,20 @@
+# LMOnext – Access protection
+# Prevents direct access to sensitive files
+
+# Never serve config.php directly
+<Files "config.php">
+    Order Allow,Deny
+    Deny from all
+</Files>
+
+# Block install.php after installation (remove comment to activate)
+# <Files "install.php">
+#     Order Allow,Deny
+#     Deny from all
+# </Files>
+
+# Block the admin/ directory completely (PHP includes only, no direct access)
+<IfModule mod_rewrite.c>
+    RewriteEngine On
+    RewriteRule ^admin/ - [F,L]
+</IfModule>

@@ -2,7 +2,31 @@
 /**
  * Project: LMOnext
  * Filename: view_liga_settings.php
- * Fileversion: 1.3.3
+ * Fileversion: 1.4.3
+ * Changelog: 1.4.3 - Bugfix: Punktesystem-Tabelle (Tab Spielsystem) hatte für "nach
+ *                     Verlängerung"/"nach Elfmeterschießen" nur ein einzelnes Eingabefeld
+ *                     (Sieg) statt der vollen S/U/N-Spalten wie im alten LMO – die beiden
+ *                     Felder missbrauchten zudem versehentlich goalfaktor/pointsfaktor,
+ *                     dieselben Schlüssel wie der Grundwerte-Tab (Dezimalstellen-Anzeige),
+ *                     wodurch sich beide Tabs beim Speichern gegenseitig überschrieben haben.
+ *                     Jetzt volles 3×3-Eingabegitter mit eigenen Schlüsseln
+ *                     PointsForWin/Draw/LostET bzw. PS, siehe computeStandings() 2.15.5
+ * Changelog: 1.4.2
+ * Changelog: 1.4.2 - Kalender/Spielpläne, Kreuztabelle/Fieberkurven und Spielerstatistik/
+ *                     Ligastatistik wieder in einzelne Tabellenzeilen aufgeteilt (statt jeweils
+ *                     zwei Checkboxen in einer gemeinsamen Zeile), konsistent zum Rest der
+ *                     Tabelle (ein Eintrag pro Zeile)
+ * Changelog: 1.4.1 - Neue Einstellung "Logo anzeigen" (ShowLogos) im Tab Anzeigen/Darstellung,
+ *                     gilt für KO- und reguläre Ligen gleichermaßen. Steuert, ob Team-Logos
+ *                     (siehe Teams (global) → Logo-Upload) in der Besucheransicht dieser Liga
+ *                     erscheinen (Tabelle, Ergebnisse, Kreuztabelle, Teamvergleich,
+ *                     Ligastatistik, Spielpläne)
+ * Changelog: 1.4.0
+ * Changelog: 1.4.0 - Farbwähler (Color-Picker) neben jeder Tabellenmarkierung ergänzt
+ *                     (Champions League/-Qualifikation/Euroleague/Relegation/Absteiger/
+ *                     Meister) – Farben waren bisher hartkodiert und wirkten sich zudem gar
+ *                     nicht auf die Besucheransicht aus. Neue Options-Schlüssel {Key}Color,
+ *                     Vorschau-Chip in der Admin-Ansicht zeigt jetzt die gewählte Farbe live
  * Changelog: 1.3.3 - Projektname auf "LMOnext" umgestellt (vorher "Online-Liga-Verwaltung Board" / "OLVBoard")
  * Changelog: 1.3.2 - Bugfix: "Tabelle"-Checkbox fehlte in dieser Ansicht komplett, obwohl
  *                     handler_settings.php den Schlüssel schon speicherte – wurde dadurch bei
@@ -212,10 +236,15 @@ if ($tab === 'grundwerte') { ?>
             </tr>
             <tr>
               <td style="text-align:right;padding:7px 12px;font-size:.85rem;color:var(--muted)"><?= h(t('ls_label_kalender')) ?></td>
-              <td style="padding:5px 10px">
-                <label style="margin-right:16px"><input type="checkbox" name="Kalender" value="1"<?= $oc('Kalender')?' checked':'' ?>> <?= h(t('ls_label_kalender')) ?></label>
-                <label><input type="checkbox" name="Plan" value="1"<?= $oc('Plan')?' checked':'' ?>> <?= h(t('ls_cb_spielplaene')) ?></label>
-              </td>
+              <td style="padding:5px 10px"><input type="checkbox" name="Kalender" value="1"<?= $oc('Kalender')?' checked':'' ?>></td>
+            </tr>
+            <tr>
+              <td style="text-align:right;padding:7px 12px;font-size:.85rem;color:var(--muted)"><?= h(t('ls_cb_spielplaene')) ?></td>
+              <td style="padding:5px 10px"><input type="checkbox" name="Plan" value="1"<?= $oc('Plan')?' checked':'' ?>></td>
+            </tr>
+            <tr>
+              <td style="text-align:right;padding:7px 12px;font-size:.85rem;color:var(--muted)"><?= h(t('ls_label_show_logos')) ?></td>
+              <td style="padding:5px 10px"><input type="checkbox" name="ShowLogos" value="1"<?= $oc('ShowLogos')?' checked':'' ?>></td>
             </tr>
 <?php if (!$isKO) { ?>
             <tr>
@@ -224,17 +253,19 @@ if ($tab === 'grundwerte') { ?>
             </tr>
             <tr>
               <td style="text-align:right;padding:7px 12px;font-size:.85rem;color:var(--muted)"><?= h(t('ls_label_kreuztabelle')) ?></td>
-              <td style="padding:5px 10px">
-                <label style="margin-right:16px"><input type="checkbox" name="Kreuz" value="1"<?= $oc('Kreuz')?' checked':'' ?>> <?= h(t('ls_label_kreuztabelle')) ?></label>
-                <label><input type="checkbox" name="kurve1" value="1"<?= $oc('kurve1')?' checked':'' ?>> <?= h(t('ls_cb_fieberkurven')) ?></label>
-              </td>
+              <td style="padding:5px 10px"><input type="checkbox" name="Kreuz" value="1"<?= $oc('Kreuz')?' checked':'' ?>></td>
+            </tr>
+            <tr>
+              <td style="text-align:right;padding:7px 12px;font-size:.85rem;color:var(--muted)"><?= h(t('ls_cb_fieberkurven')) ?></td>
+              <td style="padding:5px 10px"><input type="checkbox" name="kurve1" value="1"<?= $oc('kurve1')?' checked':'' ?>></td>
             </tr>
             <tr>
               <td style="text-align:right;padding:7px 12px;font-size:.85rem;color:var(--muted)"><?= h(t('ls_label_spielerstatistik')) ?></td>
-              <td style="padding:5px 10px">
-                <label style="margin-right:16px"><input type="checkbox" name="stats" value="1"<?= $oc('stats')?' checked':'' ?>> <?= h(t('ls_label_spielerstatistik')) ?></label>
-                <label><input type="checkbox" name="Ligastats" value="1"<?= $oc('Ligastats')?' checked':'' ?>> <?= h(t('ls_cb_ligastatistik')) ?></label>
-              </td>
+              <td style="padding:5px 10px"><input type="checkbox" name="stats" value="1"<?= $oc('stats')?' checked':'' ?>></td>
+            </tr>
+            <tr>
+              <td style="text-align:right;padding:7px 12px;font-size:.85rem;color:var(--muted)"><?= h(t('ls_cb_ligastatistik')) ?></td>
+              <td style="padding:5px 10px"><input type="checkbox" name="Ligastats" value="1"<?= $oc('Ligastats')?' checked':'' ?>></td>
             </tr>
 <?php } else { ?>
             <tr>
@@ -353,13 +384,15 @@ if ($tab === 'grundwerte') { ?>
                 </tr>
                 <tr>
                   <td style="padding:5px 10px;text-align:right;color:var(--muted)"><?= h(t('ls_row_extra_time')) ?></td>
-                  <td style="padding:4px 6px"><input type="number" name="goalfaktor"   value="<?= h($o('goalfaktor','0'))   ?>" min="0" max="99" style="<?= $numSt ?>"></td>
-                  <td colspan="2" style="padding:4px 6px;font-size:.76rem;color:var(--muted)"><?= h(t('ls_na')) ?></td>
+                  <td style="padding:4px 6px"><input type="number" name="PointsForWinET"  value="<?= h($o('PointsForWinET',  $o('PointsForWin','3')))  ?>" min="0" max="99" style="<?= $numSt ?>"></td>
+                  <td style="padding:4px 6px"><input type="number" name="PointsForDrawET" value="<?= h($o('PointsForDrawET', $o('PointsForDraw','1'))) ?>" min="0" max="99" style="<?= $numSt ?>"></td>
+                  <td style="padding:4px 6px"><input type="number" name="PointsForLostET" value="<?= h($o('PointsForLostET', $o('PointsForLost','0'))) ?>" min="0" max="99" style="<?= $numSt ?>"></td>
                 </tr>
                 <tr>
                   <td style="padding:5px 10px;text-align:right;color:var(--muted)"><?= h(t('ls_row_penalty')) ?></td>
-                  <td style="padding:4px 6px"><input type="number" name="pointsfaktor" value="<?= h($o('pointsfaktor','0')) ?>" min="0" max="99" style="<?= $numSt ?>"></td>
-                  <td colspan="2" style="padding:4px 6px;font-size:.76rem;color:var(--muted)"><?= h(t('ls_na')) ?></td>
+                  <td style="padding:4px 6px"><input type="number" name="PointsForWinPS"  value="<?= h($o('PointsForWinPS',  $o('PointsForWin','3')))  ?>" min="0" max="99" style="<?= $numSt ?>"></td>
+                  <td style="padding:4px 6px"><input type="number" name="PointsForDrawPS" value="<?= h($o('PointsForDrawPS', $o('PointsForDraw','1'))) ?>" min="0" max="99" style="<?= $numSt ?>"></td>
+                  <td style="padding:4px 6px"><input type="number" name="PointsForLostPS" value="<?= h($o('PointsForLostPS', $o('PointsForLost','0'))) ?>" min="0" max="99" style="<?= $numSt ?>"></td>
                 </tr>
               </tbody>
             </table>
@@ -371,12 +404,12 @@ if ($tab === 'grundwerte') { ?>
 // ═══════════════════════════════════════════════════════════════════════
 } elseif ($tab === 'tabelle' && !$isKO) {
     $colorMap = [
-        'Champ' => ['label' => t('ls_marker_champ'), 'bg' => '#22c55e22'],
-        'CL'    => ['label' => t('ls_marker_cl'),     'bg' => '#3b82f622'],
-        'CK'    => ['label' => t('ls_marker_ck'),     'bg' => '#0ea5e922'],
-        'UC'    => ['label' => t('ls_marker_uc'),     'bg' => '#f59e0b22'],
-        'AR'    => ['label' => t('ls_marker_ar'),     'bg' => '#f9731622'],
-        'AB'    => ['label' => t('ls_marker_ab'),     'bg' => '#ef444422'],
+        'Champ' => ['label' => t('ls_marker_champ'), 'bg' => '#22c55e22', 'default' => '#22c55e'],
+        'CL'    => ['label' => t('ls_marker_cl'),     'bg' => '#3b82f622', 'default' => '#3b82f6'],
+        'CK'    => ['label' => t('ls_marker_ck'),     'bg' => '#0ea5e922', 'default' => '#0ea5e9'],
+        'UC'    => ['label' => t('ls_marker_uc'),     'bg' => '#f59e0b22', 'default' => '#f59e0b'],
+        'AR'    => ['label' => t('ls_marker_ar'),     'bg' => '#f9731622', 'default' => '#f97316'],
+        'AB'    => ['label' => t('ls_marker_ab'),     'bg' => '#ef444422', 'default' => '#ef4444'],
     ]; ?>
           <table style="width:100%;border-collapse:collapse;max-width:500px;margin-bottom:16px">
             <tr><td style="padding:7px 12px"><label><input type="checkbox" name="tableHinRueck" value="1"<?= $oc('tableHinRueck')?' checked':'' ?>> <?= h(t('ls_cb_hin_rueck_tables')) ?></label></td></tr>
@@ -386,7 +419,8 @@ if ($tab === 'grundwerte') { ?>
           <div style="font-size:.82rem;font-weight:700;color:var(--text);margin-bottom:10px;padding:8px 12px;background:var(--surface2);border-radius:var(--radius);max-width:500px"><?= h(t('ls_heading_table_markers')) ?></div>
           <table style="border-collapse:collapse;max-width:500px">
 <?php   foreach ($colorMap as $key => $info) {
-            $val = $o($key, '0'); ?>
+            $val = $o($key, '0');
+            $colorVal = $o($key . 'Color', $info['default']); ?>
             <tr>
               <td style="padding:6px 12px;width:80px;text-align:right">
 <?php       if ($key === 'Champ') { ?>
@@ -397,12 +431,18 @@ if ($tab === 'grundwerte') { ?>
                 </select>
 <?php       } ?>
               </td>
+              <td style="padding:6px 8px">
+                <input type="color" name="<?= $key ?>Color" value="<?= h($colorVal) ?>"
+                       title="<?= h(t('ls_marker_color_title')) ?>"
+                       style="width:36px;height:28px;padding:0;border:1px solid var(--border);border-radius:6px;background:none;cursor:pointer;vertical-align:middle">
+              </td>
               <td style="padding:6px 12px">
-                <span style="background:<?= $info['bg'] ?>;border-radius:4px;padding:3px 12px;font-size:.84rem;color:var(--text)"><?= h($info['label']) ?></span>
+                <span style="background:<?= h($colorVal) ?>22;border-left:3px solid <?= h($colorVal) ?>;border-radius:4px;padding:3px 12px;font-size:.84rem;color:var(--text)"><?= h($info['label']) ?></span>
               </td>
             </tr>
 <?php   } ?>
           </table>
+          <p style="font-size:.78rem;color:var(--muted);max-width:500px;margin-top:8px"><?= h(t('ls_marker_color_hint')) ?></p>
 
 <?php
 // ═══════════════════════════════════════════════════════════════════════

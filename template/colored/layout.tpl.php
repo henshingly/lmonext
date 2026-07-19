@@ -2,92 +2,39 @@
 <html lang="<!--HtmlLang-->">
 <head>
 <!--
-  Template: default | Filename: layout.tpl.php | Fileversion: 1.15.4
-  Changelog: 1.15.4 - .team-logo-inline: margin-left ergänzt (Logo steht jetzt teils NACH dem
-                      Teamnamen, z.B. Heim-Spalte regulärer Ligen, Team-A im Teamvergleich-Titel)
-  Changelog: 1.15.3
-  Changelog: 1.15.3 - Neue Regel .st-team-logo-wrap (feste Mindestbreite, zentriert) für die
-                      Liga-Tabelle: Logo und Teamname sind jetzt getrennte Platzhalter (siehe
-                      standings_row.tpl.php 1.3.0), damit die Teamnamen untereinander bündig
-                      ausgerichtet bleiben, auch wenn die Logos unterschiedlich breit sind. Bei
-                      ungewöhnlich breiten Logos (breiter als die Mindestbreite) verschiebt sich
-                      der Name in dieser einen Zeile etwas weiter nach rechts – vollständige
-                      Bündigkeit UND komplett unbegrenzte automatische Breite schließen sich bei
-                      extremen Seitenverhältnissen gegenseitig aus
-  Changelog: 1.15.2
-  Changelog: 1.15.2 - .team-logo-inline: max-width-Grenze wieder entfernt – die hatte bei sehr
-                      breiten Logos die tatsächliche Höhe unter 18px gedrückt (object-fit:contain
-                      hat den Rest als Letterboxing "weggerechnet"), was der Anforderung "alle
-                      Logos gleiche Höhe" widersprach. Jetzt wirklich nur feste Höhe + freie,
-                      automatische Breite ohne Obergrenze
-  Changelog: 1.15.1
-  Changelog: 1.15.1 - .team-logo-inline: feste Breite (18x18) durch feste Höhe (18px) + automatische
-                      Breite ersetzt, damit nicht-quadratische Logos nicht mehr verzerrt/beschnitten
-                      wirken, sondern alle in einer Zeile dieselbe Höhe haben (max-width als
-                      Sicherheitsgrenze gegen sehr breite Logos)
-  Changelog: 1.15.0
-  Changelog: 1.15.0 - CSS für .team-logo-inline ergänzt (neues "Logo anzeigen"-Feature, siehe
-                      data_liga.php 2.15.0) – kleines, einheitlich großes Logo vor Teamnamen
-  Changelog: 1.14.9
-  Changelog: 1.14.9 - Basis-CSS für farbige Tabellenmarkierungen ergänzt (transparenter
-                      4px-Rand links, Farbe kommt per Inline-Style aus RowStyle, siehe
-                      standings_row.tpl.php 1.2.0 + computeStandingsMarkerColor() in data_liga.php)
-  Changelog: 1.14.8 - CSS für responsive Lang-/Kurzform im Teamvergleich-Modal ergänzt
-                      (.h2h-rd-long/.h2h-rd-short) – zeigt ab 480px Breite die Langform
-                      ("Spieltag"), darunter die Kurzform ("ST"); siehe data_liga.php für die
-                      serverseitige KO-Runden-Erkennung
-  Changelog: 1.14.7 - Template-Auswahl-Dropdown vom Header in den Footer verschoben (steht jetzt
-                      in der "Template: ..."-Zeile), dafür eigene dezente Footer-Optik (transparenter
-                      Hintergrund, unterstrichener Text statt Kasten-Optik)
-  Changelog: 1.14.6 - Sichtbares Template-Auswahl-Dropdown im Header ergänzt (neben der
-                      Sprachauswahl), erscheint nur wenn "Besucher erlauben, Template zu
-                      wechseln" aktiv ist und mehr als ein Template existiert (siehe
-                      renderTemplateSwitcher() in template_engine.php)
-  Changelog: 1.14.5 - PDF-Export-Button neu gestaltet: hell/blau im Normalzustand, kräftiges
-                      Blau (var(--accent)) beim Hover, dünner blauer Rahmen statt Volltonfarbe
-  Changelog: 1.14.4 - CSS für den "Als PDF exportieren"-Button auf der Ergebnisseite ergänzt
-                      (.pdf-export-row, .btn-pdf-export)
-  Changelog: 1.14.3 - CSS für Vergleichs-Icon-Zeile im Turnierbaum ergänzt (.bracket-compare)
-  Changelog: 1.14.2 - CSS für verlinkte Begegnungs-Überschrift im Vergleichs-Modal ergänzt
-                      (.h2h-match-meta jetzt als <a>, Hover-Farbe)
-  Changelog: 1.14.1 - CSS für zweizeilige Sieg-Chips im Vergleichs-Modal ergänzt
-                      (.h2h-chip-label, .h2h-chip-num)
-  Changelog: 1.14.0 - CSS für Direkter-Vergleich-Icon + Vergleichs-Modal ergänzt (.h2h-*),
-                      neue leere Kopfspalte .col-vergleich in der Ergebnistabelle
-  Changelog: 1.13.3 - Hover-CSS für anklickbare Kreuztabellen-Kopfzellen/Zeilenlabel ergänzt
-                      (.kz-col:hover, .kz-rowlabel:hover)
-  Changelog: 1.13.2 - CSS für favTeam-Hervorhebung in der Kreuztabelle ergänzt (.kz-fav,
-                      .kz-fav-row, .kz-fav-col)
-  Changelog: 1.13.1 - CSS für Lieblingsmannschaft-Hervorhebung in der Liga-Tabelle ergänzt
-                      (.st-team.fav-team), analog zu .schedule-own in Ergebnissen/Spielplan
-  Changelog: 1.13.0 - Fieberkurve nutzt jetzt Chart.js statt eigenem SVG; alte Legende-CSS
-                      (.fk-legend/.fk-swatch) durch .fk-chart-wrap ersetzt
-  Changelog: 1.12.0 - CSS für Ligastatistik ergänzt (.ligastat-*)
-  Changelog: 1.11.0 - CSS für Fieberkurven-Legende + Chart ergänzt (.fk-legend, .fk-swatch, .fk-chart)
-  Changelog: 1.10.0 - CSS für Kreuztabelle ergänzt (.kreuz-table, .kz-*)
-  Changelog: 1.9.1 - Spielplan-Sidebar verbreitert + linksbündig (jetzt mittellange Namen statt Kürzel)
-  Changelog: 1.9.0 - CSS für Team-Spielplan-Ansicht ergänzt (.schedule-wrap, .schedule-sidebar,
-                      .team-sidebar-item, .schedule-content)
-  Changelog: 1.8.1 - Ungenutzte .standings-scoring CSS-Regel entfernt
-  Changelog: 1.8.0 - CSS für Tabellen-Ansicht (.standings-table) ergänzt
-  Changelog: 1.7.2 - CSS für Info-Seiten-Links (Homepage/Forum) ergänzt
-  Changelog: 1.7.1 - Logo im Header vergrößert (34px auf 53px Höhe)
-  Changelog: 1.7.0 - CSS für Anstoßtermin im Turnierbaum (.bracket-kickoff) ergänzt
-  Changelog: 1.6.0 - Footer zeigt jetzt "LMOnext {Version}" (Version aus composer.json)
-  Changelog: 1.5.1 - Favicon-Dateien nach assets/favicon/ verschoben, Links angepasst
-  Changelog: 1.5.0 - Favicon-Verlinkung ergänzt (apple-touch-icon, android/ms-icons, manifest.json)
-  Changelog: 1.4.1 - Projektname auf "LMOnext" umgestellt (vorher "OLVBoard")
-  Changelog: 1.4.0 - Info-Ansicht umgebaut: CSS für "Über LMOnext" (Absätze,
-                      Copyright/Lizenz-Zeilen) statt der alten Info-Tabelle
-  Changelog: 1.3.1 - Bugfix: feste Boxhöhe (height:64px) hat Teamnamen abgeschnitten;
-                      jetzt min-height statt height, Text kann wieder umbrechen/wachsen
-  Changelog: 1.3.0 - Turnierbaum-Ausrichtung repariert: Paarungs-Boxen haben jetzt eine feste
-                      Höhe und die Abstände laufen rein über justify-content:space-around
-                      (kein zusätzliches "gap" mehr) – dadurch zentriert sich jede Paarung einer
-                      Runde exakt zwischen ihren zwei zuführenden Paarungen der Vorrunde
-  Changelog: 1.2.0 - CSS für Reiter-Navigation, Info-Tabelle, Monatskalender und
-                      Turnierbaum (Spielpläne) ergänzt
-  Changelog: 1.1.0 - Footer zeigt jetzt "Berechnungszeit" (Dauer Berechnungen u. Seitenaufbau)
+  Template: colored | Filename: layout.tpl.php | Fileversion: 1.3.7
+  Changelog: 1.3.7 - .team-logo-inline margin-left ergänzt, siehe template/default/layout.tpl.php 1.15.4
+  Changelog: 1.3.6
+  Changelog: 1.3.6 - .st-team-logo-wrap ergänzt, siehe template/default/layout.tpl.php 1.15.3
+  Changelog: 1.3.5
+  Changelog: 1.3.5 - .team-logo-inline: max-width-Grenze entfernt, siehe
+                     template/default/layout.tpl.php 1.15.2
+  Changelog: 1.3.4
+  Changelog: 1.3.4 - .team-logo-inline: feste Höhe + automatische Breite statt fixem Quadrat,
+                     siehe template/default/layout.tpl.php 1.15.1
+  Changelog: 1.3.3
+  Changelog: 1.3.3 - CSS für .team-logo-inline ergänzt, siehe template/default/layout.tpl.php 1.15.0
+  Changelog: 1.3.2
+  Changelog: 1.3.2 - Basis-CSS für farbige Tabellenmarkierungen ergänzt, siehe
+                     template/default/layout.tpl.php 1.14.9
+  Changelog: 1.3.1 - CSS für responsive Lang-/Kurzform im Teamvergleich-Modal ergänzt, siehe
+                     template/default/layout.tpl.php 1.14.8
+  Changelog: 1.3.0 - Header komplett entfernt (kein Logo/Schriftzug mehr). Sprachauswahl in den
+                     Footer verschoben, direkt über der "LMOnext {Version}"-Zeile, gleiche
+                     dezente Optik wie das Template-Auswahl-Dropdown dort
+  Changelog: 1.2.0 - Template-Auswahl-Dropdown vom Header in den Footer verschoben, siehe
+                     template/default/layout.tpl.php 1.14.7 für denselben Schritt dort
+  Changelog: 1.1.0 - Sichtbares Template-Auswahl-Dropdown im Header ergänzt (neben der
+                     Sprachauswahl), siehe template/default/layout.tpl.php 1.14.6 für den
+                     gleichen Schritt dort
+  Changelog: 1.0.0 - Initiale Version: zweites Frontend-Template ("Colored"), komplett
+                     eigenständiges CSS (keine gemeinsame Basis mit template/default/ – jedes
+                     Template bringt bewusst sein eigenes vollständiges Stylesheet mit). Kein
+                     Logo im Header (stattdessen ein farbiger Text-Schriftzug), Fußzeile-Inhalt
+                     unverändert wie im Default-Template. Alle anderen Seiten/Partials
+                     (home.tpl.php, liga.tpl.php, partials/*) werden nicht dupliziert – sie
+                     enthalten laut Architektur ohnehin kein CSS/Logo und fallen automatisch auf
+                     template/default/ zurück (siehe loadTemplateFile() in template_engine.php)
   HTML-Grundgerüst der ganzen Seite. Enthält AUSSCHLIESSLICH Markup und
   Platzhalter der Form <comment>Name</comment> (als HTML-Kommentar), kein PHP. Alle Werte
   werden von den Root-Controllern (home.php, liga.php) über
@@ -113,35 +60,30 @@
 <link rel="icon" type="image/png" sizes="96x96" href="assets/favicon/favicon-96x96.png">
 <link rel="icon" type="image/png" sizes="16x16" href="assets/favicon/favicon-16x16.png">
 <link rel="manifest" href="assets/favicon/manifest.json">
-<meta name="msapplication-TileColor" content="#153A8C">
+<meta name="msapplication-TileColor" content="#8b5cf6">
 <meta name="msapplication-TileImage" content="assets/favicon/ms-icon-144x144.png">
 <meta name="msapplication-config" content="assets/favicon/browserconfig.xml">
-<meta name="theme-color" content="#153A8C">
+<meta name="theme-color" content="#8b5cf6">
 <style>
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
 :root{
-  --bg:#f4f6f9;--surface:#ffffff;--border:#e3e7ee;
-  --text:#1f2430;--muted:#697182;--accent:#2563eb;
-  --green:#16a34a;--yellow:#b45309;
-  --radius:10px;--font:'Segoe UI',system-ui,-apple-system,sans-serif;
+  --bg:#f6f2ff;--surface:#ffffff;--border:#e6dbfb;
+  --text:#241a35;--muted:#7c6f97;--accent:#8b5cf6;
+  --accent2:#ec4899;--accent3:#06b6d4;
+  --green:#16a34a;--yellow:#d97706;
+  --grad:linear-gradient(120deg,#8b5cf6,#ec4899);
+  --grad2:linear-gradient(120deg,#8b5cf6,#06b6d4);
+  --radius:14px;--font:'Segoe UI',system-ui,-apple-system,sans-serif;
 }
 body{font-family:var(--font);background:var(--bg);color:var(--text);line-height:1.5;min-height:100vh}
 a{color:inherit}
 .team-logo-inline{height:18px;width:auto;vertical-align:middle;margin-right:5px;margin-left:5px;border-radius:3px}
 .st-team-logo-wrap{display:inline-block;min-width:26px;text-align:center;vertical-align:middle}
 
-header.site{background:var(--surface);border-bottom:1px solid var(--border);
-  padding:14px 28px;display:flex;align-items:center;gap:16px}
-header.site .logo{font-weight:700;font-size:1.15rem;color:var(--accent);text-decoration:none}
-header.site .logo span{color:var(--text);font-weight:400}
-.lang-switch-wrap{margin-left:auto}
-.lang-switch select,.template-switch select{background:var(--bg);border:1px solid var(--border);border-radius:var(--radius);
-  padding:6px 10px;font-size:.85rem;color:var(--text);font-family:var(--font);cursor:pointer}
-
 main{max-width:920px;margin:0 auto;padding:28px 20px 60px}
 
 .card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);
-  padding:20px 24px;margin-bottom:20px}
+  padding:20px 24px;margin-bottom:20px;box-shadow:0 1px 3px rgba(139,92,246,.06)}
 .card h2{font-size:1.02rem;font-weight:600;margin-bottom:14px;color:var(--text)}
 
 .liga-list{list-style:none}
@@ -153,7 +95,7 @@ a.liga-link:hover{color:var(--accent)}
 a.liga-link .liga-name{font-weight:500}
 
 .chip{display:inline-block;font-size:.72rem;padding:2px 9px;border-radius:20px;font-weight:600;white-space:nowrap}
-.chip-blue{background:#eaf1ff;color:var(--accent)}
+.chip-blue{background:#f1e7ff;color:var(--accent)}
 .chip-yellow{background:#fdf1dd;color:var(--yellow)}
 
 details.archiv-folder{border-bottom:1px solid var(--border)}
@@ -183,7 +125,7 @@ details.archiv-folder .folder-desc{color:var(--muted);font-size:.82rem;font-weig
 
 .table-scroll{overflow-x:auto;border:1px solid var(--border);border-radius:var(--radius);margin-bottom:10px}
 table.results-table{width:100%;border-collapse:collapse;font-size:.88rem;background:var(--surface)}
-table.results-table thead th{background:#252b3a;color:#fff;text-align:left;padding:10px 14px;
+table.results-table thead th{background:var(--grad2);color:#fff;text-align:left;padding:10px 14px;
   font-weight:600;font-size:.83rem;white-space:nowrap}
 table.results-table thead th.col-ergebnis{text-align:center}
 table.results-table thead th.col-heim{text-align:right}
@@ -192,19 +134,19 @@ table.results-table td{padding:9px 14px;border-top:1px solid var(--border)}
 table.results-table td.col-datum{color:var(--muted);white-space:nowrap;font-size:.83rem}
 table.results-table td.col-heim{text-align:right}
 table.results-table td.col-gast{text-align:left}
-table.results-table td.col-ergebnis{text-align:center;font-weight:700;white-space:nowrap}
+table.results-table td.col-ergebnis{text-align:center;font-weight:700;white-space:nowrap;color:var(--accent2)}
 table.results-table td.col-ergebnis.ergebnis-offen{color:var(--muted);font-weight:500}
 table.results-table td.col-vergleich,table.results-table thead th.col-vergleich{width:1%;text-align:center;padding-left:6px;padding-right:10px}
 
 .h2h-icon{background:none;border:none;padding:4px;margin:0;color:var(--muted);cursor:pointer;
   border-radius:6px;display:inline-flex;align-items:center;justify-content:center;line-height:0}
-.h2h-icon:hover{color:var(--accent);background:#eaf1ff}
+.h2h-icon:hover{color:var(--accent);background:#f1e7ff}
 
-.h2h-overlay{position:fixed;inset:0;background:rgba(15,18,28,.55);display:flex;align-items:center;
+.h2h-overlay{position:fixed;inset:0;background:rgba(36,26,53,.55);display:flex;align-items:center;
   justify-content:center;padding:20px;z-index:1000}
 .h2h-overlay[hidden]{display:none}
 .h2h-modal{background:var(--surface);border-radius:var(--radius);max-width:560px;width:100%;
-  max-height:85vh;overflow-y:auto;padding:24px 26px;position:relative;box-shadow:0 20px 60px rgba(0,0,0,.3)}
+  max-height:85vh;overflow-y:auto;padding:24px 26px;position:relative;box-shadow:0 20px 60px rgba(139,92,246,.35)}
 .h2h-close{position:absolute;top:14px;right:14px;background:none;border:none;font-size:1.4rem;
   line-height:1;color:var(--muted);cursor:pointer;padding:4px}
 .h2h-close:hover{color:var(--text)}
@@ -233,17 +175,17 @@ table.results-table td.col-vergleich,table.results-table thead th.col-vergleich{
 .spieltag-stats{font-size:.82rem;color:var(--muted);margin-bottom:20px}
 
 .pdf-export-row{text-align:right;margin-top:14px}
-.btn-pdf-export{display:inline-flex;align-items:center;gap:7px;background:#eaf1ff;color:var(--accent);
-  border:1px solid #cfe0fb;padding:8px 16px;border-radius:var(--radius);font-size:.85rem;font-weight:700;
+.btn-pdf-export{display:inline-flex;align-items:center;gap:7px;background:#f1e7ff;color:var(--accent);
+  border:1px solid #ddc6fb;padding:8px 16px;border-radius:var(--radius);font-size:.85rem;font-weight:700;
   text-decoration:none;transition:background .15s ease,color .15s ease,border-color .15s ease}
-.btn-pdf-export:hover{background:var(--accent);color:#fff;border-color:var(--accent)}
+.btn-pdf-export:hover{background:var(--grad);color:#fff;border-color:transparent}
 .spieltag-stats .stats-heading{font-weight:600;color:var(--text);margin-bottom:3px}
 
 .tabs-bar{display:flex;gap:0;flex-wrap:wrap;margin-bottom:16px;border-bottom:1px solid var(--border)}
 .tab-item{padding:9px 16px;font-size:.86rem;text-decoration:none;color:var(--muted);
   border-bottom:2px solid transparent;margin-bottom:-1px}
 .tab-item:hover{color:var(--text)}
-.tab-item-active{color:var(--accent);font-weight:600;border-bottom-color:var(--accent)}
+.tab-item-active{color:var(--accent2);font-weight:600;border-bottom-color:var(--accent2)}
 
 .card p{margin-bottom:10px;font-size:.9rem;line-height:1.55}
 .card p:last-child{margin-bottom:0}
@@ -258,12 +200,12 @@ table.results-table td.col-vergleich,table.results-table thead th.col-vergleich{
 .cal-monthyear{font-weight:600;flex:1;text-align:center}
 .cal-today-link{font-size:.8rem;color:var(--muted) !important}
 table.cal-table{width:100%;border-collapse:collapse;table-layout:fixed}
-table.cal-table th{background:#252b3a;color:#fff;padding:6px 4px;font-size:.75rem;font-weight:600}
+table.cal-table th{background:var(--grad2);color:#fff;padding:6px 4px;font-size:.75rem;font-weight:600}
 table.cal-table td.cal-day{border:1px solid var(--border);vertical-align:top;height:56px;padding:3px 4px;font-size:.78rem}
 table.cal-table td.cal-empty{background:var(--bg);border:1px solid var(--border)}
 .cal-daynum{color:var(--muted);font-size:.72rem;margin-bottom:2px}
-td.cal-today .cal-daynum{color:var(--accent);font-weight:700}
-a.cal-entry{display:inline-block;background:#eaf1ff;color:var(--accent);border-radius:8px;
+td.cal-today .cal-daynum{color:var(--accent2);font-weight:700}
+a.cal-entry{display:inline-block;background:#f1e7ff;color:var(--accent);border-radius:8px;
   padding:1px 5px;font-size:.7rem;text-decoration:none;margin:0 2px 2px 0}
 
 .bracket-scroll{overflow-x:auto;padding-bottom:6px}
@@ -276,19 +218,19 @@ a.cal-entry{display:inline-block;background:#eaf1ff;color:var(--accent);border-r
   padding:8px 10px;min-height:64px;box-sizing:border-box;display:flex;flex-direction:column;justify-content:center}
 .bracket-team{padding:1px 0;font-size:.83rem;line-height:1.35}
 .bracket-team-name{display:inline-block}
-.bracket-score{margin-top:3px;font-size:.78rem;font-weight:700;color:var(--accent);text-align:center}
+.bracket-score{margin-top:3px;font-size:.78rem;font-weight:700;color:var(--accent2);text-align:center}
 .bracket-compare{display:flex;justify-content:center;margin-top:2px}
 .bracket-kickoff{margin-top:2px;font-size:.68rem;color:var(--muted);text-align:center}
 
 table.standings-table{width:100%;border-collapse:collapse;font-size:.87rem;background:var(--surface)}
 table.standings-table tbody tr{border-left:4px solid transparent}
-table.standings-table thead th{background:#252b3a;color:#fff;padding:9px 10px;font-weight:600;font-size:.8rem;white-space:nowrap}
+table.standings-table thead th{background:var(--grad2);color:#fff;padding:9px 10px;font-weight:600;font-size:.8rem;white-space:nowrap}
 table.standings-table tbody tr:nth-child(even){background:var(--bg)}
 table.standings-table td{padding:8px 10px;border-top:1px solid var(--border)}
 .st-platz{width:1%;text-align:center;color:var(--muted);font-weight:600}
 .st-team{font-weight:500;white-space:nowrap}
 .st-num{text-align:center;width:1%;white-space:nowrap}
-.st-pkt{text-align:center;font-weight:700;color:var(--accent);width:1%;white-space:nowrap}
+.st-pkt{text-align:center;font-weight:700;color:var(--accent2);width:1%;white-space:nowrap}
 .st-num.diff-pos{color:var(--green)}
 .st-num.diff-neg{color:#dc2626}
 
@@ -297,7 +239,7 @@ table.standings-table td{padding:8px 10px;border-top:1px solid var(--border)}
 .team-sidebar-item{padding:8px 12px;text-align:left;font-size:.82rem;font-weight:600;color:var(--accent);
   text-decoration:none;border-bottom:1px solid var(--border)}
 .team-sidebar-item:hover{background:var(--bg)}
-.team-sidebar-item.team-sidebar-active{background:var(--accent);color:#fff}
+.team-sidebar-item.team-sidebar-active{background:var(--grad);color:#fff}
 .schedule-content{flex:1;padding:20px 24px;min-width:0}
 .schedule-content .empty-msg{margin:0}
 .col-nr{color:var(--muted);width:1%;white-space:nowrap;text-align:center}
@@ -308,15 +250,15 @@ table.standings-table td{padding:8px 10px;border-top:1px solid var(--border)}
 
 table.kreuz-table{border-collapse:collapse;font-size:.78rem;background:var(--surface);white-space:nowrap}
 table.kreuz-table th, table.kreuz-table td{border:1px solid var(--border);padding:5px 8px}
-table.kreuz-table thead th{background:#252b3a;color:#fff;font-weight:600;text-align:center}
-.kz-corner{background:#252b3a}
-.kz-rowlabel{background:#252b3a;color:#fff;font-weight:600;text-align:left;position:sticky;left:0}
+table.kreuz-table thead th{background:var(--grad2);color:#fff;font-weight:600;text-align:center}
+.kz-corner{background:#8b5cf6}
+.kz-rowlabel{background:#8b5cf6;color:#fff;font-weight:600;text-align:left;position:sticky;left:0}
 .kz-cell{text-align:center;color:var(--text)}
 .kz-cell.kz-diag{background:var(--bg)}
-.kz-col.kz-fav,.kz-rowlabel.kz-fav{background:var(--accent)}
-.kz-col:hover,.kz-rowlabel:hover{background:#3b4257}
-.kz-cell.kz-fav-row,.kz-cell.kz-fav-col{background:#eaf1ff}
-.kz-cell.kz-diag.kz-fav-row,.kz-cell.kz-diag.kz-fav-col{background:#d7e6ff}
+.kz-col.kz-fav,.kz-rowlabel.kz-fav{background:var(--accent2)}
+.kz-col:hover,.kz-rowlabel:hover{background:#7c3aed}
+.kz-cell.kz-fav-row,.kz-cell.kz-fav-col{background:#f1e7ff}
+.kz-cell.kz-diag.kz-fav-row,.kz-cell.kz-diag.kz-fav-col{background:#e2ccfc}
 
 .fk-chart-wrap{position:relative;width:100%;min-height:420px}
 
@@ -332,29 +274,24 @@ table.ligastat-kv td{padding:5px 4px;border-top:1px solid var(--border);vertical
 table.ligastat-kv td:first-child{color:var(--muted);width:46%}
 .ligastat-chances{font-size:.92rem;margin:14px 0}
 table.ligastat-overall{width:100%;border-collapse:collapse;font-size:.83rem;margin:12px 0}
-table.ligastat-overall th{background:#252b3a;color:#fff;padding:7px 10px;text-align:left;font-weight:600;font-size:.78rem}
+table.ligastat-overall th{background:var(--grad2);color:#fff;padding:7px 10px;text-align:left;font-weight:600;font-size:.78rem}
 table.ligastat-overall td{padding:7px 10px;border-top:1px solid var(--border)}
 .ligastat-remaining-eval{margin-top:14px}
 
 footer.site{text-align:center;color:var(--muted);font-size:.8rem;padding:24px 20px}
-footer.site .template-switch{display:inline-block}
-footer.site .template-switch select{background:transparent;border:none;color:var(--muted);
+footer.site .template-switch,footer.site .lang-switch{display:inline-block}
+footer.site .template-switch select,footer.site .lang-switch select{background:transparent;border:none;color:var(--muted);
   font-size:.8rem;font-family:inherit;padding:0;cursor:pointer;text-decoration:underline;text-underline-offset:2px}
-footer.site .template-switch select:hover{color:var(--accent)}
+footer.site .template-switch select:hover,footer.site .lang-switch select:hover{color:var(--accent2)}
 </style>
 </head>
 <body>
-
-<header class="site">
-  <a class="logo" href="home.php"><img src="assets/logo.svg" alt="LMOnext" style="height:53px;width:auto;display:block"></a>
-  <div class="lang-switch-wrap"><!--Sprachauswahl--></div>
-</header>
 
 <main>
 <!--Hauptteil-->
 </main>
 
-<footer class="site">LMOnext <!--Version--><br><!--TemplateZeile--><br><!--Berechnungszeit--></footer>
+<footer class="site"><!--Sprachauswahl--><br>LMOnext <!--Version--><br><!--TemplateZeile--><br><!--Berechnungszeit--></footer>
 
 </body>
 </html>

@@ -2,7 +2,19 @@
 /**
  * Project: LMOnext
  * Filename: install.php
- * Fileversion: 1.5.0
+ * Fileversion: 1.6.0
+ * Changelog: 1.6.0 - Systemprüfung um die seither hinzugekommenen Anforderungen ergänzt:
+ *                     GD-Erweiterung (Team-Logo-Uploads/PNG-GIF-Einbettung in PDFs),
+ *                     Imagick/rsvg-convert (SVG-Rasterisierung für PDF-Export, rein
+ *                     informativ), Schreibrecht für assets/img/teams/ (wird bei Bedarf
+ *                     automatisch angelegt). mbstring ist nicht mehr zwingend erforderlich –
+ *                     der Code funktioniert inzwischen überall auch ohne (siehe
+ *                     data_loader.php/handler_import_export.php/pdf_export.php), zählt daher
+ *                     jetzt nur noch als Empfehlung statt die Installation zu blockieren. Neues
+ *                     'required'-Feld pro Prüfung (Standard: true) unterscheidet Pflicht- von
+ *                     Empfehlungs-Prüfungen; allChecksPassed() blockiert nur noch bei
+ *                     fehlgeschlagenen Pflicht-Prüfungen
+ * Changelog: 1.5.0
  * Changelog: 1.5.0 - Optionales E-Mail-Feld im Administrator-Konto ergänzt (für "Passwort
  *                     vergessen"), neue Spalte admin_users.email + Tabelle
  *                     admin_password_resets, inkl. Migration für bestehende Installationen
@@ -42,7 +54,7 @@ define('INSTALL_TITLE',   t('install_title'));
 define('ADMIN_FILE',      __DIR__ . '/admin.php');
 define('CONFIG_FILE',     __DIR__ . '/config.php');
 define('MIN_PHP',         '8.2.0');
-define('INSTALL_VERSION', '1.1.0');
+define('INSTALL_VERSION', '1.2.0');
 
 // ── Hilfsfunktionen ───────────────────────────────────────────────────────────
 function h(mixed $v): string {
@@ -66,23 +78,59 @@ function adminUrl(): string {
 function checkEnvironment(): array {
     $checks = [];
     $phpOk = version_compare(PHP_VERSION, MIN_PHP, '>=');
-    $checks[] = ['label'=>t('install_check_php_version'), 'ok'=>$phpOk,
+    $checks[] = ['label'=>t('install_check_php_version'), 'ok'=>$phpOk, 'required'=>true,
                  'info'=>PHP_VERSION.($phpOk?'':t('install_check_php_version_fail', ['min'=>MIN_PHP]))];
-    $checks[] = ['label'=>t('install_check_pdo'),     'ok'=>extension_loaded('pdo'),
+    $checks[] = ['label'=>t('install_check_pdo'),     'ok'=>extension_loaded('pdo'), 'required'=>true,
                  'info'=>extension_loaded('pdo')?t('install_available'):t('install_missing_ini')];
-    $checks[] = ['label'=>t('install_check_pdo_mysql'), 'ok'=>extension_loaded('pdo_mysql'),
+    $checks[] = ['label'=>t('install_check_pdo_mysql'), 'ok'=>extension_loaded('pdo_mysql'), 'required'=>true,
                  'info'=>extension_loaded('pdo_mysql')?t('install_available'):t('install_missing_pdo_mysql')];
-    $checks[] = ['label'=>t('install_check_mbstring'),          'ok'=>extension_loaded('mbstring'),
-                 'info'=>extension_loaded('mbstring')?t('install_available'):t('install_missing')];
+    // mbstring ist NICHT mehr zwingend erforderlich: der Code fällt an allen
+    // Stellen, die mbstring nutzen könnten (Team-Namens-Duplikaterkennung,
+    // Fuzzy-Matching beim Import, PDF-Textkodierung), automatisch auf eine
+    // mbstring-freie Alternative zurück (strtolower()+Umlaut-Ersetzung,
+    // preg_split('//u',...), iconv()). Nur noch als Empfehlung geführt,
+    // blockiert die Installation nicht mehr.
+    $checks[] = ['label'=>t('install_check_mbstring'), 'ok'=>extension_loaded('mbstring'), 'required'=>false,
+                 'info'=>extension_loaded('mbstring')?t('install_available'):t('install_recommended_missing')];
+    // GD wird für Team-Logo-Uploads (PNG/GIF/JPG-Validierung) und für die
+    // Einbettung von PNG/GIF-Logos in PDF-Exporte benötigt. Ohne GD
+    // funktioniert LMOnext weiterhin vollständig – nur JPG-Logos lassen
+    // sich dann in PDFs einbetten, PNG/GIF-Logos werden dort einfach
+    // übersprungen (kein Absturz, siehe pdf_export.php).
+    $checks[] = ['label'=>t('install_check_gd'), 'ok'=>extension_loaded('gd'), 'required'=>false,
+                 'info'=>extension_loaded('gd')?t('install_available'):t('install_recommended_missing')];
+    // Imagick + externes Tool "rsvg-convert" sind zwei unabhängige,
+    // optionale Zusatzwege, um hochgeladene SVG-Team-Logos für den
+    // PDF-Export zu rastern (die PDF-Engine kann SVG nicht selbst als
+    // Vektorgrafik rendern). Rein informativ, da mindestens einer von
+    // beiden ausreicht und beide komplett fehlen dürfen.
+    $hasImagick    = class_exists('Imagick');
+    $hasRsvgTool   = function_exists('shell_exec') && trim((string)@shell_exec('command -v rsvg-convert 2>/dev/null')) !== '';
+    $svgRasterInfo = ($hasImagick || $hasRsvgTool)
+        ? t('install_available') . ' (' . implode(' + ', array_filter([$hasImagick ? 'Imagick' : null, $hasRsvgTool ? 'rsvg-convert' : null])) . ')'
+        : t('install_recommended_missing');
+    $checks[] = ['label'=>t('install_check_svg_raster'), 'ok'=>($hasImagick || $hasRsvgTool), 'required'=>false,
+                 'info'=>$svgRasterInfo];
     $wr = is_writable(__DIR__);
-    $checks[] = ['label'=>t('install_check_writable', ['dir'=>basename(__DIR__)]),'ok'=>$wr,
+    $checks[] = ['label'=>t('install_check_writable', ['dir'=>basename(__DIR__)]),'ok'=>$wr, 'required'=>true,
                  'info'=>$wr?t('install_writable_ok'):t('install_writable_fail')];
-    $checks[] = ['label'=>t('install_check_adminphp'),'ok'=>file_exists(ADMIN_FILE),
+    // Eigener Ordner für Team-Logo-Uploads (siehe Admin → Teams (global)).
+    // Wird bei Bedarf automatisch angelegt (analog zu teamLogoDir() in
+    // admin/bootstrap.php); nur relevant, wenn das übergeordnete
+    // Projektverzeichnis überhaupt schreibbar ist.
+    $teamsDir = __DIR__ . '/assets/img/teams';
+    if (!is_dir($teamsDir) && $wr) {
+        @mkdir($teamsDir, 0755, true);
+    }
+    $teamsDirOk = is_dir($teamsDir) && is_writable($teamsDir);
+    $checks[] = ['label'=>t('install_check_teams_dir'), 'ok'=>$teamsDirOk, 'required'=>false,
+                 'info'=>$teamsDirOk?t('install_writable_ok'):t('install_recommended_missing')];
+    $checks[] = ['label'=>t('install_check_adminphp'),'ok'=>file_exists(ADMIN_FILE), 'required'=>true,
                  'info'=>file_exists(ADMIN_FILE)?t('install_adminphp_found'):t('install_adminphp_missing')];
     return $checks;
 }
 function allChecksPassed(array $checks): bool {
-    foreach ($checks as $c) { if (!$c['ok']) return false; }
+    foreach ($checks as $c) { if (($c['required'] ?? true) && !$c['ok']) return false; }
     return true;
 }
 
@@ -434,10 +482,12 @@ code{background:var(--bg);padding:1px 5px;border-radius:4px;font-size:.8rem}
   <div class="card">
     <h2><?= h(t('install_requirements_heading')) ?></h2>
     <ul class="check-list">
-    <?php foreach ($checks as $c) { ?>
+    <?php foreach ($checks as $c) {
+        $required = $c['required'] ?? true;
+        $icon = $c['ok'] ? '✅' : ($required ? '❌' : '⚠️'); ?>
       <li>
-        <span class="check-icon"><?= $c['ok'] ? '✅' : '❌' ?></span>
-        <span class="check-label"><?= h($c['label']) ?></span>
+        <span class="check-icon"><?= $icon ?></span>
+        <span class="check-label"><?= h($c['label']) ?><?= (!$required && !$c['ok']) ? ' <em style="opacity:.7">(' . h(t('install_optional')) . ')</em>' : '' ?></span>
         <span class="check-info"><?= h($c['info']) ?></span>
       </li>
     <?php } ?>

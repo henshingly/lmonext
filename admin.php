@@ -24,6 +24,7 @@ define('ADMIN_INC', __DIR__ . '/admin');
 // ── Bootstrap: Config, DB, Hilfsfunktionen ───────────────────────────────────
 require_once ADMIN_INC . '/bootstrap.php';  // inkl. session_start()
 require_once ADMIN_INC . '/templates.php';
+require_once ADMIN_INC . '/schluesselring_data.php';
 
 // ── Aktion ────────────────────────────────────────────────────────────────────
 $action = $_GET['action'] ?? $_POST['action'] ?? 'dashboard';

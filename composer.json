@@ -2,9 +2,9 @@
     "name": "henshingly/lmo_next",
     "type": "PHP-Script",
     "description": "Liga Manager Online next (or LMOnext for short) is free PHP software for managing sports leagues and their standings online using a database.",
-    "homepage": "https://github.com/henshingly/lmonext",
-    "version": "beta 0.7",
-    "time": "2026-07-10",
+    "homepage": "https://github.com/henshingly/lmo_next",
+    "version": "beta 0.8.5",
+    "time": "2026-07-19",
     "keywords": [
         "LMOnext",
         "Liga Manager Online next",

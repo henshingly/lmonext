@@ -2,7 +2,23 @@
 /**
  * Project: LMOnext
  * Filename: lang/admin/de.php
- * Fileversion: 1.10.2
+ * Fileversion: 1.11.1
+ * Changelog: 1.11.1 - Übersetzungen für die erweiterten Installer-Systemprüfungen ergänzt
+ *                     (GD, SVG-Rasterisierung, Team-Logo-Ordner, "optional"-Kennzeichnung)
+ * Changelog: 1.11.0 - Übersetzung für die neue Einstellung "Logo anzeigen" ergänzt
+ * Changelog: 1.10.9 - Übersetzungen für Logo & Vereinslink bei "Teams (global)" ergänzt
+ * Changelog: 1.10.8 - Zusatz "Berger-Tabelle: " aus der Spielplan-Beschreibung entfernt (das ist
+ *                     ein Schach-Fachbegriff, gehört hier nicht rein)
+ * Changelog: 1.10.7 - Bezeichnung "Schlüsselring" zu "Schlüsselplan" geändert (Wizard,
+ *                     Spielplan-Erstellungsart)
+ * Changelog: 1.10.6 - Übersetzungen für die neue Spielplan-Erstellungsart-Auswahl im
+ *                     Liga-Wizard ergänzt (Schlüsselring/Zufall/kein Spielplan)
+ * Changelog: 1.10.5 - Übersetzungen für die Mehrfachauswahl beim Team-Abgleich (Import) ergänzt/
+ *                     angepasst: Dropdown statt Ja/Nein-Checkbox, wenn mehrere ähnliche Teams
+ *                     gefunden wurden
+ * Changelog: 1.10.4 - Übersetzungen für die neuen Farbwähler bei den Tabellenmarkierungen ergänzt
+ * Changelog: 1.10.3 - Übersetzung für den Hinweistext "Sieger & Verlierer aus Runde..." ergänzt
+ *                     (letzte Runde bei Finale + Spiel um Platz 3)
  * Changelog: 1.10.2 - Fehlende Übersetzungen für die "Passwort vergessen"-Funktion ergänzt
  *                     (Modal auf der Login-Seite, Reset-Landingpage, Flash-Meldungen,
  *                     E-Mail-Text) – Backend/Reset-Landingpage referenzierten diese Schlüssel
@@ -140,6 +156,11 @@ return [
     'install_check_pdo'              => 'PDO-Extension',
     'install_check_pdo_mysql'        => 'PDO MySQL-Treiber',
     'install_check_mbstring'         => 'mbstring',
+    'install_check_gd'                => 'GD-Erweiterung',
+    'install_check_svg_raster'        => 'SVG-Rasterisierung (Imagick/rsvg-convert)',
+    'install_check_teams_dir'         => 'Schreibrecht (assets/img/teams/)',
+    'install_recommended_missing'     => 'nicht gefunden (optional)',
+    'install_optional'                => 'optional',
     'install_available'              => 'verfügbar',
     'install_missing_ini'            => 'FEHLT – in php.ini aktivieren',
     'install_missing_pdo_mysql'      => 'FEHLT – pdo_mysql fehlt',
@@ -256,6 +277,15 @@ return [
     'teams_field_name_required'  => 'Name *',
     'teams_field_mittel'         => 'Mittelname',
     'teams_field_kurz'           => 'Kürzel',
+    'teams_field_url'            => 'Vereins-/Team-Website',
+    'teams_field_logo'           => 'Logo',
+    'teams_logo_remove'          => 'Logo entfernen',
+    'teams_logo_hint'            => 'SVG, JPG, PNG oder GIF, mindestens 50px hoch.',
+    'teams_col_logo'             => 'Logo',
+    'teams_logo_err_upload'      => 'Der Upload ist fehlgeschlagen. Bitte erneut versuchen.',
+    'teams_logo_err_format'      => 'Ungültiges Dateiformat. Erlaubt sind SVG, JPG, PNG und GIF.',
+    'teams_logo_err_invalid'     => 'Die Datei konnte nicht als gültiges Bild gelesen werden.',
+    'teams_logo_err_too_small'   => 'Das Bild ist zu klein. Mindesthöhe: {min}px.',
     'teams_ligen_modal_default'  => 'Ligen',
     'teams_js_ligen_title'       => 'Ligen: {name}',
     'teams_js_no_ligen'          => 'Keine Ligen gefunden.',
@@ -281,6 +311,7 @@ return [
     'sp_pairing_label'               => 'Paarung {n}',
     'sp_tooltip_remove_pair'         => 'Paarung entfernen',
     'sp_only_winners_from'           => '🏆 Nur Sieger aus Runde {round} ({count} Teams)',
+    'sp_winners_and_losers_from'     => '🏆 Sieger & Verlierer aus Runde {round} ({count} Teams) – Finale und Spiel um Platz 3',
     'sp_leg_home'                    => 'Hinspiel',
     'sp_leg_away'                    => 'Rückspiel',
     'sp_game_n'                      => 'Spiel {n}',
@@ -390,7 +421,13 @@ return [
     'wiz_template_fallback'       => 'Vorlage',
 
     'wiz_step3_liga_heading' => 'Schritt 3 – Spielplan (automatisch generiert)',
-    'wiz_step3_liga_desc'    => 'Berger-Tabelle: {days} Spieltage, {matches} Partien pro Spieltag.',
+    'wiz_schedule_mode_heading'        => 'Spielplan-Erstellung',
+    'wiz_schedule_mode_schluesselring' => 'Schlüsselplan (DFB-Muster)',
+    'wiz_schedule_mode_unavailable'    => 'für diese Teamzahl nicht verfügbar',
+    'wiz_schedule_mode_random'         => 'Zufällig erstellen',
+    'wiz_schedule_mode_none'          => 'Kein Spielplan',
+    'wiz_schedule_mode_apply'         => 'Anwenden',
+    'wiz_step3_liga_desc'    => '{days} Spieltage, {matches} Partien pro Spieltag.',
     'wiz_col_hash'           => '#',
     'wiz_matchday_first_half'  => ' (Hinrunde)',
     'wiz_matchday_second_half' => ' (Rückrunde)',
@@ -543,6 +580,7 @@ return [
     'ls_label_spieltagsdatum' => 'Spieltagsdatum',
     'ls_label_ergebnisse'     => 'Ergebnisse',
     'ls_label_tabelle'        => 'Tabelle',
+    'ls_label_show_logos'     => 'Logo anzeigen',
     'ls_label_kalender'       => 'Kalender',
     'ls_cb_spielplaene'       => 'Spielpläne',
     'ls_label_kreuztabelle'   => 'Kreuztabelle',
@@ -586,6 +624,8 @@ return [
     'ls_marker_uc'    => 'Euroleague-Teilnehmer',
     'ls_marker_ar'    => 'Relegation zum Abstieg',
     'ls_marker_ab'    => 'feststehende Absteiger',
+    'ls_marker_color_title' => 'Farbe der Randmarkierung',
+    'ls_marker_color_hint'  => 'Die Farbe erscheint als schmaler farbiger Rand am linken Tabellenrand in der Besucheransicht.',
 
     'ls_warning_heading' => 'Achtung!',
     'ls_warning_text'    => 'Diese Einstellungen können eine bestehende Liga unbrauchbar machen. Bitte nur ändern wenn du dir sicher bist.',
@@ -686,7 +726,10 @@ return [
     // ── Import: Team-Namensabgleich (ungefähre Treffer vor dem eigentlichen Import) ─
     'imp_review_heading'      => 'Team-Abgleich ({n})',
     'imp_review_intro'        => 'Folgende Teams aus den hochgeladenen .l98-Dateien ähneln bereits vorhandenen Teams in der Datenbank, sind aber nicht exakt namensgleich. Wähle aus, bei welchen der Name aus der Datenbank übernommen werden soll – so entstehen keine Duplikate. Nicht angehakte Teams werden mit ihrem Namen aus der .l98-Datei als neues Team angelegt.',
-    'imp_review_item'         => '{import} → ähnelt vorhandenem Team {db} (ID {id}). Name aus DB übernehmen?',
+    'imp_review_item'         => '{import} → ähnelt vorhandenem Team {db} (ID {id}).',
+    'imp_review_item_multi'   => '{import} → ähnelt {n} vorhandenen Teams.',
+    'imp_review_select_label' => 'Team aus der DB übernehmen:',
+    'imp_review_option_new'   => '– Kein passendes Team – neues Team anlegen –',
     'imp_review_db_details'   => 'Kurz: {kurz} · Mittel: {mittel}',
     'imp_review_btn_confirm'  => 'Import fortsetzen',
     'imp_review_btn_cancel'   => 'Abbrechen',

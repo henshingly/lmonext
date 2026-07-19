@@ -1,0 +1,4 @@
+# Deny direct access to all files in the admin/ directory.
+# These files are intended only as PHP includes, not as standalone pages.
+Order Allow,Deny
+Deny from all

@@ -1,0 +1,16 @@
+# Database backups (Maintenance > Backup) - complete access protection.
+# These files must only be read/written via admin.php (logged-in admin),
+# never directly via URL.
+
+# Apache 2.2
+Order Allow,Deny
+Deny from all
+
+# Apache 2.4
+<IfModule mod_authz_core.c>
+    Require all denied
+</IfModule>
+
+# Also disable directory listing in case the deny rules
+# do not take effect for some reason (e.g., AllowOverride restriction)
+Options -Indexes

@@ -2,7 +2,47 @@
 /**
  * Project: LMOnext
  * Filename: liga.php
- * Fileversion: 3.8.5
+ * Fileversion: 3.9.3
+ * Changelog: 3.9.3 - Alle PDF-Export-Aufrufe (Ergebnisse/Tabelle/Spielplan/Teamvergleich)
+ *                     übergeben jetzt $showLogos, damit Team-Logos auch im PDF erscheinen, wenn
+ *                     die Liga-Einstellung "Logo anzeigen" aktiv ist. Der Teamvergleich-PDF-Link
+ *                     ist teamübergreifend (kein Liga-Kontext an der Stelle) – bekommt das Flag
+ *                     deshalb über einen neuen "&logos=1"-Query-Parameter mit, den das Modal
+ *                     selbst anhand seines eigenen Payloads setzt
+ * Changelog: 3.9.2
+ * Changelog: 3.9.2 - Name-zuerst-dann-Logo für die Heim-Spalte gilt jetzt auch bei KO-Ligen in
+ *                     der Ergebnisse-Ansicht (vorher nur reguläre Ligen). Der KO-Turnierbaum
+ *                     (Spielpläne) bleibt bewusst unverändert bei Logo-zuerst, da dort die
+ *                     Teams untereinander geschrieben werden
+ * Changelog: 3.9.1
+ * Changelog: 3.9.1 - renderResultsTable()-Aufrufe übergeben jetzt !$isKO als reverseHeim, damit
+ *                     die Heim-Spalte bei regulären Ligen Name-zuerst-dann-Logo zeigt (KO bleibt
+ *                     unverändert Logo-zuerst)
+ * Changelog: 3.9.0
+ * Changelog: 3.9.0 - Neue liga-weite Variable $showLogos (aus der Einstellung ShowLogos), wird
+ *                     an renderResultsTable() weitergereicht, damit Ergebnisse/Finale+Platz3
+ *                     bei aktiviertem "Logo anzeigen" die Team-Logos einblenden
+ * Changelog: 3.8.9
+ * Changelog: 3.8.9 - PDF-Export bei Finale + Spiel um Platz 3: baut jetzt zwei getrennte
+ *                     Abschnitte (sectionSpecs) mit jeweils eigenem Datum, statt beider
+ *                     Begegnungen in einer gemeinsamen Tabelle mit einem (falschen) über beide
+ *                     Spiele gemittelten Datumsbereich. Spiegelt exakt dieselbe Bedingung wie
+ *                     die HTML-Ansicht (siehe exportErgebnissePdf()/buildResultsPdf() in
+ *                     pdf_export.php)
+ * Changelog: 3.8.8 - Bugfix: Finale + Spiel um Platz 3 zeigten in der Überschrift beide den
+ *                     Datumsbereich der GESAMTEN Runde (z.B. "18.07.2026 - 19.07.2026"), obwohl
+ *                     jede Paarung nur ein eigenes Einzeldatum hat. Datumsbereich wird jetzt pro
+ *                     Paarung berechnet (spieltagDateRange() nur mit den Partien dieser
+ *                     Paarung), zeigt dadurch bei Einzelspielen korrekt nur das eine Datum
+ * Changelog: 3.8.7 - Neue Route "?h2h_pdf=1&a=X&b=Y": PDF-Export des Team-Vergleichs
+ *                     (Direkter-Vergleich-Modal). Teamübergreifend, deshalb vor der normalen
+ *                     id/view-Auflösung abgefangen (keine gültige Liga-ID nötig). Siehe
+ *                     exportH2hPdf() in pdf_export.php und den neuen PDF-Button im Modal
+ *                     (data_liga.php, renderH2hModalAssets())
+ * Changelog: 3.8.6 - "Als PDF exportieren"-Button jetzt auch unter dem Spielplan einer
+ *                     Mannschaft (reguläre Ligen) – erscheint nur, wenn tatsächlich ein Team
+ *                     ausgewählt ist (nicht bei der "Bitte wählen Sie..."-Leeranzeige). Neue
+ *                     exportSpielplanPdf() in pdf_export.php
  * Changelog: 3.8.5 - PDF-Export-Buttons (Ergebnisse + Tabelle) neu gestaltet: nur noch "PDF"
  *                     als Text statt der übersetzten Beschriftung (spart die Übersetzung, ist
  *                     universell verständlich), neues Dokumenten-Icon, Übersetzung bleibt als
@@ -69,6 +109,18 @@ declare(strict_types = 1);
 
 require_once __DIR__ . '/frontend/bootstrap.php';
 
+// ── PDF-Export des Team-Vergleichs (Direkter Vergleich) ──────────────────────
+// Teamübergreifend, nicht an eine bestimmte Liga gebunden – deshalb hier vor
+// der normalen id/view-Auflösung abgefangen.
+if (isset($_GET['h2h_pdf'])) {
+    $teamAId = (int)($_GET['a'] ?? 0);
+    $teamBId = (int)($_GET['b'] ?? 0);
+    if ($teamAId > 0 && $teamBId > 0) {
+        exportH2hPdf($teamAId, $teamBId, ($_GET['logos'] ?? '0') === '1');
+    }
+    exit;
+}
+
 $ligaId = (int)($_GET['id'] ?? 0);
 $liga   = $ligaId > 0 ? getLigaById($ligaId) : null;
 
@@ -84,6 +136,7 @@ if ($liga === null) {
 $isKO         = getLigaType($ligaId) === 1;
 $opts         = getLigaOptions($ligaId);
 $flags        = getLigaViewFlags($opts);
+$showLogos    = ($opts['ShowLogos'] ?? '0') === '1';
 // Tabelle und Kreuztabelle ergeben bei KO-Turnieren (Ausscheidungsmodus) keinen
 // Sinn – nur für reguläre (Round-Robin-)Ligen anzeigen.
 if ($isKO) {
@@ -123,7 +176,7 @@ switch ($currentView) {
 
     case 'tabelle':
         if (isset($_GET['pdf'])) {
-            exportTabellePdf($liga['name'], $ligaId, $allSpieltage);
+            exportTabellePdf($liga['name'], $ligaId, $allSpieltage, $showLogos);
             exit;
         }
         $viewInhalt = renderStandingsView($ligaId, $allSpieltage);
@@ -141,7 +194,19 @@ switch ($currentView) {
             $selectedTeamId = isset($_GET['team'])
                 ? (int)$_GET['team']
                 : resolveTeamNumberToId($ligaId, (int)($opts['selTeam'] ?? 0));
+            if ($selectedTeamId !== null && isset($_GET['pdf'])) {
+                exportSpielplanPdf($liga['name'], $ligaId, $allSpieltage, $selectedTeamId, $showLogos);
+                exit;
+            }
             $viewInhalt = renderTeamScheduleView($ligaId, $allSpieltage, $selectedTeamId);
+            if ($selectedTeamId !== null) {
+                $pdfUrl = '?id=' . $ligaId . '&view=spielplaene&team=' . $selectedTeamId . '&pdf=1';
+                $viewInhalt .= '<div class="pdf-export-row"><a class="btn-pdf-export" href="' . h($pdfUrl) . '" title="' . h(tf('liga_pdf_export_button')) . '">'
+                    . '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">'
+                    . '<rect x="7" y="3" width="13" height="16" rx="2"/><path d="M4 7v13a2 2 0 0 0 2 2h11"/>'
+                    . '</svg>'
+                    . 'PDF</a></div>';
+            }
         }
         break;
 
@@ -182,10 +247,32 @@ switch ($currentView) {
         $dateRange   = $spieltag !== null ? spieltagDateRange($partien, $spieltag['start'] ?? null) : '';
 
         // ── PDF-Export (reguläre Ligen: "Spieltag N", KO-Turniere: Rundenname
-        // wie "Achtelfinale"/"Runde 1") ────────────────────────────────────────
+        // wie "Achtelfinale"/"Runde 1"; bei Finale+Spiel um Platz 3 zwei
+        // getrennte Abschnitte mit jeweils eigenem Datum statt einem
+        // gemeinsamen Datumsbereich über beide Begegnungen hinweg) ────────────
         if ($spieltag !== null && isset($_GET['pdf'])) {
-            $pdfRoundLabel = $isKO ? $currentName : tf('liga_pdf_title_matchday', ['n' => $currentNr]);
-            exportErgebnissePdf($liga['name'], $pdfRoundLabel, $dateRange, $partien, $spieltag['start'] ?? null);
+            if ($isKO && (int)$currentNr === $maxNr && count(groupPartienByPairing($partien)) > 1) {
+                $pdfGroups = groupPartienByPairing($partien);
+                $pdfGroupHeadings = [tf('liga_round_finale'), tf('liga_heading_platz3')];
+                $sectionSpecs = [];
+                foreach ($pdfGroups as $i => $groupPartien) {
+                    $heading = $pdfGroupHeadings[$i] ?? tf('liga_round_finale');
+                    $groupDateRange = spieltagDateRange($groupPartien, $spieltag['start'] ?? null);
+                    $sectionSpecs[] = [
+                        'label'         => $heading . ($groupDateRange !== '' ? ' · ' . $groupDateRange : ''),
+                        'partien'       => $groupPartien,
+                        'spieltagStart' => $spieltag['start'] ?? null,
+                    ];
+                }
+            } else {
+                $pdfRoundLabel = $isKO ? $currentName : tf('liga_pdf_title_matchday', ['n' => $currentNr]);
+                $sectionSpecs = [[
+                    'label'         => $pdfRoundLabel . ($dateRange !== '' ? ' · ' . $dateRange : ''),
+                    'partien'       => $partien,
+                    'spieltagStart' => $spieltag['start'] ?? null,
+                ]];
+            }
+            exportErgebnissePdf($liga['name'], $sectionSpecs, $showLogos);
             exit;
         }
 
@@ -212,9 +299,10 @@ switch ($currentView) {
             $groupHeadings  = [tf('liga_round_finale'), tf('liga_heading_platz3')];
             foreach ($groups as $i => $groupPartien) {
                 $heading = $groupHeadings[$i] ?? tf('liga_round_finale');
-                $headingWithRange = $heading . ($dateRange !== '' ? ' ' . $dateRange : '');
+                $groupDateRange = spieltagDateRange($groupPartien, $spieltag['start'] ?? null);
+                $headingWithRange = $heading . ($groupDateRange !== '' ? ' ' . $groupDateRange : '');
                 $ergebnisInhalt .= '<h3 class="spieltag-heading">' . h($headingWithRange) . '</h3>';
-                $ergebnisInhalt .= renderResultsTable($groupPartien, $spieltag['start'] ?? null, $favTeamId);
+                $ergebnisInhalt .= renderResultsTable($groupPartien, $spieltag['start'] ?? null, $favTeamId, $showLogos, true);
                 $ergebnisInhalt .= renderStatsBlock($heading, $groupPartien);
             }
             $ergebnisInhalt .= $pdfButtonHtml;
@@ -223,7 +311,7 @@ switch ($currentView) {
                 ? $currentName . ($dateRange !== '' ? ' ' . $dateRange : '')
                 : tf('liga_heading_matchday_range', ['n' => $currentNr, 'range' => $dateRange]);
             $ergebnisInhalt  = '<h3 class="spieltag-heading">' . h($headingText) . '</h3>';
-            $ergebnisInhalt .= renderResultsTable($partien, $spieltag['start'] ?? null, $favTeamId);
+            $ergebnisInhalt .= renderResultsTable($partien, $spieltag['start'] ?? null, $favTeamId, $showLogos, true);
             $ergebnisInhalt .= renderStatsBlock($currentName, $partien);
             $ergebnisInhalt .= $pdfButtonHtml;
         }

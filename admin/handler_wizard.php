@@ -2,7 +2,19 @@
 /**
  * Project: LMOnext
  * Filename: handler_wizard.php
- * Fileversion: 1.2.1
+ * Fileversion: 1.3.1
+ * Changelog: 1.3.1 - Bugfix: liest Teamzahl jetzt aus dem zum Liga-Typ passenden, dauerhaft
+ *                     eigenen Feld ("team_count_liga"/"team_count_ko" statt eines gemeinsamen
+ *                     "team_count"), siehe view_wizard.php 1.3.1 für die Ursache. Liga-Maximum
+ *                     außerdem von 128 auf 256 angehoben (passend zum max-Attribut im Formular)
+ * Changelog: 1.3.0 - Reguläre Liga: Spielplan wird jetzt standardmäßig per DFB-Schlüsselring-
+ *                     Muster erstellt (falls für die Teamzahl vorhanden), statt immer per
+ *                     Zufall. Neue Aktion "?action=create_liga&step=3&regen=1" zum Wechseln der
+ *                     Spielplan-Art (Schlüsselring/Zufall/kein Spielplan) auf der Vorschauseite,
+ *                     ohne die Teamnamen erneut eingeben zu müssen. Der bestehende
+ *                     Teamnamen-Handler (auch step=3+POST) musste dafür "regen" explizit
+ *                     ausschließen, sonst fing er die regen-Anfrage ab und interpretierte die
+ *                     fehlenden team_name_X-Felder fälschlich als leeren Teamnamen
  * Changelog: 1.2.1 - Projektname auf "LMOnext" umgestellt (vorher "Online-Liga-Verwaltung Board" / "OLVBoard")
  * Changelog: 1.2.0 - Flash-Meldungen über t() übersetzt
  * Changelog: 1.1.2 - Team-Limit von 64 auf 128 erhöht
@@ -61,13 +73,18 @@ if ($action === 'create_liga') {
     if ($step === 2 && $_SERVER['REQUEST_METHOD'] === 'POST') {
         $name    = trim($_POST['liga_name'] ?? '');
         $type    = (int)($_POST['liga_type'] ?? 0);
-        $teamCnt = max(2, min(128, (int)($_POST['team_count'] ?? 2)));
+        // Liga und KO haben getrennte Felder (team_count_liga/team_count_ko),
+        // damit ein einzelner gemeinsamer Feldname nicht durch das jeweils
+        // andere (unsichtbare) Feld überschrieben werden kann.
+        $teamCnt = $type === 1
+            ? max(2, min(128, (int)($_POST['team_count_ko'] ?? 2)))
+            : max(2, min(256, (int)($_POST['team_count_liga'] ?? 2)));
         $rndCnt  = ($type === 1) ? max(1, (int)($_POST['round_count'] ?? 1)) : 0;
         if ($name === '') { flash(t('wiz_flash_name_required'), 'error'); redirect('?action=create_liga&step=1'); }
         $_SESSION['wiz'] = ['name'=>$name,'type'=>$type,'team_count'=>$teamCnt,'round_count'=>$rndCnt,'teams'=>[],'spieltage'=>[]];
         redirect('?action=create_liga&step=2');
     }
-    if ($step === 3 && $_SERVER['REQUEST_METHOD'] === 'POST') {
+    if ($step === 3 && !isset($_GET['regen']) && $_SERVER['REQUEST_METHOD'] === 'POST') {
         $wiz = $_SESSION['wiz'] ?? null;
         if (!$wiz) { redirect('?action=create_liga&step=1'); }
         $teams = [];
@@ -80,8 +97,28 @@ if ($action === 'create_liga') {
         }
         $_SESSION['wiz']['teams'] = $teams;
         if ($wiz['type'] === 0) {
-            $_SESSION['wiz']['spieltage'] = generateRoundRobin(range(0, count($teams) - 1));
+            // Default: Schlüsselring, wenn für diese Teamzahl ein Muster
+            // hinterlegt ist (siehe schluesselring_data.php), sonst Zufall.
+            // Auf der Vorschauseite (Schritt 3) kann der Admin das noch ändern.
+            $defaultMode = getSchluesselringPattern(count($teams)) !== null ? 'schluesselring' : 'random';
+            $_SESSION['wiz']['schedule_mode'] = $defaultMode;
+            $_SESSION['wiz']['spieltage'] = buildScheduleForMode(count($teams), $defaultMode);
         }
+        redirect('?action=create_liga&step=3');
+    }
+
+    // Schritt 3 (reguläre Liga): Spielplan-Erstellungsart wechseln (Schlüsselring/
+    // Zufall/kein Spielplan), ohne die Teamnamen erneut einzugeben. Muss VOR
+    // dem obigen Block geprüft werden (bzw. dieser muss "regen" ausschließen) –
+    // sonst fängt der Teamnamen-Handler jede POST auf step=3 ab und interpretiert
+    // die fehlenden team_name_X-Felder fälschlich als "Teamname leer".
+    if ($step === 3 && isset($_GET['regen']) && $_SERVER['REQUEST_METHOD'] === 'POST') {
+        $wiz = $_SESSION['wiz'] ?? null;
+        if (!$wiz || $wiz['type'] !== 0) { redirect('?action=create_liga&step=1'); }
+        $mode = $_POST['schedule_mode'] ?? 'schluesselring';
+        if (!in_array($mode, ['schluesselring', 'random', 'none'], true)) { $mode = 'schluesselring'; }
+        $_SESSION['wiz']['schedule_mode'] = $mode;
+        $_SESSION['wiz']['spieltage'] = buildScheduleForMode(count($wiz['teams']), $mode);
         redirect('?action=create_liga&step=3');
     }
     if ($step === 4 && $_SERVER['REQUEST_METHOD'] === 'POST') {

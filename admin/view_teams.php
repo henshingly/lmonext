@@ -2,7 +2,13 @@
 /**
  * Project: LMOnext
  * Filename: view_teams.php
- * Fileversion: 1.4.1
+ * Fileversion: 1.5.0
+ * Changelog: 1.5.0 - Neue Spalte "Logo" in der Tabelle (zeigt hochgeladenes Logo oder
+ *                     Platzhalter assets/img/nopic-team.svg, einheitliche Höhe 28px). Im
+ *                     Bearbeiten-Formular neues Feld für die Vereins-URL (🔗-Link erscheint
+ *                     neben dem Namen, wenn gesetzt) sowie Logo-Upload (SVG/JPG/PNG/GIF,
+ *                     min. 50px hoch) inkl. "Logo entfernen"-Checkbox, wenn eins hinterlegt ist.
+ *                     Formular braucht dafür enctype="multipart/form-data"
  * Changelog: 1.4.1 - Projektname auf "LMOnext" umgestellt (vorher "Online-Liga-Verwaltung Board" / "OLVBoard")
  * Changelog: 1.4.0 - Alle Texte (PHP + JS) über t() übersetzt
  * Changelog: 1.3.0 - toggleDupsOnly/filterTeams in globalem Scope (waren in DOMContentLoaded eingeschlossen)
@@ -51,6 +57,7 @@ $dupCount  = count($dupIds);
           <thead>
             <tr>
               <th style="width:50px" class="sortable" data-col="id"><?= h(t('teams_col_id')) ?> ⇅</th>
+              <th style="width:44px"><?= h(t('teams_col_logo')) ?></th>
               <th class="sortable" data-col="name"><?= h(t('teams_col_name')) ?> ⇅</th>
               <th style="width:140px" class="sortable" data-col="mittel"><?= h(t('teams_col_mittel')) ?> ⇅</th>
               <th style="width:90px" class="sortable" data-col="kurz"><?= h(t('teams_col_kurz')) ?> ⇅</th>
@@ -76,7 +83,15 @@ foreach ($teams as $t) {
                 style="<?= $rowBg ?>">
               <td class="text-muted" style="font-size:.8rem"><?= (int)$t['id'] ?></td>
               <td>
+                <img src="<?= h(findTeamLogoPath((int)$t['id']) ?? 'assets/img/nopic-team.svg') ?>"
+                     alt="" style="height:28px;width:28px;object-fit:contain;border-radius:4px;vertical-align:middle">
+              </td>
+              <td>
                 <span class="team-disp-name" style="font-weight:500"><?= h($t['name']) ?></span>
+                <?php if (!empty($t['url'])) { ?>
+                <a href="<?= h($t['url']) ?>" target="_blank" rel="noopener" title="<?= h($t['url']) ?>"
+                   style="margin-left:4px;text-decoration:none">🔗</a>
+                <?php } ?>
                 <?php if ($isDup) { ?>
                 <span title="<?= h($dupHint) ?>"
                       style="font-size:.7rem;color:var(--yellow);margin-left:4px">⚠️ <?= h($dupHint) ?></span>
@@ -101,7 +116,7 @@ foreach ($teams as $t) {
               </td>
               <td style="white-space:nowrap">
                 <button class="btn btn-muted btn-sm"
-                        onclick="openGlobalEdit(<?= $t['id'] ?>, <?= h(json_encode($t['name'])) ?>, <?= h(json_encode($t['mittel'])) ?>, <?= h(json_encode($t['kurz'])) ?>)">✏️</button>
+                        onclick="openGlobalEdit(<?= $t['id'] ?>, <?= h(json_encode($t['name'])) ?>, <?= h(json_encode($t['mittel'])) ?>, <?= h(json_encode($t['kurz'])) ?>, <?= h(json_encode($t['url'] ?? '')) ?>)">✏️</button>
                 <?php if ($isDup) { ?>
                 <button class="btn btn-sm" style="background:#f59e0b22;border:1px solid var(--yellow);color:var(--yellow)"
                         onclick="openMerge(<?= $t['id'] ?>, <?= h(json_encode($t['name'])) ?>)"><?= h(t('teams_btn_merge_short')) ?></button>
@@ -117,27 +132,49 @@ foreach ($teams as $t) {
             </tr>
             <!-- Inline-Edit-Zeile -->
             <tr id="edit-<?= $t['id'] ?>" style="display:none;background:var(--surface2)">
-              <td colspan="6" style="padding:6px 12px">
-                <form method="post" action="?action=save_global_team"
+              <td colspan="7" style="padding:10px 12px">
+                <form method="post" action="?action=save_global_team" enctype="multipart/form-data"
                       style="display:flex;gap:8px;align-items:flex-end;flex-wrap:wrap">
                   <input type="hidden" name="team_id" value="<?= (int)$t['id'] ?>">
                   <div>
                     <label style="font-size:.73rem;color:var(--muted);display:block;margin-bottom:2px"><?= h(t('teams_field_name_required')) ?></label>
                     <input type="text" name="team_name" id="ge-name-<?= $t['id'] ?>"
                            style="background:var(--bg);border:1px solid var(--border);color:var(--text);
-                                  border-radius:var(--radius);padding:5px 10px;font-size:.87rem;width:260px" required>
+                                  border-radius:var(--radius);padding:5px 10px;font-size:.87rem;width:220px" required>
                   </div>
                   <div>
                     <label style="font-size:.73rem;color:var(--muted);display:block;margin-bottom:2px"><?= h(t('teams_field_mittel')) ?></label>
                     <input type="text" name="team_mittel" id="ge-mittel-<?= $t['id'] ?>"
                            style="background:var(--bg);border:1px solid var(--border);color:var(--text);
-                                  border-radius:var(--radius);padding:5px 10px;font-size:.87rem;width:160px">
+                                  border-radius:var(--radius);padding:5px 10px;font-size:.87rem;width:140px">
                   </div>
                   <div>
                     <label style="font-size:.73rem;color:var(--muted);display:block;margin-bottom:2px"><?= h(t('teams_field_kurz')) ?></label>
                     <input type="text" name="team_kurz" id="ge-kurz-<?= $t['id'] ?>" maxlength="10"
                            style="background:var(--bg);border:1px solid var(--border);color:var(--text);
-                                  border-radius:var(--radius);padding:5px 10px;font-size:.87rem;width:80px">
+                                  border-radius:var(--radius);padding:5px 10px;font-size:.87rem;width:70px">
+                  </div>
+                  <div>
+                    <label style="font-size:.73rem;color:var(--muted);display:block;margin-bottom:2px"><?= h(t('teams_field_url')) ?></label>
+                    <input type="text" name="team_url" id="ge-url-<?= $t['id'] ?>" placeholder="https://…"
+                           style="background:var(--bg);border:1px solid var(--border);color:var(--text);
+                                  border-radius:var(--radius);padding:5px 10px;font-size:.87rem;width:220px">
+                  </div>
+                  <div>
+                    <label style="font-size:.73rem;color:var(--muted);display:block;margin-bottom:2px"><?= h(t('teams_field_logo')) ?></label>
+                    <div style="display:flex;align-items:center;gap:8px">
+                      <img src="<?= h(findTeamLogoPath((int)$t['id']) ?? 'assets/img/nopic-team.svg') ?>" alt=""
+                           style="height:28px;width:28px;object-fit:contain;border-radius:4px">
+                      <input type="file" name="team_logo" accept=".svg,.jpg,.jpeg,.png,.gif"
+                             style="font-size:.8rem;color:var(--text);max-width:180px">
+                    </div>
+                    <div style="font-size:.7rem;color:var(--muted);margin-top:2px"><?= h(t('teams_logo_hint')) ?></div>
+                    <?php if (findTeamLogoPath((int)$t['id']) !== null) { ?>
+                    <label style="font-size:.72rem;color:var(--muted);display:flex;align-items:center;gap:4px;margin-top:3px;cursor:pointer">
+                      <input type="checkbox" name="remove_logo" value="1" style="accent-color:var(--red)">
+                      <?= h(t('teams_logo_remove')) ?>
+                    </label>
+                    <?php } ?>
                   </div>
                   <button type="submit" class="btn btn-success btn-sm"><?= h(t('common_save')) ?></button>
                   <button type="button" class="btn btn-muted btn-sm"
@@ -215,11 +252,12 @@ const i18nTeams = {
 };
 
 // ── Inline-Edit ───────────────────────────────────────────────────────────────
-function openGlobalEdit(id, name, mittel, kurz) {
+function openGlobalEdit(id, name, mittel, kurz, url) {
   document.querySelectorAll('[id^="edit-"]').forEach(r => r.style.display = 'none');
   document.getElementById('ge-name-'   + id).value = name;
   document.getElementById('ge-mittel-' + id).value = mittel;
   document.getElementById('ge-kurz-'   + id).value = kurz;
+  document.getElementById('ge-url-'    + id).value = url || '';
   document.getElementById('edit-' + id).style.display = '';
   document.getElementById('ge-name-' + id).focus();
 }

@@ -2,7 +2,24 @@
 /**
  * Project: LMOnext
  * Filename: handler_import_export.php
- * Fileversion: 1.5.4
+ * Fileversion: 1.6.0
+ * Changelog: 1.6.0 - Team-Abgleich beim Import zeigt jetzt ALLE ähnlichen vorhandenen Teams
+ *                     zur Auswahl an (z.B. Haupt- und Reserve-Team "FC Bayern Muenchen"/"FC
+ *                     Bayern Muenchen II"), statt automatisch nur den einen besten Treffer
+ *                     vorzuschlagen. Neue Funktion findFuzzyTeamMatches() (Mehrzahl) liefert
+ *                     alle Kandidaten sortiert nach Ähnlichkeit; die Review-Seite zeigt sie als
+ *                     Dropdown statt einer einzelnen Ja/Nein-Checkbox. import_confirm liest
+ *                     jetzt die gewählte Team-ID statt eines Häkchens
+ * Changelog: 1.5.5 - Bugfix Team-Abgleich beim Import: die reine Trigramm-Ähnlichkeit
+ *                     produzierte zu viele Fehltreffer zwischen thematisch völlig
+ *                     unverwandten, aber ähnlich langen Namen (z.B. "Norwegen" ↔ "TSG
+ *                     Balingen", "Schweden" ↔ "BSV Schwarz-Weiß Rehden" – beide lagen über dem
+ *                     alten Schwellenwert von 0.25 bei Namen >7 Zeichen). teamNamesAreFuzzyMatch()
+ *                     verlangt jetzt zusätzlich eine hohe normalisierte Levenshtein-Distanz
+ *                     (≥0.72) – beide Kennzahlen müssen unabhängig voneinander übereinstimmen,
+ *                     nicht nur eine. Echte Tippfehler-/Formatierungs-Varianten (z.B. "FC St
+ *                     Pauli" ↔ "FC St. Pauli", "Hansa Rostock" ↔ "Hansa Rostock II") erkennt die
+ *                     Funktion weiterhin zuverlässig
  * Changelog: 1.5.4 - l98DecodeText() jetzt auch auf den Spielbericht-Link (BE-Feld) angewendet,
  *                     in beiden Zweigen (KO und regulär) – relevant für "&amp;" in
  *                     Query-Parametern von URLs, war bisher übersehen worden
@@ -118,10 +135,18 @@ function teamTrigramSimilarity(string $a, string $b) : float
 }
 
 /**
- * Ob zwei (rohe, unnormalisierte) Teamnamen "ungefähr gleich" sind – gleicher
- * Schwellenwert wie im Teams-Suchfeld (normalize()/fuzzyMatch() in
- * view_teams.php). Exakte Übereinstimmung zählt hier NICHT als "fuzzy"
- * (dafür sorgt der Aufrufer, der exakte Treffer vorher separat behandelt).
+ * Ob zwei (rohe, unnormalisierte) Teamnamen "ungefähr gleich" sind. Exakte
+ * Übereinstimmung zählt hier NICHT als "fuzzy" (dafür sorgt der Aufrufer,
+ * der exakte Treffer vorher separat behandelt).
+ *
+ * Trigramm-Ähnlichkeit allein reagierte in der Praxis zu leicht auf rein
+ * zufällige Buchstaben-Überschneidungen zwischen thematisch völlig
+ * unverwandten, aber ähnlich langen Namen (z.B. "Norwegen" vs. "TSG
+ * Balingen", "Schweden" vs. "BSV Schwarz-Weiß Rehden" – beide lagen über
+ * dem alten Schwellenwert, obwohl die Namen nichts miteinander zu tun
+ * haben). Deshalb wird zusätzlich die normalisierte Levenshtein-Distanz
+ * verlangt: beide Kennzahlen müssen unabhängig voneinander eine hohe
+ * Übereinstimmung zeigen, nicht nur eine der beiden.
  */
 function teamNamesAreFuzzyMatch(string $a, string $b) : bool
 {
@@ -133,10 +158,18 @@ function teamNamesAreFuzzyMatch(string $a, string $b) : bool
     if (str_contains($bn, $an) || str_contains($an, $bn)) {
         return true;
     }
-    $similarity = teamTrigramSimilarity($an, $bn);
-    $len = count(teamUtf8Chars($an));
-    $threshold = $len <= 4 ? 0.5 : ($len <= 7 ? 0.35 : 0.25);
-    return $similarity >= $threshold;
+
+    $lenA = count(teamUtf8Chars($an));
+    $lenB = count(teamUtf8Chars($bn));
+    $lenMax = max($lenA, $lenB);
+    // levenshtein() arbeitet byteweise, das ist hier unkritisch: teamNormalizeName()
+    // hat Umlaute/Akzente bereits vorher in reines ASCII überführt.
+    $levRatio = $lenMax > 0 ? 1 - (levenshtein($an, $bn) / $lenMax) : 0.0;
+
+    $trigramSim = teamTrigramSimilarity($an, $bn);
+    $trigramThreshold = $lenA <= 4 ? 0.5 : ($lenA <= 7 ? 0.4 : 0.32);
+
+    return $trigramSim >= $trigramThreshold && $levRatio >= 0.72;
 }
 
 /**
@@ -148,20 +181,33 @@ function teamNamesAreFuzzyMatch(string $a, string $b) : bool
  */
 function findFuzzyTeamMatch(string $name, array $existingTeams) : ?array
 {
-    $best = null;
-    $bestScore = -1.0;
+    $matches = findFuzzyTeamMatches($name, $existingTeams);
+    return $matches[0] ?? null;
+}
+
+/**
+ * Wie findFuzzyTeamMatch(), gibt aber ALLE ungefähr passenden Treffer zurück
+ * (nicht nur den besten), nach Ähnlichkeit absteigend sortiert. Wichtig,
+ * wenn mehrere vorhandene Teams ähnlich benannt sind (z.B. "FC Bayern
+ * Muenchen" und "FC Bayern Muenchen II") – dann soll der Admin beim
+ * Import-Abgleich zwischen ihnen wählen können, statt dass automatisch nur
+ * der (unter Umständen falsche) beste Treffer vorgeschlagen wird.
+ *
+ * @return array<int,array{id:int,name:string,mittel:string,kurz:string,score:float}>
+ */
+function findFuzzyTeamMatches(string $name, array $existingTeams) : array
+{
     $nameNorm = teamNormalizeName(trim($name));
+    $matches = [];
     foreach ($existingTeams as $t) {
         if (!teamNamesAreFuzzyMatch($name, $t['name'])) {
             continue;
         }
-        $score = teamTrigramSimilarity($nameNorm, teamNormalizeName($t['name']));
-        if ($score > $bestScore) {
-            $bestScore = $score;
-            $best = $t;
-        }
+        $t['score'] = teamTrigramSimilarity($nameNorm, teamNormalizeName($t['name']));
+        $matches[] = $t;
     }
-    return $best;
+    usort($matches, static fn(array $a, array $b) => $b['score'] <=> $a['score']);
+    return $matches;
 }
 
 // ── Dummy-Team ___ anlegen oder vorhandene ID holen ───────────────────────────
@@ -644,9 +690,18 @@ function detectFuzzyTeamMatchesForImport(array $parsedList) : array {
             if (isset($existingByName[$name])) {
                 continue; // exakter Treffer -> kein Abgleich nötig
             }
-            $match = findFuzzyTeamMatch($name, $existing);
-            if ($match === null) {
+            $matches = findFuzzyTeamMatches($name, $existing);
+            if (empty($matches)) {
                 continue; // kein ähnliches Team gefunden -> wird als neues Team angelegt
+            }
+            $candidates = [];
+            foreach ($matches as $m) {
+                $candidates[] = [
+                    'id'     => (int)$m['id'],
+                    'name'   => $m['name'],
+                    'kurz'   => $m['kurz'],
+                    'mittel' => $m['mittel'],
+                ];
             }
             $ambiguous[] = [
                 'fileIdx'      => $fileIdx,
@@ -655,10 +710,7 @@ function detectFuzzyTeamMatchesForImport(array $parsedList) : array {
                 'importName'   => $name,
                 'importKurz'   => $entry['data']['teamKurz'][$nr] ?? '',
                 'importMittel' => $entry['data']['teamMittel'][$nr] ?? '',
-                'dbId'         => (int)$match['id'],
-                'dbName'       => $match['name'],
-                'dbKurz'       => $match['kurz'],
-                'dbMittel'     => $match['mittel'],
+                'candidates'   => $candidates, // mehrere möglich, [0] = bester Treffer
             ];
         }
     }
@@ -795,17 +847,25 @@ if ($action === 'import_confirm' && $_SERVER['REQUEST_METHOD'] === 'POST') {
         redirect('?action=import');
     }
 
-    // adopt[<fileIdx>][<nr>] = "1" -> Admin hat bestätigt: DB-Namen übernehmen
+    // adopt[<fileIdx>][<nr>] = gewählte Team-ID (aus dem Dropdown der Review-
+    // Seite) oder "0"/leer -> Admin hat sich gegen eine Übernahme entschieden,
+    // Team wird mit seinem eigenen Namen aus der .l98-Datei neu angelegt.
     $adopt = $_POST['adopt'] ?? [];
     $overridesByFile = [];
     foreach ($ambiguous as $amb) {
-        $checked = ($adopt[$amb['fileIdx']][$amb['nr']] ?? '') === '1';
-        if ($checked) {
-            $overridesByFile[$amb['fileIdx']][$amb['nr']] = [
-                'name'   => $amb['dbName'],
-                'kurz'   => $amb['dbKurz'],
-                'mittel' => $amb['dbMittel'],
-            ];
+        $selectedId = (int)($adopt[$amb['fileIdx']][$amb['nr']] ?? 0);
+        if ($selectedId <= 0) {
+            continue;
+        }
+        foreach ($amb['candidates'] as $cand) {
+            if ($cand['id'] === $selectedId) {
+                $overridesByFile[$amb['fileIdx']][$amb['nr']] = [
+                    'name'   => $cand['name'],
+                    'kurz'   => $cand['kurz'],
+                    'mittel' => $cand['mittel'],
+                ];
+                break;
+            }
         }
     }
 

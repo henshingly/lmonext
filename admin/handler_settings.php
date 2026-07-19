@@ -2,7 +2,19 @@
 /**
  * Project: LMOnext
  * Filename: handler_settings.php
- * Fileversion: 1.3.2
+ * Fileversion: 1.3.5
+ * Changelog: 1.3.5 - Bugfix: Tab "spielsystem" speicherte versehentlich goalfaktor/
+ *                     pointsfaktor (kollidierte mit dem Grundwerte-Tab, siehe
+ *                     view_liga_settings.php 1.4.3) statt der neuen ET/PS-Punktefelder;
+ *                     jetzt PointsForWin/Draw/LostET und PointsForWin/Draw/LostPS
+ * Changelog: 1.3.4
+ * Changelog: 1.3.4 - Neue Einstellung "ShowLogos" (Tab Anzeigen/Darstellung) wird jetzt
+ *                     mitgespeichert
+ * Changelog: 1.3.3
+ * Changelog: 1.3.3 - Bugfix: "Meister wird ausgespielt"-Checkbox wurde nie gespeichert
+ *                     (Formularfeld heißt "Champ_enabled", Handler las aber "Champ" – dieses
+ *                     POST-Feld existierte nie). Neu: Randfarben der Tabellenmarkierungen
+ *                     ({Key}Color) werden jetzt mitgespeichert (nur gültige #rrggbb-Hexwerte)
  * Changelog: 1.3.2 - Projektname auf "LMOnext" umgestellt (vorher "Online-Liga-Verwaltung Board" / "OLVBoard")
  * Changelog: 1.3.1 - Bugfix: "Kalender"-Option wird jetzt unter eigenem Schlüssel gespeichert
  *                     (statt der Namenskollision mit DatC/Spieltagsdatum)
@@ -54,6 +66,7 @@ if ($action === 'save_liga_settings' && $_SERVER['REQUEST_METHOD'] === 'POST') {
                 $save('Ergebnis',   isset($_POST['Ergebnis'])   ? '1' : '0');
                 $save('Plan',       isset($_POST['Plan'])       ? '1' : '0');
                 $save('Tabelle',    isset($_POST['Tabelle'])    ? '1' : '0');
+                $save('ShowLogos',  isset($_POST['ShowLogos'])  ? '1' : '0');
                 $save('Kreuz',      isset($_POST['Kreuz'])      ? '1' : '0');
                 $save('stats',      isset($_POST['stats'])      ? '1' : '0');
                 $save('Ligastats',  isset($_POST['Ligastats'])  ? '1' : '0');
@@ -79,8 +92,18 @@ if ($action === 'save_liga_settings' && $_SERVER['REQUEST_METHOD'] === 'POST') {
                 $save('PointsForWin',  trim($_POST['PointsForWin']  ?? '3'));
                 $save('PointsForDraw', trim($_POST['PointsForDraw'] ?? '1'));
                 $save('PointsForLost', trim($_POST['PointsForLost'] ?? '0'));
-                $save('goalfaktor',    trim($_POST['goalfaktor']    ?? '1'));
-                $save('pointsfaktor',  trim($_POST['pointsfaktor']  ?? '1'));
+                // Eigene Punktwerte "nach Verlängerung" (ET) und "nach
+                // Elfmeterschießen" (PS), analog zum alten LMO. Frühere
+                // Versionen missbrauchten hierfür versehentlich goalfaktor/
+                // pointsfaktor – dieselben Schlüssel, die der Grundwerte-Tab
+                // für die Dezimalstellen-Anzeige nutzt, wodurch sich beide
+                // Tabs beim Speichern gegenseitig überschrieben haben.
+                $save('PointsForWinET',  trim($_POST['PointsForWinET']  ?? $_POST['PointsForWin']  ?? '3'));
+                $save('PointsForDrawET', trim($_POST['PointsForDrawET'] ?? $_POST['PointsForDraw'] ?? '1'));
+                $save('PointsForLostET', trim($_POST['PointsForLostET'] ?? $_POST['PointsForLost'] ?? '0'));
+                $save('PointsForWinPS',  trim($_POST['PointsForWinPS']  ?? $_POST['PointsForWin']  ?? '3'));
+                $save('PointsForDrawPS', trim($_POST['PointsForDrawPS'] ?? $_POST['PointsForDraw'] ?? '1'));
+                $save('PointsForLostPS', trim($_POST['PointsForLostPS'] ?? $_POST['PointsForLost'] ?? '0'));
                 $save('Kegel',         isset($_POST['Kegel'])       ? '1' : '0');
                 $save('HandS',         isset($_POST['HandS'])       ? '1' : '0');
                 break;
@@ -88,12 +111,24 @@ if ($action === 'save_liga_settings' && $_SERVER['REQUEST_METHOD'] === 'POST') {
             case 'tabelle':
                 $save('tableHinRueck',  isset($_POST['tableHinRueck'])  ? '1' : '0');
                 $save('tableHeimAusw',  isset($_POST['tableHeimAusw'])  ? '1' : '0');
-                $save('Champ',    trim($_POST['Champ']    ?? '0'));
+                // Bugfix: Checkbox im Formular heißt "Champ_enabled" (nicht "Champ") –
+                // $_POST['Champ'] existierte nie, wodurch dieser Haken bislang immer
+                // stillschweigend als "0" gespeichert wurde, unabhängig von der Auswahl.
+                $save('Champ',    isset($_POST['Champ_enabled']) ? '1' : '0');
                 $save('CL',       trim($_POST['CL']       ?? '0'));
                 $save('CK',       trim($_POST['CK']       ?? '0'));
                 $save('UC',       trim($_POST['UC']       ?? '0'));
                 $save('AR',       trim($_POST['AR']       ?? '0'));
                 $save('AB',       trim($_POST['AB']       ?? '0'));
+                // Randfarben der Tabellenmarkierungen (siehe computeStandingsMarkerColor()
+                // in frontend/data_liga.php). Nur speichern, wenn es ein gültiger
+                // #rrggbb-Hexwert ist (so wie ihn <input type="color"> liefert).
+                foreach (['Champ', 'CL', 'CK', 'UC', 'AR', 'AB'] as $mk) {
+                    $colVal = trim($_POST[$mk . 'Color'] ?? '');
+                    if (preg_match('/^#[0-9a-fA-F]{6}$/', $colVal)) {
+                        $save($mk . 'Color', $colVal);
+                    }
+                }
                 break;
 
             case 'ticker':

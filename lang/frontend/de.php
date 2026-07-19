@@ -2,7 +2,16 @@
 /**
  * Project: LMOnext
  * Filename: lang/frontend/de.php
- * Fileversion: 1.16.4
+ * Fileversion: 1.16.9
+ * Changelog: 1.16.9 - Übersetzung "Stand: {datum}" ergänzt, für das neue Minitabellen-Addon
+ *                     (addon/mini/lmo-minitab.php)
+ * Changelog: 1.16.8 - 'liga_col_spieltag_short' auf 'ST' geändert (vorher 'Sp.tag'), neuer
+ *                     Schlüssel 'liga_col_spieltag_long' ('Spieltag') ergänzt – für die
+ *                     responsive Lang-/Kurzform im Teamvergleich-Modal (Web/Mobil)
+ * Changelog: 1.16.7 - Übersetzung "Template:" (ohne Namen) ergänzt, für den Footer, wenn dort
+ *                     das Auswahl-Dropdown statt des reinen Namens steht
+ * Changelog: 1.16.6 - Übersetzung "Design" für das neue Template-Auswahl-Dropdown im Header ergänzt
+ * Changelog: 1.16.5 - Übersetzung "Nr." für die Spieltag-Nummer-Spalte im Spielplan-PDF-Export ergänzt
  * Changelog: 1.16.4 - Übersetzung für die PDF-Fußzeile ("© {year} www.liga-manager-online.org.
  *                     Alle Rechte vorbehalten. Version {version}") ergänzt
  * Changelog: 1.16.3 - Übersetzung "Ergebnisse Spieltag {n}" als PDF-Titel ergänzt
@@ -56,6 +65,7 @@ declare(strict_types = 1);
 return [
 
     'lang_switch_label' => 'Sprache',
+    'template_switch_label' => 'Design',
     'site_title'         => 'LMOnext – Übersicht',
 
     // ── Startseite (home.php, template/*/home.php) ──────────────────────────
@@ -76,7 +86,9 @@ return [
     'liga_label_pick_matchday'   => 'Spieltag wählen:',
     'liga_label_pick_round'      => 'Runde wählen:',
     'liga_heading_matchday_range'=> '{n}. Spieltag {range}',
+    'liga_col_nr'                => 'Nr.',
     'liga_col_datum'             => 'Datum',
+    'liga_stand_datum'           => 'Stand: {datum}',
     'liga_col_heim'              => 'Heim',
     'liga_col_gast'              => 'Gast',
     'liga_col_ergebnis'          => 'Ergebnis',
@@ -90,7 +102,8 @@ return [
     'liga_tab_fieberkurve'        => 'Fieberkurven',
     'liga_tab_ligastatistik'      => 'Ligastatistik',
     'liga_fieberkurve_no_data'    => 'Für die Fieberkurve werden erst Ergebnisse benötigt.',
-    'liga_col_spieltag_short'     => 'Sp.tag',
+    'liga_col_spieltag_short'     => 'ST',
+    'liga_col_spieltag_long'      => 'Spieltag',
     'liga_stat_home'              => 'Heim',
     'liga_stat_away'              => 'Auswärts',
     'liga_stat_home_short'        => 'H',
@@ -170,6 +183,7 @@ return [
     'liga_heading_platz3'        => 'Kleines Finale – Spiel um Platz 3',
     'footer_render_time'         => 'Dauer Berechnungen u. Seitenaufbau: {sekunden} sek.',
     'footer_template'            => 'Template: {name}',
+    'footer_template_prefix'     => 'Template:',
 
     // ── Reiter-Navigation (Kalender/Ergebnisse/Spielpläne/Info) ──────────────
     'liga_tab_kalender'      => 'Kalender',

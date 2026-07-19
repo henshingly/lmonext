@@ -2,7 +2,12 @@
 /**
  * Project: LMOnext
  * Filename: handler_liga.php
- * Fileversion: 1.6.0
+ * Fileversion: 1.6.1
+ * Changelog: 1.6.1 - save_global_team speichert jetzt zusätzlich Vereins-URL (team_url, "https://"
+ *                     wird automatisch ergänzt falls fehlend) und verarbeitet einen optionalen
+ *                     Logo-Upload (team_logo) bzw. dessen Entfernung (remove_logo), siehe
+ *                     saveTeamLogoUpload()/deleteTeamLogo() in bootstrap.php
+ * Changelog: 1.6.0
  * Changelog: 1.6.0 - Bugfix delete_liga: löscht jetzt kaskadierend auch liga_options/
  *                     liga_teams/liga_team_values/liga_spieltage/liga_partien mit (das Schema
  *                     hat bewusst keine FOREIGN-KEY-Constraints, vorher blieben diese Zeilen
@@ -264,10 +269,27 @@ if ($action === 'save_global_team' && $_SERVER['REQUEST_METHOD'] === 'POST') {
     $name   = trim($_POST['team_name']   ?? '');
     $mittel = trim($_POST['team_mittel'] ?? '');
     $kurz   = trim($_POST['team_kurz']   ?? '');
+    $url    = trim($_POST['team_url']    ?? '');
+    if ($url !== '' && !preg_match('~^https?://~i', $url)) {
+        $url = 'https://' . $url; // bequemer für den Admin, muss nicht jedes Mal "https://" mit eintippen
+    }
     if ($tid > 0 && $name !== '') {
         try {
-            getDB()->prepare('UPDATE '.tbl('teams_global').' SET name=?, mittel=?, kurz=? WHERE id=?')
-                   ->execute([$name, $mittel, $kurz, $tid]);
+            ensureTeamUrlSchema();
+            getDB()->prepare('UPDATE '.tbl('teams_global').' SET name=?, mittel=?, kurz=?, url=? WHERE id=?')
+                   ->execute([$name, $mittel, $kurz, $url !== '' ? $url : null, $tid]);
+
+            if (!empty($_FILES['team_logo']['name'])) {
+                $logoResult = saveTeamLogoUpload($tid, $_FILES['team_logo']);
+                if (!$logoResult['ok']) {
+                    flash($logoResult['error'], 'error');
+                    redirect('?action=teams');
+                }
+            }
+            if (isset($_POST['remove_logo'])) {
+                deleteTeamLogo($tid);
+            }
+
             flash(t('hl_flash_team_updated'));
         } catch (Throwable $e) { flash(t('flash_error_prefix', ['msg' => $e->getMessage()]), 'error'); }
     }

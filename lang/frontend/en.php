@@ -2,7 +2,16 @@
 /**
  * Project: LMOnext
  * Filename: lang/frontend/en.php
- * Fileversion: 1.16.4
+ * Fileversion: 1.16.9
+ * Changelog: 1.16.9 - Added "As of: {datum}" translation for the new Minitabellen addon
+ *                     (addon/mini/lmo-minitab.php)
+ * Changelog: 1.16.8 - Added 'liga_col_spieltag_long' ('Matchday') for the responsive long/short
+ *                     form in the head-to-head comparison modal (web/mobile); short key ('MD')
+ *                     unchanged
+ * Changelog: 1.16.7 - Added "Template:" (without name) translation, for the footer when the
+ *                     selector dropdown appears there instead of the plain name
+ * Changelog: 1.16.6 - Added "Theme" translation for the new template-switcher dropdown in the header
+ * Changelog: 1.16.5 - Added "No." translation for the matchday-number column in the schedule PDF export
  * Changelog: 1.16.4 - Added PDF footer translation ("© {year} www.liga-manager-online.org.
  *                     All rights reserved. Version {version}")
  * Changelog: 1.16.3 - Added "Results Matchday {n}" PDF title translation
@@ -54,6 +63,7 @@ declare(strict_types = 1);
 return [
 
     'lang_switch_label' => 'Language',
+    'template_switch_label' => 'Theme',
     'site_title'         => 'LMOnext – Overview',
 
     // ── Home page (home.php, template/*/home.php) ────────────────────────────
@@ -74,7 +84,9 @@ return [
     'liga_label_pick_matchday'   => 'Select matchday:',
     'liga_label_pick_round'      => 'Select round:',
     'liga_heading_matchday_range'=> 'Matchday {n} {range}',
+    'liga_col_nr'                => 'No.',
     'liga_col_datum'             => 'Date',
+    'liga_stand_datum'           => 'As of: {datum}',
     'liga_col_heim'              => 'Home',
     'liga_col_gast'              => 'Away',
     'liga_col_ergebnis'          => 'Result',
@@ -89,6 +101,7 @@ return [
     'liga_tab_ligastatistik'      => 'League stats',
     'liga_fieberkurve_no_data'    => 'Results are needed before the position chart can be shown.',
     'liga_col_spieltag_short'     => 'MD',
+    'liga_col_spieltag_long'      => 'Matchday',
     'liga_stat_home'              => 'Home',
     'liga_stat_away'              => 'Away',
     'liga_stat_home_short'        => 'H',
@@ -168,6 +181,7 @@ return [
     'liga_heading_platz3'        => 'Third-place match',
     'footer_render_time'         => 'Calculation & page build time: {sekunden} sec.',
     'footer_template'            => 'Template: {name}',
+    'footer_template_prefix'     => 'Template:',
 
     // ── Tab navigation (Calendar/Results/Bracket/Info) ───────────────────────
     'liga_tab_kalender'      => 'Calendar',

@@ -2,7 +2,11 @@
 /**
  * Project: LMOnext
  * Filename: view_import_review.php
- * Fileversion: 1.0.0
+ * Fileversion: 1.1.0
+ * Changelog: 1.1.0 - Zeigt jetzt ALLE ähnlichen vorhandenen Teams als Dropdown-Auswahl an
+ *                     (statt nur den einen besten Treffer per Ja/Nein-Checkbox), z.B. wenn
+ *                     Haupt- und Reserve-Team beide ähnlich zum importierten Namen sind.
+ *                     Zusätzliche Option "Kein passendes Team – neues Team anlegen"
  * Changelog: 1.0.0 - Initiale Version: Abgleichsseite zwischen Upload und tatsächlichem Import.
  *                     Wird nur angezeigt, wenn detectFuzzyTeamMatchesForImport() ungefähre
  *                     (nicht exakte) Namenstreffer mit bereits vorhandenen Teams gefunden hat –
@@ -42,24 +46,35 @@ foreach ($ambiguous as $amb) {
               📄 <?= h($group['fileName']) ?>
             </div>
 <?php foreach ($group['items'] as $amb) {
-    $cbId = 'adopt-' . $amb['fileIdx'] . '-' . $amb['nr']; ?>
+    $selId = 'adopt-' . $amb['fileIdx'] . '-' . $amb['nr']; ?>
             <div style="background:var(--bg);border:1px solid var(--border);border-radius:var(--radius);
                         padding:10px 14px;margin-bottom:8px">
-              <label for="<?= h($cbId) ?>" style="display:flex;align-items:flex-start;gap:10px;cursor:pointer">
-                <input type="checkbox" id="<?= h($cbId) ?>"
-                       name="adopt[<?= (int)$amb['fileIdx'] ?>][<?= (int)$amb['nr'] ?>]" value="1" checked
-                       style="accent-color:var(--accent);width:15px;height:15px;flex:none;margin-top:3px">
-                <span style="font-size:.85rem;line-height:1.5">
-                  <?= t('imp_review_item', [
-                        'import' => '<strong>' . h($amb['importName']) . '</strong>',
-                        'db'     => '<strong>' . h($amb['dbName']) . '</strong>',
-                        'id'     => (int)$amb['dbId'],
-                      ]) ?><br>
-                  <span style="color:var(--muted);font-size:.78rem">
-                    <?= h(t('imp_review_db_details', ['kurz' => $amb['dbKurz'] ?: '–', 'mittel' => $amb['dbMittel'] ?: '–'])) ?>
-                  </span>
-                </span>
-              </label>
+              <div style="font-size:.85rem;line-height:1.5;margin-bottom:8px">
+<?php       if (count($amb['candidates']) > 1) { ?>
+                <?= t('imp_review_item_multi', [
+                      'import' => '<strong>' . h($amb['importName']) . '</strong>',
+                      'n'      => count($amb['candidates']),
+                    ]) ?>
+<?php       } else {
+                $cand = $amb['candidates'][0]; ?>
+                <?= t('imp_review_item', [
+                      'import' => '<strong>' . h($amb['importName']) . '</strong>',
+                      'db'     => '<strong>' . h($cand['name']) . '</strong>',
+                      'id'     => (int)$cand['id'],
+                    ]) ?>
+<?php       } ?>
+              </div>
+              <label for="<?= h($selId) ?>" style="display:block;font-size:.78rem;color:var(--muted);margin-bottom:4px"><?= h(t('imp_review_select_label')) ?></label>
+              <select id="<?= h($selId) ?>" name="adopt[<?= (int)$amb['fileIdx'] ?>][<?= (int)$amb['nr'] ?>]"
+                      style="width:100%;max-width:420px;background:var(--surface);border:1px solid var(--border);
+                             color:var(--text);border-radius:var(--radius);padding:6px 10px;font-size:.85rem">
+<?php       foreach ($amb['candidates'] as $i => $cand) { ?>
+                <option value="<?= (int)$cand['id'] ?>"<?= $i === 0 ? ' selected' : '' ?>>
+                  <?= h($cand['name']) ?> (ID <?= (int)$cand['id'] ?>)<?= $cand['kurz'] !== '' ? ' · ' . h($cand['kurz']) : '' ?>
+                </option>
+<?php       } ?>
+                <option value="0"><?= h(t('imp_review_option_new')) ?></option>
+              </select>
             </div>
 <?php } ?>
           </div>

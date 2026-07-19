@@ -2,7 +2,19 @@
 /**
  * Project: LMOnext
  * Filename: template_engine.php
- * Fileversion: 2.3.0
+ * Fileversion: 2.5.0
+ * Changelog: 2.5.0 - Template-Auswahl-Dropdown vom Header in den Footer verschoben: steht jetzt
+ *                     direkt in der "Template: ..."-Zeile anstelle des Klartext-Namens (nur wenn
+ *                     der Wechsel erlaubt ist und mehr als ein Template existiert – sonst wie
+ *                     gehabt reiner Klartext). Der separate Header-Platzhalter "Vorlagenauswahl"
+ *                     entfällt dadurch wieder
+ * Changelog: 2.4.0 - Neue Funktion renderTemplateSwitcher(): sichtbares Dropdown, mit dem
+ *                     Besucher (falls in den Einstellungen erlaubt) zwischen den vorhandenen
+ *                     Templates wechseln können. Die Einstellung "Besucher erlauben, Template
+ *                     zu wechseln" schaltete bisher nur den ?template=xxx-URL-Parameter frei,
+ *                     ohne dass es dafür je eine sichtbare Bedienmöglichkeit für Besucher gab.
+ *                     Neuer automatisch befüllter Platzhalter "Vorlagenauswahl" (analog zu
+ *                     "Sprachauswahl"), erscheint nur bei mehr als einem verfügbaren Template
  * Changelog: 2.3.0 - renderTemplate() ergänzt zusätzlich Platzhalter "TemplateZeile" (zeigt den
  *                     Namen des aktiven Templates im Footer, z.B. "Template: Default")
  * Changelog: 2.2.0 - renderTemplate() ergänzt Platzhalter "Version" automatisch (aus composer.json,
@@ -189,16 +201,58 @@ function renderPartial(string $partialName, array $vars = []) : string
  * REQUEST_TIME_FLOAT und wird bewusst als Letztes berechnet, damit die
  * Anzeige möglichst die tatsächliche Gesamtdauer widerspiegelt.
  */
+/**
+ * Baut das Dropdown, mit dem Besucher (falls in den Einstellungen erlaubt)
+ * zwischen den vorhandenen Templates wechseln können – vom Aufbau her
+ * bewusst analog zu renderLanguageSwitcher() (auto-submitting <form>, alle
+ * übrigen GET-Parameter werden als Hidden-Felder mitgeführt). Gibt einen
+ * leeren String zurück, wenn der Wechsel nicht erlaubt ist oder es ohnehin
+ * nur ein einziges Template gibt (dann gäbe es nichts zur Auswahl).
+ */
+function renderTemplateSwitcher(bool $allowSwitch) : string
+{
+    $available = getAvailableTemplates();
+    if (!$allowSwitch || count($available) < 2) {
+        return '';
+    }
+    $current = getActiveTemplateName();
+    $esc = static fn(string $v) : string => htmlspecialchars($v, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8');
+
+    $html = '<form method="get" class="template-switch" onchange="this.submit()">';
+    foreach ($_GET as $k => $v) {
+        if ($k === 'template' || !is_scalar($v)) {
+            continue;
+        }
+        $html .= '<input type="hidden" name="' . $esc((string)$k) . '" value="' . $esc((string)$v) . '">';
+    }
+    $html .= '<select name="template" aria-label="' . $esc(tf('template_switch_label')) . '">';
+    foreach ($available as $key => $meta) {
+        $sel = $key === $current ? ' selected' : '';
+        $html .= '<option value="' . $esc($key) . '"' . $sel . '>' . $esc($meta['name']) . '</option>';
+    }
+    $html .= '</select></form>';
+    return $html;
+}
+
 function renderTemplate(string $activeTemplate, string $page, array $vars = []) : void
 {
     setActiveTemplateName($activeTemplate);
     $available     = getAvailableTemplates();
     $templateLabel = $available[$activeTemplate]['name'] ?? $activeTemplate;
+
+    // Ist der Wechsel erlaubt (und gibt es überhaupt mehr als ein Template),
+    // steht im Footer statt des reinen Namens das Auswahl-Dropdown – sonst
+    // wie bisher nur Klartext "Template: {name}".
+    $switcherHtml = renderTemplateSwitcher((bool)($GLOBALS['allowTemplateSwitch'] ?? false));
+    $templateZeile = $switcherHtml !== ''
+        ? h(tf('footer_template_prefix')) . ' ' . $switcherHtml
+        : h(tf('footer_template', ['name' => $templateLabel]));
+
     $vars += [
         'HtmlLang'      => h(getCurrentLanguage('frontend')),
         'Sprachauswahl' => renderLanguageSwitcher('frontend'),
         'Version'       => h(getAppVersion()),
-        'TemplateZeile' => h(tf('footer_template', ['name' => $templateLabel])),
+        'TemplateZeile' => $templateZeile,
     ];
     $pageHtml          = loadTemplateFile($page . '.tpl.php', $vars);
     $vars['Hauptteil'] = $pageHtml;

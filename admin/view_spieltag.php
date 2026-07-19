@@ -2,7 +2,10 @@
 /**
  * Project: LMOnext
  * Filename: view_spieltag.php
- * Fileversion: 1.3.2
+ * Fileversion: 1.3.3
+ * Changelog: 1.3.3 - Hinweistext über dem Team-Dropdown unterscheidet jetzt, ob nur Sieger
+ *                     ("Nur Sieger aus Runde X") oder Sieger+Verlierer angeboten werden (in der
+ *                     letzten Runde bei Finale + Spiel um Platz 3, siehe data_loader.php 1.6.4)
  * Changelog: 1.3.2 - Projektname auf "LMOnext" umgestellt (vorher "Online-Liga-Verwaltung Board" / "OLVBoard")
  * Changelog: 1.3.1 - "Tabelle"-Button ebenfalls über t() übersetzt (war übersehen worden)
  * Changelog: 1.3.0 - Alle Texte (PHP + JS) über t() übersetzt; koModusLabel() statt rohem KO_MODUS-Label
@@ -184,7 +187,7 @@ function dtInput(string $hiddenName, string $atVal, string $extraStyle = ''): st
               </div>
               <?php if ($hasWinnerFilter) { ?>
               <div style="font-size:.74rem;color:var(--accent);margin-bottom:8px;padding-left:168px;opacity:.8">
-                <?= h(t('sp_only_winners_from', ['round' => $stNr - 1, 'count' => count($dropdownTeams)])) ?>
+                <?= h(t($isLastRound ? 'sp_winners_and_losers_from' : 'sp_only_winners_from', ['round' => $stNr - 1, 'count' => count($dropdownTeams)])) ?>
               </div>
               <?php } ?>
               <!-- Einzel-Spiele -->

@@ -2,7 +2,24 @@
 /**
  * Project: LMOnext
  * Filename: data_loader.php
- * Fileversion: 1.6.3
+ * Fileversion: 1.6.6
+ * Changelog: 1.6.6 - Bugfix: Duplikat-Erkennung bei "Teams (global)" nutzte ungeschützt
+ *                     mb_strtolower() – auf Hosting ohne mbstring-Extension (die laut
+ *                     Projektkonvention NICHT garantiert ist, siehe handler_import_export.php/
+ *                     pdf_export.php) führte das zu einer Exception, wodurch die komplette
+ *                     Teams-Seite leer blieb. Fällt jetzt auf strtolower() + Umlaut-Ersetzung
+ *                     zurück, wenn mbstring fehlt
+ * Changelog: 1.6.5
+ * Changelog: 1.6.5 - Teams-Query liefert jetzt auch teams_global.url mit (Logo&Link-Feature),
+ *                     ruft dafür vorher ensureTeamUrlSchema() auf
+ * Changelog: 1.6.4
+ * Changelog: 1.6.4 - Bugfix KO-Team-Dropdown: die letzte Runde eines Turniers mit "Spiel um
+ *                     Platz 3" (KlFin) enthält zwei Paarungen (Finale + kleines Finale), die
+ *                     unterschiedliche Vorrunden-Teams brauchen – das Finale die Sieger, das
+ *                     Spiel um Platz 3 aber die VERLIERER der Halbfinals. Bisher wurden nur
+ *                     Sieger ermittelt, wodurch sich das Spiel um Platz 3 gar nicht eintragen
+ *                     ließ. Jetzt werden in der letzten Runde Sieger UND Verlierer der Vorrunde
+ *                     gemeinsam zur Auswahl angeboten
  * Changelog: 1.6.3 - Users-Query liefert jetzt auch die E-Mail-Adresse mit (für das neue
  *                     E-Mail-Feld in der Benutzerverwaltung), ruft dafür vorher
  *                     ensurePasswordResetSchema() auf (stellt sicher, dass admin_users.email
@@ -167,6 +184,7 @@ if (isLoggedIn()) {
                         }
 
                         $winnerIds = [];
+                        $loserIds  = [];
                         foreach ($paarungen as $parts) {
                             // Prüfen ob alle Spiele dieser Paarung Ergebnisse haben
                             $allPlayed = true;
@@ -198,8 +216,8 @@ if (isLoggedIn()) {
                                 else                 { $torA += $gT; $torB += $hT; }
                             }
 
-                            if ($torA > $torB)      { $winnerIds[$teamA] = true; }
-                            elseif ($torB > $torA)  { $winnerIds[$teamB] = true; }
+                            if ($torA > $torB)      { $winnerIds[$teamA] = true; $loserIds[$teamB] = true; }
+                            elseif ($torB > $torA)  { $winnerIds[$teamB] = true; $loserIds[$teamA] = true; }
                             else {
                                 // Gleichstand → beide behalten (Elfmeter/Verlängerung noch offen)
                                 $winnerIds[$teamA] = true;
@@ -207,14 +225,25 @@ if (isLoggedIn()) {
                             }
                         }
 
+                        // Ausnahme: Ist dies die letzte Runde UND gibt es ein "Spiel um
+                        // Platz 3" (KlFin), werden dort die VERLIERER der Vorrunde
+                        // (Halbfinale) gebraucht, nicht die Sieger – die stehen ja
+                        // schon im Finale. Beide Runden (Finale + Spiel um Platz 3)
+                        // teilen sich dieselbe Spieltag-Nummer, daher hier einfach
+                        // Sieger UND Verlierer gemeinsam zur Auswahl anbieten.
+                        $includeIds = $winnerIds;
+                        if ($spieltagData['kl_fin'] && $stNr === $spieltagData['total_rounds']) {
+                            $includeIds += $loserIds;
+                        }
+
                         // Nur filtern wenn alle Paarungen vollständig ausgewertet werden konnten
-                        if (!empty($winnerIds)) {
-                            $phs = implode(',', array_fill(0, count($winnerIds), '?'));
+                        if (!empty($includeIds)) {
+                            $phs = implode(',', array_fill(0, count($includeIds), '?'));
                             $sW  = $db->prepare(
                                 'SELECT id,name FROM '.tbl('teams_global').'
                                   WHERE id IN ('.$phs.') ORDER BY name'
                             );
-                            $sW->execute(array_keys($winnerIds));
+                            $sW->execute(array_keys($includeIds));
                             $spieltagData['prevWinners'] = $sW->fetchAll();
                         }
                     }
@@ -313,11 +342,12 @@ if ($action === 'liga_settings' && isLoggedIn()) {
 
 $teamsData = null;
 if ($action === 'teams' && isLoggedIn()) {
+    ensureTeamUrlSchema();
     try {
         $db = getDB();
         // Alle Teams mit Anzahl Ligen-Verwendungen
         $sT = $db->query(
-            'SELECT g.id, g.name, g.mittel, g.kurz,
+            'SELECT g.id, g.name, g.mittel, g.kurz, g.url,
                     COUNT(DISTINCT lt.liga_id) AS liga_count
                FROM '.tbl('teams_global').' g
                LEFT JOIN '.tbl('liga_teams').' lt ON lt.team_id = g.id
@@ -328,7 +358,13 @@ if ($action === 'teams' && isLoggedIn()) {
 
         // Umlaut-Normalisierung für Duplikat-Vergleich
         $normalizeStr = function(string $s): string {
-            $s = mb_strtolower(trim($s));
+            // mbstring ist auf Shared-Hosting nicht garantiert (siehe Projektkonvention) –
+            // ohne die Erweiterung reicht strtolower() + eine kleine Ersetzung der
+            // deutschen Großbuchstaben-Umlaute, da die eigentliche Umlaut-Normalisierung
+            // ohnehin gleich im Anschluss über str_replace() passiert.
+            $s = function_exists('mb_strtolower')
+                ? mb_strtolower(trim($s))
+                : strtolower(strtr(trim($s), ['Ä' => 'ä', 'Ö' => 'ö', 'Ü' => 'ü']));
             $s = str_replace(['ä','ö','ü','ß','à','á','â','è','é','ê','ì','í','î','ò','ó','ô','ù','ú','û','ñ','ç'],
                              ['ae','oe','ue','ss','a','a','a','e','e','e','i','i','i','o','o','o','u','u','u','n','c'], $s);
             return $s;
