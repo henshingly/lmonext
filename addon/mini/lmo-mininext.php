@@ -2,7 +2,11 @@
 /**
  * Project: LMOnext
  * Filename: addon/mini/lmo-mininext.php
- * Fileversion: 1.0.0
+ * Fileversion: 1.0.1
+ * Changelog: 1.0.1 - Bugfix: <!--ligaDatum--> zeigte immer das heutige Tagesdatum statt des
+ *                     tatsächlichen letzten Speicherdatums der Liga. Liest jetzt liga.datum aus
+ *                     der DB, siehe lmo-minitab.php 1.1.0 für Details
+ * Changelog: 1.0.0
  * Changelog: 1.0.0 - Initiale Version: Portierung des alten LMO-Addons "Mininext" (siehe
  *                     doc/help/addons/mininext.html + template/mini/mininext.tpl.php im alten
  *                     LMO). Zeigt die nächste (oder, falls die Saison vorbei ist, letzte)
@@ -150,6 +154,16 @@ function renderMininext(int $ligaId, ?int $teamAId, ?int $teamBId, string $templ
         return '<p style="font-family:sans-serif;color:#a33">Liga nicht gefunden (mini_liga=' . h($ligaId) . ')</p>';
     }
 
+    try {
+        $ligaDatumRaw = getDB()->prepare('SELECT datum FROM ' . tbl('liga') . ' WHERE id = ?');
+        $ligaDatumRaw->execute([$ligaId]);
+        $ligaDatumVal = $ligaDatumRaw->fetchColumn();
+    } catch (Throwable) {
+        $ligaDatumVal = false;
+    }
+    $ligaTs = $ligaDatumVal !== false ? strtotime((string)$ligaDatumVal) : false;
+    $ligaDatumText = $ligaTs !== false ? date('d.m.Y', $ligaTs) : date('d.m.Y');
+
     if ($teamAId === null) {
         $teamAId = resolveTeamNumberToId($ligaId, (int)($opts['favTeam'] ?? 0));
     }
@@ -230,7 +244,7 @@ function renderMininext(int $ligaId, ?int $teamAId, ?int $teamBId, string $templ
         '<!--gameTime-->'   => $zeitTs !== false ? h(date('H:i', $zeitTs)) : '',
         '<!--countDown-->'  => h($countdownText),
         '<!--gameNote-->'   => h((string)($current['notiz'] ?? '')),
-        '<!--ligaDatum-->'  => h(tf('liga_stand_datum', ['datum' => date('d.m.Y')])),
+        '<!--ligaDatum-->'  => h(tf('liga_stand_datum', ['datum' => $ligaDatumText])),
         '<!--homeName-->'        => h($nameOf($currentHeimId, 'name')),
         '<!--homeNameMiddle-->'  => h($nameOf($currentHeimId, 'mittel')),
         '<!--homeNameShort-->'   => h($nameOf($currentHeimId, 'kurz')),

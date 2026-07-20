@@ -1,5 +1,8 @@
 <!--
-  Template: addon/mini | Filename: mininext.tpl.php | Fileversion: 1.0.0
+  Template: addon/mini | Filename: mininext.tpl.php | Fileversion: 1.0.1
+  Changelog: 1.0.1 - box-sizing:border-box + display:inline-block ergänzt (gleiche defensive
+                     Absicherung wie beim Minitabelle-Template-Fix, siehe standard.tpl.php 1.1.0)
+                     gegen abweichende CSS-Regeln auf der Zielseite
   Changelog: 1.0.0 - Initiale Version, angelehnt an das gleichnamige Template des alten LMO
                      (siehe template/mini/mininext.tpl.php dort, vom Nutzer als Referenz
                      bereitgestellt), aber mit eigenständigem, modernem CSS passend zum
@@ -10,7 +13,7 @@
   Reines Markup + Platzhalter, kein PHP.
 -->
 <style>
-.lmo-mininext{font-family:'Segoe UI',system-ui,-apple-system,sans-serif;font-size:.8rem;
+.lmo-mininext{display:inline-block;box-sizing:border-box;font-family:'Segoe UI',system-ui,-apple-system,sans-serif;font-size:.8rem;
   background:#fff;border:1px solid #e3e7ee;border-radius:8px;overflow:hidden;max-width:260px}
 .lmo-mininext .lmo-mn-head{background:#153A8C;color:#fff;font-weight:700;padding:6px 10px}
 .lmo-mininext .lmo-mn-countdown{text-align:center;padding:6px 8px 0;color:#697182;font-size:.72rem}

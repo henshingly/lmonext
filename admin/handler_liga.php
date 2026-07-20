@@ -2,7 +2,12 @@
 /**
  * Project: LMOnext
  * Filename: handler_liga.php
- * Fileversion: 1.6.1
+ * Fileversion: 1.6.2
+ * Changelog: 1.6.2 - save_ergebnisse aktualisiert jetzt liga.datum (bisher nur beim Anlegen der
+ *                     Liga gesetzt, nie danach) – gibt den Mini-Addons (Minitabelle/Mininext,
+ *                     <!--ligaDatum-->) ein echtes "letztes Speicherdatum" statt des
+ *                     bisherigen, immer aktuellen Tagesdatums
+ * Changelog: 1.6.1
  * Changelog: 1.6.1 - save_global_team speichert jetzt zusätzlich Vereins-URL (team_url, "https://"
  *                     wird automatisch ergänzt falls fehlend) und verarbeitet einen optionalen
  *                     Logo-Upload (team_logo) bzw. dessen Entfernung (remove_logo), siehe
@@ -56,6 +61,13 @@ if ($action === 'save_ergebnisse' && $_SERVER['REQUEST_METHOD'] === 'POST') {
                 $stmtE->execute([$hv, $gv, $zeitDb, $status, $berichtDb, $pid]);
             }
         }
+        // "Letztes Speicherdatum" der Liga aktualisieren (siehe liga.datum) –
+        // wird u.a. von den Mini-Addons (Minitabelle/Mininext) als
+        // <!--ligaDatum--> angezeigt, analog zum Datei-Änderungsdatum im
+        // alten LMO. Bewusst nur bei Ergebnis-Speicherungen berührt (nicht
+        // bei jeder Einstellungsänderung), da das für die "wie aktuell ist
+        // diese Tabelle"-Frage der Widgets am aussagekräftigsten ist.
+        $db->prepare('UPDATE ' . tbl('liga') . ' SET datum=NOW() WHERE id=?')->execute([$lid]);
         flash(t('hl_flash_spieltag_saved', ['n' => $stNr]));
     } catch (Throwable $e) { flash(t('flash_error_prefix', ['msg' => $e->getMessage()]), 'error'); }
     // Weiter zum nächsten Spieltag?

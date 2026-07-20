@@ -2,7 +2,13 @@
 /**
  * Project: LMOnext
  * Filename: addon/mini/lmo-minitab.php
- * Fileversion: 1.0.0
+ * Fileversion: 1.1.0
+ * Changelog: 1.1.0 - Bugfix: <!--ligaDatum--> zeigte immer das heutige Tagesdatum statt des
+ *                     tatsächlichen letzten Speicherdatums der Liga (im alten LMO das
+ *                     Änderungsdatum der .l98-Datei). Liest jetzt liga.datum aus der DB, das
+ *                     save_ergebnisse (siehe handler_liga.php 1.6.2) bei jeder
+ *                     Ergebnis-Speicherung aktualisiert
+ * Changelog: 1.0.0
  * Changelog: 1.0.0 - Initiale Version: Portierung des alten LMO-Addons "Minitabellen" (siehe
  *                     doc/help/addons/minitabellen.html + template/mini/standard.tpl.php im
  *                     alten LMO). Zeigt einen Ausschnitt der Tabelle einer Liga (z.B. "3 Plätze
@@ -78,7 +84,7 @@ if ($miniIsDirectCall) {
 function renderMinitabelle(int $ligaId, ?int $platz, int $ueber, int $unter, string $templateName) : string
 {
     try {
-        $liga = getDB()->prepare('SELECT id, name FROM ' . tbl('liga') . ' WHERE id = ?');
+        $liga = getDB()->prepare('SELECT id, name, datum FROM ' . tbl('liga') . ' WHERE id = ?');
         $liga->execute([$ligaId]);
         $ligaRow = $liga->fetch();
     } catch (Throwable) {
@@ -183,7 +189,7 @@ function renderMinitabelle(int $ligaId, ?int $platz, int $ueber, int $unter, str
     $outer = [
         '<!--Link-->'     => h('liga.php?id=' . $ligaId . '&view=tabelle'),
         '<!--Tabelle-->'  => h($ligaRow['name']),
-        '<!--ligaDatum-->'=> h(tf('liga_stand_datum', ['datum' => date('d.m.Y')])),
+        '<!--ligaDatum-->'=> h(tf('liga_stand_datum', ['datum' => ($ligaTs = strtotime((string)($ligaRow['datum'] ?? ''))) !== false ? date('d.m.Y', $ligaTs) : date('d.m.Y')])),
     ];
     $before = strtr($before, $outer);
     $after  = strtr($after, $outer);

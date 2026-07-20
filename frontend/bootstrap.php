@@ -2,7 +2,15 @@
 /**
  * Project: LMOnext
  * Filename: bootstrap.php
- * Fileversion: 1.4.0
+ * Fileversion: 1.4.1
+ * Changelog: 1.4.1 - Bugfix: Die in den Admin-Einstellungen konfigurierte "Standardsprache"
+ *                     wurde im gesamten Besucherbereich nie berücksichtigt (getCurrentLanguage()
+ *                     wurde ganz am Anfang der Datei OHNE den Standardsprache-Parameter
+ *                     aufgerufen, bevor getAdminSetting() überhaupt verfügbar war – betraf
+ *                     dadurch nicht nur die neuen Addons, sondern auch home.php/liga.php
+ *                     direkt). Sprachauflösung jetzt an das Ende der Funktionsdefinitionen
+ *                     verschoben, mit getAdminSetting('language', DEFAULT_LANGUAGE) als
+ *                     Standardsprache-Parameter (identisches Muster wie admin/bootstrap.php)
  * Changelog: 1.4.0 - pdf_export.php eingebunden (Ergebnisse-als-PDF-Export für reguläre Ligen)
  * Changelog: 1.3.0 - getAppVersion() ergänzt (liest Version aus composer.json)
  * Changelog: 1.2.1 - Projektname auf "LMOnext" umgestellt (vorher "Online-Liga-Verwaltung Board" / "OLVBoard")
@@ -30,8 +38,11 @@ session_name('lmonext_frontend');
 session_start();
 
 // ── Mehrsprachigkeit (Besucherbereich, unabhängig vom Adminbereich) ──────────
+// Die eigentliche Sprachauflösung (inkl. der in den Admin-Einstellungen
+// konfigurierten Standardsprache) passiert weiter unten, NACHDEM
+// getAdminSetting() verfügbar ist (siehe dort) – hier nur die
+// Funktionsdefinitionen laden, noch nichts auflösen.
 require_once dirname(__DIR__) . '/lang/i18n.php';
-getCurrentLanguage('frontend');
 
 // ── Konfiguration ─────────────────────────────────────────────────────────────
 $_configFile = dirname(__DIR__) . '/config.php';
@@ -101,6 +112,13 @@ function getAdminSetting(string $key, string $default = '') : string
         return $default;
     }
 }
+
+// ── Sprache jetzt WIRKLICH auflösen (siehe Kommentar weiter oben): erst jetzt
+// ist getAdminSetting() verfügbar, um die in den Admin-Einstellungen
+// konfigurierte Standardsprache zu berücksichtigen. Muss auch VOR
+// resolveActiveTemplate() passieren, damit t()/tf() im weiteren Verlauf
+// (inkl. der Datenfunktionen) korrekt auflösen.
+getCurrentLanguage('frontend', getAdminSetting('language', DEFAULT_LANGUAGE));
 
 // ── Template-Engine + aktives Template ermitteln ─────────────────────────────
 require_once __DIR__ . '/template_engine.php';
