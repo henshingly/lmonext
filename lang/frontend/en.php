@@ -2,7 +2,10 @@
 /**
  * Project: LMOnext
  * Filename: lang/frontend/en.php
- * Fileversion: 1.16.9
+ * Fileversion: 1.17.0
+ * Changelog: 1.17.0 - Added translations for the new "Mininext" addon (ported from old LMO, see
+ *                     addon/mini/lmo-mininext.php)
+ * Changelog: 1.16.9
  * Changelog: 1.16.9 - Added "As of: {datum}" translation for the new Minitabellen addon
  *                     (addon/mini/lmo-minitab.php)
  * Changelog: 1.16.8 - Added 'liga_col_spieltag_long' ('Matchday') for the responsive long/short
@@ -87,6 +90,16 @@ return [
     'liga_col_nr'                => 'No.',
     'liga_col_datum'             => 'Date',
     'liga_stand_datum'           => 'As of: {datum}',
+    'mini_next_upcoming'         => 'Next match',
+    'mini_next_season_over'      => 'Last match of the season',
+    'mini_next_previous'         => 'Previous match',
+    'mini_next_countdown'        => '{d} days, {h} hrs, {m} min',
+    'mini_next_matches_heading'  => 'Previous meetings',
+    'mini_next_win_short'        => 'W',
+    'mini_next_draw_short'       => 'D',
+    'mini_next_lost_short'       => 'L',
+    'mini_next_home'             => 'Home',
+    'mini_next_away'             => 'Away',
     'liga_col_heim'              => 'Home',
     'liga_col_gast'              => 'Away',
     'liga_col_ergebnis'          => 'Result',

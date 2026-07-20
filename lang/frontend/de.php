@@ -2,7 +2,10 @@
 /**
  * Project: LMOnext
  * Filename: lang/frontend/de.php
- * Fileversion: 1.16.9
+ * Fileversion: 1.17.0
+ * Changelog: 1.17.0 - Übersetzungen für das neue Addon "Mininext" (Portierung aus dem alten LMO,
+ *                     siehe addon/mini/lmo-mininext.php) ergänzt
+ * Changelog: 1.16.9
  * Changelog: 1.16.9 - Übersetzung "Stand: {datum}" ergänzt, für das neue Minitabellen-Addon
  *                     (addon/mini/lmo-minitab.php)
  * Changelog: 1.16.8 - 'liga_col_spieltag_short' auf 'ST' geändert (vorher 'Sp.tag'), neuer
@@ -89,6 +92,16 @@ return [
     'liga_col_nr'                => 'Nr.',
     'liga_col_datum'             => 'Datum',
     'liga_stand_datum'           => 'Stand: {datum}',
+    'mini_next_upcoming'         => 'Nächstes Spiel',
+    'mini_next_season_over'      => 'Letztes Spiel der Saison',
+    'mini_next_previous'         => 'Vorheriges Spiel',
+    'mini_next_countdown'        => '{d} Tage, {h} Std, {m} Min',
+    'mini_next_matches_heading'  => 'Bisherige Begegnungen',
+    'mini_next_win_short'        => 'S',
+    'mini_next_draw_short'       => 'U',
+    'mini_next_lost_short'       => 'N',
+    'mini_next_home'             => 'Heim',
+    'mini_next_away'             => 'Auswärts',
     'liga_col_heim'              => 'Heim',
     'liga_col_gast'              => 'Gast',
     'liga_col_ergebnis'          => 'Ergebnis',
