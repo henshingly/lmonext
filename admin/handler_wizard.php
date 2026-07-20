@@ -2,15 +2,19 @@
 /**
  * Project: LMOnext
  * Filename: handler_wizard.php
- * Fileversion: 1.3.1
+ * Fileversion: 1.3.2
+ * Changelog: 1.3.2 - Umbenennung auf Nutzerwunsch: interne Bezeichnungen jetzt durchgehend auf
+ *                     Englisch ("League Key" statt der vorherigen deutschen Bezeichnung) –
+ *                     Funktionsname, Konstante und interner Modus-Wert entsprechend angepasst
+ *                     (siehe bootstrap.php/league-key_data.php)
  * Changelog: 1.3.1 - Bugfix: liest Teamzahl jetzt aus dem zum Liga-Typ passenden, dauerhaft
  *                     eigenen Feld ("team_count_liga"/"team_count_ko" statt eines gemeinsamen
  *                     "team_count"), siehe view_wizard.php 1.3.1 für die Ursache. Liga-Maximum
  *                     außerdem von 128 auf 256 angehoben (passend zum max-Attribut im Formular)
- * Changelog: 1.3.0 - Reguläre Liga: Spielplan wird jetzt standardmäßig per DFB-Schlüsselring-
+ * Changelog: 1.3.0 - Reguläre Liga: Spielplan wird jetzt standardmäßig per DFB-League-Key-
  *                     Muster erstellt (falls für die Teamzahl vorhanden), statt immer per
  *                     Zufall. Neue Aktion "?action=create_liga&step=3&regen=1" zum Wechseln der
- *                     Spielplan-Art (Schlüsselring/Zufall/kein Spielplan) auf der Vorschauseite,
+ *                     Spielplan-Art (League Key/Zufall/kein Spielplan) auf der Vorschauseite,
  *                     ohne die Teamnamen erneut eingeben zu müssen. Der bestehende
  *                     Teamnamen-Handler (auch step=3+POST) musste dafür "regen" explizit
  *                     ausschließen, sonst fing er die regen-Anfrage ab und interpretierte die
@@ -97,17 +101,17 @@ if ($action === 'create_liga') {
         }
         $_SESSION['wiz']['teams'] = $teams;
         if ($wiz['type'] === 0) {
-            // Default: Schlüsselring, wenn für diese Teamzahl ein Muster
-            // hinterlegt ist (siehe schluesselring_data.php), sonst Zufall.
+            // Default: League Key, wenn für diese Teamzahl ein Muster
+            // hinterlegt ist (siehe league-key_data.php), sonst Zufall.
             // Auf der Vorschauseite (Schritt 3) kann der Admin das noch ändern.
-            $defaultMode = getSchluesselringPattern(count($teams)) !== null ? 'schluesselring' : 'random';
+            $defaultMode = getLeagueKeyPattern(count($teams)) !== null ? 'leaguekey' : 'random';
             $_SESSION['wiz']['schedule_mode'] = $defaultMode;
             $_SESSION['wiz']['spieltage'] = buildScheduleForMode(count($teams), $defaultMode);
         }
         redirect('?action=create_liga&step=3');
     }
 
-    // Schritt 3 (reguläre Liga): Spielplan-Erstellungsart wechseln (Schlüsselring/
+    // Schritt 3 (reguläre Liga): Spielplan-Erstellungsart wechseln (League Key/
     // Zufall/kein Spielplan), ohne die Teamnamen erneut einzugeben. Muss VOR
     // dem obigen Block geprüft werden (bzw. dieser muss "regen" ausschließen) –
     // sonst fängt der Teamnamen-Handler jede POST auf step=3 ab und interpretiert
@@ -115,8 +119,8 @@ if ($action === 'create_liga') {
     if ($step === 3 && isset($_GET['regen']) && $_SERVER['REQUEST_METHOD'] === 'POST') {
         $wiz = $_SESSION['wiz'] ?? null;
         if (!$wiz || $wiz['type'] !== 0) { redirect('?action=create_liga&step=1'); }
-        $mode = $_POST['schedule_mode'] ?? 'schluesselring';
-        if (!in_array($mode, ['schluesselring', 'random', 'none'], true)) { $mode = 'schluesselring'; }
+        $mode = $_POST['schedule_mode'] ?? 'leaguekey';
+        if (!in_array($mode, ['leaguekey', 'random', 'none'], true)) { $mode = 'leaguekey'; }
         $_SESSION['wiz']['schedule_mode'] = $mode;
         $_SESSION['wiz']['spieltage'] = buildScheduleForMode(count($wiz['teams']), $mode);
         redirect('?action=create_liga&step=3');

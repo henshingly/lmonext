@@ -2,7 +2,10 @@
 /**
  * Project: LMOnext
  * Filename: admin.php
- * Fileversion: 1.4.2
+ * Fileversion: 1.4.3
+ * Changelog: 1.4.3 - require_once-Pfad an die Datei-Umbenennung angepasst (Nutzerwunsch:
+ *                     interne Bezeichnungen jetzt durchgehend auf Englisch, siehe
+ *                     league-key_data.php 1.2.0)
  * Changelog: 1.4.2 - Route für "reset_password" (Passwort-Reset-Landingpage aus der E-Mail) ergänzt
  * Changelog: 1.4.1 - Route für "import_review" (Team-Namensabgleich beim .l98-Import) ergänzt
  * Changelog: 1.4.0 - Route + Handler für "Wartung" (Datenbank-Backup/Wiederherstellung) ergänzt
@@ -24,7 +27,7 @@ define('ADMIN_INC', __DIR__ . '/admin');
 // ── Bootstrap: Config, DB, Hilfsfunktionen ───────────────────────────────────
 require_once ADMIN_INC . '/bootstrap.php';  // inkl. session_start()
 require_once ADMIN_INC . '/templates.php';
-require_once ADMIN_INC . '/schluesselring_data.php';
+require_once ADMIN_INC . '/league-key_data.php';
 
 // ── Aktion ────────────────────────────────────────────────────────────────────
 $action = $_GET['action'] ?? $_POST['action'] ?? 'dashboard';

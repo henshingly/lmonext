@@ -2,7 +2,13 @@
 /**
  * Project: LMOnext
  * Filename: bootstrap.php
- * Fileversion: 1.7.3
+ * Fileversion: 1.7.4
+ * Changelog: 1.7.4 - Umbenennung auf Nutzerwunsch: interne Bezeichnungen jetzt durchgehend auf
+ *                     Englisch ("League Key" statt der vorherigen deutschen Bezeichnung, die
+ *                     hier nicht mehr vorkommen soll). Der sichtbare UI-Text hieß schon vorher
+ *                     "Schlüsselplan" und ist unverändert. Funktionsname, Konstante und interner
+ *                     Modus-Wert entsprechend angepasst (siehe league-key_data.php)
+ * Changelog: 1.7.3
  * Changelog: 1.7.3 - Logo-Ordner von assets/img/Teams auf assets/img/teams umbenannt
  *                     (kleingeschrieben)
  * Changelog: 1.7.2
@@ -18,9 +24,9 @@
  *                     nur mit Leerteam-Platzhaltern (-1, siehe createLigaInDB()) statt echter
  *                     Paarungen – vorher wurden bei "kein Spielplan" gar keine Spieltage/
  *                     Partien-Zeilen angelegt
- * Changelog: 1.7.0 - Neue Funktionen getSchluesselringPattern()/buildScheduleForMode(): Spielplan
- *                     für reguläre Ligen kann jetzt wahlweise nach dem DFB-Schlüsselring-Muster
- *                     (siehe admin/schluesselring_data.php, für 6/8/10/12/14/16/18 Teams), per
+ * Changelog: 1.7.0 - Neue Funktionen getLeagueKeyPattern()/buildScheduleForMode(): Spielplan
+ *                     für reguläre Ligen kann jetzt wahlweise nach dem DFB-League-Key-Muster
+ *                     (siehe admin/league-key_data.php, für 6/8/10/12/14/16/18 Teams), per
  *                     Zufall (bisheriges generateRoundRobin()) oder gar nicht erstellt werden
  * Changelog: 1.6.0
  * Changelog: 1.6.0 - "Passwort vergessen"-Grundlagen ergänzt: ensurePasswordResetSchema()
@@ -290,21 +296,21 @@ function generateRoundRobin(array $teamIds) : array
 }
 
 /**
- * Liefert das vorgefertigte DFB-Schlüsselring-Spielplanmuster für die
+ * Liefert das vorgefertigte DFB-League-Key-Spielplanmuster für die
  * angegebene Teamzahl, falls eines hinterlegt ist (siehe
- * admin/schluesselring_data.php) – sonst null. Anders als die per Zufall
- * erzeugte generateRoundRobin()-Reihenfolge folgt der Schlüsselring einer
+ * admin/league-key_data.php) – sonst null. Anders als die per Zufall
+ * erzeugte generateRoundRobin()-Reihenfolge folgt der League Key einer
  * traditionellen, festen Paarungslogik, wie sie deutsche Fußballverbände
  * für Ligen üblicher Größe verwenden.
  */
-function getSchluesselringPattern(int $teamCount) : ?array
+function getLeagueKeyPattern(int $teamCount) : ?array
 {
-    return SCHLUESSELRING_PATTERNS[$teamCount] ?? null;
+    return LEAGUEKEYS_PATTERNS[$teamCount] ?? null;
 }
 
 /**
  * Baut den Spielplan für eine reguläre Liga gemäß gewähltem Modus:
- * 'schluesselring' (falls für die Teamzahl vorhanden, sonst automatisch
+ * 'leaguekey' (falls für die Teamzahl vorhanden, sonst automatisch
  * Rückfall auf 'random'), 'random' (bisheriges Verhalten, generateRoundRobin()
  * mit fortlaufender Team-Reihenfolge) oder 'none' (kein Spielplan).
  *
@@ -328,8 +334,8 @@ function buildScheduleForMode(int $teamCount, string $mode) : array
         }
         return $blank;
     }
-    if ($mode === 'schluesselring') {
-        $pattern = getSchluesselringPattern($teamCount);
+    if ($mode === 'leaguekey') {
+        $pattern = getLeagueKeyPattern($teamCount);
         if ($pattern !== null) {
             return $pattern;
         }

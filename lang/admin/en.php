@@ -2,7 +2,10 @@
 /**
  * Project: LMOnext
  * Filename: lang/admin/en.php
- * Fileversion: 1.10.12
+ * Fileversion: 1.10.13
+ * Changelog: 1.10.13 - Renamed the fixture-generation-mode lang key (user request: internal
+ *                      naming now consistently uses the English term "League Key" instead of
+ *                      the previous German term)
  * Changelog: 1.10.12 - Added translations for the new "Show language selector?" setting
  * Changelog: 1.10.11
  * Changelog: 1.10.11 - Added translations for the new "Show PDF export to visitors?" setting
@@ -421,7 +424,7 @@ return [
 
     'wiz_step3_liga_heading' => 'Step 3 – Schedule (auto-generated)',
     'wiz_schedule_mode_heading'        => 'Schedule creation',
-    'wiz_schedule_mode_schluesselring' => 'Fixture plan (DFB pattern)',
+    'wiz_schedule_mode_leaguekey' => 'Fixture plan (DFB pattern)',
     'wiz_schedule_mode_unavailable'    => 'not available for this number of teams',
     'wiz_schedule_mode_random'         => 'Generate randomly',
     'wiz_schedule_mode_none'          => 'No schedule',

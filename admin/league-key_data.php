@@ -1,16 +1,21 @@
 <?php
 /**
  * Project: LMOnext
- * Filename: schluesselring_data.php
- * Fileversion: 1.1.0
+ * Filename: league-key_data.php
+ * Fileversion: 1.2.0
+ * Changelog: 1.2.0 - Umbenennung auf Nutzerwunsch: Datei und Konstante nutzen jetzt durchgehend
+ *                     die englische Bezeichnung "League Key" statt der vorherigen deutschen
+ *                     Bezeichnung. Ebenso angepasst: die zugehörige Funktion in bootstrap.php,
+ *                     der interne Spielplan-Erstellungsmodus in handler_wizard.php/
+ *                     view_wizard.php, sowie alle betroffenen Kommentare
  * Changelog: 1.1.0 - Neues Muster für 4 Teams ergänzt: die ursprüngliche 04er-Referenzdatei war
  *                     fehlerhaft (Team 4 kam nie vor), der Nutzer hat eine korrigierte Version
  *                     bereitgestellt. Team 4 kommt jetzt korrekt in jeder Runde vor, jedes Team
  *                     spielt gegen jedes andere Team genau zweimal (Hin- und Rückspiel), 3
- *                     Gegner × 2 = 6 Runden, geprüft. getSchluesselringPattern()/der Wizard
+ *                     Gegner × 2 = 6 Runden, geprüft. getLeagueKeyPattern()/der Wizard
  *                     bieten "Schlüsselplan (DFB-Muster)" für 4-Team-Ligen jetzt automatisch an
  *                     (vorher immer generateRoundRobin()-Fallback wegen fehlendem Muster)
- * Changelog: 1.0.0 - Initiale Version: DFB-Schluesselring-Spielplanmuster fuer reguläre Ligen
+ * Changelog: 1.0.0 - Initiale Version: DFB-League-Key-Spielplanmuster fuer reguläre Ligen
  *                     (6/8/10/12/14/16/18 Teams), extrahiert aus den vom Nutzer bereitgestellten
  *                     Referenz-.l98-Dateien. Team-Positionen sind 0-basiert (Index in die vom
  *                     Nutzer im Wizard eingegebene Teamliste). Rueckrunde ist bereits enthalten
@@ -20,7 +25,7 @@
  */
 declare(strict_types=1);
 
-const SCHLUESSELRING_PATTERNS = [
+const LEAGUEKEYS_PATTERNS = [
     4 => [
         1 => [[0,2], [1,3]],
         2 => [[0,1], [2,3]],

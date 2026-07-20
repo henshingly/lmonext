@@ -2,14 +2,21 @@
 /**
  * Project: LMOnext
  * Filename: view_wizard.php
- * Fileversion: 1.3.4
+ * Fileversion: 1.3.5
+ * Changelog: 1.3.5 - Umbenennung auf Nutzerwunsch: interne Bezeichnungen jetzt durchgehend auf
+ *                     Englisch ("League Key" statt der vorherigen deutschen Bezeichnung) –
+ *                     Variablenname, Funktionsname, interner Modus-Wert und Lang-Schlüssel
+ *                     entsprechend angepasst (siehe bootstrap.php/league-key_data.php). Der
+ *                     sichtbare UI-Text hieß schon vorher "Schlüsselplan" (siehe Changelog 1.3.2)
+ *                     und ist unverändert
  * Changelog: 1.3.4 - Vorschautabelle zeigt bei "kein Spielplan" jetzt korrekt "___" für die
  *                     Leerteam-Platzhalter (-1) statt eines PHP-Fehlers/leerer Zelle, siehe
  *                     bootstrap.php 1.7.1
  * Changelog: 1.3.3 - Auf Wunsch zurückgenommen: Schlüsselplan-Option wieder wie ursprünglich
  *                     immer sichtbar (nur ausgegraut mit "nicht verfügbar"-Hinweis) statt
  *                     komplett zu verschwinden, wenn kein Muster zur Teamzahl passt
- * Changelog: 1.3.2 - Umbenennung "Schlüsselring" zu "Schlüsselplan" (siehe lang-Dateien). Die
+ * Changelog: 1.3.2 - Umbenennung "League Key" (intern) zu "Schlüsselplan" (UI-Text, siehe
+ *                     lang-Dateien). Die
  *                     Option erscheint jetzt komplett nicht mehr (statt nur ausgegraut mit
  *                     "nicht verfügbar"-Hinweis), wenn für die gewählte Teamzahl kein Muster
  *                     hinterlegt ist
@@ -22,9 +29,9 @@
  *                     KO-Dropdown mit 16). Felder heißen jetzt dauerhaft unterschiedlich
  *                     ("team_count_liga"/"team_count_ko"), keine Namensumschaltung per JS mehr nötig
  * Changelog: 1.3.0 - Schritt 3 (reguläre Liga): neue Auswahl "Spielplan-Erstellung"
- *                     (Schlüsselring/Zufall/kein Spielplan) oberhalb der Vorschautabelle, per
+ *                     (League Key/Zufall/kein Spielplan) oberhalb der Vorschautabelle, per
  *                     eigenem Formular ohne die Teamnamen erneut einzugeben (siehe
- *                     handler_wizard.php "step=3&regen=1"). Schlüsselring-Option ist
+ *                     handler_wizard.php "step=3&regen=1"). League-Key-Option ist
  *                     ausgegraut, wenn für die gewählte Teamzahl kein Muster hinterlegt ist
  * Changelog: 1.2.1 - Projektname auf "LMOnext" umgestellt (vorher "Online-Liga-Verwaltung Board" / "OLVBoard")
  * Changelog: 1.2.0 - Alle Texte (PHP + JS) über t() übersetzt; Vorlagen-Texte (label/beschreibung/detail) über t($tpl[...]) aufgelöst
@@ -236,15 +243,15 @@ $stepLabels = [t('wiz_step_label_1'), t('wiz_step_label_2'), t('wiz_step_label_3
             $spieltage    = $wiz['spieltage'];
             $teams        = $wiz['teams'];
             $hinRunden    = count($spieltage) / 2;
-            $scheduleMode = $wiz['schedule_mode'] ?? 'schluesselring';
-            $hasSchluesselring = getSchluesselringPattern(count($teams)) !== null; ?>
+            $scheduleMode = $wiz['schedule_mode'] ?? 'leaguekey';
+            $hasLeagueKey = getLeagueKeyPattern(count($teams)) !== null; ?>
         <div class="card" style="margin-bottom:16px">
           <h2><?= h(t('wiz_schedule_mode_heading')) ?></h2>
           <form method="post" action="?action=create_liga&step=3&regen=1">
             <div style="display:flex;gap:20px;flex-wrap:wrap;margin-bottom:14px;font-size:.87rem">
               <label style="display:flex;align-items:center;gap:6px;cursor:pointer">
-                <input type="radio" name="schedule_mode" value="schluesselring"<?= $scheduleMode === 'schluesselring' ? ' checked' : '' ?><?= $hasSchluesselring ? '' : ' disabled' ?>>
-                <?= h(t('wiz_schedule_mode_schluesselring')) ?><?= $hasSchluesselring ? '' : ' <span style="color:var(--muted);font-size:.8em">(' . h(t('wiz_schedule_mode_unavailable')) . ')</span>' ?>
+                <input type="radio" name="schedule_mode" value="leaguekey"<?= $scheduleMode === 'leaguekey' ? ' checked' : '' ?><?= $hasLeagueKey ? '' : ' disabled' ?>>
+                <?= h(t('wiz_schedule_mode_leaguekey')) ?><?= $hasLeagueKey ? '' : ' <span style="color:var(--muted);font-size:.8em">(' . h(t('wiz_schedule_mode_unavailable')) . ')</span>' ?>
               </label>
               <label style="display:flex;align-items:center;gap:6px;cursor:pointer">
                 <input type="radio" name="schedule_mode" value="random"<?= $scheduleMode === 'random' ? ' checked' : '' ?>>

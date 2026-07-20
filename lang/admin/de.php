@@ -2,7 +2,10 @@
 /**
  * Project: LMOnext
  * Filename: lang/admin/de.php
- * Fileversion: 1.11.3
+ * Fileversion: 1.11.4
+ * Changelog: 1.11.4 - Lang-Schlüssel für die Spielplan-Erstellungsart umbenannt (Nutzerwunsch:
+ *                     interne Bezeichnungen jetzt durchgehend auf Englisch, "League Key" statt
+ *                     der vorherigen deutschen Bezeichnung)
  * Changelog: 1.11.3 - Übersetzungen für die neue Einstellung "Sprachauswahl anzeigen?" ergänzt
  * Changelog: 1.11.2
  * Changelog: 1.11.2 - Übersetzungen für die neue Einstellung "PDF-Export für Besucher
@@ -13,10 +16,10 @@
  * Changelog: 1.10.9 - Übersetzungen für Logo & Vereinslink bei "Teams (global)" ergänzt
  * Changelog: 1.10.8 - Zusatz "Berger-Tabelle: " aus der Spielplan-Beschreibung entfernt (das ist
  *                     ein Schach-Fachbegriff, gehört hier nicht rein)
- * Changelog: 1.10.7 - Bezeichnung "Schlüsselring" zu "Schlüsselplan" geändert (Wizard,
- *                     Spielplan-Erstellungsart)
+ * Changelog: 1.10.7 - Bezeichnung "League Key" (intern) zu "Schlüsselplan" (UI-Text) geändert
+ *                     (Wizard, Spielplan-Erstellungsart)
  * Changelog: 1.10.6 - Übersetzungen für die neue Spielplan-Erstellungsart-Auswahl im
- *                     Liga-Wizard ergänzt (Schlüsselring/Zufall/kein Spielplan)
+ *                     Liga-Wizard ergänzt (League Key/Zufall/kein Spielplan)
  * Changelog: 1.10.5 - Übersetzungen für die Mehrfachauswahl beim Team-Abgleich (Import) ergänzt/
  *                     angepasst: Dropdown statt Ja/Nein-Checkbox, wenn mehrere ähnliche Teams
  *                     gefunden wurden
@@ -426,7 +429,7 @@ return [
 
     'wiz_step3_liga_heading' => 'Schritt 3 – Spielplan (automatisch generiert)',
     'wiz_schedule_mode_heading'        => 'Spielplan-Erstellung',
-    'wiz_schedule_mode_schluesselring' => 'Schlüsselplan (DFB-Muster)',
+    'wiz_schedule_mode_leaguekey' => 'Schlüsselplan (DFB-Muster)',
     'wiz_schedule_mode_unavailable'    => 'für diese Teamzahl nicht verfügbar',
     'wiz_schedule_mode_random'         => 'Zufällig erstellen',
     'wiz_schedule_mode_none'          => 'Kein Spielplan',
