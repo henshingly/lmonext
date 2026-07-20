@@ -2,7 +2,9 @@
 /**
  * Project: LMOnext
  * Filename: handler_user.php
- * Fileversion: 1.5.2
+ * Fileversion: 1.5.3
+ * Changelog: 1.5.3 - save_admin_settings speichert jetzt zusätzlich show_language_switcher
+ * Changelog: 1.5.2
  * Changelog: 1.5.2 - save_admin_settings speichert jetzt zusätzlich show_pdf_buttons (neue
  *                     Einstellung "PDF-Export für Besucher anzeigen?" im Besucherbereich)
  * Changelog: 1.5.1 - E-Mail-Adresse jetzt auch nachträglich in der Benutzerverwaltung editierbar
@@ -253,6 +255,10 @@ if ($action === 'save_admin_settings' && $_SERVER['REQUEST_METHOD'] === 'POST') 
 
         if (isset($_POST['show_pdf_buttons'])) {
             $s->execute(['show_pdf_buttons', $_POST['show_pdf_buttons'] === '1' ? '1' : '0']);
+        }
+
+        if (isset($_POST['show_language_switcher'])) {
+            $s->execute(['show_language_switcher', $_POST['show_language_switcher'] === '1' ? '1' : '0']);
         }
 
         flash(t('flash_settings_saved'));

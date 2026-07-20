@@ -2,7 +2,12 @@
 /**
  * Project: LMOnext
  * Filename: template_engine.php
- * Fileversion: 2.5.0
+ * Fileversion: 2.5.1
+ * Changelog: 2.5.1 - Neue globale Einstellung "Sprachauswahl anzeigen?" ausgewertet: die
+ *                     Sprachauswahl im Footer/Header wird unterdrückt, wenn deaktiviert – gilt
+ *                     zentral für alle Templates und alle Seiten (renderTemplate() wird sowohl
+ *                     von home.php als auch liga.php genutzt)
+ * Changelog: 2.5.0
  * Changelog: 2.5.0 - Template-Auswahl-Dropdown vom Header in den Footer verschoben: steht jetzt
  *                     direkt in der "Template: ..."-Zeile anstelle des Klartext-Namens (nur wenn
  *                     der Wechsel erlaubt ist und mehr als ein Template existiert – sonst wie
@@ -250,7 +255,7 @@ function renderTemplate(string $activeTemplate, string $page, array $vars = []) 
 
     $vars += [
         'HtmlLang'      => h(getCurrentLanguage('frontend')),
-        'Sprachauswahl' => renderLanguageSwitcher('frontend'),
+        'Sprachauswahl' => getAdminSetting('show_language_switcher', '1') === '1' ? renderLanguageSwitcher('frontend') : '',
         'Version'       => h(getAppVersion()),
         'TemplateZeile' => $templateZeile,
     ];

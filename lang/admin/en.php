@@ -2,7 +2,9 @@
 /**
  * Project: LMOnext
  * Filename: lang/admin/en.php
- * Fileversion: 1.10.11
+ * Fileversion: 1.10.12
+ * Changelog: 1.10.12 - Added translations for the new "Show language selector?" setting
+ * Changelog: 1.10.11
  * Changelog: 1.10.11 - Added translations for the new "Show PDF export to visitors?" setting
  * Changelog: 1.10.10 - Added translations for the extended installer system checks (GD, SVG
  *                      rasterization, team logo directory, "optional" label)
@@ -683,6 +685,8 @@ return [
     'settings_hint_allow_template_switch'  => 'If yes, visitors can pick a different template than the one active here via a dropdown (only for their own session).',
     'settings_label_show_pdf_buttons'      => 'Show PDF export to visitors?',
     'settings_hint_show_pdf_buttons'       => 'If no, the PDF button is hidden entirely from visitors in results, standings, schedules, and the head-to-head comparison – for both KO and regular leagues, on every page.',
+    'settings_label_show_language_switcher' => 'Show language selector?',
+    'settings_hint_show_language_switcher'  => 'If no, the language selector is hidden from visitors on every page of the frontend.',
 
     // ── Maintenance (database backup/restore) ─────────────────────────────────
     'wartung_tab_backup'             => 'Backup',
