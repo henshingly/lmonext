@@ -2,7 +2,9 @@
 /**
  * Project: LMOnext
  * Filename: lang/admin/de.php
- * Fileversion: 1.11.1
+ * Fileversion: 1.11.2
+ * Changelog: 1.11.2 - Übersetzungen für die neue Einstellung "PDF-Export für Besucher
+ *                     anzeigen?" ergänzt
  * Changelog: 1.11.1 - Übersetzungen für die erweiterten Installer-Systemprüfungen ergänzt
  *                     (GD, SVG-Rasterisierung, Team-Logo-Ordner, "optional"-Kennzeichnung)
  * Changelog: 1.11.0 - Übersetzung für die neue Einstellung "Logo anzeigen" ergänzt
@@ -684,6 +686,8 @@ return [
     'settings_hint_active_template'     => 'Design, das Besucher auf der Startseite und den weiteren Seiten sehen.',
     'settings_label_allow_template_switch' => 'Besucher erlauben, Template zu wechseln?',
     'settings_hint_allow_template_switch'  => 'Wenn ja, können Besucher über ein Dropdown ein anderes als das hier aktive Template auswählen (nur für ihre eigene Sitzung).',
+    'settings_label_show_pdf_buttons'      => 'PDF-Export für Besucher anzeigen?',
+    'settings_hint_show_pdf_buttons'       => 'Wenn nein, wird der PDF-Button in Ergebnisse, Tabelle, Spielplänen und dem Teamvergleich für Besucher komplett ausgeblendet – bei KO- und regulären Ligen gleichermaßen, auf allen Seiten.',
 
     // ── Wartung (Datenbank-Backup/Wiederherstellung) ──────────────────────────
     'wartung_tab_backup'             => 'Backup',

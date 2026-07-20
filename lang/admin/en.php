@@ -2,7 +2,8 @@
 /**
  * Project: LMOnext
  * Filename: lang/admin/en.php
- * Fileversion: 1.10.10
+ * Fileversion: 1.10.11
+ * Changelog: 1.10.11 - Added translations for the new "Show PDF export to visitors?" setting
  * Changelog: 1.10.10 - Added translations for the extended installer system checks (GD, SVG
  *                      rasterization, team logo directory, "optional" label)
  * Changelog: 1.10.9 - Added translation for the new "Show logo" setting
@@ -680,6 +681,8 @@ return [
     'settings_hint_active_template'     => 'Design visitors see on the home page and other pages.',
     'settings_label_allow_template_switch' => 'Allow visitors to switch templates?',
     'settings_hint_allow_template_switch'  => 'If yes, visitors can pick a different template than the one active here via a dropdown (only for their own session).',
+    'settings_label_show_pdf_buttons'      => 'Show PDF export to visitors?',
+    'settings_hint_show_pdf_buttons'       => 'If no, the PDF button is hidden entirely from visitors in results, standings, schedules, and the head-to-head comparison – for both KO and regular leagues, on every page.',
 
     // ── Maintenance (database backup/restore) ─────────────────────────────────
     'wartung_tab_backup'             => 'Backup',

@@ -2,7 +2,13 @@
 /**
  * Project: LMOnext
  * Filename: liga.php
- * Fileversion: 3.9.3
+ * Fileversion: 3.9.4
+ * Changelog: 3.9.4 - Neue globale Einstellung "PDF-Export für Besucher anzeigen?" (Admin →
+ *                     Einstellungen → Besucherbereich) ausgewertet: blendet bei Deaktivierung
+ *                     nicht nur die PDF-Buttons aus (Ergebnisse/Tabelle/Spielplan), sondern
+ *                     blockiert auch den direkten Aufruf über ?pdf=1 bzw. ?h2h_pdf=1, gilt für
+ *                     KO- und reguläre Ligen gleichermaßen
+ * Changelog: 3.9.3
  * Changelog: 3.9.3 - Alle PDF-Export-Aufrufe (Ergebnisse/Tabelle/Spielplan/Teamvergleich)
  *                     übergeben jetzt $showLogos, damit Team-Logos auch im PDF erscheinen, wenn
  *                     die Liga-Einstellung "Logo anzeigen" aktiv ist. Der Teamvergleich-PDF-Link
@@ -112,7 +118,7 @@ require_once __DIR__ . '/frontend/bootstrap.php';
 // ── PDF-Export des Team-Vergleichs (Direkter Vergleich) ──────────────────────
 // Teamübergreifend, nicht an eine bestimmte Liga gebunden – deshalb hier vor
 // der normalen id/view-Auflösung abgefangen.
-if (isset($_GET['h2h_pdf'])) {
+if (isset($_GET['h2h_pdf']) && getAdminSetting('show_pdf_buttons', '1') === '1') {
     $teamAId = (int)($_GET['a'] ?? 0);
     $teamBId = (int)($_GET['b'] ?? 0);
     if ($teamAId > 0 && $teamBId > 0) {
@@ -137,6 +143,11 @@ $isKO         = getLigaType($ligaId) === 1;
 $opts         = getLigaOptions($ligaId);
 $flags        = getLigaViewFlags($opts);
 $showLogos    = ($opts['ShowLogos'] ?? '0') === '1';
+// Globale Einstellung (Admin → Einstellungen → Besucherbereich), gilt für
+// alle Liga-Typen und alle PDF-Exporte gleichermaßen. Blockiert bei
+// Deaktivierung nicht nur den Button, sondern auch den direkten Aufruf über
+// ?pdf=1 (sonst wäre die Datei trotz ausgeblendetem Button weiter abrufbar).
+$showPdfButtons = getAdminSetting('show_pdf_buttons', '1') === '1';
 // Tabelle und Kreuztabelle ergeben bei KO-Turnieren (Ausscheidungsmodus) keinen
 // Sinn – nur für reguläre (Round-Robin-)Ligen anzeigen.
 if ($isKO) {
@@ -175,16 +186,18 @@ switch ($currentView) {
         break;
 
     case 'tabelle':
-        if (isset($_GET['pdf'])) {
+        if (isset($_GET['pdf']) && $showPdfButtons) {
             exportTabellePdf($liga['name'], $ligaId, $allSpieltage, $showLogos);
             exit;
         }
         $viewInhalt = renderStandingsView($ligaId, $allSpieltage);
-        $viewInhalt .= '<div class="pdf-export-row"><a class="btn-pdf-export" href="?id=' . $ligaId . '&view=tabelle&pdf=1" title="' . h(tf('liga_pdf_export_button')) . '">'
-            . '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">'
-            . '<rect x="7" y="3" width="13" height="16" rx="2"/><path d="M4 7v13a2 2 0 0 0 2 2h11"/>'
-            . '</svg>'
-            . 'PDF</a></div>';
+        if ($showPdfButtons) {
+            $viewInhalt .= '<div class="pdf-export-row"><a class="btn-pdf-export" href="?id=' . $ligaId . '&view=tabelle&pdf=1" title="' . h(tf('liga_pdf_export_button')) . '">'
+                . '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">'
+                . '<rect x="7" y="3" width="13" height="16" rx="2"/><path d="M4 7v13a2 2 0 0 0 2 2h11"/>'
+                . '</svg>'
+                . 'PDF</a></div>';
+        }
         break;
 
     case 'spielplaene':
@@ -194,12 +207,12 @@ switch ($currentView) {
             $selectedTeamId = isset($_GET['team'])
                 ? (int)$_GET['team']
                 : resolveTeamNumberToId($ligaId, (int)($opts['selTeam'] ?? 0));
-            if ($selectedTeamId !== null && isset($_GET['pdf'])) {
+            if ($selectedTeamId !== null && isset($_GET['pdf']) && $showPdfButtons) {
                 exportSpielplanPdf($liga['name'], $ligaId, $allSpieltage, $selectedTeamId, $showLogos);
                 exit;
             }
             $viewInhalt = renderTeamScheduleView($ligaId, $allSpieltage, $selectedTeamId);
-            if ($selectedTeamId !== null) {
+            if ($selectedTeamId !== null && $showPdfButtons) {
                 $pdfUrl = '?id=' . $ligaId . '&view=spielplaene&team=' . $selectedTeamId . '&pdf=1';
                 $viewInhalt .= '<div class="pdf-export-row"><a class="btn-pdf-export" href="' . h($pdfUrl) . '" title="' . h(tf('liga_pdf_export_button')) . '">'
                     . '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">'
@@ -250,7 +263,7 @@ switch ($currentView) {
         // wie "Achtelfinale"/"Runde 1"; bei Finale+Spiel um Platz 3 zwei
         // getrennte Abschnitte mit jeweils eigenem Datum statt einem
         // gemeinsamen Datumsbereich über beide Begegnungen hinweg) ────────────
-        if ($spieltag !== null && isset($_GET['pdf'])) {
+        if ($spieltag !== null && isset($_GET['pdf']) && $showPdfButtons) {
             if ($isKO && (int)$currentNr === $maxNr && count(groupPartienByPairing($partien)) > 1) {
                 $pdfGroups = groupPartienByPairing($partien);
                 $pdfGroupHeadings = [tf('liga_round_finale'), tf('liga_heading_platz3')];
@@ -285,7 +298,7 @@ switch ($currentView) {
         }
 
         $pdfUrl = '?id=' . $ligaId . '&view=ergebnisse&nr=' . (int)$currentNr . '&pdf=1';
-        $pdfButtonHtml = '<div class="pdf-export-row"><a class="btn-pdf-export" href="' . h($pdfUrl) . '" title="' . h(tf('liga_pdf_export_button')) . '">'
+        $pdfButtonHtml = !$showPdfButtons ? '' : '<div class="pdf-export-row"><a class="btn-pdf-export" href="' . h($pdfUrl) . '" title="' . h(tf('liga_pdf_export_button')) . '">'
             . '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">'
             . '<rect x="7" y="3" width="13" height="16" rx="2"/><path d="M4 7v13a2 2 0 0 0 2 2h11"/>'
             . '</svg>'

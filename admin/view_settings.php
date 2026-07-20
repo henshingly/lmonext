@@ -2,7 +2,11 @@
 /**
  * Project: LMOnext
  * Filename: view_settings.php
- * Fileversion: 1.3.1
+ * Fileversion: 1.3.2
+ * Changelog: 1.3.2 - Neue globale Einstellung "PDF-Export für Besucher anzeigen?" in der Karte
+ *                     Besucherbereich – blendet den PDF-Button in Ergebnisse/Tabelle/
+ *                     Spielplänen/Teamvergleich für alle Liga-Typen und alle Seiten aus,
+ *                     wenn deaktiviert
  * Changelog: 1.3.1 - Projektname auf "LMOnext" umgestellt (vorher "Online-Liga-Verwaltung Board" / "OLVBoard")
  * Changelog: 1.3.0 - Neue Karte "Besucherbereich": aktives Template wählen, Template-Wechsel für Besucher erlauben
  * Changelog: 1.2.0 - Alle Texte über t() übersetzt (war bisher übersehen, nur Sprachauswahl war übersetzt)
@@ -46,6 +50,7 @@ $availableTemplates = getAvailableTemplates();
 $activeTemplate     = getAdminSetting('active_template', DEFAULT_TEMPLATE);
 if (!array_key_exists($activeTemplate, $availableTemplates)) { $activeTemplate = DEFAULT_TEMPLATE; }
 $allowTemplateSwitch = getAdminSetting('allow_template_switch', '0') === '1';
+$showPdfButtons      = getAdminSetting('show_pdf_buttons', '1') === '1';
 
 // ── View: Einstellungen ───────────────────────────────────────────────────────
 ?>
@@ -110,6 +115,17 @@ $allowTemplateSwitch = getAdminSetting('allow_template_switch', '0') === '1';
             </select>
             <div style="font-size:.78rem;color:var(--muted);margin-top:4px">
               <?= h(t('settings_hint_allow_template_switch')) ?>
+            </div>
+          </div>
+          <div class="form-group">
+            <label><?= h(t('settings_label_show_pdf_buttons')) ?></label>
+            <select name="show_pdf_buttons" style="width:100%;background:var(--bg);border:1px solid var(--border);
+                   color:var(--text);border-radius:var(--radius);padding:8px 10px;font-size:.87rem;margin-top:4px">
+              <option value="1"<?= $showPdfButtons ? ' selected' : '' ?>><?= h(t('common_yes')) ?></option>
+              <option value="0"<?= !$showPdfButtons ? ' selected' : '' ?>><?= h(t('common_no')) ?></option>
+            </select>
+            <div style="font-size:.78rem;color:var(--muted);margin-top:4px">
+              <?= h(t('settings_hint_show_pdf_buttons')) ?>
             </div>
           </div>
           <button type="submit" class="btn btn-primary"><?= h(t('common_save')) ?></button>

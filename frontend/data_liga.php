@@ -2,7 +2,12 @@
 /**
  * Project: LMOnext
  * Filename: data_liga.php
- * Fileversion: 2.15.5
+ * Fileversion: 2.15.6
+ * Changelog: 2.15.6 - renderH2hModalAssets() blendet den PDF-Button im Teamvergleich-Modal
+ *                     jetzt aus, wenn die globale Einstellung "PDF-Export für Besucher
+ *                     anzeigen?" deaktiviert ist; JS-Zuweisung auf pdfLinkEl entsprechend
+ *                     gegen ein fehlendes Element abgesichert
+ * Changelog: 2.15.5
  * Changelog: 2.15.5 - Bugfix: computeStandings() ignorierte den Spielstatus (n.V./i.E.)
  *                     komplett und wertete jede Partie immer mit den normalen Punktwerten
  *                     (PointsForWin/Draw/Lost), entgegen dem alten LMO, das für "nach
@@ -674,6 +679,7 @@ function renderH2hModalAssets() : string
         return '';
     }
     $emitted = true;
+    $showPdfButtons = getAdminSetting('show_pdf_buttons', '1') === '1';
 
     $html  = '<div class="h2h-overlay" id="h2h-overlay" hidden>';
     $html .= '<div class="h2h-modal" role="dialog" aria-modal="true">';
@@ -681,11 +687,13 @@ function renderH2hModalAssets() : string
     $html .= '<h3 class="h2h-title" id="h2h-title"></h3>';
     $html .= '<div class="h2h-record" id="h2h-record"></div>';
     $html .= '<div class="h2h-list" id="h2h-list"></div>';
-    $html .= '<div class="pdf-export-row"><a class="btn-pdf-export" id="h2h-pdf-link" href="#" title="' . h(tf('liga_pdf_export_button')) . '">'
-        . '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">'
-        . '<rect x="7" y="3" width="13" height="16" rx="2"/><path d="M4 7v13a2 2 0 0 0 2 2h11"/>'
-        . '</svg>'
-        . 'PDF</a></div>';
+    if ($showPdfButtons) {
+        $html .= '<div class="pdf-export-row"><a class="btn-pdf-export" id="h2h-pdf-link" href="#" title="' . h(tf('liga_pdf_export_button')) . '">'
+            . '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">'
+            . '<rect x="7" y="3" width="13" height="16" rx="2"/><path d="M4 7v13a2 2 0 0 0 2 2h11"/>'
+            . '</svg>'
+            . 'PDF</a></div>';
+    }
     $html .= '</div></div>';
 
     $html .= '<script>(function(){'
@@ -704,7 +712,7 @@ function renderH2hModalAssets() : string
         . 'var teamALabel=esc(data.teamAName)+(data.teamALogo?\'<img src="\'+esc(data.teamALogo)+\'" alt="" class="team-logo-inline">\':\'\');'
         . 'var teamBLabel=(data.teamBLogo?\'<img src="\'+esc(data.teamBLogo)+\'" alt="" class="team-logo-inline">\':\'\')+esc(data.teamBName);'
         . 'titleEl.innerHTML=titleTpl.replace("{heim}",teamALabel).replace("{gast}",teamBLabel);'
-        . 'pdfLinkEl.href="liga.php?h2h_pdf=1&a="+data.teamAId+"&b="+data.teamBId+(data.teamALogo?"&logos=1":"");'
+        . 'if(pdfLinkEl){pdfLinkEl.href="liga.php?h2h_pdf=1&a="+data.teamAId+"&b="+data.teamBId+(data.teamALogo?"&logos=1":"");}'
         . 'recordEl.innerHTML=\'<span class="h2h-chip h2h-chip-a"><span class="h2h-chip-label">\'+winsLabel(data.teamAName)+\'</span><span class="h2h-chip-num">\'+data.winsA+\'</span></span>\''
         . '+\'<span class="h2h-chip h2h-chip-draw">\'+data.draws+\' \'+esc(drawLabel)+\'</span>\''
         . '+\'<span class="h2h-chip h2h-chip-b"><span class="h2h-chip-label">\'+winsLabel(data.teamBName)+\'</span><span class="h2h-chip-num">\'+data.winsB+\'</span></span>\';'
