@@ -1,5 +1,12 @@
 <!--
-  Template: addon/mini | Filename: mininext.tpl.php | Fileversion: 1.0.1
+  Template: addon/mini | Filename: mininext.tpl.php | Fileversion: 1.1.0
+  Changelog: 1.1.0 - Team-Anzeige auf Wunsch umgebaut: Logo steht jetzt neben dem Namen statt
+                     darüber ("TEAMNAME LOGO -:- LOGO TEAMNAME", Logos "schauen" zum Ergebnis in
+                     der Mitte), analog zur Ergebnisse-Ansicht der normalen Besucherseite.
+                     CSS-Selektor für die Logo-Größe generisch auf "img im Team-Bereich" gesetzt
+                     statt auf die globale .team-logo-inline-Klasse (existiert auf dieser
+                     eigenständigen Seite nicht). Gleiche Anpassung im "Vorheriges Spiel"-Block
+  Changelog: 1.0.1
   Changelog: 1.0.1 - box-sizing:border-box + display:inline-block ergänzt (gleiche defensive
                      Absicherung wie beim Minitabelle-Template-Fix, siehe standard.tpl.php 1.1.0)
                      gegen abweichende CSS-Regeln auf der Zielseite
@@ -14,14 +21,17 @@
 -->
 <style>
 .lmo-mininext{display:inline-block;box-sizing:border-box;font-family:'Segoe UI',system-ui,-apple-system,sans-serif;font-size:.8rem;
-  background:#fff;border:1px solid #e3e7ee;border-radius:8px;overflow:hidden;max-width:260px}
+  background:#fff;border:1px solid #e3e7ee;border-radius:8px;overflow:hidden;max-width:300px}
 .lmo-mininext .lmo-mn-head{background:#153A8C;color:#fff;font-weight:700;padding:6px 10px}
 .lmo-mininext .lmo-mn-countdown{text-align:center;padding:6px 8px 0;color:#697182;font-size:.72rem}
 .lmo-mininext .lmo-mn-date{text-align:center;padding:2px 8px 6px;color:#9098a8;font-size:.72rem}
-.lmo-mininext .lmo-mn-teams{display:flex;align-items:center;justify-content:center;gap:8px;padding:6px 10px}
-.lmo-mininext .lmo-mn-team{flex:1;text-align:center;font-weight:600;color:#1f2430;font-size:.76rem}
-.lmo-mininext .lmo-mn-logo{height:28px;width:28px;object-fit:contain;vertical-align:middle}
-.lmo-mininext .lmo-mn-score{font-weight:700;font-size:1.15rem;color:#153A8C;white-space:nowrap;padding:0 4px}
+.lmo-mininext .lmo-mn-teams{display:flex;align-items:center;justify-content:space-between;gap:6px;padding:6px 8px}
+.lmo-mininext .lmo-mn-team{flex:1;display:flex;align-items:center;gap:5px;font-weight:600;color:#1f2430;font-size:.74rem;min-width:0}
+.lmo-mininext .lmo-mn-team span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.lmo-mininext .lmo-mn-team-a{justify-content:flex-end;text-align:right}
+.lmo-mininext .lmo-mn-team-b{justify-content:flex-start;text-align:left}
+.lmo-mininext .lmo-mn-team img{height:22px;width:auto;object-fit:contain;vertical-align:middle;flex-shrink:0}
+.lmo-mininext .lmo-mn-score{font-weight:700;font-size:1.1rem;color:#153A8C;white-space:nowrap;padding:0 4px;flex-shrink:0}
 .lmo-mininext .lmo-mn-note{text-align:center;color:#9098a8;font-size:.7rem;padding:0 8px 6px}
 .lmo-mininext .lmo-mn-sub{background:#f4f6fb;color:#697182;font-weight:700;padding:5px 10px;
   font-size:.72rem;text-transform:uppercase;letter-spacing:.02em}
@@ -44,9 +54,9 @@
   <div class="lmo-mn-countdown"><!--countDown--></div>
   <div class="lmo-mn-date"><!--gameDate--> <!--gameTime--></div>
   <div class="lmo-mn-teams">
-    <div class="lmo-mn-team"><!--imgHomeBig--><br><!--homeName--></div>
+    <div class="lmo-mn-team lmo-mn-team-a"><span><!--homeName--></span><!--imgHomeBig--></div>
     <div class="lmo-mn-score"><!--homeTore--> : <!--guestTore--></div>
-    <div class="lmo-mn-team"><!--imgGuestBig--><br><!--guestName--></div>
+    <div class="lmo-mn-team lmo-mn-team-b"><!--imgGuestBig--><span><!--guestName--></span></div>
   </div>
   <div class="lmo-mn-note"><!--gameNote--></div>
 
@@ -68,9 +78,9 @@
     <div class="lmo-mn-sub"><!--previous_gameTxt--></div>
     <div class="lmo-mn-date"><!--previous_gameDate--> <!--previous_gameTime--></div>
     <div class="lmo-mn-teams">
-      <div class="lmo-mn-team"><!--previous_imgHomeSmall--><br><!--previous_homeName--></div>
+      <div class="lmo-mn-team lmo-mn-team-a"><span><!--previous_homeName--></span><!--previous_imgHomeSmall--></div>
       <div class="lmo-mn-score"><!--previous_hTore--> : <!--previous_gTore--></div>
-      <div class="lmo-mn-team"><!--previous_imgGuestSmall--><br><!--previous_guestName--></div>
+      <div class="lmo-mn-team lmo-mn-team-b"><!--previous_imgGuestSmall--><span><!--previous_guestName--></span></div>
     </div>
   </div>
   <!-- END previous -->

@@ -2,7 +2,24 @@
 /**
  * Project: LMOnext
  * Filename: addon/mini/lmo-minitab.php
- * Fileversion: 1.1.0
+ * Fileversion: 1.2.1
+ * Changelog: 1.2.1 - Bugfix: Team-Logo-Bild und der "Zur Tabelle"-Link in der Kopfzeile
+ *                     zeigten ins Leere, da renderTeamLogoImg()/die "liga.php?id=..."-Verlinkung
+ *                     Pfade relativ zum Projekt-Root zurückgeben – korrekt für liga.php/home.php
+ *                     (die selbst im Projekt-Root liegen), aber falsch für dieses Addon (liegt
+ *                     unter addon/mini/, zwei Ebenen tiefer). Neue Funktion
+ *                     miniProjectRootUrlPrefix() berechnet das korrekte URL-Präfix dynamisch
+ *                     über Document-Root-Abgleich (funktioniert bei Direktaufruf UND bei
+ *                     include() aus einer beliebig platzierten Wrapper-Datei, nicht nur bei
+ *                     einer festen Verzeichnistiefe), Fallback auf einfache Heuristik falls
+ *                     nicht ermittelbar
+ * Changelog: 1.2.0
+ * Changelog: 1.2.0 - Neuer Platzhalter "Logo" (Team-Logo, siehe Admin → Teams (global)),
+ *                     zwischen Tabellenplatz und Teamname positioniert (siehe standard.tpl.php
+ *                     1.2.0). Immer angezeigt (unabhängig von der liga-eigenen
+ *                     "Logo anzeigen"-Einstellung, da dieses Widget als eigenständiges,
+ *                     extern eingebundenes Element davon unabhängig sein soll)
+ * Changelog: 1.1.0
  * Changelog: 1.1.0 - Bugfix: <!--ligaDatum--> zeigte immer das heutige Tagesdatum statt des
  *                     tatsächlichen letzten Speicherdatums der Liga (im alten LMO das
  *                     Änderungsdatum der .l98-Datei). Liest jetzt liga.datum aus der DB, das
@@ -60,6 +77,52 @@ $miniIsDirectCall = basename($_SERVER['SCRIPT_NAME'] ?? '') === 'lmo-minitab.php
 
 require_once __DIR__ . '/../../frontend/bootstrap.php';
 
+/**
+ * Berechnet das URL-Präfix zum Projekt-Root, egal ob diese Datei direkt
+ * aufgerufen ODER per include() aus einer beliebig platzierten Wrapper-Datei
+ * eingebunden wird. renderTeamLogoImg() & Co. liefern Pfade wie
+ * "assets/img/teams/X.png", relativ zum Projekt-Root gedacht – bei direktem
+ * Aufruf (Datei liegt unter addon/mini/, zwei Ebenen tiefer als der Root)
+ * würde der Browser das sonst falsch auflösen, und ein reines "../../"
+ * würde wiederum bei include() aus einer Wrapper-Datei fehlschlagen, die
+ * selbst nicht im Projekt-Root liegt.
+ *
+ * Funktionsweise: __DIR__ dieser Datei ist IMMER "{ProjektRoot}/addon/mini"
+ * (unabhängig vom Aufrufweg, da PHP __DIR__ den tatsächlichen Speicherort
+ * der Datei liefert). $_SERVER['SCRIPT_FILENAME']/['SCRIPT_NAME'] verraten,
+ * wie der ursprünglich aufgerufene Dateipfad auf eine URL abgebildet wird –
+ * daraus lässt sich das Document-Root ableiten und der Projekt-Root-Pfad in
+ * eine korrekte, absolute URL umrechnen.
+ */
+function miniProjectRootUrlPrefix() : string
+{
+    static $prefix = null;
+    if ($prefix !== null) {
+        return $prefix;
+    }
+
+    $projectRootDisk = rtrim(str_replace('\\', '/', dirname(__DIR__, 2)), '/');
+    $scriptFilename  = str_replace('\\', '/', (string)($_SERVER['SCRIPT_FILENAME'] ?? ''));
+    $scriptName      = (string)($_SERVER['SCRIPT_NAME'] ?? '');
+
+    if ($scriptFilename !== '' && $scriptName !== '' && str_ends_with($scriptFilename, $scriptName)) {
+        $documentRootDisk = substr($scriptFilename, 0, -strlen($scriptName));
+        $documentRootDisk = rtrim($documentRootDisk, '/');
+        if ($documentRootDisk !== '' && str_starts_with($projectRootDisk, $documentRootDisk)) {
+            $prefix = substr($projectRootDisk, strlen($documentRootDisk)) . '/';
+            return $prefix;
+        }
+    }
+
+    // Fallback, falls sich das Document-Root nicht zuverlässig ermitteln
+    // lässt (untypisches Server-Setup): bei Direktaufruf ist der Pfad relativ
+    // zu addon/mini/ bekannt (zwei Ebenen hoch), bei include() bleibt nur
+    // die (unsichere) Annahme, dass die Wrapper-Datei im Projekt-Root liegt.
+    $isDirectCall = basename($_SERVER['SCRIPT_NAME'] ?? '') === basename(__FILE__);
+    $prefix = $isDirectCall ? '../../' : '';
+    return $prefix;
+}
+
 // ── Parameter einlesen (GET überschreibt vorher per include() gesetzte
 // PHP-Variablen, die wiederum Vorrang vor den Standardwerten haben) ──────────
 $m_liga     = isset($_GET['mini_liga']) ? (int)$_GET['mini_liga'] : (int)($mini_liga ?? 0);
@@ -75,6 +138,20 @@ if ($miniIsDirectCall) {
     header('Content-Type: text/html; charset=utf-8');
     echo "<!DOCTYPE html>\n<html><head><meta charset=\"utf-8\"><title>Minitabelle</title>"
         . "<style>html,body{margin:0;padding:0;background:transparent;}</style></head><body>\n";
+}
+
+/**
+ * renderTeamLogoImg()/findTeamLogoPathFrontend() liefern Pfade wie
+ * "assets/img/teams/X.png" – relativ zum Projekt-Root gedacht, korrekt für
+ * Seiten wie liga.php/home.php, die selbst im Projekt-Root liegen. Dieses
+ * Addon liegt aber unter addon/mini/ (zwei Ebenen tiefer), wodurch der
+ * Browser denselben relativen Pfad fälschlich relativ zu addon/mini/
+ * aufgelöst hätte. Eigene, lokal korrigierte Variante mit "../../"-Präfix.
+ */
+function miniLogoImg(int $teamId) : string
+{
+    $path = findTeamLogoPathFrontend($teamId) ?? 'assets/img/nopic-team.svg';
+    return '<img src="' . h(miniProjectRootUrlPrefix() . $path) . '" alt="" class="team-logo-inline">';
 }
 
 /**
@@ -169,6 +246,7 @@ function renderMinitabelle(int $ligaId, ?int $platz, int $ueber, int $unter, str
 
         $replacements = [
             '<!--Platz-->'        => (string)$platzNr,
+            '<!--Logo-->'         => miniLogoImg((int)$r['id']),
             '<!--Team-->'         => h($r['kurz'] !== '' ? $r['kurz'] : $r['name']),
             '<!--TeamLang-->'     => h($r['name']),
             '<!--TeamMittel-->'   => h($mittelById[$r['id']] ?? ''),
@@ -187,7 +265,7 @@ function renderMinitabelle(int $ligaId, ?int $platz, int $ueber, int $unter, str
     }
 
     $outer = [
-        '<!--Link-->'     => h('liga.php?id=' . $ligaId . '&view=tabelle'),
+        '<!--Link-->'     => h(miniProjectRootUrlPrefix() . 'liga.php?id=' . $ligaId . '&view=tabelle'),
         '<!--Tabelle-->'  => h($ligaRow['name']),
         '<!--ligaDatum-->'=> h(tf('liga_stand_datum', ['datum' => ($ligaTs = strtotime((string)($ligaRow['datum'] ?? ''))) !== false ? date('d.m.Y', $ligaTs) : date('d.m.Y')])),
     ];

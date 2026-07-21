@@ -1,5 +1,9 @@
 <!--
-  Template: addon/mini | Filename: standard.tpl.php | Fileversion: 1.1.0
+  Template: addon/mini | Filename: standard.tpl.php | Fileversion: 1.2.0
+  Changelog: 1.2.0 - Neue Logo-Spalte zwischen Tabellenplatz und Teamname (Platzhalter "Logo",
+                     siehe lmo-minitab.php 1.2.0), eigenständiges CSS (kein Zugriff auf die
+                     globale .team-logo-inline-Klasse des Hauptstylesheets, da diese Tabelle auf
+                     fremden Webseiten läuft)
   Changelog: 1.1.0 - Bugfix: Tabelle hatte keine Breitenbegrenzung – auf Zielseiten mit eigenen
                      CSS-Regeln für <table> (z.B. eine übliche "table{width:100%}"-Reset-Regel)
                      zog sich das Widget dadurch über die volle Seitenbreite statt kompakt zu
@@ -22,6 +26,8 @@
 .lmo-mini caption a:hover{text-decoration:underline}
 .lmo-mini td{padding:4px 8px;border-top:1px solid #eef1f6;white-space:nowrap}
 .lmo-mini td.lmo-mini-platz{color:#697182;width:1%;text-align:center;font-weight:600}
+.lmo-mini td.lmo-mini-logo{width:1%;text-align:center;padding-left:2px;padding-right:2px}
+.lmo-mini td.lmo-mini-logo img{height:18px;width:auto;vertical-align:middle}
 .lmo-mini td.lmo-mini-team{text-align:left;width:100%}
 .lmo-mini td.lmo-mini-diff,.lmo-mini td.lmo-mini-pkt{text-align:center;width:1%}
 .lmo-mini td.lmo-mini-pkt{font-weight:700;color:#153A8C}
@@ -34,6 +40,7 @@
   <!-- BEGIN Inhalt -->
   <tr class="<!--Class-->" style="<!--Style-->">
     <td class="lmo-mini-platz"><!--Platz--></td>
+    <td class="lmo-mini-logo"><!--Logo--></td>
     <td class="lmo-mini-team" title="<!--TeamLang-->"><!--Team--></td>
     <td class="lmo-mini-diff"><!--Tordifferenz--></td>
     <td class="lmo-mini-pkt"><!--Punkte--></td>

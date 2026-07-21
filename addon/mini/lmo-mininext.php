@@ -2,7 +2,16 @@
 /**
  * Project: LMOnext
  * Filename: addon/mini/lmo-mininext.php
- * Fileversion: 1.0.1
+ * Fileversion: 1.0.2
+ * Changelog: 1.0.2 - Bugfix: Team-Logos zeigten ins Leere, da renderTeamLogoImg() Pfade
+ *                     relativ zum Projekt-Root zurückgibt – korrekt für liga.php/home.php (die
+ *                     selbst im Projekt-Root liegen), aber falsch für dieses Addon (liegt unter
+ *                     addon/mini/, zwei Ebenen tiefer, siehe direkter URL-Aufruf in der
+ *                     Fehlermeldung des Nutzers). Neue Funktion miniProjectRootUrlPrefix()
+ *                     berechnet das korrekte URL-Präfix dynamisch über Document-Root-Abgleich
+ *                     (funktioniert bei Direktaufruf UND bei include() aus einer beliebig
+ *                     platzierten Wrapper-Datei), an allen 8 Logo-Stellen verwendet
+ * Changelog: 1.0.1
  * Changelog: 1.0.1 - Bugfix: <!--ligaDatum--> zeigte immer das heutige Tagesdatum statt des
  *                     tatsächlichen letzten Speicherdatums der Liga. Liest jetzt liga.datum aus
  *                     der DB, siehe lmo-minitab.php 1.1.0 für Details
@@ -57,6 +66,36 @@ $miniIsDirectCall = basename($_SERVER['SCRIPT_NAME'] ?? '') === 'lmo-mininext.ph
 
 require_once __DIR__ . '/../../frontend/bootstrap.php';
 
+/**
+ * Berechnet das URL-Präfix zum Projekt-Root, egal ob diese Datei direkt
+ * aufgerufen ODER per include() aus einer beliebig platzierten Wrapper-Datei
+ * eingebunden wird. Siehe ausführlichen Kommentar in lmo-minitab.php.
+ */
+function miniProjectRootUrlPrefix() : string
+{
+    static $prefix = null;
+    if ($prefix !== null) {
+        return $prefix;
+    }
+
+    $projectRootDisk = rtrim(str_replace('\\', '/', dirname(__DIR__, 2)), '/');
+    $scriptFilename  = str_replace('\\', '/', (string)($_SERVER['SCRIPT_FILENAME'] ?? ''));
+    $scriptName      = (string)($_SERVER['SCRIPT_NAME'] ?? '');
+
+    if ($scriptFilename !== '' && $scriptName !== '' && str_ends_with($scriptFilename, $scriptName)) {
+        $documentRootDisk = substr($scriptFilename, 0, -strlen($scriptName));
+        $documentRootDisk = rtrim($documentRootDisk, '/');
+        if ($documentRootDisk !== '' && str_starts_with($projectRootDisk, $documentRootDisk)) {
+            $prefix = substr($projectRootDisk, strlen($documentRootDisk)) . '/';
+            return $prefix;
+        }
+    }
+
+    $isDirectCall = basename($_SERVER['SCRIPT_NAME'] ?? '') === basename(__FILE__);
+    $prefix = $isDirectCall ? '../../' : '';
+    return $prefix;
+}
+
 // ── Parameter einlesen (GET überschreibt vorher per include() gesetzte
 // PHP-Variablen, die wiederum Vorrang vor den Standardwerten haben) ──────────
 $m_liga     = isset($_GET['mini_liga']) ? (int)$_GET['mini_liga'] : (int)($mini_liga ?? 0);
@@ -69,6 +108,20 @@ if ($miniIsDirectCall) {
     header('Content-Type: text/html; charset=utf-8');
     echo "<!DOCTYPE html>\n<html><head><meta charset=\"utf-8\"><title>Mininext</title>"
         . "<style>html,body{margin:0;padding:0;background:transparent;}</style></head><body>\n";
+}
+
+/**
+ * renderTeamLogoImg()/findTeamLogoPathFrontend() liefern Pfade relativ zum
+ * Projekt-Root, korrekt für Seiten wie liga.php/home.php, die selbst dort
+ * liegen. Dieses Addon liegt aber unter addon/mini/ (zwei Ebenen tiefer),
+ * wodurch der Browser denselben relativen Pfad fälschlich relativ zu
+ * addon/mini/ aufgelöst hätte. Eigene, lokal korrigierte Variante mit
+ * "../../"-Präfix.
+ */
+function miniLogoImg(int $teamId) : string
+{
+    $path = findTeamLogoPathFrontend($teamId) ?? 'assets/img/nopic-team.svg';
+    return '<img src="' . h(miniProjectRootUrlPrefix() . $path) . '" alt="" class="team-logo-inline">';
 }
 
 /**
@@ -253,10 +306,10 @@ function renderMininext(int $ligaId, ?int $teamAId, ?int $teamBId, string $templ
         '<!--guestNameShort-->'  => h($nameOf($currentGastId, 'kurz')),
         '<!--homeTore-->'  => $gespielt ? h((string)$current['h_tore']) : '-',
         '<!--guestTore-->' => $gespielt ? h((string)$current['g_tore']) : '-',
-        '<!--imgHomeBig-->'    => renderTeamLogoImg($currentHeimId, true),
-        '<!--imgHomeSmall-->'  => renderTeamLogoImg($currentHeimId, true),
-        '<!--imgGuestBig-->'   => renderTeamLogoImg($currentGastId, true),
-        '<!--imgGuestSmall-->' => renderTeamLogoImg($currentGastId, true),
+        '<!--imgHomeBig-->'    => miniLogoImg($currentHeimId),
+        '<!--imgHomeSmall-->'  => miniLogoImg($currentHeimId),
+        '<!--imgGuestBig-->'   => miniLogoImg($currentGastId),
+        '<!--imgGuestSmall-->' => miniLogoImg($currentGastId),
     ];
 
     // ── "Vorheriges Spiel"-Block (optional, siehe <!-- BEGIN/END previous --> im Template) ──
@@ -279,10 +332,10 @@ function renderMininext(int $ligaId, ?int $teamAId, ?int $teamBId, string $templ
                 '<!--previous_guestNameShort-->'  => h($nameOf($pGastId, 'kurz')),
                 '<!--previous_hTore-->' => $previous['h_tore'] !== null ? h((string)$previous['h_tore']) : '-',
                 '<!--previous_gTore-->' => $previous['g_tore'] !== null ? h((string)$previous['g_tore']) : '-',
-                '<!--previous_imgHomeSmall-->'  => renderTeamLogoImg($pHeimId, true),
-                '<!--previous_imgHomeBig-->'    => renderTeamLogoImg($pHeimId, true),
-                '<!--previous_imgGuestSmall-->' => renderTeamLogoImg($pGastId, true),
-                '<!--previous_imgGuestBig-->'   => renderTeamLogoImg($pGastId, true),
+                '<!--previous_imgHomeSmall-->'  => miniLogoImg($pHeimId),
+                '<!--previous_imgHomeBig-->'    => miniLogoImg($pHeimId),
+                '<!--previous_imgGuestSmall-->' => miniLogoImg($pGastId),
+                '<!--previous_imgGuestBig-->'   => miniLogoImg($pGastId),
             ];
             $prevBlockHtml = strtr($prevBlockSrc, $prevRepl);
         }
