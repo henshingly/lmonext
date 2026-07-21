@@ -2,7 +2,20 @@
 /**
  * Project: LMOnext
  * Filename: handler_backup.php
- * Fileversion: 1.1.1
+ * Fileversion: 1.2.0
+ * Changelog: 1.2.0 - Team-Logo-Ordner (assets/img/teams/) wird jetzt mitgesichert: neue
+ *                     Funktionen backupCreateLogosZip()/backupRestoreLogosZip()/
+ *                     backupLogosZipFilenameFor(). Bei jedem Backup wird (falls ZipArchive
+ *                     verfügbar ist und mindestens ein Logo hochgeladen wurde) ein begleitendes
+ *                     "backup_{Zeitstempel}_logos.zip" im selben /store-Ordner angelegt, mit
+ *                     demselben Zeitstempel wie der SQL-Dump. Wird beim Wiederherstellen
+ *                     automatisch mit zurückgespielt (vorhandene Logos werden vorher entfernt,
+ *                     analog zur "Komplett ersetzen"-Logik der DB-Wiederherstellung), und beim
+ *                     Löschen/automatischen Aufräumen (Max-Anzahl) zusammen mit dem
+ *                     zugehörigen SQL-Backup entfernt. ZipArchive ist optional (wie bzip2) –
+ *                     fehlt die Erweiterung, wird die Logo-Sicherung übersprungen, die
+ *                     Datenbank-Sicherung funktioniert unverändert weiter
+ * Changelog: 1.1.1
  * Changelog: 1.1.1 - .htaccess-Text (Kommentare) für /store auf Englisch umgestellt, sowohl die
  *                     Datei selbst als auch die Auto-Wiederherstellungs-Logik in backupDir()
  * Changelog: 1.1.0 - Backups sind jetzt zwischen Installationen mit unterschiedlichem
@@ -120,11 +133,14 @@ function backupList() : array
         if ($meta === null) {
             continue;
         }
+        $logosFilename = backupLogosZipFilenameFor($filename);
         $out[] = [
-            'filename' => $filename,
-            'datetime' => $meta['datetime'],
-            'format'   => $meta['format'],
-            'size'     => (int)(@filesize($path) ?: 0),
+            'filename'   => $filename,
+            'datetime'   => $meta['datetime'],
+            'format'     => $meta['format'],
+            'size'       => (int)(@filesize($path) ?: 0),
+            'hasLogos'   => $logosFilename !== null,
+            'logosSize'  => $logosFilename !== null ? (int)(@filesize($dir . '/' . $logosFilename) ?: 0) : 0,
         ];
     }
     usort($out, static fn(array $a, array $b) => $b['datetime'] <=> $a['datetime']);
@@ -147,6 +163,10 @@ function backupEnforceMaxCount() : void
     }
     $dir = backupDir();
     foreach (array_slice($all, $max) as $old) {
+        $oldLogos = backupLogosZipFilenameFor($old['filename']);
+        if ($oldLogos !== null) {
+            @unlink($dir . '/' . $oldLogos);
+        }
         @unlink($dir . '/' . $old['filename']);
     }
 }
@@ -292,7 +312,8 @@ function backupCreate(string $type, string $format, array $tables) : array
         'bzip2' => '.sql.bz2',
         default => '.sql',
     };
-    $filename = 'backup_' . date('Y-m-d_H-i-s') . $ext;
+    $timestamp = date('Y-m-d_H-i-s');
+    $filename = 'backup_' . $timestamp . $ext;
     $path = backupDir() . '/' . $filename;
 
     $bytes = match ($format) {
@@ -308,9 +329,135 @@ function backupCreate(string $type, string $format, array $tables) : array
         return ['ok' => false, 'error' => t('wartung_error_write', ['path' => 'store/' . $filename])];
     }
 
+    // Team-Logos im selben Zug mitsichern (gleicher Zeitstempel im
+    // Dateinamen, damit beide Dateien eindeutig zusammengehören). Rein
+    // informativ, kein harter Fehler: fehlt ZipArchive oder gibt es noch
+    // keine hochgeladenen Logos, bleibt logosFilename einfach null.
+    $logosFilename = backupCreateLogosZip($timestamp);
+
     backupEnforceMaxCount();
 
-    return ['ok' => true, 'filename' => $filename];
+    return ['ok' => true, 'filename' => $filename, 'logosFilename' => $logosFilename];
+}
+
+/**
+ * Ob die ZipArchive-Erweiterung verfügbar ist. Fehlt sie (manches
+ * Shared-Hosting), wird die Logo-Sicherung übersprungen statt einen
+ * Fataler Fehler zu riskieren – die Datenbank-Sicherung selbst
+ * funktioniert davon komplett unabhängig weiter.
+ */
+function backupZipAvailable() : bool
+{
+    return class_exists('ZipArchive');
+}
+
+/**
+ * Erzeugt zu einem Datenbank-Backup ein begleitendes ZIP mit dem
+ * Team-Logo-Ordner (assets/img/teams/, siehe Admin → Teams (global) →
+ * Logo-Upload), im selben /store-Verzeichnis, mit demselben Zeitstempel im
+ * Dateinamen ("backup_{Zeitstempel}_logos.zip") wie der zugehörige
+ * SQL-Dump, damit beide Dateien eindeutig zusammengehören und gemeinsam
+ * verwaltet (angezeigt/gelöscht/wiederhergestellt) werden können.
+ *
+ * @return string|null Dateiname, oder null wenn ZipArchive fehlt oder der
+ *                      Logo-Ordner leer ist (kein Fehler – einfach nichts
+ *                      zu sichern)
+ */
+function backupCreateLogosZip(string $timestamp) : ?string
+{
+    if (!backupZipAvailable()) {
+        return null;
+    }
+    $logoDir = teamLogoDir();
+    $files = array_filter(glob($logoDir . '/*') ?: [], 'is_file');
+    if ($files === []) {
+        return null;
+    }
+
+    $filename = 'backup_' . $timestamp . '_logos.zip';
+    $path = backupDir() . '/' . $filename;
+
+    $zip = new ZipArchive();
+    if ($zip->open($path, ZipArchive::CREATE | ZipArchive::OVERWRITE) !== true) {
+        return null;
+    }
+    foreach ($files as $file) {
+        $zip->addFile($file, 'teams/' . basename($file));
+    }
+    $zip->close();
+
+    return is_file($path) ? $filename : null;
+}
+
+/**
+ * Ermittelt (falls vorhanden) den zu einer SQL-Backup-Datei gehörenden
+ * Logo-ZIP-Dateinamen (gleicher Zeitstempel im Namen).
+ */
+function backupLogosZipFilenameFor(string $sqlFilename) : ?string
+{
+    $meta = backupParseFilename($sqlFilename);
+    if ($meta === null) {
+        return null;
+    }
+    $candidate = 'backup_' . $meta['datetime']->format('Y-m-d_H-i-s') . '_logos.zip';
+    return is_file(backupDir() . '/' . $candidate) ? $candidate : null;
+}
+
+/**
+ * Stellt den Team-Logo-Ordner aus dem zu einem SQL-Backup gehörenden ZIP
+ * wieder her (siehe backupCreateLogosZip()). Entfernt vorher alle
+ * vorhandenen Logo-Dateien (vollständiges Ersetzen, analog zur
+ * Datenbank-Wiederherstellung), damit keine Altlasten von inzwischen
+ * gelöschten Teams zurückbleiben. Kein Fehler, wenn es zu diesem Backup gar
+ * kein Logo-ZIP gibt (z.B. ein älteres Backup von vor diesem Feature) –
+ * dann bleibt der aktuelle Logo-Ordner einfach unangetastet.
+ *
+ * @return array{ok:bool,count?:int,error?:string}
+ */
+function backupRestoreLogosZip(string $sqlFilename) : array
+{
+    $logosFilename = backupLogosZipFilenameFor($sqlFilename);
+    if ($logosFilename === null) {
+        return ['ok' => true, 'count' => 0];
+    }
+    if (!backupZipAvailable()) {
+        return ['ok' => false, 'error' => t('wartung_error_zip_missing')];
+    }
+    $path = backupDir() . '/' . $logosFilename;
+    if (!is_file($path)) {
+        return ['ok' => true, 'count' => 0];
+    }
+
+    $zip = new ZipArchive();
+    if ($zip->open($path) !== true) {
+        return ['ok' => false, 'error' => t('wartung_error_decompress')];
+    }
+
+    $logoDir = teamLogoDir();
+    foreach (glob($logoDir . '/*') ?: [] as $existing) {
+        if (is_file($existing)) {
+            @unlink($existing);
+        }
+    }
+
+    $count = 0;
+    for ($i = 0; $i < $zip->numFiles; $i++) {
+        $entryName = $zip->getNameIndex($i);
+        if ($entryName === false || !str_starts_with($entryName, 'teams/')) {
+            continue;
+        }
+        $baseName = basename($entryName);
+        if ($baseName === '' || str_contains($baseName, '..')) {
+            continue; // gegen Path-Traversal in manipulierten ZIP-Einträgen
+        }
+        $data = $zip->getFromIndex($i);
+        if ($data !== false && @file_put_contents($logoDir . '/' . $baseName, $data) !== false) {
+            $count++;
+        }
+    }
+    $zip->close();
+
+    return ['ok' => true, 'count' => $count];
 }
 
 /**
@@ -321,6 +468,10 @@ function backupDelete(string $filename) : bool
 {
     if (backupParseFilename($filename) === null) {
         return false;
+    }
+    $logosFilename = backupLogosZipFilenameFor($filename);
+    if ($logosFilename !== null) {
+        @unlink(backupDir() . '/' . $logosFilename); // Logo-ZIP mit entsorgen, falls vorhanden
     }
     $path = backupDir() . '/' . $filename;
     return is_file($path) && @unlink($path);
@@ -388,7 +539,15 @@ function backupRestore(string $filename) : array
         return ['ok' => false, 'error' => t('flash_error_prefix', ['msg' => $e->getMessage()]), 'statements' => $count];
     }
 
-    return ['ok' => true, 'statements' => $count, 'remappedPrefix' => $remappedPrefix];
+    $logosResult = backupRestoreLogosZip($filename);
+
+    return [
+        'ok'             => true,
+        'statements'     => $count,
+        'remappedPrefix' => $remappedPrefix,
+        'logosRestored'  => $logosResult['count'] ?? 0,
+        'logosError'     => $logosResult['ok'] ? null : ($logosResult['error'] ?? null),
+    ];
 }
 
 // ── AJAX/POST-Actions ─────────────────────────────────────────────────────────
@@ -401,7 +560,11 @@ if ($action === 'run_backup' && $_SERVER['REQUEST_METHOD'] === 'POST') {
 
     $result = backupCreate($type, $format, $tables);
     if ($result['ok']) {
-        flash(t('wartung_flash_backup_created', ['file' => $result['filename']]));
+        $msg = t('wartung_flash_backup_created', ['file' => $result['filename']]);
+        if (!empty($result['logosFilename'])) {
+            $msg .= ' ' . t('wartung_flash_logos_included');
+        }
+        flash($msg);
     } else {
         flash($result['error'] ?? t('wartung_error_generic'), 'error');
     }
@@ -416,6 +579,11 @@ if ($action === 'restore_backup' && $_SERVER['REQUEST_METHOD'] === 'POST') {
         $msg = t('wartung_flash_restored', ['n' => $result['statements'] ?? 0]);
         if (!empty($result['remappedPrefix'])) {
             $msg .= ' ' . t('wartung_flash_prefix_remapped', $result['remappedPrefix']);
+        }
+        if (!empty($result['logosRestored'])) {
+            $msg .= ' ' . t('wartung_flash_logos_restored', ['n' => $result['logosRestored']]);
+        } elseif (!empty($result['logosError'])) {
+            $msg .= ' ' . t('wartung_flash_logos_restore_failed', ['msg' => $result['logosError']]);
         }
         flash($msg);
     } else {

@@ -1,5 +1,9 @@
 <!--
-  Template: addon/mini | Filename: mininext.tpl.php | Fileversion: 1.1.0
+  Template: addon/mini | Filename: mininext.tpl.php | Fileversion: 1.2.0
+  Changelog: 1.2.0 - Auf Wunsch zurückgebaut: Logo steht wieder über dem Teamnamen (gestapelt)
+                     statt daneben – bei langen Namen wie "Bayer 04 Leverkusen" führte die
+                     horizontale Anordnung zu abgeschnittenem Text ("Bayer 04 Leve..."). Gleiche
+                     Rückänderung im "Vorheriges Spiel"-Block
   Changelog: 1.1.0 - Team-Anzeige auf Wunsch umgebaut: Logo steht jetzt neben dem Namen statt
                      darüber ("TEAMNAME LOGO -:- LOGO TEAMNAME", Logos "schauen" zum Ergebnis in
                      der Mitte), analog zur Ergebnisse-Ansicht der normalen Besucherseite.
@@ -25,13 +29,11 @@
 .lmo-mininext .lmo-mn-head{background:#153A8C;color:#fff;font-weight:700;padding:6px 10px}
 .lmo-mininext .lmo-mn-countdown{text-align:center;padding:6px 8px 0;color:#697182;font-size:.72rem}
 .lmo-mininext .lmo-mn-date{text-align:center;padding:2px 8px 6px;color:#9098a8;font-size:.72rem}
-.lmo-mininext .lmo-mn-teams{display:flex;align-items:center;justify-content:space-between;gap:6px;padding:6px 8px}
-.lmo-mininext .lmo-mn-team{flex:1;display:flex;align-items:center;gap:5px;font-weight:600;color:#1f2430;font-size:.74rem;min-width:0}
-.lmo-mininext .lmo-mn-team span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.lmo-mininext .lmo-mn-team-a{justify-content:flex-end;text-align:right}
-.lmo-mininext .lmo-mn-team-b{justify-content:flex-start;text-align:left}
-.lmo-mininext .lmo-mn-team img{height:22px;width:auto;object-fit:contain;vertical-align:middle;flex-shrink:0}
-.lmo-mininext .lmo-mn-score{font-weight:700;font-size:1.1rem;color:#153A8C;white-space:nowrap;padding:0 4px;flex-shrink:0}
+.lmo-mininext .lmo-mn-teams{display:flex;align-items:flex-start;justify-content:center;gap:8px;padding:8px 10px}
+.lmo-mininext .lmo-mn-team{flex:1;display:flex;flex-direction:column;align-items:center;gap:4px;
+  text-align:center;font-weight:600;color:#1f2430;font-size:.74rem;min-width:0}
+.lmo-mininext .lmo-mn-team img{height:26px;width:auto;object-fit:contain;flex-shrink:0}
+.lmo-mininext .lmo-mn-score{font-weight:700;font-size:1.1rem;color:#153A8C;white-space:nowrap;padding:4px 4px 0;flex-shrink:0}
 .lmo-mininext .lmo-mn-note{text-align:center;color:#9098a8;font-size:.7rem;padding:0 8px 6px}
 .lmo-mininext .lmo-mn-sub{background:#f4f6fb;color:#697182;font-weight:700;padding:5px 10px;
   font-size:.72rem;text-transform:uppercase;letter-spacing:.02em}
@@ -54,9 +56,9 @@
   <div class="lmo-mn-countdown"><!--countDown--></div>
   <div class="lmo-mn-date"><!--gameDate--> <!--gameTime--></div>
   <div class="lmo-mn-teams">
-    <div class="lmo-mn-team lmo-mn-team-a"><span><!--homeName--></span><!--imgHomeBig--></div>
+    <div class="lmo-mn-team"><!--imgHomeBig--><span><!--homeName--></span></div>
     <div class="lmo-mn-score"><!--homeTore--> : <!--guestTore--></div>
-    <div class="lmo-mn-team lmo-mn-team-b"><!--imgGuestBig--><span><!--guestName--></span></div>
+    <div class="lmo-mn-team"><!--imgGuestBig--><span><!--guestName--></span></div>
   </div>
   <div class="lmo-mn-note"><!--gameNote--></div>
 
@@ -78,9 +80,9 @@
     <div class="lmo-mn-sub"><!--previous_gameTxt--></div>
     <div class="lmo-mn-date"><!--previous_gameDate--> <!--previous_gameTime--></div>
     <div class="lmo-mn-teams">
-      <div class="lmo-mn-team lmo-mn-team-a"><span><!--previous_homeName--></span><!--previous_imgHomeSmall--></div>
+      <div class="lmo-mn-team"><!--previous_imgHomeSmall--><span><!--previous_homeName--></span></div>
       <div class="lmo-mn-score"><!--previous_hTore--> : <!--previous_gTore--></div>
-      <div class="lmo-mn-team lmo-mn-team-b"><!--previous_imgGuestSmall--><span><!--previous_guestName--></span></div>
+      <div class="lmo-mn-team"><!--previous_imgGuestSmall--><span><!--previous_guestName--></span></div>
     </div>
   </div>
   <!-- END previous -->

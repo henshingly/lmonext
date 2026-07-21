@@ -2,7 +2,11 @@
 /**
  * Project: LMOnext
  * Filename: install.php
- * Fileversion: 1.6.0
+ * Fileversion: 1.6.1
+ * Changelog: 1.6.1 - Neue empfohlene (nicht blockierende) Prüfung für die ZipArchive-
+ *                     Erweiterung ergänzt – wird für die Team-Logo-Mitsicherung bei
+ *                     Backup/Wiederherstellung benötigt (siehe handler_backup.php 1.2.0)
+ * Changelog: 1.6.0
  * Changelog: 1.6.0 - Systemprüfung um die seither hinzugekommenen Anforderungen ergänzt:
  *                     GD-Erweiterung (Team-Logo-Uploads/PNG-GIF-Einbettung in PDFs),
  *                     Imagick/rsvg-convert (SVG-Rasterisierung für PDF-Export, rein
@@ -111,6 +115,13 @@ function checkEnvironment(): array {
         : t('install_recommended_missing');
     $checks[] = ['label'=>t('install_check_svg_raster'), 'ok'=>($hasImagick || $hasRsvgTool), 'required'=>false,
                  'info'=>$svgRasterInfo];
+    // ZipArchive wird benötigt, damit die Wartung-Seite (Backup/Wiederherstellung)
+    // den Team-Logo-Ordner (assets/img/teams/) als begleitendes ZIP mitsichern
+    // kann. Ohne diese Erweiterung funktioniert die Datenbank-Sicherung selbst
+    // unverändert weiter – nur die Logos werden dann bei einem Backup nicht
+    // mitgesichert (siehe handler_backup.php).
+    $checks[] = ['label'=>t('install_check_zip'), 'ok'=>class_exists('ZipArchive'), 'required'=>false,
+                 'info'=>class_exists('ZipArchive')?t('install_available'):t('install_recommended_missing')];
     $wr = is_writable(__DIR__);
     $checks[] = ['label'=>t('install_check_writable', ['dir'=>basename(__DIR__)]),'ok'=>$wr, 'required'=>true,
                  'info'=>$wr?t('install_writable_ok'):t('install_writable_fail')];

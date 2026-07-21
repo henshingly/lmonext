@@ -2,7 +2,12 @@
 /**
  * Project: LMOnext
  * Filename: view_wartung.php
- * Fileversion: 1.1.0
+ * Fileversion: 1.2.0
+ * Changelog: 1.2.0 - Hinweis auf der Backup-Karte, ob Team-Logos mitgesichert werden (bzw.
+ *                     Warnung, wenn ZipArchive fehlt). Backup-Liste in der Wiederherstellen-
+ *                     Karte zeigt jetzt pro Eintrag ein kleines Symbol, wenn dieses Backup auch
+ *                     Team-Logos enthält, siehe handler_backup.php 1.2.0
+ * Changelog: 1.1.0
  * Changelog: 1.1.0 - Bugfix: native <select multiple>/<select size> hatten browserübergreifend
  *                     sehr schlechten Kontrast bei markierten Zeilen im Dark-Theme (kaum lesbar).
  *                     Tabellen-Auswahl und Backup-Auswahl durch selbst gestylte
@@ -28,6 +33,7 @@ $tabs = ['backup' => t('wartung_tab_backup'), 'restore' => t('wartung_tab_restor
 
 $allTables    = backupAllTableNames();
 $bzip2Ok      = backupBzip2Available();
+$zipOk        = backupZipAvailable();
 $backupMaxN   = (int)getAdminSetting('backup_max_count', '10');
 $backupsList  = $tab === 'restore' ? backupList() : [];
 
@@ -59,6 +65,13 @@ function wartungFormatSize(int $bytes) : string
 <?php if ($tab === 'backup') { ?>
 
         <p style="color:var(--muted);font-size:.86rem;margin-top:0"><?= h(t('wartung_backup_intro')) ?></p>
+        <p style="color:var(--muted);font-size:.82rem;margin-top:-8px">
+<?php if ($zipOk) { ?>
+          <?= h(t('wartung_hint_logos_included')) ?>
+<?php } else { ?>
+          ⚠️ <?= h(t('wartung_hint_logos_unavailable')) ?>
+<?php } ?>
+        </p>
 
         <form method="post" action="?action=run_backup">
           <h3 style="margin-bottom:10px"><?= h(t('wartung_heading_backup_options')) ?></h3>
@@ -159,6 +172,9 @@ function wartungFormatSize(int $bytes) : string
                 <input type="radio" name="filename" value="<?= h($b['filename']) ?>"<?= $i === 0 ? ' checked' : '' ?>
                        style="accent-color:var(--accent);width:14px;height:14px;flex:none">
                 <?= h($label) ?>
+<?php if ($b['hasLogos']) { ?>
+                <span title="<?= h(t('wartung_hint_includes_logos')) ?>" style="color:var(--muted);font-size:.8rem">🖼️</span>
+<?php } ?>
               </label>
 <?php } ?>
             </div>

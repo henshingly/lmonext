@@ -2,7 +2,12 @@
 /**
  * Project: LMOnext
  * Filename: lang/admin/de.php
- * Fileversion: 1.11.4
+ * Fileversion: 1.11.6
+ * Changelog: 1.11.6 - Übersetzung für die neue Installer-Systemprüfung "ZIP-Erweiterung" ergänzt
+ * Changelog: 1.11.5
+ * Changelog: 1.11.5 - Übersetzungen für die neue Team-Logo-Mitsicherung bei Backup/
+ *                     Wiederherstellung ergänzt
+ * Changelog: 1.11.4
  * Changelog: 1.11.4 - Lang-Schlüssel für die Spielplan-Erstellungsart umbenannt (Nutzerwunsch:
  *                     interne Bezeichnungen jetzt durchgehend auf Englisch, "League Key" statt
  *                     der vorherigen deutschen Bezeichnung)
@@ -165,6 +170,7 @@ return [
     'install_check_mbstring'         => 'mbstring',
     'install_check_gd'                => 'GD-Erweiterung',
     'install_check_svg_raster'        => 'SVG-Rasterisierung (Imagick/rsvg-convert)',
+    'install_check_zip'               => 'ZIP-Erweiterung (Team-Logo-Backup)',
     'install_check_teams_dir'         => 'Schreibrecht (assets/img/teams/)',
     'install_recommended_missing'     => 'nicht gefunden (optional)',
     'install_optional'                => 'optional',
@@ -700,6 +706,9 @@ return [
     'wartung_tab_backup'             => 'Backup',
     'wartung_tab_restore'            => 'Wiederherstellung',
     'wartung_backup_intro'           => 'Hier kannst du alle Datenbank-Tabellen sichern. Das Archiv wird im Ordner store/ gespeichert.',
+    'wartung_hint_logos_included'    => 'Hochgeladene Team-Logos (Teams (global) → Logo-Upload) werden automatisch als separates ZIP am gleichen Ort mitgesichert.',
+    'wartung_hint_logos_unavailable' => 'Die ZIP-Erweiterung ist auf diesem Server nicht verfügbar – Team-Logos werden bei dieser Sicherung nicht mit gespeichert (die Datenbank-Sicherung selbst ist davon nicht betroffen).',
+    'wartung_hint_includes_logos'    => 'Dieses Backup enthält auch die Team-Logos',
     'wartung_heading_backup_options' => 'Backup-Optionen',
     'wartung_label_backup_type'      => 'Backup-Art:',
     'wartung_backup_type_complete'   => 'Komplett',
@@ -722,6 +731,10 @@ return [
     'wartung_confirm_restore'        => 'Wirklich wiederherstellen? Vorhandene Daten werden überschrieben.',
     'wartung_confirm_delete'         => 'Dieses Backup wirklich löschen?',
     'wartung_flash_backup_created'   => 'Backup erstellt: {file}',
+    'wartung_flash_logos_included'   => 'Team-Logos wurden mitgesichert.',
+    'wartung_flash_logos_restored'   => '{n} Team-Logo(s) wiederhergestellt.',
+    'wartung_flash_logos_restore_failed' => 'Team-Logos konnten nicht wiederhergestellt werden: {msg}',
+    'wartung_error_zip_missing'      => 'Die ZIP-Erweiterung ist auf diesem Server nicht verfügbar, Team-Logos können daher nicht wiederhergestellt werden.',
     'wartung_flash_restored'         => 'Wiederherstellung abgeschlossen ({n} Anweisungen ausgeführt).',
     'wartung_flash_prefix_remapped'  => 'Hinweis: Das Backup wurde mit Tabellenprefix "{from}" erstellt und automatisch auf den aktuell konfigurierten Prefix "{to}" umgeschrieben.',
     'wartung_flash_deleted'          => 'Backup gelöscht.',

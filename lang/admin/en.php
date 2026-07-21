@@ -2,7 +2,11 @@
 /**
  * Project: LMOnext
  * Filename: lang/admin/en.php
- * Fileversion: 1.10.13
+ * Fileversion: 1.10.15
+ * Changelog: 1.10.15 - Added translation for the new "ZIP extension" installer check
+ * Changelog: 1.10.14
+ * Changelog: 1.10.14 - Added translations for the new team-logo backup/restore inclusion
+ * Changelog: 1.10.13
  * Changelog: 1.10.13 - Renamed the fixture-generation-mode lang key (user request: internal
  *                      naming now consistently uses the English term "League Key" instead of
  *                      the previous German term)
@@ -160,6 +164,7 @@ return [
     'install_check_mbstring'         => 'mbstring',
     'install_check_gd'                => 'GD extension',
     'install_check_svg_raster'        => 'SVG rasterization (Imagick/rsvg-convert)',
+    'install_check_zip'               => 'ZIP extension (team logo backup)',
     'install_check_teams_dir'         => 'Write permission (assets/img/teams/)',
     'install_recommended_missing'     => 'not found (optional)',
     'install_optional'                => 'optional',
@@ -695,6 +700,9 @@ return [
     'wartung_tab_backup'             => 'Backup',
     'wartung_tab_restore'            => 'Restore',
     'wartung_backup_intro'           => 'Here you can back up all database tables. The archive is saved in the store/ folder.',
+    'wartung_hint_logos_included'    => 'Uploaded team logos (Teams (global) → logo upload) are automatically backed up as a separate ZIP in the same location.',
+    'wartung_hint_logos_unavailable' => 'The ZIP extension is not available on this server – team logos will not be included in this backup (the database backup itself is unaffected).',
+    'wartung_hint_includes_logos'    => 'This backup also includes team logos',
     'wartung_heading_backup_options' => 'Backup options',
     'wartung_label_backup_type'      => 'Backup type:',
     'wartung_backup_type_complete'   => 'Complete',
@@ -717,6 +725,10 @@ return [
     'wartung_confirm_restore'        => 'Really restore? Existing data will be overwritten.',
     'wartung_confirm_delete'         => 'Really delete this backup?',
     'wartung_flash_backup_created'   => 'Backup created: {file}',
+    'wartung_flash_logos_included'   => 'Team logos were backed up too.',
+    'wartung_flash_logos_restored'   => '{n} team logo(s) restored.',
+    'wartung_flash_logos_restore_failed' => 'Team logos could not be restored: {msg}',
+    'wartung_error_zip_missing'      => 'The ZIP extension is not available on this server, so team logos cannot be restored.',
     'wartung_flash_restored'         => 'Restore complete ({n} statements executed).',
     'wartung_flash_prefix_remapped'  => 'Note: this backup was created with table prefix "{from}" and was automatically remapped to the currently configured prefix "{to}".',
     'wartung_flash_deleted'          => 'Backup deleted.',
