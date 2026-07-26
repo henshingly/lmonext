@@ -2,7 +2,9 @@
 /**
  * Project: LMOnext
  * Filename: lang/admin/de.php
- * Fileversion: 1.13.2
+ * Fileversion: 1.13.3
+ * Changelog: 1.13.3 - Übersetzung für die neue Einstellung "Spielfrei anzeigen" ergänzt
+ * Changelog: 1.13.2
  * Changelog: 1.13.2 - Übersetzungen für die neuen Installer-Prüfungen (store/-Schreibrecht,
  *                     bzip2) und die verständlicheren DB-Verbindungsfehlermeldungen ergänzt
  * Changelog: 1.13.1
@@ -607,6 +609,7 @@ return [
     'ls_label_php_dateformat' => 'PHP-Datumsformat',
     'ls_label_spieltagsdatum' => 'Spieltagsdatum',
     'ls_label_ergebnisse'     => 'Ergebnisse',
+    'ls_label_show_spielfrei' => 'Spielfrei anzeigen',
     'ls_label_tabelle'        => 'Tabelle',
     'ls_label_show_logos'     => 'Logo anzeigen',
     'ls_label_kalender'       => 'Kalender',

@@ -2,7 +2,14 @@
 /**
  * Project: LMOnext
  * Filename: view_liga_settings.php
- * Fileversion: 1.4.3
+ * Fileversion: 1.4.4
+ * Changelog: 1.4.4 - Neue Einstellung "Spielfrei anzeigen" (ShowSpielfrei) im Tab Anzeigen/
+ *                     Darstellung, direkt unter "Ergebnisse" - steuert, ob der "Spielfrei:
+ *                     TEAMNAME"-Hinweis in Ergebnisse-Ansicht und PDF-Export erscheint (siehe
+ *                     liga.php 3.10.3). Default "an" (kein stiller Verhaltenswechsel für
+ *                     bestehende Ligen, da die Anzeige bereits ohne diese Einstellung
+ *                     ausgeliefert wurde)
+ * Changelog: 1.4.3
  * Changelog: 1.4.3 - Bugfix: Punktesystem-Tabelle (Tab Spielsystem) hatte für "nach
  *                     Verlängerung"/"nach Elfmeterschießen" nur ein einzelnes Eingabefeld
  *                     (Sieg) statt der vollen S/U/N-Spalten wie im alten LMO – die beiden
@@ -233,6 +240,10 @@ if ($tab === 'grundwerte') { ?>
             <tr>
               <td style="text-align:right;padding:7px 12px;font-size:.85rem;color:var(--muted)"><?= h(t('ls_label_ergebnisse')) ?></td>
               <td style="padding:5px 10px"><input type="checkbox" name="Ergebnis" value="1"<?= $oc('Ergebnis')?' checked':'' ?>></td>
+            </tr>
+            <tr>
+              <td style="text-align:right;padding:7px 12px;font-size:.85rem;color:var(--muted)"><?= h(t('ls_label_show_spielfrei')) ?></td>
+              <td style="padding:5px 10px"><input type="checkbox" name="ShowSpielfrei" value="1"<?= ($opts['ShowSpielfrei'] ?? '1') === '1' ?' checked':'' ?>></td>
             </tr>
             <tr>
               <td style="text-align:right;padding:7px 12px;font-size:.85rem;color:var(--muted)"><?= h(t('ls_label_kalender')) ?></td>

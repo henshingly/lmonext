@@ -2,7 +2,9 @@
 /**
  * Project: LMOnext
  * Filename: handler_settings.php
- * Fileversion: 1.3.5
+ * Fileversion: 1.3.6
+ * Changelog: 1.3.6 - Speichert die neue Einstellung ShowSpielfrei (Tab Anzeigen/Darstellung)
+ * Changelog: 1.3.5
  * Changelog: 1.3.5 - Bugfix: Tab "spielsystem" speicherte versehentlich goalfaktor/
  *                     pointsfaktor (kollidierte mit dem Grundwerte-Tab, siehe
  *                     view_liga_settings.php 1.4.3) statt der neuen ET/PS-Punktefelder;
@@ -64,6 +66,7 @@ if ($action === 'save_liga_settings' && $_SERVER['REQUEST_METHOD'] === 'POST') {
                 $save('DatF',       trim($_POST['DatF']         ?? 'd.m.Y H:i'));
                 $save('Actual',     trim($_POST['Actual']       ?? '1'));
                 $save('Ergebnis',   isset($_POST['Ergebnis'])   ? '1' : '0');
+                $save('ShowSpielfrei', isset($_POST['ShowSpielfrei']) ? '1' : '0');
                 $save('Plan',       isset($_POST['Plan'])       ? '1' : '0');
                 $save('Tabelle',    isset($_POST['Tabelle'])    ? '1' : '0');
                 $save('ShowLogos',  isset($_POST['ShowLogos'])  ? '1' : '0');

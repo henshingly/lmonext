@@ -2,7 +2,11 @@
 /**
  * Project: LMOnext
  * Filename: liga.php
- * Fileversion: 3.10.2
+ * Fileversion: 3.10.3
+ * Changelog: 3.10.3 - "Spielfrei"-Anzeige (HTML + PDF) jetzt über die neue Liga-Einstellung
+ *                     ShowSpielfrei steuerbar (siehe view_liga_settings.php 1.4.4), Default
+ *                     "an"
+ * Changelog: 3.10.2
  * Changelog: 3.10.2 - PDF-Export der Ergebnisse übergibt jetzt die "Spielfrei"-Teams pro
  *                     Spieltag mit (siehe pdf_export.php 1.6.7)
  * Changelog: 3.10.1
@@ -152,6 +156,10 @@ $isKO         = getLigaType($ligaId) === 1;
 $opts         = getLigaOptions($ligaId);
 $flags        = getLigaViewFlags($opts);
 $showLogos    = ($opts['ShowLogos'] ?? '0') === '1';
+// Default '1' (anzeigen): die Spielfrei-Anzeige wurde bereits ohne diese
+// Einstellung ausgeliefert, daher soll sich für bestehende Ligen ohne
+// explizite Wahl nichts ändern (kein stiller Verhaltenswechsel).
+$showSpielfrei = ($opts['ShowSpielfrei'] ?? '1') === '1';
 // Globale Einstellung (Admin → Einstellungen → Besucherbereich), gilt für
 // alle Liga-Typen und alle PDF-Exporte gleichermaßen. Blockiert bei
 // Deaktivierung nicht nur den Button, sondern auch den direkten Aufruf über
@@ -296,7 +304,7 @@ switch ($currentView) {
                     'label'         => $pdfRoundLabel . ($dateRange !== '' ? ' · ' . $dateRange : ''),
                     'partien'       => $partien,
                     'spieltagStart' => $spieltag['start'] ?? null,
-                    'spielfrei'     => findSpielfreiTeams($ligaId, $partien),
+                    'spielfrei'     => $showSpielfrei ? findSpielfreiTeams($ligaId, $partien) : [],
                 ]];
             }
             exportErgebnissePdf($liga['name'], $sectionSpecs, $showLogos);
@@ -339,7 +347,7 @@ switch ($currentView) {
                 : tf('liga_heading_matchday_range', ['n' => $currentNr, 'range' => $dateRange]);
             $ergebnisInhalt  = '<h3 class="spieltag-heading">' . h($headingText) . '</h3>';
             $ergebnisInhalt .= renderResultsTable($partien, $spieltag['start'] ?? null, $favTeamId, $showLogos, true);
-            $ergebnisInhalt .= renderSpielfreiNote($ligaId, $partien);
+            $ergebnisInhalt .= $showSpielfrei ? renderSpielfreiNote($ligaId, $partien) : '';
             $ergebnisInhalt .= renderStatsBlock($currentName, $partien);
             $ergebnisInhalt .= $pdfButtonHtml;
         }

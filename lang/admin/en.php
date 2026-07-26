@@ -2,7 +2,9 @@
 /**
  * Project: LMOnext
  * Filename: lang/admin/en.php
- * Fileversion: 1.12.2
+ * Fileversion: 1.12.3
+ * Changelog: 1.12.3 - Added translation for the new "Show bye teams" setting
+ * Changelog: 1.12.2
  * Changelog: 1.12.2 - Added translations for the new installer checks (store/ write
  *                     permission, bzip2) and the clearer DB connection error messages
  * Changelog: 1.12.1
@@ -601,6 +603,7 @@ return [
     'ls_label_php_dateformat' => 'PHP date format',
     'ls_label_spieltagsdatum' => 'Matchday date',
     'ls_label_ergebnisse'     => 'Results',
+    'ls_label_show_spielfrei' => 'Show bye teams',
     'ls_label_tabelle'        => 'Table',
     'ls_label_show_logos'     => 'Show logo',
     'ls_label_kalender'       => 'Calendar',
