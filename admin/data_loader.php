@@ -2,7 +2,12 @@
 /**
  * Project: LMOnext
  * Filename: data_loader.php
- * Fileversion: 1.7.0
+ * Fileversion: 1.7.1
+ * Changelog: 1.7.1 - spielerstatData enthält jetzt zusätzlich die Namen aller Teams der Liga
+ *                     ("teams"), damit Team-/Mannschaft-/Verein-Spalten im Spielerstatistik-
+ *                     Addon als Dropdown statt Freitext angeboten werden können, siehe
+ *                     view_spielerstatistik.php
+ * Changelog: 1.7.0
  * Changelog: 1.7.0 - Neuer Datenlader für die Spielerstatistik-Verwaltung ("spielerstatistik"
  *                     Action, siehe admin/spielerstat_lib.php + view_spielerstatistik.php)
  * Changelog: 1.6.6 - Bugfix: Duplikat-Erkennung bei "Teams (global)" nutzte ungeschützt
@@ -92,12 +97,19 @@ if (isLoggedIn()) {
             $lid = (int)$_GET['liga_id'];
             $sLiga = $db->prepare('SELECT id,name FROM '.tbl('liga').' WHERE id=?');
             $sLiga->execute([$lid]);
+            $sTeams = $db->prepare(
+                'SELECT tg.name FROM '.tbl('liga_teams').' lt
+                   JOIN '.tbl('teams_global').' tg ON tg.id = lt.team_id
+                  WHERE lt.liga_id = ? ORDER BY tg.name'
+            );
+            $sTeams->execute([$lid]);
             $spielerstatData = [
                 'liga_id' => $lid,
                 'liga'    => $sLiga->fetch(),
                 'spalten' => getSpielerstatSpalten($lid),
                 'spieler' => getSpielerstatSpieler($lid),
                 'config'  => getSpielerstatConfig($lid),
+                'teams'   => array_column($sTeams->fetchAll(), 'name'),
             ];
         }
         // Spieltag-Ergebnisse

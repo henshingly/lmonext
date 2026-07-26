@@ -2,7 +2,16 @@
 /**
  * Project: LMOnext
  * Filename: addon/player/view_spielerstatistik.php
- * Fileversion: 1.2.0
+ * Fileversion: 1.3.0
+ * Changelog: 1.3.0 - Spalten mit dem Namen "Team"/"Mannschaft"/"Verein" (unabhängig von
+ *                     Groß-/Kleinschreibung) bekommen beim Werte-Eintragen jetzt ein Dropdown
+ *                     mit den aktuellen Teams der Liga statt eines Freitextfeldes (siehe
+ *                     data_loader.php 1.7.1 für die Team-Liste). Erleichtert die Zuordnung und
+ *                     vermeidet Tippfehler; der gespeicherte Wert bleibt einfacher Text, kein
+ *                     Fremdschlüssel. Ein bestehender Wert, der zu keinem aktuellen Team passt
+ *                     (z.B. nach Umbenennung), wird als zusätzliche, vorausgewählte Option
+ *                     angezeigt statt beim Speichern unbemerkt verloren zu gehen
+ * Changelog: 1.2.0
  * Changelog: 1.2.0 - Import-Karte für alte .stat/.cfg-Dateien wird jetzt komplett ausgeblendet,
  *                     sobald mindestens eine Spalte manuell angelegt wurde (statt nur eine
  *                     Warnung anzuzeigen, wenn schon Spieler existieren) – der Import ist nur
@@ -30,6 +39,15 @@ $liga    = $spielerstatData['liga'] ?? null;
 $spalten = $spielerstatData['spalten'] ?? [];
 $spieler = $spielerstatData['spieler'] ?? [];
 $cfg     = $spielerstatData['config'] ?? [];
+$ligaTeams = $spielerstatData['teams'] ?? [];
+// Spalten, deren Name auf "Team"/"Mannschaft"/"Verein" hindeutet, bekommen
+// beim Werte-Eintragen ein Dropdown mit den aktuellen Teams der Liga statt
+// eines Freitextfeldes – erleichtert die Zuordnung und vermeidet
+// Tippfehler/uneinheitliche Schreibweisen. Der gespeicherte Wert bleibt
+// weiterhin einfacher Text (kein Fremdschlüssel auf teams_global), damit
+// bestehende Werte und das generische Spalten-Datenmodell unverändert
+// bleiben; das Dropdown ist rein eine Eingabehilfe.
+$isTeamColumn = static fn(string $name): bool => in_array(strtolower(trim($name)), ['team', 'mannschaft', 'verein'], true);
 ?>
       <a href="?action=liga_detail&id=<?= $lid ?>" class="back-link"><?= h(t('spst_back_link')) ?></a>
       <h1 style="margin:8px 0 18px"><?= h(t('spst_title', ['liga' => $liga['name'] ?? ''])) ?></h1>
@@ -147,6 +165,27 @@ $cfg     = $spielerstatData['config'] ?? [];
                     $val = $p['werte'][$sp['id']] ?? '';
                     if ($sp['typ'] === 'formel') { ?>
                 <td style="text-align:center;color:var(--muted)"><?= h($val) ?></td>
+<?php             } elseif ($isTeamColumn($sp['name'])) { ?>
+                <td>
+                  <select name="wert_<?= (int)$p['id'] ?>_<?= (int)$sp['id'] ?>"
+                          style="width:100%;min-width:110px;background:var(--bg);border:1px solid var(--border);
+                                color:var(--text);border-radius:4px;padding:4px 6px;font-size:.82rem">
+                    <option value=""<?= $val === '' ? ' selected' : '' ?>>—</option>
+<?php               $valueMatchesTeam = false;
+                    foreach ($ligaTeams as $teamName) {
+                        if ($teamName === $val) { $valueMatchesTeam = true; }
+                        ?>
+                    <option value="<?= h($teamName) ?>"<?= $teamName === $val ? ' selected' : '' ?>><?= h($teamName) ?></option>
+<?php               }
+                    // Bestehender Wert passt zu keinem aktuellen Team der Liga (z.B. Team
+                    // inzwischen umbenannt/entfernt, oder aus altem Import übernommen) -
+                    // als zusätzliche Option anzeigen, damit er beim Speichern nicht
+                    // unbemerkt durch "—" ersetzt wird.
+                    if ($val !== '' && !$valueMatchesTeam) { ?>
+                    <option value="<?= h($val) ?>" selected><?= h($val) ?> (<?= h(t('spst_team_col_unknown')) ?>)</option>
+<?php               } ?>
+                  </select>
+                </td>
 <?php             } else { ?>
                 <td>
                   <input type="text" name="wert_<?= (int)$p['id'] ?>_<?= (int)$sp['id'] ?>" value="<?= h($val) ?>"

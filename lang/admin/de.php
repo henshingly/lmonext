@@ -2,7 +2,10 @@
 /**
  * Project: LMOnext
  * Filename: lang/admin/de.php
- * Fileversion: 1.13.3
+ * Fileversion: 1.13.4
+ * Changelog: 1.13.4 - Übersetzung für den neuen Team-Spalten-Dropdown-Hinweis im
+ *                     Spielerstatistik-Addon ergänzt
+ * Changelog: 1.13.3
  * Changelog: 1.13.3 - Übersetzung für die neue Einstellung "Spielfrei anzeigen" ergänzt
  * Changelog: 1.13.2
  * Changelog: 1.13.2 - Übersetzungen für die neuen Installer-Prüfungen (store/-Schreibrecht,
@@ -809,6 +812,7 @@ return [
     'spst_cfg_show_zero'           => 'Nullwerte einblenden',
     'spst_cfg_show_per_club'       => 'Vereinsweise anzeigen',
     'spst_cfg_show_extra_sort'     => 'Extra Sortierspalte',
+    'spst_team_col_unknown'        => 'kein aktuelles Team der Liga',
     'spst_import_hint'             => 'Lade eine .stat-Datei (und optional die zugehörige .cfg-Datei) aus dem alten LMO-Addon "Spielerstatistik" hoch. Alle drei bekannten Trennzeichen (§, |, #) werden automatisch erkannt.',
     'spst_import_replace_warning'  => 'Ein Import ersetzt die komplette bestehende Spielerstatistik dieser Liga.',
     'spst_flash_import_blocked'    => 'Import nicht möglich: Für diese Liga wurde bereits mindestens eine Spalte manuell angelegt. Der Import ist nur für eine noch komplett unkonfigurierte Spielerstatistik gedacht.',

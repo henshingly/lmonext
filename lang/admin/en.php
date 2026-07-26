@@ -2,7 +2,10 @@
 /**
  * Project: LMOnext
  * Filename: lang/admin/en.php
- * Fileversion: 1.12.3
+ * Fileversion: 1.12.4
+ * Changelog: 1.12.4 - Added translation for the new team-column dropdown hint in the Player
+ *                     Statistics addon
+ * Changelog: 1.12.3
  * Changelog: 1.12.3 - Added translation for the new "Show bye teams" setting
  * Changelog: 1.12.2
  * Changelog: 1.12.2 - Added translations for the new installer checks (store/ write
@@ -803,6 +806,7 @@ return [
     'spst_cfg_show_zero'           => 'Show zero values',
     'spst_cfg_show_per_club'       => 'Show per club',
     'spst_cfg_show_extra_sort'     => 'Extra sort column',
+    'spst_team_col_unknown'        => 'not a current team of this league',
     'spst_import_hint'             => 'Upload a .stat file (and optionally its matching .cfg file) from the old LMO "Spielerstatistik" addon. All three known delimiters (§, |, #) are detected automatically.',
     'spst_import_replace_warning'  => 'An import replaces the entire existing player stats for this league.',
     'spst_flash_import_blocked'    => 'Import not possible: at least one column has already been added manually for this league. Import is only intended for a completely unconfigured player statistics setup.',
