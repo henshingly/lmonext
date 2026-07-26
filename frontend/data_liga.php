@@ -2,7 +2,18 @@
 /**
  * Project: LMOnext
  * Filename: data_liga.php
- * Fileversion: 2.15.6
+ * Fileversion: 2.17.0
+ * Changelog: 2.17.0 - Neu: "Spielfrei: TEAMNAME"-Hinweis unterhalb der Ergebnistabelle eines
+ *                     Spieltags, analog zum alten LMO (siehe Screenshot-Vorlage des Nutzers).
+ *                     findSpielfreiTeams() ermittelt betroffene Teams durch Abwesenheit (kein
+ *                     expliziter "Spielfrei"-Datensatz im Modell, das Team taucht im Spieltag
+ *                     einfach in keiner Paarung auf - identisch zur Kodierung in den alten
+ *                     .l98-Dateien). renderSpielfreiNote() rendert das über das neue Partial
+ *                     "spielfrei_note"
+ * Changelog: 2.16.0
+ * Changelog: 2.16.0 - "spielerstatistik"-Reiter ergänzt (wired an den bereits reservierten
+ *                     "stats"-Options-Key, siehe Liga-Einstellungen); Default aus, da neue
+ *                     Ligen ohne Spielerstatistik-Daten sonst einen leeren Reiter zeigen würden
  * Changelog: 2.15.6 - renderH2hModalAssets() blendet den PDF-Button im Teamvergleich-Modal
  *                     jetzt aus, wenn die globale Einstellung "PDF-Export für Besucher
  *                     anzeigen?" deaktiviert ist; JS-Zuweisung auf pdfLinkEl entsprechend
@@ -322,8 +333,7 @@ function ligaFlagEnabled(array $opts, string $key, bool $default = true) : bool
 
 /**
  * Welche Besucher-Reiter für diese Liga sichtbar sein sollen, basierend auf
- * den Liga-Einstellungen. "Info" ist immer an. "Spielerstatistik" ist als
- * Addon noch nicht gebaut und wird hier bewusst nicht berücksichtigt.
+ * den Liga-Einstellungen. "Info" ist immer an.
  */
 function getLigaViewFlags(array $opts) : array
 {
@@ -335,6 +345,7 @@ function getLigaViewFlags(array $opts) : array
         'kreuztabelle'  => ligaFlagEnabled($opts, 'Kreuz', true),
         'fieberkurve'   => ligaFlagEnabled($opts, 'kurve1', true),
         'ligastatistik' => ligaFlagEnabled($opts, 'Ligastats', true),
+        'spielerstatistik' => ligaFlagEnabled($opts, 'stats', false),
         'info'          => true,
     ];
 }
@@ -761,6 +772,61 @@ function statusSuffix(array $partie) : string
 }
 
 /**
+ * Ermittelt für einen Spieltag alle Teams der Liga, die an diesem Spieltag
+ * KEINE Partie haben ("Spielfrei"). Kommt typischerweise bei ungerader
+ * Teamzahl vor, kann aber auch bei gerader Teamzahl auftreten (z.B. wenn ein
+ * Team im Spielplan schlicht nicht eingeteilt wurde). Ermittlung durch
+ * Abwesenheit, genau wie im alten LMO: es gibt keinen expliziten
+ * "Spielfrei"-Eintrag im Datenmodell, das betroffene Team taucht einfach in
+ * keiner Paarung des Spieltags auf.
+ *
+ * @return array<int,array> Liste der betroffenen Teams (id,name,kurz,mittel)
+ */
+function findSpielfreiTeams(int $ligaId, array $partien) : array
+{
+    $scheduledIds = [];
+    foreach ($partien as $p) {
+        if (partieIsEmptyPlaceholder($p)) {
+            continue; // "kein Spielplan"-Platzhalterpaarung zählt nicht als Termin
+        }
+        if ((int)($p['heim_id'] ?? 0) > 0) {
+            $scheduledIds[(int)$p['heim_id']] = true;
+        }
+        if ((int)($p['gast_id'] ?? 0) > 0) {
+            $scheduledIds[(int)$p['gast_id']] = true;
+        }
+    }
+
+    $spielfrei = [];
+    foreach (getLigaTeamsList($ligaId) as $team) {
+        $tid  = (int)$team['id'];
+        $name = trim((string)($team['name'] ?? ''));
+        if (!isset($scheduledIds[$tid]) && $name !== '' && $name !== '___') {
+            $spielfrei[] = $team;
+        }
+    }
+    return $spielfrei;
+}
+
+/**
+ * Rendert die "Spielfrei: TEAMNAME"-Zeile unterhalb der Ergebnistabelle
+ * eines Spieltags (siehe findSpielfreiTeams()). Liefert einen leeren String,
+ * wenn kein Team spielfrei ist.
+ */
+function renderSpielfreiNote(int $ligaId, array $partien) : string
+{
+    $teams = findSpielfreiTeams($ligaId, $partien);
+    if ($teams === []) {
+        return '';
+    }
+    $names = implode(', ', array_map(static fn(array $t) : string => '<strong>' . h($t['name']) . '</strong>', $teams));
+    return renderPartial('spielfrei_note', [
+        'Label' => h(tf('liga_spielfrei_label')),
+        'Teams' => $names,
+    ]);
+}
+
+/**
  * Anzeigename eines Teams für eine Partie-Zeile (echtes Team oder Platzhalter-Label).
  */
 /**
@@ -1107,6 +1173,7 @@ function renderTabsBar(array $flags, int $ligaId, string $currentView) : string
         'kreuztabelle'  => tf('liga_tab_kreuztabelle'),
         'fieberkurve'   => tf('liga_tab_fieberkurve'),
         'ligastatistik' => tf('liga_tab_ligastatistik'),
+        'spielerstatistik' => tf('liga_tab_spielerstatistik'),
         'info'          => tf('liga_tab_info'),
     ];
     $tabsHtml = '';

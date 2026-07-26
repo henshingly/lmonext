@@ -2,7 +2,9 @@
 /**
  * Project: LMOnext
  * Filename: bootstrap.php
- * Fileversion: 1.4.1
+ * Fileversion: 1.5.0
+ * Changelog: 1.5.0 - data_spielerstat.php eingebunden (Besucher-Ansicht für das neue
+ *                     Spielerstatistik-Addon, siehe admin/spielerstat_lib.php)
  * Changelog: 1.4.1 - Bugfix: Die in den Admin-Einstellungen konfigurierte "Standardsprache"
  *                     wurde im gesamten Besucherbereich nie berücksichtigt (getCurrentLanguage()
  *                     wurde ganz am Anfang der Datei OHNE den Standardsprache-Parameter
@@ -130,4 +132,5 @@ $activeTemplate        = resolveActiveTemplate($activeTemplateDefault, $allowTem
 // ── Datenfunktionen (Abfragen) ────────────────────────────────────────────────
 require_once __DIR__ . '/data_home.php';
 require_once __DIR__ . '/data_liga.php';
+require_once __DIR__ . '/../addon/player/frontend_spielerstat.php';
 require_once __DIR__ . '/pdf_export.php';

@@ -2,7 +2,11 @@
 /**
  * Project: LMOnext
  * Filename: handler_backup.php
- * Fileversion: 1.2.0
+ * Fileversion: 1.3.0
+ * Changelog: 1.3.0 - Spielerfotos (assets/img/player/, siehe addon/player/spielerstat_lib.php)
+ *                     werden jetzt im selben Logo-ZIP mitgesichert (eigenes Unterverzeichnis
+ *                     "player/" neben "teams/"), inkl. Wiederherstellung. Kein zusätzliches
+ *                     ZIP nötig, kein Verhaltensunterschied für ältere Backups ohne Fotos
  * Changelog: 1.2.0 - Team-Logo-Ordner (assets/img/teams/) wird jetzt mitgesichert: neue
  *                     Funktionen backupCreateLogosZip()/backupRestoreLogosZip()/
  *                     backupLogosZipFilenameFor(). Bei jedem Backup wird (falls ZipArchive
@@ -353,24 +357,35 @@ function backupZipAvailable() : bool
 
 /**
  * Erzeugt zu einem Datenbank-Backup ein begleitendes ZIP mit dem
- * Team-Logo-Ordner (assets/img/teams/, siehe Admin → Teams (global) →
- * Logo-Upload), im selben /store-Verzeichnis, mit demselben Zeitstempel im
- * Dateinamen ("backup_{Zeitstempel}_logos.zip") wie der zugehörige
- * SQL-Dump, damit beide Dateien eindeutig zusammengehören und gemeinsam
- * verwaltet (angezeigt/gelöscht/wiederhergestellt) werden können.
+ * Team-Logo-Ordner (assets/img/teams/) UND dem Spielerfoto-Ordner
+ * (assets/img/player/, siehe addon/player/spielerstat_lib.php), jeweils in
+ * einem eigenen Unterordner ("teams/" bzw. "player/") desselben ZIPs, im
+ * selben /store-Verzeichnis, mit demselben Zeitstempel im Dateinamen
+ * ("backup_{Zeitstempel}_logos.zip") wie der zugehörige SQL-Dump, damit alle
+ * Dateien eindeutig zusammengehören und gemeinsam verwaltet
+ * (angezeigt/gelöscht/wiederhergestellt) werden können.
  *
- * @return string|null Dateiname, oder null wenn ZipArchive fehlt oder der
- *                      Logo-Ordner leer ist (kein Fehler – einfach nichts
- *                      zu sichern)
+ * @return string|null Dateiname, oder null wenn ZipArchive fehlt oder beide
+ *                      Ordner leer sind (kein Fehler – einfach nichts zu
+ *                      sichern)
  */
 function backupCreateLogosZip(string $timestamp) : ?string
 {
     if (!backupZipAvailable()) {
         return null;
     }
-    $logoDir = teamLogoDir();
-    $files = array_filter(glob($logoDir . '/*') ?: [], 'is_file');
-    if ($files === []) {
+    $logoDir  = teamLogoDir();
+    $logoFiles = array_filter(glob($logoDir . '/*') ?: [], 'is_file');
+
+    // Spielerfotos (siehe addon/player/spielerstat_lib.php) werden, falls
+    // vorhanden, in dasselbe ZIP mit aufgenommen (eigenes Verzeichnis-Präfix
+    // "player/"), damit ein Backup weiterhin nur eine begleitende Datei hat.
+    $photoFiles = [];
+    if (function_exists('spielerPhotoDir')) {
+        $photoFiles = array_filter(glob(spielerPhotoDir() . '/*') ?: [], 'is_file');
+    }
+
+    if ($logoFiles === [] && $photoFiles === []) {
         return null;
     }
 
@@ -381,8 +396,11 @@ function backupCreateLogosZip(string $timestamp) : ?string
     if ($zip->open($path, ZipArchive::CREATE | ZipArchive::OVERWRITE) !== true) {
         return null;
     }
-    foreach ($files as $file) {
+    foreach ($logoFiles as $file) {
         $zip->addFile($file, 'teams/' . basename($file));
+    }
+    foreach ($photoFiles as $file) {
+        $zip->addFile($file, 'player/' . basename($file));
     }
     $zip->close();
 
@@ -404,13 +422,14 @@ function backupLogosZipFilenameFor(string $sqlFilename) : ?string
 }
 
 /**
- * Stellt den Team-Logo-Ordner aus dem zu einem SQL-Backup gehörenden ZIP
- * wieder her (siehe backupCreateLogosZip()). Entfernt vorher alle
- * vorhandenen Logo-Dateien (vollständiges Ersetzen, analog zur
- * Datenbank-Wiederherstellung), damit keine Altlasten von inzwischen
- * gelöschten Teams zurückbleiben. Kein Fehler, wenn es zu diesem Backup gar
- * kein Logo-ZIP gibt (z.B. ein älteres Backup von vor diesem Feature) –
- * dann bleibt der aktuelle Logo-Ordner einfach unangetastet.
+ * Stellt den Team-Logo-Ordner UND den Spielerfoto-Ordner aus dem zu einem
+ * SQL-Backup gehörenden ZIP wieder her (siehe backupCreateLogosZip()).
+ * Entfernt vorher alle vorhandenen Dateien in beiden Ordnern (vollständiges
+ * Ersetzen, analog zur Datenbank-Wiederherstellung), damit keine Altlasten
+ * von inzwischen gelöschten Teams/Spielern zurückbleiben. Kein Fehler, wenn
+ * es zu diesem Backup gar kein Logo-ZIP gibt (z.B. ein älteres Backup von
+ * vor diesem Feature) – dann bleiben die aktuellen Ordner einfach
+ * unangetastet.
  *
  * @return array{ok:bool,count?:int,error?:string}
  */
@@ -439,11 +458,26 @@ function backupRestoreLogosZip(string $sqlFilename) : array
             @unlink($existing);
         }
     }
+    $photoDir = function_exists('spielerPhotoDir') ? spielerPhotoDir() : null;
+    if ($photoDir !== null) {
+        foreach (glob($photoDir . '/*') ?: [] as $existing) {
+            if (is_file($existing)) {
+                @unlink($existing);
+            }
+        }
+    }
 
     $count = 0;
     for ($i = 0; $i < $zip->numFiles; $i++) {
         $entryName = $zip->getNameIndex($i);
-        if ($entryName === false || !str_starts_with($entryName, 'teams/')) {
+        if ($entryName === false) {
+            continue;
+        }
+        if (str_starts_with($entryName, 'teams/')) {
+            $targetDir = $logoDir;
+        } elseif (str_starts_with($entryName, 'player/') && $photoDir !== null) {
+            $targetDir = $photoDir;
+        } else {
             continue;
         }
         $baseName = basename($entryName);
@@ -451,7 +485,7 @@ function backupRestoreLogosZip(string $sqlFilename) : array
             continue; // gegen Path-Traversal in manipulierten ZIP-Einträgen
         }
         $data = $zip->getFromIndex($i);
-        if ($data !== false && @file_put_contents($logoDir . '/' . $baseName, $data) !== false) {
+        if ($data !== false && @file_put_contents($targetDir . '/' . $baseName, $data) !== false) {
             $count++;
         }
     }

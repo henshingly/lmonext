@@ -2,7 +2,9 @@
 /**
  * Project: LMOnext
  * Filename: data_loader.php
- * Fileversion: 1.6.6
+ * Fileversion: 1.7.0
+ * Changelog: 1.7.0 - Neuer Datenlader für die Spielerstatistik-Verwaltung ("spielerstatistik"
+ *                     Action, siehe admin/spielerstat_lib.php + view_spielerstatistik.php)
  * Changelog: 1.6.6 - Bugfix: Duplikat-Erkennung bei "Teams (global)" nutzte ungeschützt
  *                     mb_strtolower() – auf Hosting ohne mbstring-Extension (die laut
  *                     Projektkonvention NICHT garantiert ist, siehe handler_import_export.php/
@@ -57,7 +59,7 @@ $flash = getFlash();
 if ($action !== 'login' && $action !== 'reset_password') { requireLogin(); }
 
 $ligen = []; $users = []; $ligaDetail = null;
-$spieltagData = null; $tabelleData = null;
+$spieltagData = null; $tabelleData = null; $spielerstatData = null;
 
 if (isLoggedIn()) {
     ensureArchivColumns();
@@ -83,6 +85,20 @@ if (isLoggedIn()) {
             $s3->execute([$lid]); $ligaDetail['spieltage'] = $s3->fetchAll();
             $s4 = $db->prepare('SELECT option_key,option_value FROM '.tbl('liga_options').' WHERE liga_id=?');
             $s4->execute([$lid]); $ligaDetail['options'] = array_column($s4->fetchAll(), null, 'option_key');
+        }
+        // Spielerstatistik-Verwaltung
+        if ($action === 'spielerstatistik' && isset($_GET['liga_id'])) {
+            require_once ADDON_INC . '/player/spielerstat_lib.php';
+            $lid = (int)$_GET['liga_id'];
+            $sLiga = $db->prepare('SELECT id,name FROM '.tbl('liga').' WHERE id=?');
+            $sLiga->execute([$lid]);
+            $spielerstatData = [
+                'liga_id' => $lid,
+                'liga'    => $sLiga->fetch(),
+                'spalten' => getSpielerstatSpalten($lid),
+                'spieler' => getSpielerstatSpieler($lid),
+                'config'  => getSpielerstatConfig($lid),
+            ];
         }
         // Spieltag-Ergebnisse
         if ($action === 'spieltag' && isset($_GET['liga_id'])) {

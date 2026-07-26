@@ -2,7 +2,12 @@
 /**
  * Project: LMOnext
  * Filename: admin.php
- * Fileversion: 1.4.3
+ * Fileversion: 1.5.1
+ * Changelog: 1.5.1 - Spielerstatistik-Addon nach addon/player/ verschoben (neben addon/mini/,
+ *                     einheitliche Addon-Ordnerstruktur); neue Konstante ADDON_INC
+ * Changelog: 1.5.0 - Routen für das neue Spielerstatistik-Addon ergänzt: "spielerstatistik"
+ *                     (Verwaltung je Liga) und "spst_import_review" (Team-Abgleich beim Import
+ *                     alter .stat/.cfg-Dateien), siehe handler_spielerstat.php
  * Changelog: 1.4.3 - require_once-Pfad an die Datei-Umbenennung angepasst (Nutzerwunsch:
  *                     interne Bezeichnungen jetzt durchgehend auf Englisch, siehe
  *                     league-key_data.php 1.2.0)
@@ -23,6 +28,7 @@ declare(strict_types = 1);
 
 // ── Pfad zu den Include-Dateien ───────────────────────────────────────────────
 define('ADMIN_INC', __DIR__ . '/admin');
+define('ADDON_INC', __DIR__ . '/addon');
 
 // ── Bootstrap: Config, DB, Hilfsfunktionen ───────────────────────────────────
 require_once ADMIN_INC . '/bootstrap.php';  // inkl. session_start()
@@ -41,6 +47,7 @@ require_once ADMIN_INC . '/handler_wizard.php';
 require_once ADMIN_INC . '/handler_export.php';
 require_once ADMIN_INC . '/handler_liga.php';
 require_once ADMIN_INC . '/handler_backup.php';
+require_once ADDON_INC . '/player/handler_spielerstat.php';
 
 // ── Daten laden (vor HTML-Ausgabe) ───────────────────────────────────────────
 require_once ADMIN_INC . '/data_loader.php';
@@ -100,6 +107,12 @@ if ($action === 'create_liga') {
 
 } elseif ($action === 'wartung') {
     require ADMIN_INC . '/view_wartung.php';
+
+} elseif ($action === 'spielerstatistik' && $spielerstatData) {
+    require ADDON_INC . '/player/view_spielerstatistik.php';
+
+} elseif ($action === 'spst_import_review') {
+    require ADDON_INC . '/player/view_spst_import_review.php';
 
 } else {
     // Fallback + Dashboard

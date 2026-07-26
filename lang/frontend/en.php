@@ -2,7 +2,10 @@
 /**
  * Project: LMOnext
  * Filename: lang/frontend/en.php
- * Fileversion: 1.17.0
+ * Fileversion: 1.19.0
+ * Changelog: 1.19.0 - Added translation for the new "Spielfrei" (bye) note
+ * Changelog: 1.18.0
+ * Changelog: 1.18.0 - Added translations for the new "Player stats" visitor tab
  * Changelog: 1.17.0 - Added translations for the new "Mininext" addon (ported from old LMO, see
  *                     addon/mini/lmo-mininext.php)
  * Changelog: 1.16.9
@@ -82,6 +85,7 @@ return [
     'liga_back_link'            => '← Back to overview',
     'liga_label_matchday'       => 'Matchday {n}',
     'liga_no_results_yet'       => 'No results have been entered for this league yet.',
+    'liga_spielfrei_label'      => 'Bye:',
     'liga_subtitle_matchday'     => 'Results – Matchday {n}',
     'liga_subtitle_round'        => 'Results – {name}',
     'liga_label_pick_matchday'   => 'Select matchday:',
@@ -112,6 +116,7 @@ return [
     'liga_tab_kreuztabelle'       => 'Cross table',
     'liga_tab_fieberkurve'        => 'Position chart',
     'liga_tab_ligastatistik'      => 'League stats',
+    'liga_tab_spielerstatistik'   => 'Player stats',
     'liga_fieberkurve_no_data'    => 'Results are needed before the position chart can be shown.',
     'liga_col_spieltag_short'     => 'MD',
     'liga_col_spieltag_long'      => 'Matchday',
@@ -232,5 +237,15 @@ return [
     'liga_weekday_fr' => 'Fri',
     'liga_weekday_sa' => 'Sat',
     'liga_weekday_so' => 'Sun',
+
+    // ── Player stats (visitor view) ──────────────────────────────────────────
+    'spst_view_empty'         => 'No player stats are available for this league yet.',
+    'spst_view_all_clubs'     => 'All clubs',
+    'spst_sort_desc'          => 'sort descending',
+    'spst_sort_asc'           => 'sort ascending',
+    'spst_player_link_title'  => 'Open external player profile',
+    'spst_pager_prev'         => 'Previous',
+    'spst_pager_next'         => 'Next',
+    'spst_pager_range'        => '{from}–{to} of {total}',
 
 ];

@@ -2,7 +2,9 @@
 /**
  * Project: LMOnext
  * Filename: view_liga_detail.php
- * Fileversion: 1.7.0
+ * Fileversion: 1.8.0
+ * Changelog: 1.8.0 - Neuer Button "Spielerstatistik" verlinkt auf die neue Verwaltungsseite des
+ *                     gleichnamigen Addons (siehe admin/view_spielerstatistik.php)
  * Changelog: 1.7.0 - Team-Editor: neue direkte Team-ID-Eingabe (Alternative zur Namenssuche) –
  *                     Team-ID eintippen + "Übernehmen", schlägt per neuem team_by_id-AJAX-
  *                     Endpunkt nach und übernimmt den Treffer wie ein Suchergebnis
@@ -39,6 +41,7 @@ $lid   = (int)$ligaDetail['liga']['id'];
 <?php } ?>
           <a href="?action=spieltag&liga_id=<?= $lid ?>&nr=1" class="btn btn-muted"><?= h(t('ld_btn_enter_results')) ?></a>
           <a href="?action=export&liga_id=<?= $lid ?>" class="btn btn-muted"><?= h(t('ld_btn_export')) ?></a>
+          <a href="?action=spielerstatistik&liga_id=<?= $lid ?>" class="btn btn-muted"><?= h(t('ld_btn_spielerstatistik')) ?></a>
           <!-- Ins Archiv verschieben -->
           <div style="position:relative;display:inline-block" id="archiv-dd">
             <button type="button" class="btn btn-muted" onclick="toggleArchivMenu()"

@@ -2,7 +2,16 @@
 /**
  * Project: LMOnext
  * Filename: liga.php
- * Fileversion: 3.9.4
+ * Fileversion: 3.10.2
+ * Changelog: 3.10.2 - PDF-Export der Ergebnisse übergibt jetzt die "Spielfrei"-Teams pro
+ *                     Spieltag mit (siehe pdf_export.php 1.6.7)
+ * Changelog: 3.10.1
+ * Changelog: 3.10.1 - Neuer "Spielfrei: TEAMNAME"-Hinweis unterhalb der Ergebnistabelle eines
+ *                     Spieltags (siehe renderSpielfreiNote() in data_liga.php 2.17.0), analog
+ *                     zum alten LMO
+ * Changelog: 3.10.0
+ * Changelog: 3.10.0 - "spielerstatistik"-Reiter ergänzt (neues Addon, siehe
+ *                     frontend/data_spielerstat.php + admin/spielerstat_lib.php)
  * Changelog: 3.9.4 - Neue globale Einstellung "PDF-Export für Besucher anzeigen?" (Admin →
  *                     Einstellungen → Besucherbereich) ausgewertet: blendet bei Deaktivierung
  *                     nicht nur die PDF-Buttons aus (Ergebnisse/Tabelle/Spielplan), sondern
@@ -162,7 +171,7 @@ $maxNr        = getMaxSpieltagNummer($allSpieltage);
 $favTeamId    = resolveTeamNumberToId($ligaId, (int)($opts['favTeam'] ?? 0));
 
 // ── Aktuellen Reiter bestimmen (?view=…, sonst ersten aktivierten Reiter) ────
-$viewOrder   = ['ergebnisse', 'kalender', 'tabelle', 'spielplaene', 'kreuztabelle', 'fieberkurve', 'ligastatistik', 'info'];
+$viewOrder   = ['ergebnisse', 'kalender', 'tabelle', 'spielplaene', 'kreuztabelle', 'fieberkurve', 'ligastatistik', 'spielerstatistik', 'info'];
 $currentView = $_GET['view'] ?? 'ergebnisse';
 if (empty($flags[$currentView])) {
     $currentView = 'ergebnisse';
@@ -237,6 +246,10 @@ switch ($currentView) {
         $viewInhalt = renderLigastatistikView($ligaId, $allSpieltage, $team1, $team2);
         break;
 
+    case 'spielerstatistik':
+        $viewInhalt = renderSpielerstatistikView($ligaId);
+        break;
+
     case 'info':
         $viewInhalt = renderInfoView();
         break;
@@ -283,6 +296,7 @@ switch ($currentView) {
                     'label'         => $pdfRoundLabel . ($dateRange !== '' ? ' · ' . $dateRange : ''),
                     'partien'       => $partien,
                     'spieltagStart' => $spieltag['start'] ?? null,
+                    'spielfrei'     => findSpielfreiTeams($ligaId, $partien),
                 ]];
             }
             exportErgebnissePdf($liga['name'], $sectionSpecs, $showLogos);
@@ -325,6 +339,7 @@ switch ($currentView) {
                 : tf('liga_heading_matchday_range', ['n' => $currentNr, 'range' => $dateRange]);
             $ergebnisInhalt  = '<h3 class="spieltag-heading">' . h($headingText) . '</h3>';
             $ergebnisInhalt .= renderResultsTable($partien, $spieltag['start'] ?? null, $favTeamId, $showLogos, true);
+            $ergebnisInhalt .= renderSpielfreiNote($ligaId, $partien);
             $ergebnisInhalt .= renderStatsBlock($currentName, $partien);
             $ergebnisInhalt .= $pdfButtonHtml;
         }

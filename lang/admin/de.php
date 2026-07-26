@@ -2,7 +2,15 @@
 /**
  * Project: LMOnext
  * Filename: lang/admin/de.php
- * Fileversion: 1.11.6
+ * Fileversion: 1.13.2
+ * Changelog: 1.13.2 - Übersetzungen für die neuen Installer-Prüfungen (store/-Schreibrecht,
+ *                     bzip2) und die verständlicheren DB-Verbindungsfehlermeldungen ergänzt
+ * Changelog: 1.13.1
+ * Changelog: 1.13.1 - Neue Meldung für den blockierten Spielerstatistik-Import ergänzt
+ * Changelog: 1.13.0
+ * Changelog: 1.13.0 - Übersetzungen für Foto-Upload und Spaltenüberschriften-Grafiken ergänzt
+ * Changelog: 1.12.0 - Übersetzungen für das neue Spielerstatistik-Addon ergänzt (Verwaltung,
+ *                     Import alter .stat/.cfg-Dateien, Team-Abgleich)
  * Changelog: 1.11.6 - Übersetzung für die neue Installer-Systemprüfung "ZIP-Erweiterung" ergänzt
  * Changelog: 1.11.5
  * Changelog: 1.11.5 - Übersetzungen für die neue Team-Logo-Mitsicherung bei Backup/
@@ -172,6 +180,8 @@ return [
     'install_check_svg_raster'        => 'SVG-Rasterisierung (Imagick/rsvg-convert)',
     'install_check_zip'               => 'ZIP-Erweiterung (Team-Logo-Backup)',
     'install_check_teams_dir'         => 'Schreibrecht (assets/img/teams/)',
+    'install_check_store_dir'         => 'Schreibrecht (store/, für Backups)',
+    'install_check_bzip2'             => 'bzip2-Erweiterung (Backup-Kompression)',
     'install_recommended_missing'     => 'nicht gefunden (optional)',
     'install_optional'                => 'optional',
     'install_available'              => 'verfügbar',
@@ -184,6 +194,11 @@ return [
     'install_check_adminphp'         => 'admin.php vorhanden',
     'install_adminphp_found'         => 'gefunden',
     'install_adminphp_missing'       => 'NICHT gefunden – admin.php ins gleiche Verzeichnis legen',
+    'install_db_error_unreachable'    => 'Der Datenbankserver ist unter Host/Port nicht erreichbar. Prüfe, ob MariaDB/MySQL läuft und ob Host und Port korrekt sind (bei den meisten Webhostern ist der Host NICHT "localhost", sondern ein spezieller Servername – siehe Hosting-Zugangsdaten).',
+    'install_db_error_access_denied'  => 'Zugriff verweigert – Benutzername oder Passwort ist falsch, oder der Datenbank-Benutzer hat keine Berechtigung für diese Datenbank.',
+    'install_db_error_no_db_permission' => 'Die Datenbank existiert nicht und konnte auch nicht automatisch angelegt werden. Bei den meisten Webhostern muss die Datenbank vorher im Hosting-Kontrollpanel manuell angelegt werden – der Datenbank-Benutzer darf dort meist keine neuen Datenbanken erstellen.',
+    'install_db_error_unknown_host'   => 'Der angegebene Datenbank-Host wurde nicht gefunden. Bitte den Hostnamen in den Hosting-Zugangsdaten prüfen.',
+    'install_db_error_generic'        => 'Datenbankfehler: {msg}',
 
     'install_requirements_heading' => 'Systemvoraussetzungen',
     'install_fix_issues'           => 'Bitte behebe die markierten Probleme vor der Installation.',
@@ -758,5 +773,61 @@ return [
     'imp_review_btn_confirm'  => 'Import fortsetzen',
     'imp_review_btn_cancel'   => 'Abbrechen',
     'imp_review_expired'      => 'Die Abgleich-Daten sind nicht mehr verfügbar. Bitte Datei(en) erneut hochladen.',
+
+    // ── Spielerstatistik-Addon ──────────────────────────────────────────────
+    'ld_btn_spielerstatistik'      => 'Spielerstatistik',
+    'spst_back_link'               => '« zurück zur Liga',
+    'spst_title'                   => 'Spielerstatistik: {liga}',
+    'spst_heading_add_column'      => 'Spalte hinzufügen',
+    'spst_heading_add_player'      => 'Spieler hinzufügen',
+    'spst_heading_columns'         => 'Spalten löschen',
+    'spst_heading_config'          => 'Konfiguration',
+    'spst_heading_import'          => 'Alte Statistik importieren',
+    'spst_col_name'                => 'Name',
+    'spst_col_typ'                 => 'Typ',
+    'spst_col_rolle'               => 'Rolle',
+    'spst_col_formel'              => 'Formel',
+    'spst_typ_zahl'                => 'Zahlen',
+    'spst_typ_text'                => 'Text',
+    'spst_typ_formel'               => 'Formel',
+    'spst_rolle_normal'            => 'normal',
+    'spst_rolle_verein'            => 'Verein',
+    'spst_rolle_spielerlink'       => 'Spielerlink',
+    'spst_btn_add_column'          => 'Spalte hinzufügen',
+    'spst_btn_add_player'          => 'Spieler hinzufügen',
+    'spst_btn_save_values'         => 'Werte speichern',
+    'spst_btn_save_config'         => 'Konfiguration speichern',
+    'spst_btn_import'              => 'Importieren',
+    'spst_confirm_delete_player'   => 'Diesen Spieler wirklich löschen?',
+    'spst_confirm_delete_column'   => 'Diese Spalte wirklich löschen? Alle Werte darin gehen verloren.',
+    'spst_empty_hint'              => 'Noch keine Spalten/Spieler vorhanden. Lege oben eine Spalte und einen Spieler an, oder importiere eine alte Statistik-Datei.',
+    'spst_cfg_per_page'            => 'Anzeige pro Seite (0 = alle)',
+    'spst_cfg_link_label'          => 'Linkbezeichnung',
+    'spst_cfg_show_zero'           => 'Nullwerte einblenden',
+    'spst_cfg_show_per_club'       => 'Vereinsweise anzeigen',
+    'spst_cfg_show_extra_sort'     => 'Extra Sortierspalte',
+    'spst_import_hint'             => 'Lade eine .stat-Datei (und optional die zugehörige .cfg-Datei) aus dem alten LMO-Addon "Spielerstatistik" hoch. Alle drei bekannten Trennzeichen (§, |, #) werden automatisch erkannt.',
+    'spst_import_replace_warning'  => 'Ein Import ersetzt die komplette bestehende Spielerstatistik dieser Liga.',
+    'spst_flash_import_blocked'    => 'Import nicht möglich: Für diese Liga wurde bereits mindestens eine Spalte manuell angelegt. Der Import ist nur für eine noch komplett unkonfigurierte Spielerstatistik gedacht.',
+    'spst_review_intro'            => 'Folgende Vereine aus der importierten Datei ähneln bereits vorhandenen Teams, sind aber nicht exakt namensgleich. Wähle aus, welcher Vereinsname übernommen werden soll.',
+    'spst_flash_name_required'     => 'Bitte einen Namen angeben.',
+    'spst_flash_column_added'      => 'Spalte hinzugefügt.',
+    'spst_flash_column_deleted'    => 'Spalte gelöscht.',
+    'spst_flash_player_added'      => 'Spieler hinzugefügt.',
+    'spst_flash_player_deleted'    => 'Spieler gelöscht.',
+    'spst_flash_updated'           => 'Werte gespeichert.',
+    'spst_flash_config_saved'      => 'Konfiguration gespeichert.',
+    'spst_flash_no_file'           => 'Bitte eine .stat-Datei hochladen.',
+    'spst_flash_file_unreadable'   => 'Datei konnte nicht gelesen werden.',
+    'spst_flash_parse_failed'      => 'Datei konnte nicht als Spielerstatistik erkannt werden.',
+    'spst_import_success'          => 'Import abgeschlossen: {n} Spieler übernommen.',
+    'spst_column_image_hint'       => 'Liegt im Ordner assets/addon/player/ eine Grafik mit exakt dem Spaltennamen (z.B. "Tore.png"), wird sie in der Besucheransicht statt des Textes als Spaltenüberschrift angezeigt.',
+    'spst_btn_photo'                => 'Foto',
+    'spst_btn_photo_remove'         => 'Foto entfernen',
+    'spst_flash_photo_saved'        => 'Foto gespeichert.',
+    'spst_flash_photo_removed'      => 'Foto entfernt.',
+    'spst_photo_err_upload'         => 'Foto konnte nicht hochgeladen werden.',
+    'spst_photo_err_format'         => 'Nicht unterstütztes Bildformat (erlaubt: JPG, PNG, GIF, SVG).',
+    'spst_photo_err_invalid'        => 'Datei ist kein gültiges Bild.',
 
 ];

@@ -2,7 +2,11 @@
 /**
  * Project: LMOnext
  * Filename: frontend/pdf_export.php
- * Fileversion: 1.6.6
+ * Fileversion: 1.6.7
+ * Changelog: 1.6.7 - "Spielfrei: TEAMNAME"-Zeile jetzt auch im PDF-Export der Ergebnisse
+ *                     (direkt nach den Ergebniszeilen, vor der Tore-Schnitt-Zeile - gleiche
+ *                     Reihenfolge wie in der HTML-Ansicht), siehe liga.php 3.10.2
+ * Changelog: 1.6.6
  * Changelog: 1.6.6 - Bugfix + Verbesserung: die Logos im Teamvergleich-Titel ("TeamA Logo vs
  *                     Logo TeamB") wurden immer in der kleinen Zeilen-Logo-Höhe (9.5pt)
  *                     gezeichnet, obwohl der reservierte Platz für 15pt berechnet war
@@ -653,7 +657,7 @@ function pdfLoadTeamLogos(array $teamIds) : array
  * ("Finale" und "Spiel um Platz 3"), jeweils mit eigenem Datum statt einem
  * gemeinsamen Datumsbereich über beide Begegnungen hinweg.
  *
- * @param array<int,array{subtitle:string,rows:array,statsLine:string}> $sections
+ * @param array<int,array{subtitle:string,rows:array,statsLine:string,spielfreiLine?:string}> $sections
  */
 function buildResultsPdf(string $ligaName, array $sections, string $footerText = '', array $teamLogos = []) : string
 {
@@ -808,7 +812,8 @@ function buildResultsPdf(string $ligaName, array $sections, string $footerText =
     foreach ($sections as $sectionIdx => $section) {
         $rows      = $section['rows'] ?? [];
         $subtitle  = $section['subtitle'] ?? '';
-        $statsLine = $section['statsLine'] ?? '';
+        $statsLine     = $section['statsLine'] ?? '';
+        $spielfreiLine = $section['spielfreiLine'] ?? '';
 
         $bodyCells = [];
         $bodyRowIds = [];
@@ -918,6 +923,20 @@ function buildResultsPdf(string $ligaName, array $sections, string $footerText =
             }
             $y -= $lineHeight;
             $rowIndex++;
+        }
+
+        // "Spielfrei: TEAMNAME"-Zeile, falls ein Team an diesem Spieltag keine
+        // Partie hat (siehe findSpielfreiTeams() in data_liga.php) - direkt
+        // nach den Ergebniszeilen, vor der Tore-Schnitt-Zeile (gleiche
+        // Reihenfolge wie in der HTML-Ansicht)
+        if ($spielfreiLine !== '') {
+            if ($y < $marginBottom + $lineHeight) {
+                $startNewPage();
+            }
+            $y -= 4;
+            $setColor($mutedR, $mutedG, $mutedB);
+            $addText($prep($spielfreiLine, 120), $tableStartX, $y, 'F1', $headFontSize);
+            $y -= $lineHeight - 4;
         }
 
         // Tore-Schnitt-Zeile am Ende der Ergebnisliste dieses Abschnitts
@@ -1454,10 +1473,15 @@ function exportErgebnissePdf(string $ligaName, array $sectionSpecs, bool $showLo
             'proSpiel' => $stats['toreProSpiel'],
         ]);
 
+        $spielfreiTeams = $spec['spielfrei'] ?? [];
+        $spielfreiLine  = $spielfreiTeams === [] ? '' : tf('liga_spielfrei_label') . ' '
+            . implode(', ', array_map(static fn(array $t) : string => (string)$t['name'], $spielfreiTeams));
+
         $sections[] = [
-            'subtitle'  => $spec['label'],
-            'rows'      => $rows,
-            'statsLine' => $statsLine,
+            'subtitle'      => $spec['label'],
+            'rows'          => $rows,
+            'statsLine'     => $statsLine,
+            'spielfreiLine' => $spielfreiLine,
         ];
     }
 

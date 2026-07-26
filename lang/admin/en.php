@@ -2,7 +2,15 @@
 /**
  * Project: LMOnext
  * Filename: lang/admin/en.php
- * Fileversion: 1.10.15
+ * Fileversion: 1.12.2
+ * Changelog: 1.12.2 - Added translations for the new installer checks (store/ write
+ *                     permission, bzip2) and the clearer DB connection error messages
+ * Changelog: 1.12.1
+ * Changelog: 1.12.1 - Added message for the blocked player-stats import
+ * Changelog: 1.12.0
+ * Changelog: 1.12.0 - Added translations for photo upload and column-header images
+ * Changelog: 1.11.0 - Added translations for the new player-stats addon (management, legacy
+ *                     .stat/.cfg import, team matching)
  * Changelog: 1.10.15 - Added translation for the new "ZIP extension" installer check
  * Changelog: 1.10.14
  * Changelog: 1.10.14 - Added translations for the new team-logo backup/restore inclusion
@@ -166,6 +174,8 @@ return [
     'install_check_svg_raster'        => 'SVG rasterization (Imagick/rsvg-convert)',
     'install_check_zip'               => 'ZIP extension (team logo backup)',
     'install_check_teams_dir'         => 'Write permission (assets/img/teams/)',
+    'install_check_store_dir'         => 'Write permission (store/, for backups)',
+    'install_check_bzip2'             => 'bzip2 extension (backup compression)',
     'install_recommended_missing'     => 'not found (optional)',
     'install_optional'                => 'optional',
     'install_available'              => 'available',
@@ -178,6 +188,11 @@ return [
     'install_check_adminphp'         => 'admin.php present',
     'install_adminphp_found'         => 'found',
     'install_adminphp_missing'       => 'NOT found – place admin.php in the same directory',
+    'install_db_error_unreachable'    => 'Could not reach the database server at that host/port. Check whether MariaDB/MySQL is running and whether the host and port are correct (with most web hosts, the host is NOT "localhost" but a specific server name – check your hosting credentials).',
+    'install_db_error_access_denied'  => 'Access denied – the username or password is wrong, or the database user does not have permission for this database.',
+    'install_db_error_no_db_permission' => 'The database does not exist and could not be created automatically. With most web hosts, the database must first be created manually in the hosting control panel – the database user usually cannot create new databases.',
+    'install_db_error_unknown_host'   => 'The specified database host could not be found. Please check the hostname in your hosting credentials.',
+    'install_db_error_generic'        => 'Database error: {msg}',
 
     'install_requirements_heading' => 'System requirements',
     'install_fix_issues'           => 'Please fix the marked issues before installing.',
@@ -752,5 +767,61 @@ return [
     'imp_review_btn_confirm'  => 'Continue import',
     'imp_review_btn_cancel'   => 'Cancel',
     'imp_review_expired'      => 'The matching data is no longer available. Please upload the file(s) again.',
+
+    // ── Player stats addon ──────────────────────────────────────────────────
+    'ld_btn_spielerstatistik'      => 'Player stats',
+    'spst_back_link'               => '« back to league',
+    'spst_title'                   => 'Player stats: {liga}',
+    'spst_heading_add_column'      => 'Add column',
+    'spst_heading_add_player'      => 'Add player',
+    'spst_heading_columns'         => 'Delete columns',
+    'spst_heading_config'          => 'Configuration',
+    'spst_heading_import'          => 'Import legacy stats',
+    'spst_col_name'                => 'Name',
+    'spst_col_typ'                 => 'Type',
+    'spst_col_rolle'               => 'Role',
+    'spst_col_formel'              => 'Formula',
+    'spst_typ_zahl'                => 'Number',
+    'spst_typ_text'                => 'Text',
+    'spst_typ_formel'               => 'Formula',
+    'spst_rolle_normal'            => 'normal',
+    'spst_rolle_verein'            => 'Club',
+    'spst_rolle_spielerlink'       => 'Player link',
+    'spst_btn_add_column'          => 'Add column',
+    'spst_btn_add_player'          => 'Add player',
+    'spst_btn_save_values'         => 'Save values',
+    'spst_btn_save_config'         => 'Save configuration',
+    'spst_btn_import'              => 'Import',
+    'spst_confirm_delete_player'   => 'Really delete this player?',
+    'spst_confirm_delete_column'   => 'Really delete this column? All values in it will be lost.',
+    'spst_empty_hint'              => 'No columns/players yet. Add a column and a player above, or import an old stats file.',
+    'spst_cfg_per_page'            => 'Rows per page (0 = all)',
+    'spst_cfg_link_label'          => 'Link label',
+    'spst_cfg_show_zero'           => 'Show zero values',
+    'spst_cfg_show_per_club'       => 'Show per club',
+    'spst_cfg_show_extra_sort'     => 'Extra sort column',
+    'spst_import_hint'             => 'Upload a .stat file (and optionally its matching .cfg file) from the old LMO "Spielerstatistik" addon. All three known delimiters (§, |, #) are detected automatically.',
+    'spst_import_replace_warning'  => 'An import replaces the entire existing player stats for this league.',
+    'spst_flash_import_blocked'    => 'Import not possible: at least one column has already been added manually for this league. Import is only intended for a completely unconfigured player statistics setup.',
+    'spst_review_intro'            => 'The following clubs from the imported file resemble existing teams, but do not match exactly. Choose which club name to adopt.',
+    'spst_flash_name_required'     => 'Please provide a name.',
+    'spst_flash_column_added'      => 'Column added.',
+    'spst_flash_column_deleted'    => 'Column deleted.',
+    'spst_flash_player_added'      => 'Player added.',
+    'spst_flash_player_deleted'    => 'Player deleted.',
+    'spst_flash_updated'           => 'Values saved.',
+    'spst_flash_config_saved'      => 'Configuration saved.',
+    'spst_flash_no_file'           => 'Please upload a .stat file.',
+    'spst_flash_file_unreadable'   => 'File could not be read.',
+    'spst_flash_parse_failed'      => 'File could not be recognized as player stats.',
+    'spst_import_success'          => 'Import complete: {n} players imported.',
+    'spst_column_image_hint'       => 'If a file with the exact column name (e.g. "Tore.png") exists in assets/addon/player/, it is shown instead of the text column header in the visitor view.',
+    'spst_btn_photo'                => 'Photo',
+    'spst_btn_photo_remove'         => 'Remove photo',
+    'spst_flash_photo_saved'        => 'Photo saved.',
+    'spst_flash_photo_removed'      => 'Photo removed.',
+    'spst_photo_err_upload'         => 'Photo could not be uploaded.',
+    'spst_photo_err_format'         => 'Unsupported image format (allowed: JPG, PNG, GIF, SVG).',
+    'spst_photo_err_invalid'        => 'File is not a valid image.',
 
 ];

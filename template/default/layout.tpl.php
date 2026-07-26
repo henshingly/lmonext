@@ -2,7 +2,8 @@
 <html lang="<!--HtmlLang-->">
 <head>
 <!--
-  Template: default | Filename: layout.tpl.php | Fileversion: 1.15.4
+  Template: default | Filename: layout.tpl.php | Fileversion: 1.15.5
+  Changelog: 1.15.5 - CSS für den neuen "Spielfrei"-Hinweis (spielfrei_note.tpl.php) ergänzt
   Changelog: 1.15.4 - .team-logo-inline: margin-left ergänzt (Logo steht jetzt teils NACH dem
                       Teamnamen, z.B. Heim-Spalte regulärer Ligen, Team-A im Teamvergleich-Titel)
   Changelog: 1.15.3
@@ -238,6 +239,9 @@ table.results-table td.col-vergleich,table.results-table thead th.col-vergleich{
   text-decoration:none;transition:background .15s ease,color .15s ease,border-color .15s ease}
 .btn-pdf-export:hover{background:var(--accent);color:#fff;border-color:var(--accent)}
 .spieltag-stats .stats-heading{font-weight:600;color:var(--text);margin-bottom:3px}
+.spielfrei-note{font-size:.85rem;color:var(--muted);margin:-8px 0 16px;padding:8px 12px;
+  background:var(--bg);border-radius:var(--radius);border:1px dashed var(--border)}
+.spielfrei-note strong{color:var(--text)}
 
 .tabs-bar{display:flex;gap:0;flex-wrap:wrap;margin-bottom:16px;border-bottom:1px solid var(--border)}
 .tab-item{padding:9px 16px;font-size:.86rem;text-decoration:none;color:var(--muted);

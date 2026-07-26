@@ -2,7 +2,10 @@
 /**
  * Project: LMOnext
  * Filename: lang/frontend/de.php
- * Fileversion: 1.17.0
+ * Fileversion: 1.19.0
+ * Changelog: 1.19.0 - Übersetzung für den neuen "Spielfrei"-Hinweis ergänzt
+ * Changelog: 1.18.0
+ * Changelog: 1.18.0 - Übersetzungen für den neuen Besucher-Reiter "Spielerstatistik" ergänzt
  * Changelog: 1.17.0 - Übersetzungen für das neue Addon "Mininext" (Portierung aus dem alten LMO,
  *                     siehe addon/mini/lmo-mininext.php) ergänzt
  * Changelog: 1.16.9
@@ -84,6 +87,7 @@ return [
     'liga_back_link'            => '← Zur Übersicht',
     'liga_label_matchday'       => 'Spieltag {n}',
     'liga_no_results_yet'       => 'Für diese Liga wurden noch keine Ergebnisse eingetragen.',
+    'liga_spielfrei_label'      => 'Spielfrei:',
     'liga_subtitle_matchday'     => 'Ergebnisse Spieltag {n}',
     'liga_subtitle_round'        => 'Ergebnisse {name}',
     'liga_label_pick_matchday'   => 'Spieltag wählen:',
@@ -114,6 +118,7 @@ return [
     'liga_tab_kreuztabelle'       => 'Kreuztabelle',
     'liga_tab_fieberkurve'        => 'Fieberkurven',
     'liga_tab_ligastatistik'      => 'Ligastatistik',
+    'liga_tab_spielerstatistik'   => 'Spielerstatistik',
     'liga_fieberkurve_no_data'    => 'Für die Fieberkurve werden erst Ergebnisse benötigt.',
     'liga_col_spieltag_short'     => 'ST',
     'liga_col_spieltag_long'      => 'Spieltag',
@@ -234,5 +239,15 @@ return [
     'liga_weekday_fr' => 'Fr',
     'liga_weekday_sa' => 'Sa',
     'liga_weekday_so' => 'So',
+
+    // ── Spielerstatistik (Besucheransicht) ──────────────────────────────────
+    'spst_view_empty'         => 'Für diese Liga liegt noch keine Spielerstatistik vor.',
+    'spst_view_all_clubs'     => 'Alle Vereine',
+    'spst_sort_desc'          => 'absteigend sortieren',
+    'spst_sort_asc'           => 'aufsteigend sortieren',
+    'spst_player_link_title'  => 'Externes Spielerprofil öffnen',
+    'spst_pager_prev'         => 'Zurück',
+    'spst_pager_next'         => 'Weiter',
+    'spst_pager_range'        => '{from}–{to} von {total}',
 
 ];
