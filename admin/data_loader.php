@@ -2,7 +2,11 @@
 /**
  * Project: LMOnext
  * Filename: data_loader.php
- * Fileversion: 1.7.1
+ * Fileversion: 1.7.2
+ * Changelog: 1.7.2 - Teams-Liste liefert jetzt zusätzlich link_count je Team (Anzahl
+ *                     Team-Verknüpfungen, siehe team_links), damit in "Teams (global)" auf
+ *                     einen Blick erkennbar ist, welche Teams schon verknüpft sind
+ * Changelog: 1.7.1
  * Changelog: 1.7.1 - spielerstatData enthält jetzt zusätzlich die Namen aller Teams der Liga
  *                     ("teams"), damit Team-/Mannschaft-/Verein-Spalten im Spielerstatistik-
  *                     Addon als Dropdown statt Freitext angeboten werden können, siehe
@@ -383,6 +387,29 @@ if ($action === 'teams' && isLoggedIn()) {
               ORDER BY g.name'
         );
         $teamsData['teams'] = $sT->fetchAll();
+
+        // Anzahl Team-Verknüpfungen je Team (siehe admin/bootstrap.php,
+        // team_links). Tabelle existiert evtl. noch nicht (Lazy-Erstellung
+        // beim ersten Anlegen einer Verknüpfung) - dann bleibt die Zuordnung
+        // einfach leer, kein Fehler.
+        $linkCounts = [];
+        try {
+            $sLinks = $db->query(
+                'SELECT team_a_id AS tid, COUNT(*) AS cnt FROM '.tbl('team_links').' GROUP BY team_a_id
+                 UNION ALL
+                 SELECT team_b_id AS tid, COUNT(*) AS cnt FROM '.tbl('team_links').' GROUP BY team_b_id'
+            );
+            foreach ($sLinks->fetchAll() as $row) {
+                $tid = (int)$row['tid'];
+                $linkCounts[$tid] = ($linkCounts[$tid] ?? 0) + (int)$row['cnt'];
+            }
+        } catch (Throwable) {
+            // team_links existiert noch nicht - $linkCounts bleibt leer
+        }
+        foreach ($teamsData['teams'] as &$teamRow) {
+            $teamRow['link_count'] = $linkCounts[(int)$teamRow['id']] ?? 0;
+        }
+        unset($teamRow);
 
         // Umlaut-Normalisierung für Duplikat-Vergleich
         $normalizeStr = function(string $s): string {

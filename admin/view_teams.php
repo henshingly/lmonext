@@ -2,7 +2,11 @@
 /**
  * Project: LMOnext
  * Filename: view_teams.php
- * Fileversion: 1.6.0
+ * Fileversion: 1.6.1
+ * Changelog: 1.6.1 - Der 🔗-Button zeigt jetzt eine kleine Zahlen-Markierung, wenn das Team
+ *                     bereits Verknüpfungen hat (siehe data_loader.php 1.7.2) – auf einen Blick
+ *                     erkennbar, ohne jedes Team einzeln öffnen zu müssen
+ * Changelog: 1.6.0
  * Changelog: 1.6.0 - Neues Modal "Team-Verknüpfungen" (🔗-Button je Team), nicht-destruktive
  *                     Alternative zum Merge: verknüpft zwei eigenständige Teams mit Typ
  *                     (Umbenennung/Fusion/Abspaltung/Sonstige) + Freitext-Notiz. Nutzt dieselbe
@@ -122,8 +126,12 @@ foreach ($teams as $t) {
               <td style="white-space:nowrap">
                 <button class="btn btn-muted btn-sm"
                         onclick="openGlobalEdit(<?= $t['id'] ?>, <?= h(json_encode($t['name'])) ?>, <?= h(json_encode($t['mittel'])) ?>, <?= h(json_encode($t['kurz'])) ?>, <?= h(json_encode($t['url'] ?? '')) ?>)">✏️</button>
-                <button class="btn btn-muted btn-sm" title="<?= h(t('teams_btn_links')) ?>"
-                        onclick="openLinkModal(<?= $t['id'] ?>, <?= h(json_encode($t['name'])) ?>)">🔗</button>
+                <button class="btn btn-muted btn-sm" style="position:relative"
+                        title="<?= h(t('teams_btn_links')) ?>"
+                        onclick="openLinkModal(<?= $t['id'] ?>, <?= h(json_encode($t['name'])) ?>)">🔗<?php if ((int)($t['link_count'] ?? 0) > 0) { ?><span
+                        style="position:absolute;top:-6px;right:-6px;background:var(--accent);color:#fff;
+                               border-radius:50%;min-width:15px;height:15px;font-size:.62rem;line-height:15px;
+                               text-align:center;padding:0 2px;font-weight:700"><?= (int)$t['link_count'] ?></span><?php } ?></button>
                 <?php if ($isDup) { ?>
                 <button class="btn btn-sm" style="background:#f59e0b22;border:1px solid var(--yellow);color:var(--yellow)"
                         onclick="openMerge(<?= $t['id'] ?>, <?= h(json_encode($t['name'])) ?>)"><?= h(t('teams_btn_merge_short')) ?></button>
