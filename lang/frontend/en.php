@@ -2,7 +2,10 @@
 /**
  * Project: LMOnext
  * Filename: lang/frontend/en.php
- * Fileversion: 1.19.1
+ * Fileversion: 1.19.2
+ * Changelog: 1.19.2 - Added key "h2h_pdf_renamed_note" for the summarized rename note in the
+ *                     head-to-head PDF export (see pdf_export.php 1.6.9)
+ * Changelog: 1.19.1
  * Changelog: 1.19.1 - Added key "h2h_today_prefix" for the "(today TEAM_TODAY)" annotation on
  *                     linked teams in the head-to-head comparison (see
  *                     resolveLinkedTeamIds()/getHeadToHeadMatches() in data_liga.php 2.18.0)
@@ -190,6 +193,7 @@ return [
     'liga_h2h_no_matches'         => 'No previous matches between these two teams yet.',
     'liga_h2h_close'              => 'Close',
     'h2h_today_prefix'            => 'today',
+    'h2h_pdf_renamed_note'        => 'Note: {list} (same team, former name)',
     'liga_status_ie'             => 'pens.',
     'liga_status_nv'             => 'AET',
     'liga_stats_line'            => 'Average home: {heim}   Average away: {gast}   Goals: {tore}   Goals/match: {proSpiel}',

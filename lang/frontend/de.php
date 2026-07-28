@@ -2,7 +2,10 @@
 /**
  * Project: LMOnext
  * Filename: lang/frontend/de.php
- * Fileversion: 1.19.1
+ * Fileversion: 1.19.2
+ * Changelog: 1.19.2 - Neuer Schlüssel "h2h_pdf_renamed_note" für den zusammenfassenden
+ *                     Umbenennungs-Hinweis im Teamvergleich-PDF (siehe pdf_export.php 1.6.9)
+ * Changelog: 1.19.1
  * Changelog: 1.19.1 - Neuer Schlüssel "h2h_today_prefix" für die "(heute TEAM_HEUTE)"-
  *                     Kennzeichnung bei verknüpften Teams im Teamvergleich (siehe
  *                     resolveLinkedTeamIds()/getHeadToHeadMatches() in data_liga.php 2.18.0)
@@ -192,6 +195,7 @@ return [
     'liga_h2h_no_matches'         => 'Bisher noch keine Begegnungen zwischen diesen beiden Mannschaften.',
     'liga_h2h_close'              => 'Schließen',
     'h2h_today_prefix'            => 'heute',
+    'h2h_pdf_renamed_note'        => 'Hinweis: {list} (jeweils selbes Team unter früherem Namen)',
     'liga_status_ie'             => 'i.E.',
     'liga_status_nv'             => 'n.V.',
     'liga_stats_line'            => 'Schnitt Heim: {heim}   Schnitt Gast: {gast}   Tore: {tore}   Tore/Spiel: {proSpiel}',

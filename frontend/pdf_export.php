@@ -2,7 +2,15 @@
 /**
  * Project: LMOnext
  * Filename: frontend/pdf_export.php
- * Fileversion: 1.6.8
+ * Fileversion: 1.6.9
+ * Changelog: 1.6.9 - Bugfix: der "(heute TEAM_HEUTE)"-Zusatz wurde bisher an JEDE einzelne
+ *                     Ergebniszeile angehängt, wodurch die Ergebnis-Spalten im Teamvergleich-PDF
+ *                     unnötig breit wurden (siehe Nutzer-Feedback mit Beispiel-PDF). Steht jetzt
+ *                     nur noch einmal als zusammenfassender Hinweis unter dem Untertitel (neuer
+ *                     optionaler Parameter $noteLine in buildStandingsPdf(), Default null -
+ *                     betrifft die normale Tabellen-PDF nicht). Tabellenzeilen zeigen wieder die
+ *                     schlichten historischen Namen ohne Zusatz
+ * Changelog: 1.6.8
  * Changelog: 1.6.8 - Angepasst an die neue Feldaufteilung in getHeadToHeadMatches()
  *                     (heim_today/gast_today statt im Namen enthalten, siehe data_liga.php
  *                     2.20.0) – rekonstruiert den "(heute TEAM_HEUTE)"-Zusatz weiterhin inline
@@ -995,7 +1003,7 @@ function buildResultsPdf(string $ligaName, array $sections, string $footerText =
  * @param int|null $accentColIndex Spalte (0-basiert), die fett/in Akzentfarbe
  *        hervorgehoben wird (z.B. die Pkt-Spalte der Tabelle) – null = keine
  */
-function buildStandingsPdf(string $ligaName, string $subtitleLabel, array $columnHeaders, array $columnAligns, array $rows, string $footerText = '', ?int $accentColIndex = null, array $rowBorderColors = [], array $teamLogos = [], array $logoCols = [], array $rowTeamIds = [], ?array $vsTitleTeams = null) : string
+function buildStandingsPdf(string $ligaName, string $subtitleLabel, array $columnHeaders, array $columnAligns, array $rows, string $footerText = '', ?int $accentColIndex = null, array $rowBorderColors = [], array $teamLogos = [], array $logoCols = [], array $rowTeamIds = [], ?array $vsTitleTeams = null, ?string $noteLine = null) : string
 {
     $pageWidth    = 595.28;
     $pageHeight   = 841.89;
@@ -1256,6 +1264,19 @@ function buildStandingsPdf(string $ligaName, string $subtitleLabel, array $colum
         $y -= 22;
     } else {
         $y -= 10;
+    }
+
+    // Optionale einzeilige Zusatznotiz (z.B. Hinweis auf umbenannte/verknüpfte
+    // Teams beim Teamvergleich, siehe exportH2hPdf()) - einmal zentriert unter
+    // dem Untertitel statt bei jeder einzelnen Tabellenzeile zu wiederholen,
+    // damit die Ergebnis-Spalten nicht unnötig breit werden.
+    if ($noteLine !== null && $noteLine !== '') {
+        $noteSize = 9;
+        $noteText = $prep($noteLine, 110);
+        $noteX = ($pageWidth - pdfEstimateTextWidth($noteText, $noteSize, false)) / 2;
+        $setColor($mutedR, $mutedG, $mutedB);
+        $addText($noteText, max($marginX, $noteX), $y, 'F1', $noteSize);
+        $y -= 18;
     }
 
     $setColor($mutedR, $mutedG, $mutedB);
@@ -1684,6 +1705,7 @@ function exportH2hPdf(int $teamAId, int $teamBId, bool $showLogos = false) : voi
     $tableRows = [];
     $rowTeamIds = [];
     $allTeamIds = [$teamAId, $teamBId];
+    $renamedNotes = [];
     foreach ($matches as $m) {
         if ($m['h_tore'] === $m['g_tore']) {
             $draws++;
@@ -1704,24 +1726,21 @@ function exportH2hPdf(int $teamAId, int $teamBId, bool $showLogos = false) : voi
         }
         $heimId = (int)($m['heim_id'] ?? 0);
         $gastId = (int)($m['gast_id'] ?? 0);
-        // PDF ist reiner (einzeiliger) Text ohne Möglichkeit für einen
-        // Zeilenumbruch wie im H2H-Modal - der "(heute TEAM_HEUTE)"-Zusatz
-        // bleibt hier bewusst inline an den Namen angehängt (siehe
-        // data_liga.php getHeadToHeadMatches(), heim_today/gast_today).
-        $heimDisplay = partieTeamName($m, 'heim');
+        // Der "heute TEAM_HEUTE"-Zusatz steht NICHT mehr pro Zeile (das machte
+        // die Spalten unnötig breit, siehe Nutzer-Feedback zum PDF) - stattdessen
+        // wird unten einmal ein zusammenfassender Hinweis gesammelt.
         if (!empty($m['heim_today'])) {
-            $heimDisplay .= ' (' . tf('h2h_today_prefix') . ' ' . $m['heim_today'] . ')';
+            $renamedNotes[$m['heim_name']] = $m['heim_today'];
         }
-        $gastDisplay = partieTeamName($m, 'gast');
         if (!empty($m['gast_today'])) {
-            $gastDisplay .= ' (' . tf('h2h_today_prefix') . ' ' . $m['gast_today'] . ')';
+            $renamedNotes[$m['gast_name']] = $m['gast_today'];
         }
         $tableRows[] = [
             $datum,
             $m['runde_label'],
-            $heimDisplay,
+            partieTeamName($m, 'heim'),
             $m['h_tore'] . ' - ' . $m['g_tore'] . statusSuffix($m),
-            $gastDisplay,
+            partieTeamName($m, 'gast'),
         ];
         $rowTeamIds[] = [2 => $heimId, 4 => $gastId];
         $allTeamIds[] = $heimId;
@@ -1732,6 +1751,19 @@ function exportH2hPdf(int $teamAId, int $teamBId, bool $showLogos = false) : voi
     $subtitle = tf('liga_h2h_wins', ['team' => $nameA]) . ': ' . $winsA
         . ' · ' . $draws . ' ' . tf('liga_h2h_draw')
         . ' · ' . tf('liga_h2h_wins', ['team' => $nameB]) . ': ' . $winsB;
+
+    // Einzeiliger Sammel-Hinweis auf umbenannte/verknüpfte Teams (siehe
+    // team_links in admin/bootstrap.php), statt den Zusatz bei jeder
+    // einzelnen Zeile zu wiederholen. Mehrere Umbenennungen werden mit "; "
+    // getrennt aufgeführt.
+    $noteLine = null;
+    if (!empty($renamedNotes)) {
+        $parts = [];
+        foreach ($renamedNotes as $oldName => $todayName) {
+            $parts[] = $oldName . ' -> ' . $todayName;
+        }
+        $noteLine = tf('h2h_pdf_renamed_note', ['list' => implode('; ', $parts)]);
+    }
 
     $headers = [tf('liga_col_datum'), tf('liga_col_spieltag_long'), tf('liga_col_heim'), tf('liga_col_ergebnis'), tf('liga_col_gast')];
     $aligns  = ['left', 'left', 'right', 'center', 'left'];
@@ -1745,7 +1777,7 @@ function exportH2hPdf(int $teamAId, int $teamBId, bool $showLogos = false) : voi
         'version' => getAppVersion(),
     ]);
 
-    $pdfBytes = buildStandingsPdf($title, $subtitle, $headers, $aligns, $tableRows, $footerText, null, [], $teamLogos, $logoCols, $rowTeamIds, $vsTitleTeams);
+    $pdfBytes = buildStandingsPdf($title, $subtitle, $headers, $aligns, $tableRows, $footerText, null, [], $teamLogos, $logoCols, $rowTeamIds, $vsTitleTeams, $noteLine);
 
     $filenameBase = preg_replace('/[^A-Za-z0-9_-]+/', '_', $nameA . '_vs_' . $nameB);
     $filenameBase = trim((string)$filenameBase, '_');
