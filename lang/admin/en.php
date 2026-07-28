@@ -2,7 +2,9 @@
 /**
  * Project: LMOnext
  * Filename: lang/admin/en.php
- * Fileversion: 1.12.4
+ * Fileversion: 1.13.0
+ * Changelog: 1.13.0 - Added translations for the new team links feature
+ * Changelog: 1.12.4
  * Changelog: 1.12.4 - Added translation for the new team-column dropdown hint in the Player
  *                     Statistics addon
  * Changelog: 1.12.3
@@ -299,6 +301,21 @@ return [
     'teams_search_placeholder'   => 'Search team…',
     'teams_merge_delete_label'   => '🗑 Delete (will be merged)',
     'teams_merge_submit'         => '⇌ Merge',
+    'teams_btn_links'             => 'Team links (rename/merger/split)',
+    'teams_links_title'           => 'Team links',
+    'teams_links_desc'            => 'Link this team to other teams, e.g. for a rename, merger, or split. Both teams stay fully independent – in the head-to-head comparison, matches under all linked names are shown together.',
+    'teams_links_none'            => 'No links yet.',
+    'teams_links_pick_team'       => 'Team to link',
+    'teams_links_type'            => 'Type of link',
+    'teams_links_type_umbenennung' => 'Rename',
+    'teams_links_type_fusion'      => 'Merger',
+    'teams_links_type_abspaltung'  => 'Split',
+    'teams_links_type_sonstige'    => 'Other',
+    'teams_links_note'            => 'Note (optional)',
+    'teams_links_note_placeholder' => 'e.g. renamed as of 2009',
+    'teams_links_add'             => 'Link',
+    'teams_links_confirm_delete'  => 'Really remove this link?',
+    'teams_links_alert_pick'      => 'Please select a team first.',
     'teams_btn_merge_short'      => '⇌ Merge',
     'teams_confirm_delete_team'  => 'Delete team »{name}«?',
     'teams_field_name_required'  => 'Name *',
@@ -507,6 +524,9 @@ return [
     'hl_flash_team_deleted'            => 'Team deleted.',
     'hl_flash_team_delete_blocked'     => 'Team is still assigned to a league and cannot be deleted.',
     'hl_flash_teams_merged'            => 'Teams merged.',
+    'hl_flash_team_link_added'         => 'Team link created.',
+    'hl_flash_team_link_failed'        => 'Could not create team link (may already exist).',
+    'hl_flash_team_link_deleted'       => 'Team link removed.',
     'hl_flash_name_required'           => 'Name required.',
     'hl_flash_folder_updated'          => 'Folder updated.',
     'hl_flash_folder_created'          => 'Folder created.',

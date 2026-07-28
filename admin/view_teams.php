@@ -2,7 +2,12 @@
 /**
  * Project: LMOnext
  * Filename: view_teams.php
- * Fileversion: 1.5.0
+ * Fileversion: 1.6.0
+ * Changelog: 1.6.0 - Neues Modal "Team-Verknüpfungen" (🔗-Button je Team), nicht-destruktive
+ *                     Alternative zum Merge: verknüpft zwei eigenständige Teams mit Typ
+ *                     (Umbenennung/Fusion/Abspaltung/Sonstige) + Freitext-Notiz. Nutzt dieselbe
+ *                     Fuzzy-Suche (mergeAllTeams/fuzzyMatch) wie das Merge-Modal
+ * Changelog: 1.5.0
  * Changelog: 1.5.0 - Neue Spalte "Logo" in der Tabelle (zeigt hochgeladenes Logo oder
  *                     Platzhalter assets/img/nopic-team.svg, einheitliche Höhe 28px). Im
  *                     Bearbeiten-Formular neues Feld für die Vereins-URL (🔗-Link erscheint
@@ -117,6 +122,8 @@ foreach ($teams as $t) {
               <td style="white-space:nowrap">
                 <button class="btn btn-muted btn-sm"
                         onclick="openGlobalEdit(<?= $t['id'] ?>, <?= h(json_encode($t['name'])) ?>, <?= h(json_encode($t['mittel'])) ?>, <?= h(json_encode($t['kurz'])) ?>, <?= h(json_encode($t['url'] ?? '')) ?>)">✏️</button>
+                <button class="btn btn-muted btn-sm" title="<?= h(t('teams_btn_links')) ?>"
+                        onclick="openLinkModal(<?= $t['id'] ?>, <?= h(json_encode($t['name'])) ?>)">🔗</button>
                 <?php if ($isDup) { ?>
                 <button class="btn btn-sm" style="background:#f59e0b22;border:1px solid var(--yellow);color:var(--yellow)"
                         onclick="openMerge(<?= $t['id'] ?>, <?= h(json_encode($t['name'])) ?>)"><?= h(t('teams_btn_merge_short')) ?></button>
@@ -236,6 +243,60 @@ foreach ($teams as $t) {
         </div>
       </div>
 
+      <!-- Team-Verknüpfungen-Modal -->
+      <div id="link-modal" style="display:none;position:fixed;inset:0;background:#000a;z-index:9999;
+                                    align-items:center;justify-content:center">
+        <div style="background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);
+                    padding:22px 26px;width:100%;max-width:520px;margin:16px;max-height:90vh;overflow-y:auto">
+          <h2 style="font-size:1rem;margin-bottom:8px"><?= h(t('teams_links_title')) ?> – <span id="link-modal-team-name"></span></h2>
+          <p style="font-size:.82rem;color:var(--muted);margin-bottom:16px"><?= h(t('teams_links_desc')) ?></p>
+
+          <div id="link-existing-list" style="margin-bottom:18px"></div>
+
+          <form method="post" action="?action=add_team_link" onsubmit="return validateAddLink()">
+            <input type="hidden" name="team_a_id" id="link-team-a-id">
+            <input type="hidden" name="team_b_id" id="link-team-b-id">
+
+            <div style="margin-bottom:12px">
+              <label style="font-size:.78rem;color:var(--muted);display:block;margin-bottom:4px"><?= h(t('teams_links_pick_team')) ?></label>
+              <input type="text" id="link-pick-q" placeholder="<?= h(t('teams_search_placeholder')) ?>" autocomplete="off"
+                     oninput="linkFilter()"
+                     style="width:100%;background:var(--bg);border:1px solid var(--border);color:var(--text);
+                            border-radius:var(--radius);padding:7px 10px;font-size:.87rem;margin-bottom:4px">
+              <div id="link-pick-result" style="font-size:.82rem;color:var(--accent);min-height:18px;margin-bottom:2px"></div>
+              <div id="link-pick-list" style="display:none;background:var(--bg);border:1px solid var(--border);
+                   border-radius:var(--radius);max-height:180px;overflow-y:auto"></div>
+            </div>
+
+            <div style="margin-bottom:12px">
+              <label style="font-size:.78rem;color:var(--muted);display:block;margin-bottom:4px"><?= h(t('teams_links_type')) ?></label>
+              <select name="type" style="width:100%;background:var(--bg);border:1px solid var(--border);color:var(--text);
+                            border-radius:var(--radius);padding:7px 10px;font-size:.87rem">
+                <option value="umbenennung"><?= h(t('teams_links_type_umbenennung')) ?></option>
+                <option value="fusion"><?= h(t('teams_links_type_fusion')) ?></option>
+                <option value="abspaltung"><?= h(t('teams_links_type_abspaltung')) ?></option>
+                <option value="sonstige"><?= h(t('teams_links_type_sonstige')) ?></option>
+              </select>
+            </div>
+
+            <div style="margin-bottom:16px">
+              <label style="font-size:.78rem;color:var(--muted);display:block;margin-bottom:4px"><?= h(t('teams_links_note')) ?></label>
+              <input type="text" name="note" maxlength="255" placeholder="<?= h(t('teams_links_note_placeholder')) ?>"
+                     style="width:100%;background:var(--bg);border:1px solid var(--border);color:var(--text);
+                            border-radius:var(--radius);padding:7px 10px;font-size:.87rem">
+            </div>
+
+            <div style="display:flex;gap:10px;justify-content:flex-end">
+              <button type="button" class="btn btn-muted btn-sm"
+                      onclick="document.getElementById('link-modal').style.display='none'"><?= h(t('common_cancel')) ?></button>
+              <button type="submit" class="btn btn-success btn-sm" id="link-submit" disabled>
+                <?= h(t('teams_links_add')) ?>
+              </button>
+            </div>
+          </form>
+        </div>
+      </div>
+
 <script>
 const i18nTeams = {
   alertPickKeep:      <?= json_encode(t('teams_js_alert_pick_keep')) ?>,
@@ -249,6 +310,16 @@ const i18nTeams = {
   loadError:          <?= json_encode(t('common_load_error')) ?>,
   typeKo:             <?= json_encode(t('dash_type_ko')) ?>,
   typeLiga:           <?= json_encode(t('dash_type_liga')) ?>,
+  linksLoading:       <?= json_encode(t('common_loading')) ?>,
+  linksNone:          <?= json_encode(t('teams_links_none')) ?>,
+  confirmUnlink:      <?= json_encode(t('teams_links_confirm_delete')) ?>,
+  alertPickTeam:      <?= json_encode(t('teams_links_alert_pick')) ?>,
+  linkTypes: {
+    umbenennung: <?= json_encode(t('teams_links_type_umbenennung')) ?>,
+    fusion:      <?= json_encode(t('teams_links_type_fusion')) ?>,
+    abspaltung:  <?= json_encode(t('teams_links_type_abspaltung')) ?>,
+    sonstige:    <?= json_encode(t('teams_links_type_sonstige')) ?>,
+  },
 };
 
 // ── Inline-Edit ───────────────────────────────────────────────────────────────
@@ -403,6 +474,104 @@ async function openMerge(id, name) {
   setTimeout(() => document.getElementById('merge-keep-q').focus(), 50);
 }
 
+// ── Team-Verknüpfungen-Modal (nutzt dieselbe Team-Suche wie das Merge-Modal) ──
+let linkCurrentTeamId = null, linkPickedId = null;
+
+async function openLinkModal(id, name) {
+  await loadMergeTeams();
+  linkCurrentTeamId = id;
+  linkPickedId = null;
+  document.getElementById('link-modal-team-name').textContent = name;
+  document.getElementById('link-team-a-id').value = id;
+  document.getElementById('link-team-b-id').value = '';
+  document.getElementById('link-pick-q').value = '';
+  document.getElementById('link-pick-result').textContent = '';
+  document.getElementById('link-pick-list').style.display = 'none';
+  document.getElementById('link-submit').disabled = true;
+  document.getElementById('link-existing-list').innerHTML = '<div style="font-size:.82rem;color:var(--muted)">' + i18nTeams.linksLoading + '</div>';
+  document.getElementById('link-modal').style.display = 'flex';
+
+  try {
+    const r = await fetch('?action=team_links_for&team_id=' + id);
+    const links = await r.json();
+    renderExistingLinks(links);
+  } catch (e) {
+    document.getElementById('link-existing-list').innerHTML = '';
+  }
+  setTimeout(() => document.getElementById('link-pick-q').focus(), 50);
+}
+
+function renderExistingLinks(links) {
+  const box = document.getElementById('link-existing-list');
+  if (!links.length) {
+    box.innerHTML = '<div style="font-size:.82rem;color:var(--muted)">' + i18nTeams.linksNone + '</div>';
+    return;
+  }
+  box.innerHTML = links.map(l => {
+    const typeLabel = i18nTeams.linkTypes[l.type] || l.type;
+    const note = l.note ? ' – <span style="color:var(--muted)">' + esc(l.note) + '</span>' : '';
+    return `<div style="display:flex;align-items:center;gap:8px;padding:8px 0;border-bottom:1px solid var(--border);font-size:.85rem">
+      <div style="flex:1">
+        <strong>${esc(l.other_name)}</strong>
+        <span class="chip chip-blue" style="font-size:.68rem;margin-left:4px">${esc(typeLabel)}</span>
+        ${note}
+      </div>
+      <form method="post" action="?action=delete_team_link" onsubmit="return confirm(i18nTeams.confirmUnlink)">
+        <input type="hidden" name="link_id" value="${l.id}">
+        <input type="hidden" name="team_id" value="${linkCurrentTeamId}">
+        <button type="submit" class="btn btn-danger btn-sm" style="font-size:.7rem;padding:3px 7px">✕</button>
+      </form>
+    </div>`;
+  }).join('');
+}
+
+function linkFilter() {
+  const q = document.getElementById('link-pick-q').value;
+  const list = document.getElementById('link-pick-list');
+  linkPickedId = null;
+  document.getElementById('link-team-b-id').value = '';
+  document.getElementById('link-submit').disabled = true;
+
+  const results = mergeAllTeams.filter(t => t.id !== linkCurrentTeamId && fuzzyMatch(q, t.name + ' ' + t.mittel));
+  if (!q || results.length === 0) { list.style.display = 'none'; return; }
+
+  const exact = results.find(t => t.name.toLowerCase() === q.toLowerCase());
+  if (exact) { linkSelect(exact.id, exact.name); list.style.display = 'none'; return; }
+
+  list.innerHTML = results.slice(0, 30).map(t => {
+    return `<div data-id="${t.id}" data-name="${t.name.replace(/"/g,'&quot;')}"
+          style="padding:10px 12px;cursor:pointer;font-size:.87rem;border-bottom:1px solid var(--border)">
+      <strong>${esc(t.name)}</strong>${t.mittel?' <span style="color:var(--muted);font-size:.78rem">'+esc(t.mittel)+'</span>':''}
+     </div>`;
+  }).join('');
+
+  list.querySelectorAll('div[data-id]').forEach(el => {
+    const handler = (e) => {
+      e.preventDefault(); e.stopPropagation();
+      linkSelect(parseInt(el.dataset.id), el.dataset.name);
+      list.style.display = 'none';
+    };
+    el.addEventListener('touchstart', handler, {passive: false});
+    el.addEventListener('mousedown',  handler);
+  });
+
+  list.style.display = 'block';
+}
+
+function linkSelect(id, name) {
+  linkPickedId = id;
+  document.getElementById('link-pick-q').value = name;
+  document.getElementById('link-pick-list').style.display = 'none';
+  document.getElementById('link-pick-result').textContent = '✓ ' + name + ' (ID ' + id + ')';
+  document.getElementById('link-team-b-id').value = id;
+  document.getElementById('link-submit').disabled = false;
+}
+
+function validateAddLink() {
+  if (!linkPickedId) { alert(i18nTeams.alertPickTeam); return false; }
+  return true;
+}
+
 // ── Filter + Sortierung (global scope – wird per onclick aufgerufen) ──────────
 let showDupsOnly = false;
 
@@ -442,6 +611,13 @@ if (mergeModal) {
   });
 }
 
+const linkModal = document.getElementById('link-modal');
+if (linkModal) {
+  linkModal.addEventListener('click', function(e) {
+    if (e.target === this) this.style.display = 'none';
+  });
+}
+
 // Dropdown schließen bei Klick außerhalb
 document.addEventListener('click', e => {
   ['keep','del'].forEach(s => {
@@ -451,6 +627,11 @@ document.addEventListener('click', e => {
       list.style.display = 'none';
     }
   });
+  const linkList = document.getElementById('link-pick-list');
+  const linkInp  = document.getElementById('link-pick-q');
+  if (linkList && linkInp && !linkList.contains(e.target) && e.target !== linkInp) {
+    linkList.style.display = 'none';
+  }
 });
 
 // ── Spalten sortieren ─────────────────────────────────────────────────────────

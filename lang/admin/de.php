@@ -2,7 +2,9 @@
 /**
  * Project: LMOnext
  * Filename: lang/admin/de.php
- * Fileversion: 1.13.4
+ * Fileversion: 1.14.0
+ * Changelog: 1.14.0 - Übersetzungen für die neue Team-Verknüpfungen-Funktion ergänzt
+ * Changelog: 1.13.4
  * Changelog: 1.13.4 - Übersetzung für den neuen Team-Spalten-Dropdown-Hinweis im
  *                     Spielerstatistik-Addon ergänzt
  * Changelog: 1.13.3
@@ -305,6 +307,21 @@ return [
     'teams_search_placeholder'   => 'Team suchen…',
     'teams_merge_delete_label'   => '🗑 Löschen (wird zusammengeführt)',
     'teams_merge_submit'         => '⇌ Zusammenführen',
+    'teams_btn_links'             => 'Team-Verknüpfungen (Umbenennung/Fusion/Abspaltung)',
+    'teams_links_title'           => 'Team-Verknüpfungen',
+    'teams_links_desc'            => 'Verknüpfe dieses Team mit anderen Teams, z.B. bei Umbenennung, Fusion oder Abspaltung. Beide Teams bleiben eigenständig erhalten – beim Teamvergleich werden Spiele unter allen verknüpften Namen gemeinsam angezeigt.',
+    'teams_links_none'            => 'Noch keine Verknüpfungen.',
+    'teams_links_pick_team'       => 'Zu verknüpfendes Team',
+    'teams_links_type'            => 'Art der Verknüpfung',
+    'teams_links_type_umbenennung' => 'Umbenennung',
+    'teams_links_type_fusion'      => 'Fusion',
+    'teams_links_type_abspaltung'  => 'Abspaltung',
+    'teams_links_type_sonstige'    => 'Sonstige',
+    'teams_links_note'            => 'Notiz (optional)',
+    'teams_links_note_placeholder' => 'z.B. ab 2009 umbenannt',
+    'teams_links_add'             => 'Verknüpfen',
+    'teams_links_confirm_delete'  => 'Diese Verknüpfung wirklich entfernen?',
+    'teams_links_alert_pick'      => 'Bitte zuerst ein Team auswählen.',
     'teams_btn_merge_short'      => '⇌ Merge',
     'teams_confirm_delete_team'  => 'Team »{name}« löschen?',
     'teams_field_name_required'  => 'Name *',
@@ -513,6 +530,9 @@ return [
     'hl_flash_team_deleted'            => 'Team gelöscht.',
     'hl_flash_team_delete_blocked'     => 'Team ist noch in einer Liga eingetragen und kann nicht gelöscht werden.',
     'hl_flash_teams_merged'            => 'Teams zusammengeführt.',
+    'hl_flash_team_link_added'         => 'Team-Verknüpfung angelegt.',
+    'hl_flash_team_link_failed'        => 'Team-Verknüpfung konnte nicht angelegt werden (evtl. schon vorhanden).',
+    'hl_flash_team_link_deleted'       => 'Team-Verknüpfung entfernt.',
     'hl_flash_name_required'           => 'Name erforderlich.',
     'hl_flash_folder_updated'          => 'Ordner aktualisiert.',
     'hl_flash_folder_created'          => 'Ordner angelegt.',

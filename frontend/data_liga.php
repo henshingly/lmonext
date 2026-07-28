@@ -2,7 +2,17 @@
 /**
  * Project: LMOnext
  * Filename: data_liga.php
- * Fileversion: 2.17.0
+ * Fileversion: 2.18.0
+ * Changelog: 2.18.0 - Neue Funktion resolveLinkedTeamIds() (transitive Auflösung von
+ *                     Team-Verknüpfungen, siehe team_links in admin/bootstrap.php 1.8.0).
+ *                     getHeadToHeadMatches() löst beide Teams jetzt zu ihrer vollständigen
+ *                     verknüpften Gruppe auf, bevor gesucht wird – Spiele unter früheren
+ *                     Namen (Umbenennung/Fusion/Abspaltung) erscheinen jetzt mit im
+ *                     Teamvergleich, mit "(heute TEAM_HEUTE)"-Kennzeichnung wenn der
+ *                     historische Name vom heute verglichenen Team abweicht. Wirkt sich
+ *                     überall aus, wo getHeadToHeadMatches() genutzt wird (H2H-Modal,
+ *                     PDF-Export, Minitabelle/Mininext-Addons)
+ * Changelog: 2.17.0
  * Changelog: 2.17.0 - Neu: "Spielfrei: TEAMNAME"-Hinweis unterhalb der Ergebnistabelle eines
  *                     Spieltags, analog zum alten LMO (siehe Screenshot-Vorlage des Nutzers).
  *                     findSpielfreiTeams() ermittelt betroffene Teams durch Abwesenheit (kein
@@ -474,6 +484,46 @@ function getSpieltagPartien(int $spieltagId) : array
  * Ergebnis- und Spielplanseiten genutzt. Pro Team-Paar innerhalb eines
  * Requests nur einmal abgefragt (statisches Cache).
  */
+/**
+ * Löst ein Team transitiv zu seiner vollständigen "verknüpften Gruppe" auf
+ * (siehe admin/bootstrap.php: team_links, Umbenennung/Fusion/Abspaltung).
+ * Bei Ketten (A↔B, B↔C) gehören beim Vergleich automatisch alle drei
+ * zusammen. Liest die Tabelle read-only – falls sie (noch) nicht existiert
+ * (Team-Verknüpfung wurde bisher nie genutzt), liefert die Funktion einfach
+ * nur das Team selbst zurück, kein Fehler.
+ *
+ * @return array<int,int> Team-IDs inkl. des übergebenen Teams selbst
+ */
+function resolveLinkedTeamIds(int $teamId) : array
+{
+    try {
+        $edges = getDB()->query('SELECT team_a_id, team_b_id FROM ' . tbl('team_links'))->fetchAll();
+    } catch (Throwable) {
+        return [$teamId];
+    }
+
+    $adj = [];
+    foreach ($edges as $e) {
+        $a = (int)$e['team_a_id'];
+        $b = (int)$e['team_b_id'];
+        $adj[$a][] = $b;
+        $adj[$b][] = $a;
+    }
+
+    $visited = [$teamId => true];
+    $queue = [$teamId];
+    while ($queue !== []) {
+        $current = array_shift($queue);
+        foreach ($adj[$current] ?? [] as $next) {
+            if (!isset($visited[$next])) {
+                $visited[$next] = true;
+                $queue[] = $next;
+            }
+        }
+    }
+    return array_keys($visited);
+}
+
 function getHeadToHeadMatches(int $idA, int $idB) : array
 {
     static $cache = [];
@@ -482,7 +532,16 @@ function getHeadToHeadMatches(int $idA, int $idB) : array
         return $cache[$key];
     }
 
+    // Beide Teams zu ihrer vollständigen verknüpften Gruppe auflösen (z.B.
+    // ein umbenannter/fusionierter/abgespaltener Verein), damit Spiele unter
+    // früheren Namen im Vergleich mit auftauchen. $idA/$idB bleiben die
+    // "heutigen" Anker-IDs für die "(heute TEAM_HEUTE)"-Kennzeichnung unten.
+    $groupA = resolveLinkedTeamIds($idA);
+    $groupB = resolveLinkedTeamIds($idB);
+
     try {
+        $phA = implode(',', array_fill(0, count($groupA), '?'));
+        $phB = implode(',', array_fill(0, count($groupB), '?'));
         $s = getDB()->prepare(
             'SELECT p.heim_id, p.gast_id, p.h_tore, p.g_tore, p.status,
                     COALESCE(p.zeit, s.start) AS zeit,
@@ -490,26 +549,46 @@ function getHeadToHeadMatches(int $idA, int $idB) : array
                FROM ' . tbl('liga_partien') . ' p
                JOIN ' . tbl('liga_spieltage') . ' s ON s.id = p.spieltag_id
                JOIN ' . tbl('liga') . ' l ON l.id = s.liga_id
-              WHERE ((p.heim_id = ? AND p.gast_id = ?) OR (p.heim_id = ? AND p.gast_id = ?))
+              WHERE ((p.heim_id IN (' . $phA . ') AND p.gast_id IN (' . $phB . '))
+                  OR (p.heim_id IN (' . $phB . ') AND p.gast_id IN (' . $phA . ')))
                 AND p.h_tore IS NOT NULL AND p.g_tore IS NOT NULL
               ORDER BY COALESCE(p.zeit, s.start) DESC'
         );
-        $s->execute([$idA, $idB, $idB, $idA]);
+        $s->execute([...$groupA, ...$groupB, ...$groupB, ...$groupA]);
         $rows = $s->fetchAll();
     } catch (Throwable) {
         $rows = [];
     }
 
+    // Namen für ALLE Teams in beiden Gruppen (nicht nur $idA/$idB), damit
+    // auch Spiele unter früheren Namen den richtigen (historischen) Namen
+    // zeigen. $anchorOf ordnet jede Team-ID der "heutigen" Vergleichs-ID
+    // (idA oder idB) zu, damit sich pro Zeile ermitteln lässt, ob eine
+    // "(heute TEAM_HEUTE)"-Kennzeichnung nötig ist.
+    $allIds = array_values(array_unique([...$groupA, ...$groupB]));
     $names = [];
+    $anchorOf = [];
+    foreach ($groupA as $tid) { $anchorOf[$tid] = $idA; }
+    foreach ($groupB as $tid) { $anchorOf[$tid] = $idB; }
     try {
-        $s2 = getDB()->prepare('SELECT id, name FROM ' . tbl('teams_global') . ' WHERE id IN (?,?)');
-        $s2->execute([$idA, $idB]);
+        $ph3 = implode(',', array_fill(0, count($allIds), '?'));
+        $s2 = getDB()->prepare('SELECT id, name FROM ' . tbl('teams_global') . ' WHERE id IN (' . $ph3 . ')');
+        $s2->execute($allIds);
         foreach ($s2->fetchAll() as $r) {
             $names[(int)$r['id']] = $r['name'];
         }
     } catch (Throwable) {
         // $names bleibt leer; Fallback "?" beim Aufbau unten
     }
+
+    $displayName = static function (int $teamId) use ($names, $anchorOf) : string {
+        $name = $names[$teamId] ?? '?';
+        $anchor = $anchorOf[$teamId] ?? $teamId;
+        if ($anchor !== $teamId && isset($names[$anchor])) {
+            $name .= ' (' . tf('h2h_today_prefix') . ' ' . $names[$anchor] . ')';
+        }
+        return $name;
+    };
 
     $matches = [];
     foreach ($rows as $r) {
@@ -518,8 +597,8 @@ function getHeadToHeadMatches(int $idA, int $idB) : array
         $matches[] = [
             'heim_id'         => $hId,
             'gast_id'         => $gId,
-            'heim_name'       => $names[$hId] ?? '?',
-            'gast_name'       => $names[$gId] ?? '?',
+            'heim_name'       => $displayName($hId),
+            'gast_name'       => $displayName($gId),
             'h_tore'          => (int)$r['h_tore'],
             'g_tore'          => (int)$r['g_tore'],
             'status'          => (int)($r['status'] ?? 0),

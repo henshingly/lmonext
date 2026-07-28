@@ -2,7 +2,11 @@
 /**
  * Project: LMOnext
  * Filename: lang/frontend/de.php
- * Fileversion: 1.19.0
+ * Fileversion: 1.19.1
+ * Changelog: 1.19.1 - Neuer Schlüssel "h2h_today_prefix" für die "(heute TEAM_HEUTE)"-
+ *                     Kennzeichnung bei verknüpften Teams im Teamvergleich (siehe
+ *                     resolveLinkedTeamIds()/getHeadToHeadMatches() in data_liga.php 2.18.0)
+ * Changelog: 1.19.0
  * Changelog: 1.19.0 - Übersetzung für den neuen "Spielfrei"-Hinweis ergänzt
  * Changelog: 1.18.0
  * Changelog: 1.18.0 - Übersetzungen für den neuen Besucher-Reiter "Spielerstatistik" ergänzt
@@ -187,6 +191,7 @@ return [
     'liga_h2h_draw'               => 'Unent.',
     'liga_h2h_no_matches'         => 'Bisher noch keine Begegnungen zwischen diesen beiden Mannschaften.',
     'liga_h2h_close'              => 'Schließen',
+    'h2h_today_prefix'            => 'heute',
     'liga_status_ie'             => 'i.E.',
     'liga_status_nv'             => 'n.V.',
     'liga_stats_line'            => 'Schnitt Heim: {heim}   Schnitt Gast: {gast}   Tore: {tore}   Tore/Spiel: {proSpiel}',

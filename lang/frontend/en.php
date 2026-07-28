@@ -2,7 +2,11 @@
 /**
  * Project: LMOnext
  * Filename: lang/frontend/en.php
- * Fileversion: 1.19.0
+ * Fileversion: 1.19.1
+ * Changelog: 1.19.1 - Added key "h2h_today_prefix" for the "(today TEAM_TODAY)" annotation on
+ *                     linked teams in the head-to-head comparison (see
+ *                     resolveLinkedTeamIds()/getHeadToHeadMatches() in data_liga.php 2.18.0)
+ * Changelog: 1.19.0
  * Changelog: 1.19.0 - Added translation for the new "Spielfrei" (bye) note
  * Changelog: 1.18.0
  * Changelog: 1.18.0 - Added translations for the new "Player stats" visitor tab
@@ -185,6 +189,7 @@ return [
     'liga_h2h_draw'               => 'Draw',
     'liga_h2h_no_matches'         => 'No previous matches between these two teams yet.',
     'liga_h2h_close'              => 'Close',
+    'h2h_today_prefix'            => 'today',
     'liga_status_ie'             => 'pens.',
     'liga_status_nv'             => 'AET',
     'liga_stats_line'            => 'Average home: {heim}   Average away: {gast}   Goals: {tore}   Goals/match: {proSpiel}',

@@ -2,7 +2,14 @@
 /**
  * Project: LMOnext
  * Filename: bootstrap.php
- * Fileversion: 1.7.4
+ * Fileversion: 1.8.0
+ * Changelog: 1.8.0 - Neue Funktionen für Team-Verknüpfungen ergänzt: ensureTeamLinksSchema()/
+ *                     getTeamLinksForTeam()/addTeamLink()/deleteTeamLink() (Tabelle
+ *                     team_links). Nicht-destruktive Alternative zu mergeTeams() für
+ *                     Umbenennung/Fusion/Abspaltung – beide Team-Datensätze bleiben
+ *                     eigenständig, nur eine Verknüpfung wird gespeichert. Wird von
+ *                     resolveLinkedTeamIds() in data_liga.php für den Teamvergleich genutzt
+ * Changelog: 1.7.4
  * Changelog: 1.7.4 - Umbenennung auf Nutzerwunsch: interne Bezeichnungen jetzt durchgehend auf
  *                     Englisch ("League Key" statt der vorherigen deutschen Bezeichnung, die
  *                     hier nicht mehr vorkommen soll). Der sichtbare UI-Text hieß schon vorher
@@ -404,6 +411,106 @@ function ensurePasswordResetSchema() : void
             KEY `user_id` (`user_id`)
         ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci');
     } catch (Throwable) {}
+}
+
+/**
+ * Team-Verknüpfungen: nicht-destruktive Verbindung zwischen zwei
+ * eigenständigen Team-Datensätzen (im Unterschied zu mergeTeams(), das einen
+ * Datensatz permanent löscht). Deckt drei Fälle ab, ohne sie technisch
+ * unterscheiden zu müssen (siehe resolveLinkedTeamIds() in data_liga.php für
+ * die transitive Auflösung):
+ *   - Umbenennung: A↔B (eine Verknüpfung)
+ *   - Fusion: A↔C, B↔C (zwei Verknüpfungen zum neuen Verein)
+ *   - Abspaltung: A↔B, A↔C (zwei Verknüpfungen vom ursprünglichen Verein)
+ * Wird u.a. vom Teamvergleich (H2H) genutzt, um Spiele unter allen
+ * verknüpften (historischen) Namen mit anzuzeigen.
+ */
+function ensureTeamLinksSchema() : void
+{
+    static $done = false; if ($done) return; $done = true;
+    try {
+        $db = getDB();
+        $db->exec('CREATE TABLE IF NOT EXISTS '.tbl('team_links').' (
+            `id`         INT AUTO_INCREMENT PRIMARY KEY,
+            `team_a_id`  INT NOT NULL,
+            `team_b_id`  INT NOT NULL,
+            `type`       ENUM(\'umbenennung\',\'fusion\',\'abspaltung\',\'sonstige\') NOT NULL DEFAULT \'umbenennung\',
+            `note`       VARCHAR(255) NULL DEFAULT NULL,
+            `created_at` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+            KEY `team_a_id` (`team_a_id`),
+            KEY `team_b_id` (`team_b_id`)
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci');
+    } catch (Throwable) {}
+}
+
+/**
+ * Alle direkten Verknüpfungen eines Teams (für die Anzeige/Verwaltung in
+ * "Teams (global)"), inkl. Name des jeweils anderen Teams. Liefert NUR die
+ * direkten Verknüpfungen (nicht transitiv aufgelöst) – für die
+ * Vergleichsauflösung siehe resolveLinkedTeamIds() in data_liga.php.
+ */
+function getTeamLinksForTeam(int $teamId) : array
+{
+    ensureTeamLinksSchema();
+    try {
+        $s = getDB()->prepare(
+            'SELECT tl.id, tl.type, tl.note,
+                    CASE WHEN tl.team_a_id = ? THEN tl.team_b_id ELSE tl.team_a_id END AS other_id,
+                    tg.name AS other_name
+               FROM '.tbl('team_links').' tl
+               JOIN '.tbl('teams_global').' tg
+                 ON tg.id = CASE WHEN tl.team_a_id = ? THEN tl.team_b_id ELSE tl.team_a_id END
+              WHERE tl.team_a_id = ? OR tl.team_b_id = ?
+              ORDER BY tg.name'
+        );
+        $s->execute([$teamId, $teamId, $teamId, $teamId]);
+        return $s->fetchAll();
+    } catch (Throwable) {
+        return [];
+    }
+}
+
+/**
+ * Legt eine neue Team-Verknüpfung an. Verhindert Duplikate (in beide
+ * Richtungen geprüft) und Selbstverknüpfung.
+ */
+function addTeamLink(int $teamAId, int $teamBId, string $type, string $note) : bool
+{
+    if ($teamAId <= 0 || $teamBId <= 0 || $teamAId === $teamBId) {
+        return false;
+    }
+    if (!in_array($type, ['umbenennung', 'fusion', 'abspaltung', 'sonstige'], true)) {
+        $type = 'sonstige';
+    }
+    ensureTeamLinksSchema();
+    try {
+        $db = getDB();
+        $exists = $db->prepare(
+            'SELECT id FROM '.tbl('team_links').'
+              WHERE (team_a_id = ? AND team_b_id = ?) OR (team_a_id = ? AND team_b_id = ?)'
+        );
+        $exists->execute([$teamAId, $teamBId, $teamBId, $teamAId]);
+        if ($exists->fetch() !== false) {
+            return false; // schon verknüpft
+        }
+        $db->prepare('INSERT INTO '.tbl('team_links').' (team_a_id,team_b_id,type,note) VALUES (?,?,?,?)')
+           ->execute([$teamAId, $teamBId, $type, $note !== '' ? $note : null]);
+        return true;
+    } catch (Throwable) {
+        return false;
+    }
+}
+
+/** Löscht eine Team-Verknüpfung anhand ihrer ID. */
+function deleteTeamLink(int $linkId) : bool
+{
+    ensureTeamLinksSchema();
+    try {
+        getDB()->prepare('DELETE FROM '.tbl('team_links').' WHERE id = ?')->execute([$linkId]);
+        return true;
+    } catch (Throwable) {
+        return false;
+    }
 }
 
 /**

@@ -2,7 +2,10 @@
 /**
  * Project: LMOnext
  * Filename: handler_liga.php
- * Fileversion: 1.6.2
+ * Fileversion: 1.6.3
+ * Changelog: 1.6.3 - Neue Aktionen team_links_for (JSON, Team-Verknüpfungen laden),
+ *                     add_team_link, delete_team_link – siehe bootstrap.php 1.8.0
+ * Changelog: 1.6.2
  * Changelog: 1.6.2 - save_ergebnisse aktualisiert jetzt liga.datum (bisher nur beim Anlegen der
  *                     Liga gesetzt, nie danach) – gibt den Mini-Addons (Minitabelle/Mininext,
  *                     <!--ligaDatum-->) ein echtes "letztes Speicherdatum" statt des
@@ -481,4 +484,42 @@ if ($action === 'team_search_all') {
         ], $teams)), JSON_UNESCAPED_UNICODE);
     } catch (Throwable) { echo '[]'; }
     exit;
+}
+
+// ── Team-Verknüpfungen (Umbenennung/Fusion/Abspaltung, siehe bootstrap.php) ──
+if ($action === 'team_links_for') {
+    requireLogin();
+    header('Content-Type: application/json; charset=utf-8');
+    $teamId = (int)($_GET['team_id'] ?? 0);
+    $links = $teamId > 0 ? getTeamLinksForTeam($teamId) : [];
+    echo json_encode(array_values(array_map(fn($l) => [
+        'id'         => (int)$l['id'],
+        'type'       => $l['type'],
+        'note'       => $l['note'] ?? '',
+        'other_id'   => (int)$l['other_id'],
+        'other_name' => $l['other_name'],
+    ], $links)), JSON_UNESCAPED_UNICODE);
+    exit;
+}
+
+if ($action === 'add_team_link' && $_SERVER['REQUEST_METHOD'] === 'POST') {
+    requireLogin();
+    $teamAId = (int)($_POST['team_a_id'] ?? 0);
+    $teamBId = (int)($_POST['team_b_id'] ?? 0);
+    $type    = trim($_POST['type'] ?? 'sonstige');
+    $note    = trim($_POST['note'] ?? '');
+    if (addTeamLink($teamAId, $teamBId, $type, $note)) {
+        flash(t('hl_flash_team_link_added'));
+    } else {
+        flash(t('hl_flash_team_link_failed'), 'error');
+    }
+    redirect('?action=teams');
+}
+
+if ($action === 'delete_team_link' && $_SERVER['REQUEST_METHOD'] === 'POST') {
+    requireLogin();
+    $linkId = (int)($_POST['link_id'] ?? 0);
+    deleteTeamLink($linkId);
+    flash(t('hl_flash_team_link_deleted'));
+    redirect('?action=teams');
 }
