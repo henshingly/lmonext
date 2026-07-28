@@ -2,7 +2,12 @@
 /**
  * Project: LMOnext
  * Filename: bootstrap.php
- * Fileversion: 1.9.0
+ * Fileversion: 1.10.0
+ * Changelog: 1.10.0 - Session-Cookie jetzt mit HttpOnly, SameSite=Lax und (bei HTTPS) Secure,
+ *                     analog zu frontend/bootstrap.php 1.6.0. Globaler Exception-Handler:
+ *                     unerwartete Fehler landen zusätzlich im Server-Log (Kurzfassung bleibt im
+ *                     Adminbereich sichtbar, da für Fehlersuche durch den Betreiber hilfreich)
+ * Changelog: 1.9.0
  * Changelog: 1.9.0 - Bugfix: die "(heute TEAM_HEUTE)"-Kennzeichnung im Teamvergleich hing
  *                     bisher vom zufällig angeklickten Team ab (z.B. je nachdem von welcher
  *                     Liga/welchem Spiel aus man den Vergleich öffnete, zeigte mal der eine,
@@ -71,6 +76,25 @@
  *
  */
 
+// ── Globale Fehlerbehandlung ──────────────────────────────────────────────────
+// Jede nicht abgefangene Exception landet im Server-Error-Log, im Adminbereich
+// selbst (angemeldete Nutzer) wird die eigentliche Meldung trotzdem angezeigt,
+// da das für die Fehlersuche during der Entwicklung/Wartung hilfreich ist -
+// nur der Stacktrace/Dateipfad bleibt dem Besucherbereich vorbehalten (siehe
+// frontend/bootstrap.php), hier reicht die Kurzfassung.
+set_exception_handler(static function (Throwable $e) : void {
+    error_log('LMOnext (admin) uncaught: ' . $e->getMessage() . ' in ' . $e->getFile() . ':' . $e->getLine());
+    if (!headers_sent()) {
+        http_response_code(500);
+    }
+    echo '<!DOCTYPE html><html><head><meta charset="UTF-8"><title>Fehler</title></head>'
+       . '<body style="font-family:system-ui;text-align:center;padding:60px 20px;color:#333">'
+       . '<h2>⚠️ Ein unerwarteter Fehler ist aufgetreten</h2>'
+       . '<p>' . htmlspecialchars($e->getMessage(), ENT_QUOTES) . '</p>'
+       . '<p style="color:#888;font-size:.85rem">Details wurden ins Server-Log geschrieben.</p>'
+       . '</body></html>';
+});
+
 // ── Konfiguration aus config.php laden ───────────────────────────────────────
 $_configFile = dirname(__DIR__) . '/config.php';
 if (!file_exists($_configFile)) {
@@ -94,6 +118,11 @@ defined('ADMIN_TITLE')  || define('ADMIN_TITLE',  'LMOnext Admin');
 defined('SESSION_NAME') || define('SESSION_NAME', 'lmonext_admin');
 
 session_name(SESSION_NAME);
+session_set_cookie_params([
+    'httponly' => true,
+    'secure'   => !empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off',
+    'samesite' => 'Lax',
+]);
 session_start();
 
 // ── Mehrsprachigkeit ─────────────────────────────────────────────────────────

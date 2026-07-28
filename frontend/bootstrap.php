@@ -2,7 +2,17 @@
 /**
  * Project: LMOnext
  * Filename: bootstrap.php
- * Fileversion: 1.5.0
+ * Fileversion: 1.6.0
+ * Changelog: 1.6.0 - Performance-/Robustheitsverbesserungen: getAdminSetting() liest alle
+ *                     Einstellungen jetzt in EINER Abfrage pro Request statt einer eigenen
+ *                     Abfrage pro Schlüssel. pdf_export.php wird nicht mehr pauschal für jeden
+ *                     Seitenaufruf eingebunden (belastete auch home.php/die Mini-Addons, die es
+ *                     nie brauchen), sondern nur noch direkt in liga.php, dem einzigen
+ *                     tatsächlichen Verwender. Session-Cookie jetzt mit HttpOnly, SameSite=Lax
+ *                     und (bei HTTPS) Secure. Globaler Exception-Handler: unerwartete Fehler
+ *                     landen im Server-Log, Besucher sehen nur eine schlichte, technikfreie
+ *                     Meldung statt Stacktrace/Dateipfaden
+ * Changelog: 1.5.0
  * Changelog: 1.5.0 - data_spielerstat.php eingebunden (Besucher-Ansicht für das neue
  *                     Spielerstatistik-Addon, siehe admin/spielerstat_lib.php)
  * Changelog: 1.4.1 - Bugfix: Die in den Admin-Einstellungen konfigurierte "Standardsprache"
@@ -36,7 +46,34 @@
  */
 declare(strict_types = 1);
 
+// ── Globale Fehlerbehandlung ──────────────────────────────────────────────────
+// Jede nicht abgefangene Exception landet im Server-Error-Log (für Admins/
+// Entwickler einsehbar), Besucher sehen nur eine schlichte, technikfreie
+// Fehlermeldung statt Stacktrace/Dateipfaden - unabhängig davon, wie
+// display_errors auf dem jeweiligen Hosting konfiguriert ist.
+set_exception_handler(static function (Throwable $e) : void {
+    error_log('LMOnext (frontend) uncaught: ' . $e->getMessage() . ' in ' . $e->getFile() . ':' . $e->getLine());
+    if (!headers_sent()) {
+        http_response_code(500);
+    }
+    echo '<!DOCTYPE html><html><head><meta charset="UTF-8"><title>Fehler</title></head>'
+       . '<body style="font-family:system-ui;text-align:center;padding:60px 20px;color:#333">'
+       . '<h2>⚠️ Ein unerwarteter Fehler ist aufgetreten</h2>'
+       . '<p>Bitte versuche es später erneut.</p>'
+       . '</body></html>';
+});
+
+// ── Session ────────────────────────────────────────────────────────────────
+// Cookie-Parameter schützen die Besucher-Session zusätzlich gegen
+// clientseitigen Zugriff (HttpOnly) und Cross-Site-Requests (SameSite=Lax);
+// Secure wird nur gesetzt, wenn die Seite tatsächlich über HTTPS läuft
+// (sonst würde das Cookie auf einer reinen HTTP-Installation nie ankommen).
 session_name('lmonext_frontend');
+session_set_cookie_params([
+    'httponly' => true,
+    'secure'   => !empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off',
+    'samesite' => 'Lax',
+]);
 session_start();
 
 // ── Mehrsprachigkeit (Besucherbereich, unabhängig vom Adminbereich) ──────────
@@ -98,21 +135,36 @@ function getAppVersion() : string
         $path = dirname(__DIR__) . '/composer.json';
         $data = json_decode((string)file_get_contents($path), true);
         return $version = (string)($data['version'] ?? '');
-    } catch (Throwable) {
+    } catch (Throwable $e) {
+        error_log('LMOnext getAppVersion(): ' . $e->getMessage());
         return $version = '';
     }
 }
 
+/**
+ * Liest alle admin_settings-Zeilen einmal pro Request in einen statischen
+ * Speicher-Cache (siehe getAdminSetting()) - vorher löste jeder einzelne
+ * getAdminSetting()-Aufruf eine eigene SQL-Abfrage aus, obwohl derselbe
+ * Aufruf (z.B. 'active_template', 'language', 'show_pdf_buttons' usw.)
+ * innerhalb eines Seitenaufrufs oft mehrfach vorkommt.
+ */
 function getAdminSetting(string $key, string $default = '') : string
 {
-    try {
-        $s = getDB()->prepare('SELECT `value` FROM ' . tbl('admin_settings') . ' WHERE `key`=?');
-        $s->execute([$key]);
-        $v = $s->fetchColumn();
-        return $v !== false ? (string)$v : $default;
-    } catch (Throwable) {
-        return $default;
+    static $cache = null;
+    if ($cache === null) {
+        $cache = [];
+        try {
+            $rows = getDB()->query('SELECT `key`, `value` FROM ' . tbl('admin_settings'))->fetchAll();
+            foreach ($rows as $row) {
+                $cache[$row['key']] = (string)$row['value'];
+            }
+        } catch (Throwable $e) {
+            error_log('LMOnext getAdminSetting(): ' . $e->getMessage());
+            // $cache bleibt ein leeres Array -> jede einzelne Abfrage fällt
+            // unten auf ihren jeweiligen $default zurück, kein Fataler Fehler
+        }
     }
+    return $cache[$key] ?? $default;
 }
 
 // ── Sprache jetzt WIRKLICH auflösen (siehe Kommentar weiter oben): erst jetzt
@@ -133,4 +185,7 @@ $activeTemplate        = resolveActiveTemplate($activeTemplateDefault, $allowTem
 require_once __DIR__ . '/data_home.php';
 require_once __DIR__ . '/data_liga.php';
 require_once __DIR__ . '/../addon/player/frontend_spielerstat.php';
-require_once __DIR__ . '/pdf_export.php';
+// pdf_export.php wird bewusst NICHT hier eingebunden: die Datei ist recht groß
+// (PHP muss sie sonst bei JEDEM Seitenaufruf parsen, auch auf home.php und den
+// Mini-Addons, die sie nie brauchen) und wird ausschließlich von liga.php
+// tatsächlich verwendet - dort wird sie direkt eingebunden.

@@ -2,7 +2,15 @@
 /**
  * Project: LMOnext
  * Filename: data_liga.php
- * Fileversion: 2.20.0
+ * Fileversion: 2.21.0
+ * Changelog: 2.21.0 - Performance: gezielte Speicher-Caches (pro Request) für getLigaOptions(),
+ *                     getLigaTeamsList() und resolveTeamNumberToId() ergänzt - alle drei wurden
+ *                     bisher bei jedem Aufruf neu aus der DB gelesen, obwohl sie innerhalb
+ *                     eines Seitenaufrufs oft mehrfach für dieselbe Liga gebraucht werden
+ *                     (Tabelle, Ergebnisse, PDF-Export, Mini-Addons usw. greifen unabhängig
+ *                     voneinander darauf zu). Bewusst als einfache statische Caches statt
+ *                     einer größeren Architekturumstellung, um das Risiko gering zu halten
+ * Changelog: 2.20.0
  * Changelog: 2.20.0 - Auf Wunsch: der "(heute TEAM_HEUTE)"-Zusatz im Teamvergleich-Modal steht
  *                     jetzt als eigene, kleinere Unterzeile UNTER dem Teamnamen statt inline
  *                     dahinter (verhinderte vorher unschönen Zeilenumbruch mitten im Namen,
@@ -304,8 +312,19 @@ function getLigaTeamCount(int $ligaId) : int
 /**
  * Alle liga_options einer Liga als Schlüssel→Wert-Array.
  */
+/**
+ * Liest die Liga-Optionen (siehe liga_options-Tabelle). Wird pro Seitenaufruf
+ * oft für dieselbe Liga mehrfach aufgerufen (Tabelle, Ergebnisse, PDF-Export
+ * usw. greifen alle unabhängig voneinander darauf zu) - daher Speicher-Cache
+ * pro Liga-ID, damit dieselbe Liga innerhalb eines Requests nur einmal
+ * abgefragt wird.
+ */
 function getLigaOptions(int $ligaId) : array
 {
+    static $cache = [];
+    if (array_key_exists($ligaId, $cache)) {
+        return $cache[$ligaId];
+    }
     try {
         $s = getDB()->prepare('SELECT option_key, option_value FROM ' . tbl('liga_options') . ' WHERE liga_id=?');
         $s->execute([$ligaId]);
@@ -313,9 +332,9 @@ function getLigaOptions(int $ligaId) : array
         foreach ($s->fetchAll() as $row) {
             $out[$row['option_key']] = $row['option_value'];
         }
-        return $out;
+        return $cache[$ligaId] = $out;
     } catch (Throwable) {
-        return [];
+        return $cache[$ligaId] = [];
     }
 }
 
@@ -326,25 +345,35 @@ function getLigaOptions(int $ligaId) : array
  * wird) in die tatsächliche team_id auf. 0 bzw. eine nicht mehr vorhandene
  * Position ergeben null.
  */
+/**
+ * "Team-Nummer" (Position in der nach Name sortierten Teamliste dieser Liga)
+ * zu einer Team-ID auflösen - z.B. für favTeam/selTeam. Cacht die sortierte
+ * ID-Liste pro Liga, da diese Funktion innerhalb eines Requests oft mehrfach
+ * für dieselbe Liga aufgerufen wird (favTeam, selTeam usw.).
+ */
 function resolveTeamNumberToId(int $ligaId, int $number) : ?int
 {
     if ($number <= 0) {
         return null;
     }
-    try {
-        $s = getDB()->prepare(
-            'SELECT g.id
-               FROM ' . tbl('teams_global') . ' g
-               JOIN ' . tbl('liga_teams') . ' lt ON lt.team_id = g.id
-              WHERE lt.liga_id = ?
-              ORDER BY g.name'
-        );
-        $s->execute([$ligaId]);
-        $ids = $s->fetchAll(PDO::FETCH_COLUMN);
-        return isset($ids[$number - 1]) ? (int)$ids[$number - 1] : null;
-    } catch (Throwable) {
-        return null;
+    static $cache = [];
+    if (!array_key_exists($ligaId, $cache)) {
+        try {
+            $s = getDB()->prepare(
+                'SELECT g.id
+                   FROM ' . tbl('teams_global') . ' g
+                   JOIN ' . tbl('liga_teams') . ' lt ON lt.team_id = g.id
+                  WHERE lt.liga_id = ?
+                  ORDER BY g.name'
+            );
+            $s->execute([$ligaId]);
+            $cache[$ligaId] = $s->fetchAll(PDO::FETCH_COLUMN);
+        } catch (Throwable) {
+            $cache[$ligaId] = [];
+        }
     }
+    $ids = $cache[$ligaId];
+    return isset($ids[$number - 1]) ? (int)$ids[$number - 1] : null;
 }
 
 /**
@@ -1691,7 +1720,22 @@ function renderBracketView(int $ligaId, array $allSpieltage, bool $isKO, int $ma
  * Alle Teams, die dieser Liga zugeordnet sind (für die Tabelle – auch Teams
  * ohne bisher gespielte Partie sollen mit 0 erscheinen).
  */
+/**
+ * Wird pro Seitenaufruf oft mehrfach für dieselbe Liga aufgerufen (Tabelle,
+ * Kreuztabelle, Spielplan-Sidebar, PDF-Export, Mini-Addons usw.) - Speicher-
+ * Cache pro Liga-ID, damit die (teils zweistufige, siehe Fallback unten)
+ * Abfrage innerhalb eines Requests nur einmal läuft.
+ */
 function getLigaTeamsList(int $ligaId) : array
+{
+    static $cache = [];
+    if (array_key_exists($ligaId, $cache)) {
+        return $cache[$ligaId];
+    }
+    return $cache[$ligaId] = getLigaTeamsListUncached($ligaId);
+}
+
+function getLigaTeamsListUncached(int $ligaId) : array
 {
     try {
         $s = getDB()->prepare(

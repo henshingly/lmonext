@@ -2,7 +2,11 @@
 /**
  * Project: LMOnext
  * Filename: liga.php
- * Fileversion: 3.10.3
+ * Fileversion: 3.10.4
+ * Changelog: 3.10.4 - Bindet pdf_export.php jetzt direkt hier ein (nicht mehr über den
+ *                     gemeinsamen frontend/bootstrap.php), da liga.php der einzige tatsächliche
+ *                     Verwender ist, siehe bootstrap.php 1.6.0
+ * Changelog: 3.10.3
  * Changelog: 3.10.3 - "Spielfrei"-Anzeige (HTML + PDF) jetzt über die neue Liga-Einstellung
  *                     ShowSpielfrei steuerbar (siehe view_liga_settings.php 1.4.4), Default
  *                     "an"
@@ -127,6 +131,7 @@
 declare(strict_types = 1);
 
 require_once __DIR__ . '/frontend/bootstrap.php';
+require_once __DIR__ . '/frontend/pdf_export.php';
 
 // ── PDF-Export des Team-Vergleichs (Direkter Vergleich) ──────────────────────
 // Teamübergreifend, nicht an eine bestimmte Liga gebunden – deshalb hier vor
