@@ -2,7 +2,18 @@
 /**
  * Project: LMOnext
  * Filename: bootstrap.php
- * Fileversion: 1.8.0
+ * Fileversion: 1.9.0
+ * Changelog: 1.9.0 - Bugfix: die "(heute TEAM_HEUTE)"-Kennzeichnung im Teamvergleich hing
+ *                     bisher vom zufällig angeklickten Team ab (z.B. je nachdem von welcher
+ *                     Liga/welchem Spiel aus man den Vergleich öffnete, zeigte mal der eine,
+ *                     mal der andere Name als "heute"). Neue Spalte team_links.newer_team_id
+ *                     legt jetzt fest, welches Team der tatsächlich aktuelle Name ist –
+ *                     unabhängig vom Aufrufkontext. addTeamLink() nimmt das jetzt optional
+ *                     entgegen, neue Funktion setTeamLinkDirection() zum nachträglichen Ändern.
+ *                     Bestehende Verknüpfungen ohne Richtungsangabe (newer_team_id NULL)
+ *                     fallen weiterhin auf das alte, kontextabhängige Verhalten zurück, bis die
+ *                     Richtung nachträglich gesetzt wird
+ * Changelog: 1.8.0
  * Changelog: 1.8.0 - Neue Funktionen für Team-Verknüpfungen ergänzt: ensureTeamLinksSchema()/
  *                     getTeamLinksForTeam()/addTeamLink()/deleteTeamLink() (Tabelle
  *                     team_links). Nicht-destruktive Alternative zu mergeTeams() für
@@ -431,15 +442,22 @@ function ensureTeamLinksSchema() : void
     try {
         $db = getDB();
         $db->exec('CREATE TABLE IF NOT EXISTS '.tbl('team_links').' (
-            `id`         INT AUTO_INCREMENT PRIMARY KEY,
-            `team_a_id`  INT NOT NULL,
-            `team_b_id`  INT NOT NULL,
-            `type`       ENUM(\'umbenennung\',\'fusion\',\'abspaltung\',\'sonstige\') NOT NULL DEFAULT \'umbenennung\',
-            `note`       VARCHAR(255) NULL DEFAULT NULL,
-            `created_at` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+            `id`             INT AUTO_INCREMENT PRIMARY KEY,
+            `team_a_id`      INT NOT NULL,
+            `team_b_id`      INT NOT NULL,
+            `type`           ENUM(\'umbenennung\',\'fusion\',\'abspaltung\',\'sonstige\') NOT NULL DEFAULT \'umbenennung\',
+            `note`           VARCHAR(255) NULL DEFAULT NULL,
+            `newer_team_id`  INT NULL DEFAULT NULL,
+            `created_at`     TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
             KEY `team_a_id` (`team_a_id`),
             KEY `team_b_id` (`team_b_id`)
         ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci');
+        // Migration für bereits bestehende Installationen (Tabelle existierte
+        // schon vor Einführung von newer_team_id, siehe Changelog 1.9.0)
+        $cols = $db->query('SHOW COLUMNS FROM '.tbl('team_links'))->fetchAll(PDO::FETCH_COLUMN);
+        if (!in_array('newer_team_id', $cols, true)) {
+            $db->exec('ALTER TABLE '.tbl('team_links').' ADD COLUMN `newer_team_id` INT NULL DEFAULT NULL');
+        }
     } catch (Throwable) {}
 }
 
@@ -454,7 +472,7 @@ function getTeamLinksForTeam(int $teamId) : array
     ensureTeamLinksSchema();
     try {
         $s = getDB()->prepare(
-            'SELECT tl.id, tl.type, tl.note,
+            'SELECT tl.id, tl.type, tl.note, tl.newer_team_id,
                     CASE WHEN tl.team_a_id = ? THEN tl.team_b_id ELSE tl.team_a_id END AS other_id,
                     tg.name AS other_name
                FROM '.tbl('team_links').' tl
@@ -472,15 +490,25 @@ function getTeamLinksForTeam(int $teamId) : array
 
 /**
  * Legt eine neue Team-Verknüpfung an. Verhindert Duplikate (in beide
- * Richtungen geprüft) und Selbstverknüpfung.
+ * Richtungen geprüft) und Selbstverknüpfung. $newerTeamId (optional) legt
+ * fest, welches der beiden Teams der heutige/aktuelle Name ist – wichtig für
+ * die "(heute TEAM_HEUTE)"-Kennzeichnung im Teamvergleich, die sonst vom
+ * zufällig angeklickten Team abhinge statt von einer festen Richtung
+ * (z.B. bei einer Umbenennung: der alte Name soll IMMER als "heute
+ * NEUER_NAME" gekennzeichnet werden, unabhängig davon, von welchem Spiel aus
+ * man den Vergleich öffnet). Muss einer der beiden Team-IDs entsprechen
+ * oder null sein (= Richtung unbekannt/nicht festgelegt).
  */
-function addTeamLink(int $teamAId, int $teamBId, string $type, string $note) : bool
+function addTeamLink(int $teamAId, int $teamBId, string $type, string $note, ?int $newerTeamId = null) : bool
 {
     if ($teamAId <= 0 || $teamBId <= 0 || $teamAId === $teamBId) {
         return false;
     }
     if (!in_array($type, ['umbenennung', 'fusion', 'abspaltung', 'sonstige'], true)) {
         $type = 'sonstige';
+    }
+    if ($newerTeamId !== null && $newerTeamId !== $teamAId && $newerTeamId !== $teamBId) {
+        $newerTeamId = null;
     }
     ensureTeamLinksSchema();
     try {
@@ -493,8 +521,35 @@ function addTeamLink(int $teamAId, int $teamBId, string $type, string $note) : b
         if ($exists->fetch() !== false) {
             return false; // schon verknüpft
         }
-        $db->prepare('INSERT INTO '.tbl('team_links').' (team_a_id,team_b_id,type,note) VALUES (?,?,?,?)')
-           ->execute([$teamAId, $teamBId, $type, $note !== '' ? $note : null]);
+        $db->prepare('INSERT INTO '.tbl('team_links').' (team_a_id,team_b_id,type,note,newer_team_id) VALUES (?,?,?,?,?)')
+           ->execute([$teamAId, $teamBId, $type, $note !== '' ? $note : null, $newerTeamId]);
+        return true;
+    } catch (Throwable) {
+        return false;
+    }
+}
+
+/**
+ * Ändert nachträglich, welches Team einer bestehenden Verknüpfung der
+ * heutige/aktuelle Name ist (siehe addTeamLink()). $newerTeamId muss einem
+ * der beiden verknüpften Teams entsprechen, oder null (= zurücksetzen auf
+ * "unbekannt").
+ */
+function setTeamLinkDirection(int $linkId, ?int $newerTeamId) : bool
+{
+    ensureTeamLinksSchema();
+    try {
+        $db = getDB();
+        $s = $db->prepare('SELECT team_a_id, team_b_id FROM '.tbl('team_links').' WHERE id = ?');
+        $s->execute([$linkId]);
+        $row = $s->fetch();
+        if ($row === false) {
+            return false;
+        }
+        if ($newerTeamId !== null && $newerTeamId !== (int)$row['team_a_id'] && $newerTeamId !== (int)$row['team_b_id']) {
+            return false;
+        }
+        $db->prepare('UPDATE '.tbl('team_links').' SET newer_team_id = ? WHERE id = ?')->execute([$newerTeamId, $linkId]);
         return true;
     } catch (Throwable) {
         return false;

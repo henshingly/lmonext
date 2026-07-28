@@ -2,7 +2,15 @@
 /**
  * Project: LMOnext
  * Filename: data_liga.php
- * Fileversion: 2.18.0
+ * Fileversion: 2.19.0
+ * Changelog: 2.19.0 - Bugfix: die "(heute TEAM_HEUTE)"-Kennzeichnung zeigte je nach
+ *                     Aufrufkontext (von welchem Spiel/welcher Liga aus der Vergleich
+ *                     geöffnet wurde) mal den einen, mal den anderen Namen als "heute" an,
+ *                     statt immer denselben. Neue Funktion resolveCanonicalTeamId() nutzt die
+ *                     jetzt fest hinterlegte Richtung (team_links.newer_team_id, siehe
+ *                     bootstrap.php 1.9.0), wenn eindeutig vorhanden – fällt sonst weiterhin
+ *                     auf das alte kontextabhängige Verhalten zurück
+ * Changelog: 2.18.0
  * Changelog: 2.18.0 - Neue Funktion resolveLinkedTeamIds() (transitive Auflösung von
  *                     Team-Verknüpfungen, siehe team_links in admin/bootstrap.php 1.8.0).
  *                     getHeadToHeadMatches() löst beide Teams jetzt zu ihrer vollständigen
@@ -524,6 +532,68 @@ function resolveLinkedTeamIds(int $teamId) : array
     return array_keys($visited);
 }
 
+/**
+ * Ermittelt den fest hinterlegten "heutigen" Namen einer verknüpften Gruppe
+ * (siehe team_links.newer_team_id, admin/bootstrap.php addTeamLink()/
+ * setTeamLinkDirection()) – unabhängig davon, von welchem Spiel/welcher Liga
+ * aus der Vergleich gerade geöffnet wurde. Löst dazu die "wird abgelöst
+ * durch"-Kette über evtl. mehrere Verknüpfungen hinweg auf (z.B. A wurde zu B
+ * umbenannt, B später zu C: A und B zeigen dann beide auf C).
+ *
+ * Liefert null, wenn für die Gruppe keine (eindeutige) Richtung hinterlegt
+ * ist – dann fällt getHeadToHeadMatches() auf das alte, kontextabhängige
+ * Verhalten zurück (Anker = das im aktuellen Vergleich angeklickte Team).
+ */
+function resolveCanonicalTeamId(array $groupIds) : ?int
+{
+    if (count($groupIds) < 2) {
+        return null;
+    }
+    try {
+        $ph = implode(',', array_fill(0, count($groupIds), '?'));
+        $s = getDB()->prepare(
+            'SELECT team_a_id, team_b_id, newer_team_id FROM ' . tbl('team_links') . '
+              WHERE newer_team_id IS NOT NULL
+                AND (team_a_id IN (' . $ph . ') OR team_b_id IN (' . $ph . '))'
+        );
+        $s->execute([...$groupIds, ...$groupIds]);
+        $edges = $s->fetchAll();
+    } catch (Throwable) {
+        return null;
+    }
+    if ($edges === []) {
+        return null; // keine Richtung für diese Gruppe hinterlegt
+    }
+
+    // "wird abgelöst durch"-Kette: jede Kante mit gesetztem newer_team_id
+    // sagt "die andere Seite wird abgelöst durch newer_team_id"
+    $supersededBy = [];
+    foreach ($edges as $e) {
+        $newer = (int)$e['newer_team_id'];
+        $other = ((int)$e['team_a_id'] === $newer) ? (int)$e['team_b_id'] : (int)$e['team_a_id'];
+        $supersededBy[$other] = $newer;
+    }
+
+    // Von jedem Team der Gruppe aus die Kette bis zum Ende verfolgen. Führen
+    // alle Ketten zum selben Ziel, ist das der eindeutige kanonische Name.
+    // Laufen sie auseinander (z.B. bei einer Abspaltung mit widersprüchlichen
+    // Angaben) oder gibt es gar keine ableitbare Endstation, bleibt es
+    // uneindeutig -> null (alter Anker-Fallback greift dann).
+    $terminals = [];
+    foreach ($groupIds as $start) {
+        $current = $start;
+        $seen = [$current => true];
+        while (isset($supersededBy[$current])) {
+            $current = $supersededBy[$current];
+            if (isset($seen[$current])) { break; } // Zyklus-Schutz, sollte nicht vorkommen
+            $seen[$current] = true;
+        }
+        $terminals[$current] = true;
+    }
+
+    return count($terminals) === 1 ? array_key_first($terminals) : null;
+}
+
 function getHeadToHeadMatches(int $idA, int $idB) : array
 {
     static $cache = [];
@@ -562,14 +632,21 @@ function getHeadToHeadMatches(int $idA, int $idB) : array
 
     // Namen für ALLE Teams in beiden Gruppen (nicht nur $idA/$idB), damit
     // auch Spiele unter früheren Namen den richtigen (historischen) Namen
-    // zeigen. $anchorOf ordnet jede Team-ID der "heutigen" Vergleichs-ID
-    // (idA oder idB) zu, damit sich pro Zeile ermitteln lässt, ob eine
-    // "(heute TEAM_HEUTE)"-Kennzeichnung nötig ist.
+    // zeigen. $anchorOf ordnet jede Team-ID dem "heutigen" Namen zu, damit
+    // sich pro Zeile ermitteln lässt, ob eine "(heute TEAM_HEUTE)"-
+    // Kennzeichnung nötig ist. Bevorzugt wird die FEST hinterlegte Richtung
+    // (team_links.newer_team_id, siehe resolveCanonicalTeamId()) verwendet,
+    // damit der "heutige" Name unabhängig vom Aufrufkontext immer derselbe
+    // ist – nur wenn für eine Gruppe keine (eindeutige) Richtung hinterlegt
+    // ist, fällt es auf das alte Verhalten zurück (Anker = das im aktuellen
+    // Vergleich angeklickte Team, $idA/$idB).
     $allIds = array_values(array_unique([...$groupA, ...$groupB]));
     $names = [];
     $anchorOf = [];
-    foreach ($groupA as $tid) { $anchorOf[$tid] = $idA; }
-    foreach ($groupB as $tid) { $anchorOf[$tid] = $idB; }
+    $canonicalA = resolveCanonicalTeamId($groupA) ?? $idA;
+    $canonicalB = resolveCanonicalTeamId($groupB) ?? $idB;
+    foreach ($groupA as $tid) { $anchorOf[$tid] = $canonicalA; }
+    foreach ($groupB as $tid) { $anchorOf[$tid] = $canonicalB; }
     try {
         $ph3 = implode(',', array_fill(0, count($allIds), '?'));
         $s2 = getDB()->prepare('SELECT id, name FROM ' . tbl('teams_global') . ' WHERE id IN (' . $ph3 . ')');

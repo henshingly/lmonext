@@ -2,7 +2,9 @@
 /**
  * Project: LMOnext
  * Filename: lang/admin/en.php
- * Fileversion: 1.13.0
+ * Fileversion: 1.13.1
+ * Changelog: 1.13.1 - Added translations for the team-link direction feature
+ * Changelog: 1.13.0
  * Changelog: 1.13.0 - Added translations for the new team links feature
  * Changelog: 1.12.4
  * Changelog: 1.12.4 - Added translation for the new team-column dropdown hint in the Player
@@ -316,6 +318,12 @@ return [
     'teams_links_add'             => 'Link',
     'teams_links_confirm_delete'  => 'Really remove this link?',
     'teams_links_alert_pick'      => 'Please select a team first.',
+    'teams_links_direction'        => 'Which is the current/today\'s name?',
+    'teams_links_direction_prefix' => 'Current:',
+    'teams_links_direction_short'  => 'Current',
+    'teams_links_direction_unknown' => 'Unknown / not set',
+    'teams_links_direction_hint'   => 'Determines which name is shown as the "current" name in the head-to-head comparison – regardless of which match you compare from.',
+    'teams_links_direction_failed' => 'Could not change the direction.',
     'teams_btn_merge_short'      => '⇌ Merge',
     'teams_confirm_delete_team'  => 'Delete team »{name}«?',
     'teams_field_name_required'  => 'Name *',

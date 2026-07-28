@@ -2,7 +2,12 @@
 /**
  * Project: LMOnext
  * Filename: handler_liga.php
- * Fileversion: 1.6.3
+ * Fileversion: 1.6.4
+ * Changelog: 1.6.4 - add_team_link übersetzt jetzt die a/b/unbekannt-Richtungswahl in die
+ *                     tatsächliche Team-ID (newer_team_id). Neue Aktion
+ *                     set_team_link_direction zum nachträglichen Ändern bestehender
+ *                     Verknüpfungen, siehe bootstrap.php 1.9.0
+ * Changelog: 1.6.3
  * Changelog: 1.6.3 - Neue Aktionen team_links_for (JSON, Team-Verknüpfungen laden),
  *                     add_team_link, delete_team_link – siehe bootstrap.php 1.8.0
  * Changelog: 1.6.2
@@ -508,7 +513,13 @@ if ($action === 'add_team_link' && $_SERVER['REQUEST_METHOD'] === 'POST') {
     $teamBId = (int)($_POST['team_b_id'] ?? 0);
     $type    = trim($_POST['type'] ?? 'sonstige');
     $note    = trim($_POST['note'] ?? '');
-    if (addTeamLink($teamAId, $teamBId, $type, $note)) {
+    $newerChoice = $_POST['newer_team_choice'] ?? '';
+    $newerTeamId = match ($newerChoice) {
+        'a'     => $teamAId,
+        'b'     => $teamBId,
+        default => null,
+    };
+    if (addTeamLink($teamAId, $teamBId, $type, $note, $newerTeamId)) {
         flash(t('hl_flash_team_link_added'));
     } else {
         flash(t('hl_flash_team_link_failed'), 'error');
@@ -522,4 +533,16 @@ if ($action === 'delete_team_link' && $_SERVER['REQUEST_METHOD'] === 'POST') {
     deleteTeamLink($linkId);
     flash(t('hl_flash_team_link_deleted'));
     redirect('?action=teams');
+}
+
+if ($action === 'set_team_link_direction' && $_SERVER['REQUEST_METHOD'] === 'POST') {
+    requireLogin();
+    header('Content-Type: application/json; charset=utf-8');
+    $linkId = (int)($_POST['link_id'] ?? 0);
+    $newerTeamId = isset($_POST['newer_team_id']) && $_POST['newer_team_id'] !== ''
+        ? (int)$_POST['newer_team_id']
+        : null;
+    $ok = setTeamLinkDirection($linkId, $newerTeamId);
+    echo json_encode(['ok' => $ok]);
+    exit;
 }

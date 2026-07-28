@@ -2,7 +2,13 @@
 /**
  * Project: LMOnext
  * Filename: view_teams.php
- * Fileversion: 1.6.1
+ * Fileversion: 1.7.0
+ * Changelog: 1.7.0 - Bugfix: Team-Verknüpfungen-Modal bietet jetzt eine explizite Richtungswahl
+ *                     ("Wer ist der heutige/aktuelle Name?") beim Anlegen einer Verknüpfung,
+ *                     plus ein Dropdown zum nachträglichen Ändern bei bestehenden
+ *                     Verknüpfungen – behebt, dass die "(heute...)"-Kennzeichnung im
+ *                     Teamvergleich vom Aufrufkontext abhing statt fest zu sein
+ * Changelog: 1.6.1
  * Changelog: 1.6.1 - Der 🔗-Button zeigt jetzt eine kleine Zahlen-Markierung, wenn das Team
  *                     bereits Verknüpfungen hat (siehe data_loader.php 1.7.2) – auf einen Blick
  *                     erkennbar, ohne jedes Team einzeln öffnen zu müssen
@@ -287,6 +293,25 @@ foreach ($teams as $t) {
               </select>
             </div>
 
+            <div style="margin-bottom:12px">
+              <label style="font-size:.78rem;color:var(--muted);display:block;margin-bottom:4px"><?= h(t('teams_links_direction')) ?></label>
+              <div style="font-size:.82rem;display:flex;flex-direction:column;gap:6px">
+                <label style="display:flex;align-items:center;gap:6px;cursor:pointer">
+                  <input type="radio" name="newer_team_choice" value="a" id="link-dir-a">
+                  <span><?= h(t('teams_links_direction_prefix')) ?> <strong id="link-dir-a-name"></strong></span>
+                </label>
+                <label style="display:flex;align-items:center;gap:6px;cursor:pointer">
+                  <input type="radio" name="newer_team_choice" value="b" id="link-dir-b">
+                  <span><?= h(t('teams_links_direction_prefix')) ?> <strong id="link-dir-b-name"></strong></span>
+                </label>
+                <label style="display:flex;align-items:center;gap:6px;cursor:pointer">
+                  <input type="radio" name="newer_team_choice" value="" checked>
+                  <span style="color:var(--muted)"><?= h(t('teams_links_direction_unknown')) ?></span>
+                </label>
+              </div>
+              <div style="font-size:.72rem;color:var(--muted);margin-top:4px"><?= h(t('teams_links_direction_hint')) ?></div>
+            </div>
+
             <div style="margin-bottom:16px">
               <label style="font-size:.78rem;color:var(--muted);display:block;margin-bottom:4px"><?= h(t('teams_links_note')) ?></label>
               <input type="text" name="note" maxlength="255" placeholder="<?= h(t('teams_links_note_placeholder')) ?>"
@@ -322,6 +347,9 @@ const i18nTeams = {
   linksNone:          <?= json_encode(t('teams_links_none')) ?>,
   confirmUnlink:      <?= json_encode(t('teams_links_confirm_delete')) ?>,
   alertPickTeam:      <?= json_encode(t('teams_links_alert_pick')) ?>,
+  linksDirLabel:      <?= json_encode(t('teams_links_direction_short')) ?>,
+  linksUnknown:       <?= json_encode(t('teams_links_direction_unknown')) ?>,
+  linksDirFailed:     <?= json_encode(t('teams_links_direction_failed')) ?>,
   linkTypes: {
     umbenennung: <?= json_encode(t('teams_links_type_umbenennung')) ?>,
     fusion:      <?= json_encode(t('teams_links_type_fusion')) ?>,
@@ -496,6 +524,11 @@ async function openLinkModal(id, name) {
   document.getElementById('link-pick-result').textContent = '';
   document.getElementById('link-pick-list').style.display = 'none';
   document.getElementById('link-submit').disabled = true;
+  document.getElementById('link-dir-a-name').textContent = name;
+  document.getElementById('link-dir-b-name').textContent = '';
+  document.getElementById('link-dir-a').disabled = true;
+  document.getElementById('link-dir-b').disabled = true;
+  document.querySelector('input[name="newer_team_choice"][value=""]').checked = true;
   document.getElementById('link-existing-list').innerHTML = '<div style="font-size:.82rem;color:var(--muted)">' + i18nTeams.linksLoading + '</div>';
   document.getElementById('link-modal').style.display = 'flex';
 
@@ -518,19 +551,40 @@ function renderExistingLinks(links) {
   box.innerHTML = links.map(l => {
     const typeLabel = i18nTeams.linkTypes[l.type] || l.type;
     const note = l.note ? ' – <span style="color:var(--muted)">' + esc(l.note) + '</span>' : '';
-    return `<div style="display:flex;align-items:center;gap:8px;padding:8px 0;border-bottom:1px solid var(--border);font-size:.85rem">
-      <div style="flex:1">
-        <strong>${esc(l.other_name)}</strong>
-        <span class="chip chip-blue" style="font-size:.68rem;margin-left:4px">${esc(typeLabel)}</span>
-        ${note}
+    const newer = l.newer_team_id ? parseInt(l.newer_team_id) : '';
+    return `<div style="padding:8px 0;border-bottom:1px solid var(--border);font-size:.85rem">
+      <div style="display:flex;align-items:center;gap:8px">
+        <div style="flex:1">
+          <strong>${esc(l.other_name)}</strong>
+          <span class="chip chip-blue" style="font-size:.68rem;margin-left:4px">${esc(typeLabel)}</span>
+          ${note}
+        </div>
+        <form method="post" action="?action=delete_team_link" onsubmit="return confirm(i18nTeams.confirmUnlink)">
+          <input type="hidden" name="link_id" value="${l.id}">
+          <input type="hidden" name="team_id" value="${linkCurrentTeamId}">
+          <button type="submit" class="btn btn-danger btn-sm" style="font-size:.7rem;padding:3px 7px">✕</button>
+        </form>
       </div>
-      <form method="post" action="?action=delete_team_link" onsubmit="return confirm(i18nTeams.confirmUnlink)">
-        <input type="hidden" name="link_id" value="${l.id}">
-        <input type="hidden" name="team_id" value="${linkCurrentTeamId}">
-        <button type="submit" class="btn btn-danger btn-sm" style="font-size:.7rem;padding:3px 7px">✕</button>
-      </form>
+      <div style="margin-top:4px">
+        <select onchange="updateLinkDirection(${l.id}, this.value)"
+                style="font-size:.76rem;background:var(--bg);border:1px solid var(--border);color:var(--muted);
+                       border-radius:4px;padding:2px 5px">
+          <option value=""${newer===''?' selected':''}>${i18nTeams.linksDirLabel}: ${i18nTeams.linksUnknown}</option>
+          <option value="${linkCurrentTeamId}"${newer===linkCurrentTeamId?' selected':''}>${i18nTeams.linksDirLabel}: ${esc(document.getElementById('link-modal-team-name').textContent)}</option>
+          <option value="${l.other_id}"${newer===l.other_id?' selected':''}>${i18nTeams.linksDirLabel}: ${esc(l.other_name)}</option>
+        </select>
+      </div>
     </div>`;
   }).join('');
+}
+
+async function updateLinkDirection(linkId, newerTeamId) {
+  try {
+    const body = new URLSearchParams({ link_id: linkId, newer_team_id: newerTeamId });
+    const r = await fetch('?action=set_team_link_direction', { method: 'POST', body });
+    const res = await r.json();
+    if (!res.ok) { alert(i18nTeams.linksDirFailed); }
+  } catch (e) { /* still fine, dropdown reflects the attempted choice */ }
 }
 
 function linkFilter() {
@@ -573,6 +627,9 @@ function linkSelect(id, name) {
   document.getElementById('link-pick-result').textContent = '✓ ' + name + ' (ID ' + id + ')';
   document.getElementById('link-team-b-id').value = id;
   document.getElementById('link-submit').disabled = false;
+  document.getElementById('link-dir-b-name').textContent = name;
+  document.getElementById('link-dir-a').disabled = false;
+  document.getElementById('link-dir-b').disabled = false;
 }
 
 function validateAddLink() {

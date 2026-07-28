@@ -2,7 +2,9 @@
 /**
  * Project: LMOnext
  * Filename: lang/admin/de.php
- * Fileversion: 1.14.0
+ * Fileversion: 1.14.1
+ * Changelog: 1.14.1 - Übersetzungen für die Richtungswahl bei Team-Verknüpfungen ergänzt
+ * Changelog: 1.14.0
  * Changelog: 1.14.0 - Übersetzungen für die neue Team-Verknüpfungen-Funktion ergänzt
  * Changelog: 1.13.4
  * Changelog: 1.13.4 - Übersetzung für den neuen Team-Spalten-Dropdown-Hinweis im
@@ -322,6 +324,12 @@ return [
     'teams_links_add'             => 'Verknüpfen',
     'teams_links_confirm_delete'  => 'Diese Verknüpfung wirklich entfernen?',
     'teams_links_alert_pick'      => 'Bitte zuerst ein Team auswählen.',
+    'teams_links_direction'        => 'Wer ist der heutige/aktuelle Name?',
+    'teams_links_direction_prefix' => 'Heute:',
+    'teams_links_direction_short'  => 'Heute',
+    'teams_links_direction_unknown' => 'Unbekannt / nicht festgelegt',
+    'teams_links_direction_hint'   => 'Legt fest, welcher Name im Teamvergleich als "heutiger" Name angezeigt wird – unabhängig davon, von welchem Spiel aus man vergleicht.',
+    'teams_links_direction_failed' => 'Richtung konnte nicht geändert werden.',
     'teams_btn_merge_short'      => '⇌ Merge',
     'teams_confirm_delete_team'  => 'Team »{name}« löschen?',
     'teams_field_name_required'  => 'Name *',
