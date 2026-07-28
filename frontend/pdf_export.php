@@ -2,7 +2,12 @@
 /**
  * Project: LMOnext
  * Filename: frontend/pdf_export.php
- * Fileversion: 1.6.7
+ * Fileversion: 1.6.8
+ * Changelog: 1.6.8 - Angepasst an die neue Feldaufteilung in getHeadToHeadMatches()
+ *                     (heim_today/gast_today statt im Namen enthalten, siehe data_liga.php
+ *                     2.20.0) – rekonstruiert den "(heute TEAM_HEUTE)"-Zusatz weiterhin inline
+ *                     an den Namen angehängt, da PDF-Text keinen Zeilenumbruch dieser Art kennt
+ * Changelog: 1.6.7
  * Changelog: 1.6.7 - "Spielfrei: TEAMNAME"-Zeile jetzt auch im PDF-Export der Ergebnisse
  *                     (direkt nach den Ergebniszeilen, vor der Tore-Schnitt-Zeile - gleiche
  *                     Reihenfolge wie in der HTML-Ansicht), siehe liga.php 3.10.2
@@ -1699,12 +1704,24 @@ function exportH2hPdf(int $teamAId, int $teamBId, bool $showLogos = false) : voi
         }
         $heimId = (int)($m['heim_id'] ?? 0);
         $gastId = (int)($m['gast_id'] ?? 0);
+        // PDF ist reiner (einzeiliger) Text ohne Möglichkeit für einen
+        // Zeilenumbruch wie im H2H-Modal - der "(heute TEAM_HEUTE)"-Zusatz
+        // bleibt hier bewusst inline an den Namen angehängt (siehe
+        // data_liga.php getHeadToHeadMatches(), heim_today/gast_today).
+        $heimDisplay = partieTeamName($m, 'heim');
+        if (!empty($m['heim_today'])) {
+            $heimDisplay .= ' (' . tf('h2h_today_prefix') . ' ' . $m['heim_today'] . ')';
+        }
+        $gastDisplay = partieTeamName($m, 'gast');
+        if (!empty($m['gast_today'])) {
+            $gastDisplay .= ' (' . tf('h2h_today_prefix') . ' ' . $m['gast_today'] . ')';
+        }
         $tableRows[] = [
             $datum,
             $m['runde_label'],
-            partieTeamName($m, 'heim'),
+            $heimDisplay,
             $m['h_tore'] . ' - ' . $m['g_tore'] . statusSuffix($m),
-            partieTeamName($m, 'gast'),
+            $gastDisplay,
         ];
         $rowTeamIds[] = [2 => $heimId, 4 => $gastId];
         $allTeamIds[] = $heimId;

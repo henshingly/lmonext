@@ -2,7 +2,8 @@
 <html lang="<!--HtmlLang-->">
 <head>
 <!--
-  Template: matchday | Filename: layout.tpl.php | Fileversion: 1.0.3
+  Template: matchday | Filename: layout.tpl.php | Fileversion: 1.0.4
+  Changelog: 1.0.4 - CSS für ".h2h-match-today" ergänzt (siehe default 1.15.6)
   Changelog: 1.0.3 - CSS für den neuen "Spielfrei"-Hinweis (spielfrei_note.tpl.php) ergänzt
   Changelog: 1.0.2 - Auf Wunsch: kein Header mehr. Sprachauswahl in den Footer verschoben
                      (oberhalb der Versions-/Template-Zeile). main{} bekommt etwas mehr
@@ -182,6 +183,8 @@ table.results-table td.col-vergleich,table.results-table thead th.col-vergleich{
 .h2h-match-meta:hover{color:var(--ink);text-decoration:underline}
 .h2h-match-teams{display:flex;align-items:center;gap:10px;font-size:.9rem}
 .h2h-match-team{flex:1;color:var(--muted)}
+.h2h-match-team .h2h-match-today{display:block;font-size:.7rem;font-weight:600;color:var(--muted);
+  text-transform:uppercase;letter-spacing:.02em}
 .h2h-match-team:first-child{text-align:right}
 .h2h-match-team.h2h-winner{color:var(--ink);font-weight:700}
 .h2h-match-score{flex:none;font-weight:700;color:var(--ink);min-width:48px;text-align:center;

@@ -2,7 +2,10 @@
 <html lang="<!--HtmlLang-->">
 <head>
 <!--
-  Template: default | Filename: layout.tpl.php | Fileversion: 1.15.5
+  Template: default | Filename: layout.tpl.php | Fileversion: 1.15.6
+  Changelog: 1.15.6 - CSS für ".h2h-match-today" ergänzt: der "(heute TEAM_HEUTE)"-Zusatz im
+                     Teamvergleich-Modal erscheint jetzt als eigene Unterzeile statt inline
+                     hinter dem Namen (siehe data_liga.php 2.20.0)
   Changelog: 1.15.5 - CSS für den neuen "Spielfrei"-Hinweis (spielfrei_note.tpl.php) ergänzt
   Changelog: 1.15.4 - .team-logo-inline: margin-left ergänzt (Logo steht jetzt teils NACH dem
                       Teamnamen, z.B. Heim-Spalte regulärer Ligen, Team-A im Teamvergleich-Titel)
@@ -226,6 +229,7 @@ table.results-table td.col-vergleich,table.results-table thead th.col-vergleich{
 .h2h-match-meta:hover{color:var(--accent);text-decoration:underline}
 .h2h-match-teams{display:flex;align-items:center;gap:10px;font-size:.9rem}
 .h2h-match-team{flex:1;color:var(--muted)}
+.h2h-match-team .h2h-match-today{display:block;font-size:.76rem;font-weight:400;color:var(--muted);font-style:italic}
 .h2h-match-team:first-child{text-align:right}
 .h2h-match-team.h2h-winner{color:var(--text);font-weight:700}
 .h2h-match-score{flex:none;font-weight:700;color:var(--text);min-width:44px;text-align:center}

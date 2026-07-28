@@ -2,7 +2,8 @@
 <html lang="<!--HtmlLang-->">
 <head>
 <!--
-  Template: colored | Filename: layout.tpl.php | Fileversion: 1.3.8
+  Template: colored | Filename: layout.tpl.php | Fileversion: 1.3.9
+  Changelog: 1.3.9 - CSS für ".h2h-match-today" ergänzt (siehe default 1.15.6)
   Changelog: 1.3.8 - CSS für den neuen "Spielfrei"-Hinweis (spielfrei_note.tpl.php, fällt für
                      dieses Template auf das gleichnamige Partial von "default" zurück) ergänzt
   Changelog: 1.3.7 - .team-logo-inline margin-left ergänzt, siehe template/default/layout.tpl.php 1.15.4
@@ -169,6 +170,7 @@ table.results-table td.col-vergleich,table.results-table thead th.col-vergleich{
 .h2h-match-meta:hover{color:var(--accent);text-decoration:underline}
 .h2h-match-teams{display:flex;align-items:center;gap:10px;font-size:.9rem}
 .h2h-match-team{flex:1;color:var(--muted)}
+.h2h-match-team .h2h-match-today{display:block;font-size:.76rem;font-weight:400;color:var(--muted);font-style:italic}
 .h2h-match-team:first-child{text-align:right}
 .h2h-match-team.h2h-winner{color:var(--text);font-weight:700}
 .h2h-match-score{flex:none;font-weight:700;color:var(--text);min-width:44px;text-align:center}

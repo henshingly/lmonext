@@ -2,7 +2,16 @@
 /**
  * Project: LMOnext
  * Filename: data_liga.php
- * Fileversion: 2.19.0
+ * Fileversion: 2.20.0
+ * Changelog: 2.20.0 - Auf Wunsch: der "(heute TEAM_HEUTE)"-Zusatz im Teamvergleich-Modal steht
+ *                     jetzt als eigene, kleinere Unterzeile UNTER dem Teamnamen statt inline
+ *                     dahinter (verhinderte vorher unschönen Zeilenumbruch mitten im Namen,
+ *                     siehe Screenshot des Nutzers). heim_name/gast_name in
+ *                     getHeadToHeadMatches() enthalten den Zusatz daher nicht mehr direkt,
+ *                     stattdessen neue separate Felder heim_today/gast_today. PDF-Export bleibt
+ *                     bewusst einzeilig (siehe pdf_export.php), da dort kein Zeilenumbruch
+ *                     dieser Art möglich ist
+ * Changelog: 2.19.0
  * Changelog: 2.19.0 - Bugfix: die "(heute TEAM_HEUTE)"-Kennzeichnung zeigte je nach
  *                     Aufrufkontext (von welchem Spiel/welcher Liga aus der Vergleich
  *                     geöffnet wurde) mal den einen, mal den anderen Namen als "heute" an,
@@ -658,24 +667,26 @@ function getHeadToHeadMatches(int $idA, int $idB) : array
         // $names bleibt leer; Fallback "?" beim Aufbau unten
     }
 
-    $displayName = static function (int $teamId) use ($names, $anchorOf) : string {
+    $displayName = static function (int $teamId) use ($names, $anchorOf) : array {
         $name = $names[$teamId] ?? '?';
         $anchor = $anchorOf[$teamId] ?? $teamId;
-        if ($anchor !== $teamId && isset($names[$anchor])) {
-            $name .= ' (' . tf('h2h_today_prefix') . ' ' . $names[$anchor] . ')';
-        }
-        return $name;
+        $today = ($anchor !== $teamId && isset($names[$anchor])) ? $names[$anchor] : null;
+        return ['name' => $name, 'today' => $today];
     };
 
     $matches = [];
     foreach ($rows as $r) {
         $hId = (int)$r['heim_id'];
         $gId = (int)$r['gast_id'];
+        $heimInfo = $displayName($hId);
+        $gastInfo = $displayName($gId);
         $matches[] = [
             'heim_id'         => $hId,
             'gast_id'         => $gId,
-            'heim_name'       => $displayName($hId),
-            'gast_name'       => $displayName($gId),
+            'heim_name'       => $heimInfo['name'],
+            'heim_today'      => $heimInfo['today'],
+            'gast_name'       => $gastInfo['name'],
+            'gast_today'      => $gastInfo['today'],
             'h_tore'          => (int)$r['h_tore'],
             'g_tore'          => (int)$r['g_tore'],
             'status'          => (int)($r['status'] ?? 0),
@@ -803,7 +814,9 @@ function buildHeadToHeadPayload(int $idA, int $idB, string $nameA, string $nameB
                 'ligaId'         => $m['liga_id'],
                 'liga'           => $m['liga_name'],
                 'heim'           => $m['heim_name'],
+                'heimToday'      => $m['heim_today'],
                 'gast'           => $m['gast_name'],
+                'gastToday'      => $m['gast_today'],
                 'hTore'          => $m['h_tore'],
                 'gTore'          => $m['g_tore'],
                 'suffix'         => statusSuffix($m),
@@ -870,6 +883,7 @@ function renderH2hModalAssets() : string
         . 'var listEl=document.getElementById("h2h-list");'
         . 'var pdfLinkEl=document.getElementById("h2h-pdf-link");'
         . 'var drawLabel=' . json_encode(tf('liga_h2h_draw'), JSON_UNESCAPED_UNICODE) . ';'
+        . 'var todayLabel=' . json_encode(tf('h2h_today_prefix'), JSON_UNESCAPED_UNICODE) . ';'
         . 'var winsLabelTpl=' . json_encode(tf('liga_h2h_wins'), JSON_UNESCAPED_UNICODE) . ';'
         . 'var noMatchesLabel=' . json_encode(tf('liga_h2h_no_matches'), JSON_UNESCAPED_UNICODE) . ';'
         . 'var titleTpl=' . json_encode(tf('liga_h2h_modal_title'), JSON_UNESCAPED_UNICODE) . ';'
@@ -891,9 +905,9 @@ function renderH2hModalAssets() : string
         . '+\'<a class="h2h-match-meta" href="liga.php?id=\'+m.ligaId+\'&view=ergebnisse&nr=\'+m.spieltag+\'">\'+esc(m.datum)+\' &middot; \'+esc(m.liga)+\', \'' 
         . '+\'<span class="h2h-rd-long">\'+esc(m.rundeLabel)+\'</span><span class="h2h-rd-short">\'+esc(m.rundeLabelKurz)+\'</span></a>\'' 
         . '+\'<div class="h2h-match-teams">\'' 
-        . '+\'<span class="h2h-match-team\'+heimCls+\'">\'+esc(m.heim)+\'</span>\'' 
+        . '+\'<span class="h2h-match-team\'+heimCls+\'">\'+esc(m.heim)+(m.heimToday?\'<span class="h2h-match-today">(\'+todayLabel+\' \'+esc(m.heimToday)+\')</span>\':\'\')+\'</span>\'' 
         . '+\'<span class="h2h-match-score">\'+m.hTore+\':\'+m.gTore+esc(m.suffix)+\'</span>\'' 
-        . '+\'<span class="h2h-match-team\'+gastCls+\'">\'+esc(m.gast)+\'</span>\'' 
+        . '+\'<span class="h2h-match-team\'+gastCls+\'">\'+esc(m.gast)+(m.gastToday?\'<span class="h2h-match-today">(\'+todayLabel+\' \'+esc(m.gastToday)+\')</span>\':\'\')+\'</span>\'' 
         . '+\'</div></div>\';'
         . '}).join("");}'
         . 'overlay.hidden=false;'
