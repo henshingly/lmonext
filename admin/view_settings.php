@@ -2,7 +2,10 @@
 /**
  * Project: LMOnext
  * Filename: view_settings.php
- * Fileversion: 1.3.3
+ * Fileversion: 1.3.4
+ * Changelog: 1.3.4 - Neue Einstellung "Übersicht-Link anzeigen?" in der Karte Besucherbereich,
+ *                     entspricht "Ligaauswahl" im alten LMO
+ * Changelog: 1.3.3
  * Changelog: 1.3.3 - Neue globale Einstellung "Sprachauswahl anzeigen?" in der Karte
  *                     Besucherbereich – blendet die Sprachauswahl für Besucher auf allen Seiten
  *                     aus, wenn deaktiviert
@@ -56,6 +59,7 @@ if (!array_key_exists($activeTemplate, $availableTemplates)) { $activeTemplate =
 $allowTemplateSwitch = getAdminSetting('allow_template_switch', '0') === '1';
 $showPdfButtons      = getAdminSetting('show_pdf_buttons', '1') === '1';
 $showLanguageSwitcher = getAdminSetting('show_language_switcher', '1') === '1';
+$showBackLink        = getAdminSetting('show_back_link', '1') === '1';
 
 // ── View: Einstellungen ───────────────────────────────────────────────────────
 ?>
@@ -142,6 +146,17 @@ $showLanguageSwitcher = getAdminSetting('show_language_switcher', '1') === '1';
             </select>
             <div style="font-size:.78rem;color:var(--muted);margin-top:4px">
               <?= h(t('settings_hint_show_language_switcher')) ?>
+            </div>
+          </div>
+          <div class="form-group">
+            <label><?= h(t('settings_label_show_back_link')) ?></label>
+            <select name="show_back_link" style="width:100%;background:var(--bg);border:1px solid var(--border);
+                   color:var(--text);border-radius:var(--radius);padding:8px 10px;font-size:.87rem;margin-top:4px">
+              <option value="1"<?= $showBackLink ? ' selected' : '' ?>><?= h(t('common_yes')) ?></option>
+              <option value="0"<?= !$showBackLink ? ' selected' : '' ?>><?= h(t('common_no')) ?></option>
+            </select>
+            <div style="font-size:.78rem;color:var(--muted);margin-top:4px">
+              <?= h(t('settings_hint_show_back_link')) ?>
             </div>
           </div>
           <button type="submit" class="btn btn-primary"><?= h(t('common_save')) ?></button>

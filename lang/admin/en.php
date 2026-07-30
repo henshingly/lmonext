@@ -2,7 +2,15 @@
 /**
  * Project: LMOnext
  * Filename: lang/admin/en.php
- * Fileversion: 1.13.1
+ * Fileversion: 1.13.4
+ * Changelog: 1.13.4 - Added translations for the new timezone selector in the installer
+ * Changelog: 1.13.3
+ * Changelog: 1.13.3 - Updated label/hint for "Show league overview?" - now also hides the
+ *                     league selection on the homepage, not just the back-link (see home.php
+ *                     2.1.0)
+ * Changelog: 1.13.2
+ * Changelog: 1.13.2 - Added translations for the new "Show back to overview link?" setting
+ * Changelog: 1.13.1
  * Changelog: 1.13.1 - Added translations for the team-link direction feature
  * Changelog: 1.13.0
  * Changelog: 1.13.0 - Added translations for the new team links feature
@@ -224,6 +232,8 @@ return [
     'install_label_password'     => 'Password',
     'install_placeholder_pass'   => 'at least 8 characters',
     'install_label_password2'    => 'Repeat password',
+    'install_label_timezone'     => 'Timezone',
+    'install_hint_timezone'      => 'Used for date/time display throughout the admin area. Can be changed anytime later under Settings.',
     'install_label_email'        => 'Email address',
     'install_hint_email'         => 'Optional. Only needed for "Forgot password".',
 
@@ -744,6 +754,8 @@ return [
     'settings_hint_show_pdf_buttons'       => 'If no, the PDF button is hidden entirely from visitors in results, standings, schedules, and the head-to-head comparison – for both KO and regular leagues, on every page.',
     'settings_label_show_language_switcher' => 'Show language selector?',
     'settings_hint_show_language_switcher'  => 'If no, the language selector is hidden from visitors on every page of the frontend.',
+    'settings_label_show_back_link'        => 'Show league overview?',
+    'settings_hint_show_back_link'         => 'If no, both the "← Back to overview" link on the league detail page AND the entire league selection on the homepage (active leagues + archive) are hidden from visitors. Leagues are then only reachable directly via liga.php?id=LEAGUE_ID – intended for operators who only want to embed a single, fixed league via iframe/include on an external website (equivalent to "Ligaauswahl" in the old LMO).',
 
     // ── Maintenance (database backup/restore) ─────────────────────────────────
     'wartung_tab_backup'             => 'Backup',

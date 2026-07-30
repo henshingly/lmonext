@@ -1,257 +1,26 @@
 <?php
 /**
  * Project: LMOnext
- * Filename: data_liga.php
- * Fileversion: 2.21.0
+ * Filename: frontend/data_liga.php
+ * Fileversion: 3.0.0
+ * Changelog: 3.0.0 - Große Umstrukturierung: die komplette bisherige Implementierung (~2900
+ *                     Zeilen) wurde in fokussierte, einzeln verständliche Traits unter src/Liga/
+ *                     aufgeteilt (LigaRepositoryTrait, TeamRepositoryTrait, HeadToHeadTrait,
+ *                     StandingsTrait, RenderViewsTrait usw.), zusammengeführt in der Fassade
+ *                     LMOnext\Liga\LigaService. Diese Datei ist jetzt eine reine
+ *                     Kompatibilitätsschicht: alle 61 bisherigen globalen Funktionsnamen bleiben
+ *                     unverändert erhalten und delegieren 1:1 an die neue Struktur - kein
+ *                     Aufrufer (liga.php, PDF-Export, Addons) musste angepasst werden. Bewusst
+ *                     OHNE Composer/vendor-Abhängigkeit: die Trait-Dateien werden direkt per
+ *                     require_once geladen (kein PSR-4-Autoloading nötig), damit die bisherige
+ *                     "Dateien hochladen und fertig"-Installation auf Shared Hosting unverändert
+ *                     funktioniert. Ursprüngliche Idee/Struktur-Vorlage stammt von einer
+ *                     Freund-Version des Nutzers (danke!), hier ohne die dortige .env/Composer-
+ *                     Anbindung übernommen. Alte Version vollständig als data_liga_pretraits.php
+ *                     erhalten
  * Changelog: 2.21.0 - Performance: gezielte Speicher-Caches (pro Request) für getLigaOptions(),
- *                     getLigaTeamsList() und resolveTeamNumberToId() ergänzt - alle drei wurden
- *                     bisher bei jedem Aufruf neu aus der DB gelesen, obwohl sie innerhalb
- *                     eines Seitenaufrufs oft mehrfach für dieselbe Liga gebraucht werden
- *                     (Tabelle, Ergebnisse, PDF-Export, Mini-Addons usw. greifen unabhängig
- *                     voneinander darauf zu). Bewusst als einfache statische Caches statt
- *                     einer größeren Architekturumstellung, um das Risiko gering zu halten
- * Changelog: 2.20.0
- * Changelog: 2.20.0 - Auf Wunsch: der "(heute TEAM_HEUTE)"-Zusatz im Teamvergleich-Modal steht
- *                     jetzt als eigene, kleinere Unterzeile UNTER dem Teamnamen statt inline
- *                     dahinter (verhinderte vorher unschönen Zeilenumbruch mitten im Namen,
- *                     siehe Screenshot des Nutzers). heim_name/gast_name in
- *                     getHeadToHeadMatches() enthalten den Zusatz daher nicht mehr direkt,
- *                     stattdessen neue separate Felder heim_today/gast_today. PDF-Export bleibt
- *                     bewusst einzeilig (siehe pdf_export.php), da dort kein Zeilenumbruch
- *                     dieser Art möglich ist
- * Changelog: 2.19.0
- * Changelog: 2.19.0 - Bugfix: die "(heute TEAM_HEUTE)"-Kennzeichnung zeigte je nach
- *                     Aufrufkontext (von welchem Spiel/welcher Liga aus der Vergleich
- *                     geöffnet wurde) mal den einen, mal den anderen Namen als "heute" an,
- *                     statt immer denselben. Neue Funktion resolveCanonicalTeamId() nutzt die
- *                     jetzt fest hinterlegte Richtung (team_links.newer_team_id, siehe
- *                     bootstrap.php 1.9.0), wenn eindeutig vorhanden – fällt sonst weiterhin
- *                     auf das alte kontextabhängige Verhalten zurück
- * Changelog: 2.18.0
- * Changelog: 2.18.0 - Neue Funktion resolveLinkedTeamIds() (transitive Auflösung von
- *                     Team-Verknüpfungen, siehe team_links in admin/bootstrap.php 1.8.0).
- *                     getHeadToHeadMatches() löst beide Teams jetzt zu ihrer vollständigen
- *                     verknüpften Gruppe auf, bevor gesucht wird – Spiele unter früheren
- *                     Namen (Umbenennung/Fusion/Abspaltung) erscheinen jetzt mit im
- *                     Teamvergleich, mit "(heute TEAM_HEUTE)"-Kennzeichnung wenn der
- *                     historische Name vom heute verglichenen Team abweicht. Wirkt sich
- *                     überall aus, wo getHeadToHeadMatches() genutzt wird (H2H-Modal,
- *                     PDF-Export, Minitabelle/Mininext-Addons)
- * Changelog: 2.17.0
- * Changelog: 2.17.0 - Neu: "Spielfrei: TEAMNAME"-Hinweis unterhalb der Ergebnistabelle eines
- *                     Spieltags, analog zum alten LMO (siehe Screenshot-Vorlage des Nutzers).
- *                     findSpielfreiTeams() ermittelt betroffene Teams durch Abwesenheit (kein
- *                     expliziter "Spielfrei"-Datensatz im Modell, das Team taucht im Spieltag
- *                     einfach in keiner Paarung auf - identisch zur Kodierung in den alten
- *                     .l98-Dateien). renderSpielfreiNote() rendert das über das neue Partial
- *                     "spielfrei_note"
- * Changelog: 2.16.0
- * Changelog: 2.16.0 - "spielerstatistik"-Reiter ergänzt (wired an den bereits reservierten
- *                     "stats"-Options-Key, siehe Liga-Einstellungen); Default aus, da neue
- *                     Ligen ohne Spielerstatistik-Daten sonst einen leeren Reiter zeigen würden
- * Changelog: 2.15.6 - renderH2hModalAssets() blendet den PDF-Button im Teamvergleich-Modal
- *                     jetzt aus, wenn die globale Einstellung "PDF-Export für Besucher
- *                     anzeigen?" deaktiviert ist; JS-Zuweisung auf pdfLinkEl entsprechend
- *                     gegen ein fehlendes Element abgesichert
- * Changelog: 2.15.5
- * Changelog: 2.15.5 - Bugfix: computeStandings() ignorierte den Spielstatus (n.V./i.E.)
- *                     komplett und wertete jede Partie immer mit den normalen Punktwerten
- *                     (PointsForWin/Draw/Lost), entgegen dem alten LMO, das für "nach
- *                     Verlängerung" und "nach Elfmeterschießen" eigene Punktetabellen erlaubte.
- *                     Neue Options-Schlüssel PointsForWin/Draw/LostET (n.V.) und
- *                     PointsForWin/Draw/LostPS (i.E.), fallen mangels Einstellung auf die
- *                     normalen Werte zurück (keine Verhaltensänderung für bestehende Ligen ohne
- *                     explizite ET/PS-Konfiguration)
- * Changelog: 2.15.4
- * Changelog: 2.15.4 - H2H-PDF-Link im Modal übergibt jetzt "&logos=1", wenn der aktuelle
- *                     Payload Logo-Pfade enthält, damit exportH2hPdf() weiß, ob Team-Logos
- *                     eingebettet werden sollen (der PDF-Export ist teamübergreifend, kennt also
- *                     sonst keine Liga-Einstellung an der Stelle)
- * Changelog: 2.15.3
- * Changelog: 2.15.3 - Logo-Ordner von assets/img/Teams auf assets/img/teams umbenannt
- *                     (kleingeschrieben)
- * Changelog: 2.15.2
- * Changelog: 2.15.2 - Logo-Reihenfolge verfeinert: Heim-Spalte bei Ergebnissen/Spielplänen
- *                     regulärer Ligen zeigt jetzt Name-zuerst-dann-Logo (neue Funktion
- *                     partieTeamNameWithLogoReversed(), KO-Turnierbaum bleibt unverändert
- *                     Logo-zuerst). Teamvergleich-Titel: Team A jetzt "Name Logo", Team B
- *                     weiterhin "Logo Name" (Logos "schauen" zum vs in der Mitte). Kreuztabelle:
- *                     bei aktiviertem ShowLogos zeigt die Kopfzeile NUR das Logo (kein Kürzel
- *                     mehr) und die linke Spalte Logo + Mittelname statt Logo + vollem Namen
- * Changelog: 2.15.1
- * Changelog: 2.15.1 - Neue Funktion renderTeamLogoImgWrapped(): Logo in einen <span> fester
- *                     Mindestbreite verpackt, nur für die Liga-Tabelle verwendet (dort jetzt
- *                     "Logo" als eigener Platzhalter getrennt von "Team"), damit die Teamnamen
- *                     untereinander bündig ausgerichtet bleiben
- * Changelog: 2.15.0
- * Changelog: 2.15.0 - Neues Feature "Logo anzeigen" (ShowLogos-Liga-Einstellung): Team-Logos
- *                     (siehe Admin → Teams (global)) erscheinen jetzt in der Besucheransicht
- *                     überall, wo Teams auftauchen – Tabelle, Ergebnisse, Kreuztabelle,
- *                     Spielpläne (KO-Turnierbaum + regulärer Spielplan inkl. Sidebar),
- *                     Ligastatistik/Teamvergleich und im Direkter-Vergleich-Modal. Neue
- *                     Funktionen findTeamLogoPathFrontend()/renderTeamLogoImg()/
- *                     partieTeamNameWithLogo(); partieTeamName() selbst bleibt unverändert
- *                     (liefert weiterhin reinen Text, wird auch für den PDF-Export
- *                     verwendet – Logos in PDFs sind nicht Teil dieses Features)
- * Changelog: 2.14.9
- * Changelog: 2.14.9 - PDF-Button im Direkter-Vergleich-Modal ergänzt (unten, wie bei den
- *                     anderen PDF-Exporten). Payload (buildHeadToHeadPayload()) liefert jetzt
- *                     teamAId/teamBId mit, der Button verlinkt auf
- *                     "liga.php?h2h_pdf=1&a=..&b=.." (siehe exportH2hPdf() in pdf_export.php)
- * Changelog: 2.14.8 - Teamvergleich-Modal (H2H): zeigte bisher immer hartkodiert "N. Sp.tag",
- *                     auch bei KO-Turnieren. getHeadToHeadMatches() ermittelt jetzt pro
- *                     Begegnung Liga-Typ + Rundenzahl + Paarungsanzahl und berechnet über
- *                     roundDisplayName()/koRoundName() den korrekten Rundennamen (z.B.
- *                     "Achtelfinale", "Halbfinale", "Finale") für KO-Ligen. Bei regulären Ligen
- *                     werden Lang- ("Spieltag") und Kurzform ("ST") mitgegeben, responsive
- *                     Umschaltung über CSS (.h2h-rd-long/.h2h-rd-short) je nach Bildschirmbreite
- * Changelog: 2.14.7 - Dieselbe Leerbegegnungs-Filterung (siehe 2.14.5/2.14.6) jetzt auch im
- *                     Turnierbaum ("Spielpläne" bei KO-Ligen) angewendet – galt bisher nur für
- *                     die Ergebnisse-Ansicht. Das Bracket-Layout ist eine reine Box-Liste pro
- *                     Runde ohne feste Positionen/Verbindungslinien, ein Weglassen einzelner
- *                     Paarungen verschiebt also nichts anderes
- * Changelog: 2.14.6 - Bugfix: partieIsEmptyPlaceholder() (siehe 2.14.5) prüfte nur, ob
- *                     heim_id/gast_id überhaupt gesetzt sind – erkannte dadurch echte
- *                     Dummy-Team-Zeilen namens "___" (die das alte LMO für Freilos-
- *                     Auffüllplätze anlegt, siehe getOrCreateDummyTeam()) nicht als leer, weil
- *                     dort ja eine echte (Dummy-)Team-ID vorliegt. Prüft jetzt stattdessen den
- *                     aufgelösten Anzeigenamen selbst (leer ODER wörtlich "___")
- * Changelog: 2.14.5 - Neue Funktion partieIsEmptyPlaceholder(): erkennt reine Leer-Begegnungen
- *                     ohne jede Team-Zuordnung (z.B. bei KO-Turnieren mit auf die nächste
- *                     Zweierpotenz aufgefüllter Teilnehmerzahl im alten LMO). Wird in liga.php
- *                     genutzt, um diese aus der Ergebnisse-Ansicht herauszufiltern
- * Changelog: 2.14.4 - Vergleichs-Icon jetzt auch im Turnierbaum (KO-Ligen, "Spielpläne"):
- *                     neue Zeile zwischen Ergebnis und Anstoßtermin in jeder Paarungs-Box
- * Changelog: 2.14.3 - Bugfix: Vergleichs-Modal zeigte den n.V./i.E.-Zusatz bei Begegnungen
- *                     nicht an, da status weder abgefragt noch ins Payload übernommen wurde.
- *                     getHeadToHeadMatches() liefert jetzt p.status mit,
- *                     buildHeadToHeadPayload() gibt ihn über statusSuffix() als suffix pro
- *                     Begegnung mit
- * Changelog: 2.14.2 - Vergleichs-Modal: Überschrift jeder Begegnung (Datum · Liga, Spieltag)
- *                     ist jetzt ein Link zur jeweiligen Liga/zum jeweiligen Spieltag
- *                     (liga.php?id=…&view=ergebnisse&nr=…). getHeadToHeadMatches() liefert
- *                     dafür zusätzlich liga_id, buildHeadToHeadPayload() gibt sie als ligaId
- *                     pro Begegnung mit
- * Changelog: 2.14.1 - Vergleichs-Modal: Sieg-Chips zeigen jetzt "Siege {Team}" über der Zahl
- *                     statt nur der nackten Zahl; Vergleichs-Icon durch vom Nutzer
- *                     bereitgestelltes Pfeile-Icon ersetzt (vorher zwei sich überlappende Kreise)
- * Changelog: 2.14.0 - Neues "Direkter Vergleich"-Icon in Ergebnissen und Spielplänen: Klick
- *                     öffnet ein Modal mit der bisherigen ligaübergreifenden Begegnungshistorie
- *                     der beiden Teams (Sieg/Unentschieden/Sieg-Bilanz + Liste aller bisherigen
- *                     Spiele). Neue Funktionen getHeadToHeadMatches(), buildHeadToHeadPayload(),
- *                     renderH2hIcon(), renderH2hModalAssets()
- * Changelog: 2.13.2 - Kreuztabelle: Klick auf eine Spalten-Kopfzelle oder ein Zeilen-Label
- *                     hebt jetzt diese Mannschaft hervor (ersetzt die zuvor angezeigte
- *                     favTeam-Hervorhebung client-seitig per JS). Ohne hinterlegte
- *                     Lieblingsmannschaft ist beim Aufruf noch nichts markiert.
- * Changelog: 2.13.1 - Kreuztabelle: Zeile und Spalte der favTeam-Mannschaft werden jetzt mit
- *                     einem leichten Auswahlschatten hervorgehoben (Zeilen-Label + Spalten-Kopf
- *                     in Akzentfarbe, alle Zellen der Zeile/Spalte mit hellem Hintergrund)
- * Changelog: 2.13.0 - Bugfix: Liga-Einstellungen "Lieblingsmannschaft" (favTeam) und
- *                     "Spielplan" (selTeam) wurden gespeichert, aber im Frontend nie
- *                     ausgewertet. Neue Funktion resolveTeamNumberToId() löst die in den
- *                     Einstellungen gespeicherte Team-Nummer (alphabetische Position, wie im
- *                     Adminbereich) in die tatsächliche Team-ID auf. renderTeamScheduleView()
- *                     wird jetzt ohne ?team=-Parameter automatisch mit dem selTeam-Team
- *                     aufgerufen; renderPartieRow()/renderResultsTable() und
- *                     renderStandingsView() heben die favTeam-Mannschaft jetzt fett hervor
- *                     (Ergebnisse und Tabelle)
- * Changelog: 2.12.3 - Fieberkurve: keine Punkt-Marker mehr auf der Linie (nur beim Hovern),
- *                     Linien jetzt sanft geschwungen (tension 0.35) statt spitz/eckig,
- *                     passend zum alten LMO-Look
- * Changelog: 2.12.2 - Fieberkurve zeigt beim ersten Laden nur die ersten 2 Teams an (Rest über
- *                     die Chart.js-Legende anklickbar dazuschaltbar), damit es bei vielen
- *                     Teams nicht sofort überladen wirkt
- * Changelog: 2.12.1 - Bugfix: Chart.js wird jetzt lokal aus assets/vendor/ geladen statt von
- *                     einem externen CDN (cdnjs.cloudflare.com) – dort blockierten offenbar
- *                     Werbeblocker/Netzwerkfilter das Skript, wodurch die Fieberkurve bei
- *                     manchen Nutzern komplett leer blieb
- * Changelog: 2.12.0 - Fieberkurve umgebaut: reines SVG durch interaktives Chart.js-Liniendiagramm
- *                     ersetzt (CDN), da bei vielen Teams die handgebaute SVG-Version zu
- *                     unübersichtlich wurde. Legende jetzt anklickbar (Team ein-/ausblenden),
- *                     Tooltip beim Hovern
- * Changelog: 2.11.0 - Ligastatistik ergänzt (computeTeamStreaks, computeAllTeamsStreakRecords,
- *                     findExtremeMatches, computeTeamDetailStats, renderTeamStatBox,
- *                     renderOverallStatsBlock, renderLigastatistikView): Team-Auswahl (0/1/2),
- *                     Einzel-Statistik-Box, Zwei-Team-Vergleich mit einfacher Chancen-Schätzung
- *                     (Punkteschnitt-Verhältnis) und Restprogramm-Bewertung (Ø Punkteschnitt der
- *                     verbleibenden Gegner), sowie immer sichtbarer ligaweiter Statistik-Block
- *                     (Spiele/Tore/Extremwerte/Serien-Rekorde)
- * Changelog: 2.10.0 - Fieberkurve ergänzt (renderFieberkurveView, fieberkurveColors): reines
- *                     SVG-Liniendiagramm der Tabellenposition je Spieltag, rekonstruiert die
- *                     Tabelle nach jedem gespielten Spieltag aus computeStandings()
- * Changelog: 2.9.1 - Kreuztabelle: Kopfzeile zeigt jetzt Kürzel (kurz) statt vollem Namen
- *                     (Zeilen-Beschriftung links bleibt der volle Name); kurz-Feld wird jetzt
- *                     auch durch computeStandings() durchgereicht
- * Changelog: 2.9.0 - Kreuztabelle ergänzt (renderKreuztabelleView): N×N-Gitter aller Teams,
- *                     sortiert nach aktueller Tabellenposition, Heim/Gast-Ergebnisse je Zelle
- * Changelog: 2.8.2 - Spielplan-Sidebar zeigt jetzt den mittellangen Teamnamen (mittel) statt
- *                     des Kürzels (kurz), mit Fallback auf den vollen Namen
- * Changelog: 2.8.1 - Bugfix: getLigaTeamsList() lieferte leere Sidebar in der Spielpläne-Ansicht
- *                     für Ligen, deren liga_teams-Zuordnung nie befüllt wurde (z.B. ältere
- *                     importierte Ligen). Fallback ergänzt: Teams werden in diesem Fall direkt
- *                     aus den vorhandenen Partien abgeleitet (Dummy-Team "___" ausgeschlossen)
- * Changelog: 2.8.0 - Team-Spielplan-Ansicht für reguläre Ligen ergänzt (getLigaTeamsList um
- *                     "kurz" erweitert, renderTeamScheduleView): Sidebar mit allen
- *                     Team-Kurznamen, bei Auswahl alle Partien dieser Mannschaft chronologisch,
- *                     eigenes Team fett hervorgehoben
- * Changelog: 2.7.1 - Wertungshinweis-Zeile über der Tabelle entfernt
- * Changelog: 2.7.0 - Tabellen-Ansicht ergänzt (getLigaTeamsList, getAllLigaPartien,
- *                     computeStandings, renderStandingsView): Punkte/Sp/S/U/N/Tore/Diff je
- *                     Team, sortiert nach Punkte → Tordifferenz → Tore; "tabelle"-Reiter
- *                     ergänzt (Flag "Tabelle" aus den Liga-Einstellungen)
- * Changelog: 2.6.1 - Info-Ansicht: Links zu Homepage + Forum ergänzt
- * Changelog: 2.6.0 - Ergebnisse nach Verlängerung/Elfmeterschießen zeigen jetzt "n.V."/"i.E."
- *                     (Ergebnistabelle UND Turnierbaum); getSpieltagPartien() liest dafür die
- *                     status-Spalte (mit Fallback, falls noch nicht angelegt). Turnierbaum
- *                     zeigt jetzt außerdem den Anstoßtermin je Paarung, wenn in den
- *                     Liga-Einstellungen aktiviert (DatM), im dort gewählten Format (DatF).
- * Changelog: 2.5.2 - Info-Ansicht nutzt jetzt getAppVersion() (composer.json) statt der
- *                     APP_VERSION-Konstante aus config.php, damit überall dieselbe
- *                     Versionsnummer angezeigt wird (Footer + Info-Seite)
- * Changelog: 2.5.1 - Projektname auf "LMOnext" umgestellt (vorher "Online-Liga-Verwaltung Board" / "OLVBoard")
- * Changelog: 2.5.0 - Neue Tabellen-Ansicht (Liga-Typ, kein KO): renderStandingsView() berechnet
- *                     die Tabelle aus allen gespielten Partien (Punkte → Tordifferenz → Tore,
- *                     Wertung aus liga_options PointsForWin/PointsForDraw) und ermittelt die
- *                     Platzierungsbewegung (rauf/runter/gleich) durch Vergleich mit dem Stand vor
- *                     dem letzten gespielten Spieltag.
- * Changelog: 2.4.0 - renderInfoView() umgebaut: zeigt jetzt eine allgemeine "Über LMOnext"-
- *                     Seite (Version, Copyright, Kurzbeschreibung, Lizenz) statt Liga-
- *                     Metadaten, analog zur Info-Seite des alten LMO
- * Changelog: 2.3.1 - Bugfix (Fatal Error): reorderBracketPairings() begrenzt die Anzahl der
- *                     zu verarbeitenden Team-Slots jetzt auf die Paarungsanzahl der aktuellen
- *                     Runde. Ohne die Begrenzung wurde bei einer letzten Runde mit Finale +
- *                     Spiel um Platz 3 jede Halbfinal-Paarung doppelt angefragt (als Sieger-
- *                     UND Verlierer-Quelle), was zu "null"-Einträgen und einem Fatal Error in
- *                     partieTeamName() führte. Zusätzlich defensiver Null-Check in
- *                     renderBracketView() als Sicherheitsnetz.
- * Changelog: 2.3.0 - Turnierbaum: Paarungen werden jetzt per Team-ID zwischen den Runden
- *                     zugeordnet und entsprechend umsortiert (reorderBracketPairings()),
- *                     statt sich auf die reine spiel_nr-Reihenfolge zu verlassen – die
- *                     bildete die tatsächliche Zuführung nicht immer korrekt ab.
- *                     Dummy-Platzhalter-Team wird beim Zuordnen ausgeschlossen.
- * Changelog: 2.2.0 - Reiter-Navigation (renderTabsBar), Info-Ansicht (renderInfoView),
- *                     Kalender-Ansicht (renderKalenderView, monatsbasiert, klickbare
- *                     Spieltage/Runden) und Spielpläne-Ansicht als klassischer
- *                     Turnierbaum (renderBracketView, nur KO) ergänzt
- * Changelog: 2.1.0 - getLigaOptions()/ligaFlagEnabled() ergänzt: Basis für die neuen
- *                     Besucher-Reiter (Kalender/Ergebnisse/Spielpläne/Info). Ohne
- *                     explizite Einstellung gelten Kalender/Ergebnisse/Spielpläne als
- *                     AN (neue Ligen haben diese Schlüssel noch gar nicht gesetzt).
- * Changelog: 2.0.0 - Kein HTML mehr direkt in dieser Datei: renderPartieRow() sowie neue
- *                     Funktionen renderResultsTable(), renderStatsBlock() und
- *                     renderSpieltagPicker() bauen ihr Markup jetzt über renderPartial()
- *                     aus template/<aktiv>/partials/*.tpl.php zusammen. roundDisplayName()
- *                     + getMaxSpieltagNummer() aus dem Template hierher verschoben (waren
- *                     vorher eine Closure in template/default/liga.php).
- * Changelog: 1.4.0 - koRoundName(): benannte Stufen (Achtelfinale usw.) erst ab 16 Teams;
- *                     bei mehr Teams generisches "Runde {nummer}" nach fortlaufender Rundennummer
- * Changelog: 1.3.0 - KO-Rundennamen nach Teamanzahl (Achtelfinale/Viertelfinale/Halbfinale/Finale);
- *                     Gruppierung nach Paarung für die letzte Runde (Finale + ggf. Spiel um Platz 3);
- *                     getAllSpieltage() liefert dafür zusätzlich pairing_count
- * Changelog: 1.2.0 - Tabellen-Ansicht wie alte LMO-Ergebnisseite
- * Changelog: 1.1.0 - getAllSpieltage() + getSpieltagByNummer() ergänzt
- * Changelog: 1.0.0 - Initiale Version: Liga-Basisdaten + letzter Spieltag mit Ergebnissen
+ *                     getLigaTeamsList() und resolveTeamNumberToId() ergänzt (siehe
+ *                     data_liga_pretraits.php für die vollständige Historie älterer Einträge)
  *
  * PHP version 8.2
  *
@@ -259,2448 +28,336 @@
  * @copyright 2026 Dietmar Kersting
  * @license   GPL-3.0-only
  *
- * Alle Abfragen und die dazugehörige Aufbereitung für die Liga-Detailseite an
- * einem Ort. Templates selbst enthalten kein PHP – sie bekommen fertige
- * HTML-Fragmente als Platzhalterwerte (siehe frontend/template_engine.php).
+ * Kompatibilitätsschicht für die frühere monolithische frontend/data_liga.php.
+ * Die eigentliche Implementierung liegt jetzt unter src/Liga/ (siehe dort für
+ * Details zu einzelnen Funktionen). Diese Datei lädt die Trait-Dateien direkt
+ * per require_once (kein Composer nötig) und stellt alle bisherigen globalen
+ * Funktionsnamen unverändert als dünne Delegations-Wrapper bereit.
  */
 declare(strict_types = 1);
 
-/**
- * Liga-Grunddaten (Name, Datum, …) oder null, falls nicht gefunden.
- */
+// ── Trait-Dateien + Fassaden-Klasse laden (kein Composer/PSR-4 nötig) ────────
+require_once __DIR__ . '/../src/Liga/LigaRepositoryTrait.php';
+require_once __DIR__ . '/../src/Liga/SpieltagRepositoryTrait.php';
+require_once __DIR__ . '/../src/Liga/TeamRepositoryTrait.php';
+require_once __DIR__ . '/../src/Liga/TeamFormattingTrait.php';
+require_once __DIR__ . '/../src/Liga/HeadToHeadTrait.php';
+require_once __DIR__ . '/../src/Liga/TournamentTrait.php';
+require_once __DIR__ . '/../src/Liga/StandingsTrait.php';
+require_once __DIR__ . '/../src/Liga/StatisticsTrait.php';
+require_once __DIR__ . '/../src/Liga/RenderViewsTrait.php';
+require_once __DIR__ . '/../src/Liga/LigaService.php';
+
+if (!defined('TEAM_LOGO_EXT_LIST')) {
+    define('TEAM_LOGO_EXT_LIST', ['svg', 'jpg', 'jpeg', 'png', 'gif']);
+}
+
 function getLigaById(int $id) : ?array
 {
-    try {
-        $s = getDB()->prepare('SELECT * FROM ' . tbl('liga') . ' WHERE id=?');
-        $s->execute([$id]);
-        $row = $s->fetch();
-        return $row !== false ? $row : null;
-    } catch (Throwable) {
-        return null;
-    }
+    return \LMOnext\Liga\LigaService::getLigaById($id);
 }
 
-/**
- * Liga-Typ: 0 = Liga, 1 = KO-Turnier.
- */
 function getLigaType(int $ligaId) : int
 {
-    try {
-        $s = getDB()->prepare('SELECT option_value FROM ' . tbl('liga_options') . ' WHERE liga_id=? AND option_key="Type"');
-        $s->execute([$ligaId]);
-        $v = $s->fetchColumn();
-        return $v !== false ? (int)$v : 0;
-    } catch (Throwable) {
-        return 0;
-    }
+    return \LMOnext\Liga\LigaService::getLigaType($ligaId);
 }
 
-/**
- * Anzahl der Teams, die dieser Liga zugeordnet sind (für die Info-Ansicht).
- */
 function getLigaTeamCount(int $ligaId) : int
 {
-    try {
-        $s = getDB()->prepare('SELECT COUNT(*) FROM ' . tbl('liga_teams') . ' WHERE liga_id=?');
-        $s->execute([$ligaId]);
-        return (int)$s->fetchColumn();
-    } catch (Throwable) {
-        return 0;
-    }
+    return \LMOnext\Liga\LigaService::getLigaTeamCount($ligaId);
 }
 
-/**
- * Alle liga_options einer Liga als Schlüssel→Wert-Array.
- */
-/**
- * Liest die Liga-Optionen (siehe liga_options-Tabelle). Wird pro Seitenaufruf
- * oft für dieselbe Liga mehrfach aufgerufen (Tabelle, Ergebnisse, PDF-Export
- * usw. greifen alle unabhängig voneinander darauf zu) - daher Speicher-Cache
- * pro Liga-ID, damit dieselbe Liga innerhalb eines Requests nur einmal
- * abgefragt wird.
- */
 function getLigaOptions(int $ligaId) : array
 {
-    static $cache = [];
-    if (array_key_exists($ligaId, $cache)) {
-        return $cache[$ligaId];
-    }
-    try {
-        $s = getDB()->prepare('SELECT option_key, option_value FROM ' . tbl('liga_options') . ' WHERE liga_id=?');
-        $s->execute([$ligaId]);
-        $out = [];
-        foreach ($s->fetchAll() as $row) {
-            $out[$row['option_key']] = $row['option_value'];
-        }
-        return $cache[$ligaId] = $out;
-    } catch (Throwable) {
-        return $cache[$ligaId] = [];
-    }
+    return \LMOnext\Liga\LigaService::getLigaOptions($ligaId);
 }
 
-/**
- * Löst die in den Liga-Einstellungen für favTeam/selTeam gespeicherte
- * Team-"Nummer" (1-basierte Position in der alphabetisch nach Name sortierten
- * Team-Liste, so wie sie auch im Adminbereich für diese Dropdowns aufgebaut
- * wird) in die tatsächliche team_id auf. 0 bzw. eine nicht mehr vorhandene
- * Position ergeben null.
- */
-/**
- * "Team-Nummer" (Position in der nach Name sortierten Teamliste dieser Liga)
- * zu einer Team-ID auflösen - z.B. für favTeam/selTeam. Cacht die sortierte
- * ID-Liste pro Liga, da diese Funktion innerhalb eines Requests oft mehrfach
- * für dieselbe Liga aufgerufen wird (favTeam, selTeam usw.).
- */
 function resolveTeamNumberToId(int $ligaId, int $number) : ?int
 {
-    if ($number <= 0) {
-        return null;
-    }
-    static $cache = [];
-    if (!array_key_exists($ligaId, $cache)) {
-        try {
-            $s = getDB()->prepare(
-                'SELECT g.id
-                   FROM ' . tbl('teams_global') . ' g
-                   JOIN ' . tbl('liga_teams') . ' lt ON lt.team_id = g.id
-                  WHERE lt.liga_id = ?
-                  ORDER BY g.name'
-            );
-            $s->execute([$ligaId]);
-            $cache[$ligaId] = $s->fetchAll(PDO::FETCH_COLUMN);
-        } catch (Throwable) {
-            $cache[$ligaId] = [];
-        }
-    }
-    $ids = $cache[$ligaId];
-    return isset($ids[$number - 1]) ? (int)$ids[$number - 1] : null;
+    return \LMOnext\Liga\LigaService::resolveTeamNumberToId($ligaId, $number);
 }
 
-/**
- * Prüft ein Ein/Aus-Flag aus liga_options. Fehlt der Schlüssel ganz (z.B. bei
- * einer neu angelegten Liga, für die noch nie die Einstellungen gespeichert
- * wurden), gilt $default – für Kalender/Ergebnisse/Spielpläne ist das "an",
- * damit neue Ligen nicht versehentlich unsichtbar für Besucher sind.
- */
 function ligaFlagEnabled(array $opts, string $key, bool $default = true) : bool
 {
-    return ($opts[$key] ?? ($default ? '1' : '0')) === '1';
+    return \LMOnext\Liga\LigaService::ligaFlagEnabled($opts, $key, $default);
 }
 
-/**
- * Welche Besucher-Reiter für diese Liga sichtbar sein sollen, basierend auf
- * den Liga-Einstellungen. "Info" ist immer an.
- */
 function getLigaViewFlags(array $opts) : array
 {
-    return [
-        'kalender'      => ligaFlagEnabled($opts, 'Kalender', true),
-        'ergebnisse'    => ligaFlagEnabled($opts, 'Ergebnis', true),
-        'tabelle'       => ligaFlagEnabled($opts, 'Tabelle', true),
-        'spielplaene'   => ligaFlagEnabled($opts, 'Plan', true),
-        'kreuztabelle'  => ligaFlagEnabled($opts, 'Kreuz', true),
-        'fieberkurve'   => ligaFlagEnabled($opts, 'kurve1', true),
-        'ligastatistik' => ligaFlagEnabled($opts, 'Ligastats', true),
-        'spielerstatistik' => ligaFlagEnabled($opts, 'stats', false),
-        'info'          => true,
-    ];
+    return \LMOnext\Liga\LigaService::getLigaViewFlags($opts);
 }
 
-/**
- * Alle Spieltage/Runden einer Liga mit Basis-Statistik (gespielt/partie_count/
- * pairing_count), aufsteigend nach Nummer. Grundlage für Auswahl/Navigation
- * und die KO-Rundennamen.
- */
 function getAllSpieltage(int $ligaId) : array
 {
-    try {
-        $s = getDB()->prepare(
-            'SELECT s.id, s.nummer, s.start,
-                    SUM(CASE WHEN p.h_tore IS NOT NULL THEN 1 ELSE 0 END) AS gespielt,
-                    COUNT(p.id) AS partie_count,
-                    COUNT(DISTINCT SUBSTRING_INDEX(p.spiel_nr, "_", 1)) AS pairing_count
-               FROM ' . tbl('liga_spieltage') . ' s
-               LEFT JOIN ' . tbl('liga_partien') . ' p ON p.spieltag_id = s.id
-              WHERE s.liga_id = ?
-              GROUP BY s.id, s.nummer, s.start
-              ORDER BY s.nummer'
-        );
-        $s->execute([$ligaId]);
-        return $s->fetchAll();
-    } catch (Throwable) {
-        return [];
-    }
+    return \LMOnext\Liga\LigaService::getAllSpieltage($ligaId);
 }
 
-/** Höchste Spieltag-/Rundennummer einer Liga (für die "ist das die letzte Runde?"-Prüfung). */
 function getMaxSpieltagNummer(array $allSpieltage) : int
 {
-    $max = 0;
-    foreach ($allSpieltage as $st) {
-        $max = max($max, (int)$st['nummer']);
-    }
-    return $max;
+    return \LMOnext\Liga\LigaService::getMaxSpieltagNummer($allSpieltage);
 }
 
-/**
- * Ermittelt den letzten Spieltag/die letzte Runde mit mindestens einem
- * eingetragenen Ergebnis. Gibt es noch keine Ergebnisse, wird stattdessen
- * der erste Spieltag zurückgegeben. Liefert null, wenn die Liga überhaupt
- * keine Spieltage hat.
- */
 function getLatestSpieltagWithResults(array $allSpieltage) : ?array
 {
-    if (empty($allSpieltage)) {
-        return null;
-    }
-    $latest = null;
-    foreach ($allSpieltage as $row) {
-        if ((int)$row['gespielt'] > 0) {
-            $latest = $row;
-        }
-    }
-    return $latest ?? $allSpieltage[0];
+    return \LMOnext\Liga\LigaService::getLatestSpieltagWithResults($allSpieltage);
 }
 
-/**
- * Sucht einen bestimmten Spieltag/eine Runde per Nummer innerhalb einer
- * bereits geladenen Spieltag-Liste (siehe getAllSpieltage()).
- */
 function getSpieltagByNummer(array $allSpieltage, int $nummer) : ?array
 {
-    foreach ($allSpieltage as $row) {
-        if ((int)$row['nummer'] === $nummer) {
-            return $row;
-        }
-    }
-    return null;
+    return \LMOnext\Liga\LigaService::getSpieltagByNummer($allSpieltage, $nummer);
 }
 
-/**
- * Partien (Spiele) eines Spieltags, mit aufgelösten Teamnamen (Platzhalter-
- * Teams im KO-Modus nutzen heim_label/gast_label statt einer echten
- * Team-Zuordnung).
- */
 function getSpieltagPartien(int $spieltagId) : array
 {
-    // "status" ist eine on-demand-Spalte (wird erst per ensureSpielstatusColumns()
-    // im Adminbereich angelegt) – hier defensiv prüfen, damit die Abfrage auch auf
-    // einer ganz frischen Installation nicht scheitert.
-    static $hasStatusColumn = null;
-    if ($hasStatusColumn === null) {
-        try {
-            getDB()->query('SELECT status FROM ' . tbl('liga_partien') . ' LIMIT 0');
-            $hasStatusColumn = true;
-        } catch (Throwable) {
-            $hasStatusColumn = false;
-        }
-    }
-    $statusSelect = $hasStatusColumn ? ', p.status' : '';
-
-    try {
-        $s = getDB()->prepare(
-            'SELECT p.id, p.heim_id, p.gast_id, p.heim_label, p.gast_label,
-                    p.h_tore, p.g_tore, p.zeit, p.spiel_nr' . $statusSelect . ',
-                    th.name AS heim_name, tg.name AS gast_name
-               FROM ' . tbl('liga_partien') . ' p
-               LEFT JOIN ' . tbl('teams_global') . ' th ON th.id = p.heim_id
-               LEFT JOIN ' . tbl('teams_global') . ' tg ON tg.id = p.gast_id
-              WHERE p.spieltag_id = ?
-              ORDER BY CAST(SUBSTRING_INDEX(p.spiel_nr, "_", 1) AS UNSIGNED),
-                       CAST(SUBSTRING_INDEX(p.spiel_nr, "_", -1) AS UNSIGNED)'
-        );
-        $s->execute([$spieltagId]);
-        $rows = $s->fetchAll();
-        if (!$hasStatusColumn) {
-            foreach ($rows as &$row) {
-                $row['status'] = 0;
-            }
-            unset($row);
-        }
-        return $rows;
-    } catch (Throwable) {
-        return [];
-    }
+    return \LMOnext\Liga\LigaService::getSpieltagPartien($spieltagId);
 }
 
-/**
- * Liefert alle bisher gespielten direkten Begegnungen zwischen zwei Teams,
- * ligaübergreifend über alle Saisons hinweg (nicht nur die aktuell betrachtete
- * Liga), neueste zuerst. Wird für das "Direkter Vergleich"-Modal auf den
- * Ergebnis- und Spielplanseiten genutzt. Pro Team-Paar innerhalb eines
- * Requests nur einmal abgefragt (statisches Cache).
- */
-/**
- * Löst ein Team transitiv zu seiner vollständigen "verknüpften Gruppe" auf
- * (siehe admin/bootstrap.php: team_links, Umbenennung/Fusion/Abspaltung).
- * Bei Ketten (A↔B, B↔C) gehören beim Vergleich automatisch alle drei
- * zusammen. Liest die Tabelle read-only – falls sie (noch) nicht existiert
- * (Team-Verknüpfung wurde bisher nie genutzt), liefert die Funktion einfach
- * nur das Team selbst zurück, kein Fehler.
- *
- * @return array<int,int> Team-IDs inkl. des übergebenen Teams selbst
- */
 function resolveLinkedTeamIds(int $teamId) : array
 {
-    try {
-        $edges = getDB()->query('SELECT team_a_id, team_b_id FROM ' . tbl('team_links'))->fetchAll();
-    } catch (Throwable) {
-        return [$teamId];
-    }
-
-    $adj = [];
-    foreach ($edges as $e) {
-        $a = (int)$e['team_a_id'];
-        $b = (int)$e['team_b_id'];
-        $adj[$a][] = $b;
-        $adj[$b][] = $a;
-    }
-
-    $visited = [$teamId => true];
-    $queue = [$teamId];
-    while ($queue !== []) {
-        $current = array_shift($queue);
-        foreach ($adj[$current] ?? [] as $next) {
-            if (!isset($visited[$next])) {
-                $visited[$next] = true;
-                $queue[] = $next;
-            }
-        }
-    }
-    return array_keys($visited);
+    return \LMOnext\Liga\LigaService::resolveLinkedTeamIds($teamId);
 }
 
-/**
- * Ermittelt den fest hinterlegten "heutigen" Namen einer verknüpften Gruppe
- * (siehe team_links.newer_team_id, admin/bootstrap.php addTeamLink()/
- * setTeamLinkDirection()) – unabhängig davon, von welchem Spiel/welcher Liga
- * aus der Vergleich gerade geöffnet wurde. Löst dazu die "wird abgelöst
- * durch"-Kette über evtl. mehrere Verknüpfungen hinweg auf (z.B. A wurde zu B
- * umbenannt, B später zu C: A und B zeigen dann beide auf C).
- *
- * Liefert null, wenn für die Gruppe keine (eindeutige) Richtung hinterlegt
- * ist – dann fällt getHeadToHeadMatches() auf das alte, kontextabhängige
- * Verhalten zurück (Anker = das im aktuellen Vergleich angeklickte Team).
- */
 function resolveCanonicalTeamId(array $groupIds) : ?int
 {
-    if (count($groupIds) < 2) {
-        return null;
-    }
-    try {
-        $ph = implode(',', array_fill(0, count($groupIds), '?'));
-        $s = getDB()->prepare(
-            'SELECT team_a_id, team_b_id, newer_team_id FROM ' . tbl('team_links') . '
-              WHERE newer_team_id IS NOT NULL
-                AND (team_a_id IN (' . $ph . ') OR team_b_id IN (' . $ph . '))'
-        );
-        $s->execute([...$groupIds, ...$groupIds]);
-        $edges = $s->fetchAll();
-    } catch (Throwable) {
-        return null;
-    }
-    if ($edges === []) {
-        return null; // keine Richtung für diese Gruppe hinterlegt
-    }
-
-    // "wird abgelöst durch"-Kette: jede Kante mit gesetztem newer_team_id
-    // sagt "die andere Seite wird abgelöst durch newer_team_id"
-    $supersededBy = [];
-    foreach ($edges as $e) {
-        $newer = (int)$e['newer_team_id'];
-        $other = ((int)$e['team_a_id'] === $newer) ? (int)$e['team_b_id'] : (int)$e['team_a_id'];
-        $supersededBy[$other] = $newer;
-    }
-
-    // Von jedem Team der Gruppe aus die Kette bis zum Ende verfolgen. Führen
-    // alle Ketten zum selben Ziel, ist das der eindeutige kanonische Name.
-    // Laufen sie auseinander (z.B. bei einer Abspaltung mit widersprüchlichen
-    // Angaben) oder gibt es gar keine ableitbare Endstation, bleibt es
-    // uneindeutig -> null (alter Anker-Fallback greift dann).
-    $terminals = [];
-    foreach ($groupIds as $start) {
-        $current = $start;
-        $seen = [$current => true];
-        while (isset($supersededBy[$current])) {
-            $current = $supersededBy[$current];
-            if (isset($seen[$current])) { break; } // Zyklus-Schutz, sollte nicht vorkommen
-            $seen[$current] = true;
-        }
-        $terminals[$current] = true;
-    }
-
-    return count($terminals) === 1 ? array_key_first($terminals) : null;
+    return \LMOnext\Liga\LigaService::resolveCanonicalTeamId($groupIds);
 }
 
 function getHeadToHeadMatches(int $idA, int $idB) : array
 {
-    static $cache = [];
-    $key = min($idA, $idB) . '_' . max($idA, $idB);
-    if (isset($cache[$key])) {
-        return $cache[$key];
-    }
-
-    // Beide Teams zu ihrer vollständigen verknüpften Gruppe auflösen (z.B.
-    // ein umbenannter/fusionierter/abgespaltener Verein), damit Spiele unter
-    // früheren Namen im Vergleich mit auftauchen. $idA/$idB bleiben die
-    // "heutigen" Anker-IDs für die "(heute TEAM_HEUTE)"-Kennzeichnung unten.
-    $groupA = resolveLinkedTeamIds($idA);
-    $groupB = resolveLinkedTeamIds($idB);
-
-    try {
-        $phA = implode(',', array_fill(0, count($groupA), '?'));
-        $phB = implode(',', array_fill(0, count($groupB), '?'));
-        $s = getDB()->prepare(
-            'SELECT p.heim_id, p.gast_id, p.h_tore, p.g_tore, p.status,
-                    COALESCE(p.zeit, s.start) AS zeit,
-                    s.id AS spieltag_db_id, s.nummer AS spieltag_nummer, s.liga_id AS liga_id, l.name AS liga_name
-               FROM ' . tbl('liga_partien') . ' p
-               JOIN ' . tbl('liga_spieltage') . ' s ON s.id = p.spieltag_id
-               JOIN ' . tbl('liga') . ' l ON l.id = s.liga_id
-              WHERE ((p.heim_id IN (' . $phA . ') AND p.gast_id IN (' . $phB . '))
-                  OR (p.heim_id IN (' . $phB . ') AND p.gast_id IN (' . $phA . ')))
-                AND p.h_tore IS NOT NULL AND p.g_tore IS NOT NULL
-              ORDER BY COALESCE(p.zeit, s.start) DESC'
-        );
-        $s->execute([...$groupA, ...$groupB, ...$groupB, ...$groupA]);
-        $rows = $s->fetchAll();
-    } catch (Throwable) {
-        $rows = [];
-    }
-
-    // Namen für ALLE Teams in beiden Gruppen (nicht nur $idA/$idB), damit
-    // auch Spiele unter früheren Namen den richtigen (historischen) Namen
-    // zeigen. $anchorOf ordnet jede Team-ID dem "heutigen" Namen zu, damit
-    // sich pro Zeile ermitteln lässt, ob eine "(heute TEAM_HEUTE)"-
-    // Kennzeichnung nötig ist. Bevorzugt wird die FEST hinterlegte Richtung
-    // (team_links.newer_team_id, siehe resolveCanonicalTeamId()) verwendet,
-    // damit der "heutige" Name unabhängig vom Aufrufkontext immer derselbe
-    // ist – nur wenn für eine Gruppe keine (eindeutige) Richtung hinterlegt
-    // ist, fällt es auf das alte Verhalten zurück (Anker = das im aktuellen
-    // Vergleich angeklickte Team, $idA/$idB).
-    $allIds = array_values(array_unique([...$groupA, ...$groupB]));
-    $names = [];
-    $anchorOf = [];
-    $canonicalA = resolveCanonicalTeamId($groupA) ?? $idA;
-    $canonicalB = resolveCanonicalTeamId($groupB) ?? $idB;
-    foreach ($groupA as $tid) { $anchorOf[$tid] = $canonicalA; }
-    foreach ($groupB as $tid) { $anchorOf[$tid] = $canonicalB; }
-    try {
-        $ph3 = implode(',', array_fill(0, count($allIds), '?'));
-        $s2 = getDB()->prepare('SELECT id, name FROM ' . tbl('teams_global') . ' WHERE id IN (' . $ph3 . ')');
-        $s2->execute($allIds);
-        foreach ($s2->fetchAll() as $r) {
-            $names[(int)$r['id']] = $r['name'];
-        }
-    } catch (Throwable) {
-        // $names bleibt leer; Fallback "?" beim Aufbau unten
-    }
-
-    $displayName = static function (int $teamId) use ($names, $anchorOf) : array {
-        $name = $names[$teamId] ?? '?';
-        $anchor = $anchorOf[$teamId] ?? $teamId;
-        $today = ($anchor !== $teamId && isset($names[$anchor])) ? $names[$anchor] : null;
-        return ['name' => $name, 'today' => $today];
-    };
-
-    $matches = [];
-    foreach ($rows as $r) {
-        $hId = (int)$r['heim_id'];
-        $gId = (int)$r['gast_id'];
-        $heimInfo = $displayName($hId);
-        $gastInfo = $displayName($gId);
-        $matches[] = [
-            'heim_id'         => $hId,
-            'gast_id'         => $gId,
-            'heim_name'       => $heimInfo['name'],
-            'heim_today'      => $heimInfo['today'],
-            'gast_name'       => $gastInfo['name'],
-            'gast_today'      => $gastInfo['today'],
-            'h_tore'          => (int)$r['h_tore'],
-            'g_tore'          => (int)$r['g_tore'],
-            'status'          => (int)($r['status'] ?? 0),
-            'zeit'            => $r['zeit'],
-            'spieltag'        => (int)$r['spieltag_nummer'],
-            'spieltag_db_id'  => (int)$r['spieltag_db_id'],
-            'liga_id'         => (int)$r['liga_id'],
-            'liga_name'       => $r['liga_name'],
-        ];
-    }
-
-    // ── Rundenname pro Begegnung ermitteln ────────────────────────────────────
-    // Bei KO-Ligen soll die passende Turnierrunde stehen (z.B. "Achtelfinale",
-    // "Halbfinale", "Finale") statt "N. Spieltag" – dafür braucht es je Liga
-    // den Typ (KO?) + die Gesamtrundenzahl, und je betroffenem Spieltag die
-    // Anzahl Paarungen (bestimmt z.B. Achtel- vs. Viertelfinale). Bei
-    // regulären Ligen werden Lang- UND Kurzform mitgegeben, damit die
-    // Anzeige responsiv (Web/Mobil) umschalten kann (siehe h2h-Match-Meta im
-    // <script>-Block weiter unten).
-    $ligaIds = array_values(array_unique(array_column($matches, 'liga_id')));
-    $ligaMeta = [];
-    if (!empty($ligaIds)) {
-        $ph = implode(',', array_fill(0, count($ligaIds), '?'));
-        try {
-            $db = getDB();
-            $sType = $db->prepare('SELECT liga_id, option_value FROM ' . tbl('liga_options') . ' WHERE liga_id IN (' . $ph . ') AND option_key=\'Type\'');
-            $sType->execute($ligaIds);
-            foreach ($sType->fetchAll() as $r) {
-                $ligaMeta[(int)$r['liga_id']]['isKO'] = ((string)$r['option_value'] === '1');
-            }
-            $sMax = $db->prepare('SELECT liga_id, COUNT(*) AS c FROM ' . tbl('liga_spieltage') . ' WHERE liga_id IN (' . $ph . ') GROUP BY liga_id');
-            $sMax->execute($ligaIds);
-            foreach ($sMax->fetchAll() as $r) {
-                $ligaMeta[(int)$r['liga_id']]['maxNr'] = (int)$r['c'];
-            }
-        } catch (Throwable) {
-            // $ligaMeta bleibt (teilweise) leer -> Fallback unten greift
-        }
-    }
-
-    $pairingCounts = [];
-    $spieltagIds = array_values(array_unique(array_column($matches, 'spieltag_db_id')));
-    if (!empty($spieltagIds)) {
-        try {
-            $ph2 = implode(',', array_fill(0, count($spieltagIds), '?'));
-            $sPair = getDB()->prepare('SELECT spieltag_id, spiel_nr FROM ' . tbl('liga_partien') . ' WHERE spieltag_id IN (' . $ph2 . ')');
-            $sPair->execute($spieltagIds);
-            $seen = [];
-            foreach ($sPair->fetchAll() as $r) {
-                $prefix = explode('_', (string)$r['spiel_nr'])[0];
-                $seen[(int)$r['spieltag_id']][$prefix] = true;
-            }
-            foreach ($seen as $stid => $prefixes) {
-                $pairingCounts[$stid] = count($prefixes);
-            }
-        } catch (Throwable) {
-            // $pairingCounts bleibt leer -> koRoundName() faellt auf "Runde N" zurueck
-        }
-    }
-
-    foreach ($matches as &$m) {
-        $isKO = $ligaMeta[$m['liga_id']]['isKO'] ?? false;
-        if ($isKO) {
-            $maxNr = $ligaMeta[$m['liga_id']]['maxNr'] ?? $m['spieltag'];
-            $pairingCount = $pairingCounts[$m['spieltag_db_id']] ?? 0;
-            $label = roundDisplayName(['nummer' => $m['spieltag'], 'pairing_count' => $pairingCount], true, $maxNr);
-            $m['runde_label']       = $label;
-            $m['runde_label_short'] = $label; // KO-Rundennamen brauchen keine eigene Kurzform
-        } else {
-            $m['runde_label']       = $m['spieltag'] . '. ' . tf('liga_col_spieltag_long');
-            $m['runde_label_short'] = $m['spieltag'] . '. ' . tf('liga_col_spieltag_short');
-        }
-    }
-    unset($m);
-
-    return $cache[$key] = $matches;
+    return \LMOnext\Liga\LigaService::getHeadToHeadMatches($idA, $idB);
 }
 
-/**
- * Baut das JSON-Payload (für das data-h2h-Attribut des Vergleichs-Icons) aus
- * Sicht von $idA (links, i.d.R. das Heimteam der aufrufenden Zeile) gegen
- * $idB (rechts).
- */
 function buildHeadToHeadPayload(int $idA, int $idB, string $nameA, string $nameB, bool $showLogos = false) : string
 {
-    $matches = getHeadToHeadMatches($idA, $idB);
-    $winsA = 0;
-    $winsB = 0;
-    $draws = 0;
-    foreach ($matches as $m) {
-        if ($m['h_tore'] === $m['g_tore']) {
-            $draws++;
-        } elseif (($m['heim_id'] === $idA && $m['h_tore'] > $m['g_tore'])
-            || ($m['gast_id'] === $idA && $m['g_tore'] > $m['h_tore'])) {
-            $winsA++;
-        } else {
-            $winsB++;
-        }
-    }
-
-    $payload = [
-        'teamAId'   => $idA,
-        'teamBId'   => $idB,
-        'teamAName' => $nameA,
-        'teamBName' => $nameB,
-        'teamALogo' => $showLogos ? (findTeamLogoPathFrontend($idA) ?? 'assets/img/nopic-team.svg') : null,
-        'teamBLogo' => $showLogos ? (findTeamLogoPathFrontend($idB) ?? 'assets/img/nopic-team.svg') : null,
-        'winsA'     => $winsA,
-        'draws'     => $draws,
-        'winsB'     => $winsB,
-        'matches'   => array_map(static function (array $m) : array {
-            $datum = '–';
-            if (!empty($m['zeit'])) {
-                try {
-                    $datum = (new DateTime($m['zeit']))->format('d.m.Y');
-                } catch (Throwable) {
-                    // $datum bleibt '–'
-                }
-            }
-            return [
-                'datum'          => $datum,
-                'spieltag'       => $m['spieltag'],
-                'rundeLabel'     => $m['runde_label'],
-                'rundeLabelKurz' => $m['runde_label_short'],
-                'ligaId'         => $m['liga_id'],
-                'liga'           => $m['liga_name'],
-                'heim'           => $m['heim_name'],
-                'heimToday'      => $m['heim_today'],
-                'gast'           => $m['gast_name'],
-                'gastToday'      => $m['gast_today'],
-                'hTore'          => $m['h_tore'],
-                'gTore'          => $m['g_tore'],
-                'suffix'         => statusSuffix($m),
-            ];
-        }, $matches),
-    ];
-
-    return str_replace('</script>', '<\/script>', json_encode($payload, JSON_UNESCAPED_UNICODE));
+    return \LMOnext\Liga\LigaService::buildHeadToHeadPayload($idA, $idB, $nameA, $nameB, $showLogos);
 }
 
-/**
- * Baut das anklickbare Vergleichs-Icon für eine Ergebnis-/Spielplanzeile.
- * Liefert einen leeren String, wenn eine der beiden Team-IDs kein echtes Team
- * ist (z.B. KO-Platzhalter "___" ohne heim_id/gast_id).
- */
 function renderH2hIcon(int $heimId, int $gastId, string $heimName, string $gastName, bool $showLogos = false) : string
 {
-    if ($heimId <= 0 || $gastId <= 0) {
-        return '';
-    }
-    $payload = buildHeadToHeadPayload($heimId, $gastId, $heimName, $gastName, $showLogos);
-
-    return '<button type="button" class="h2h-icon" title="' . h(tf('liga_h2h_icon_title')) . '" data-h2h="' . h($payload) . '">'
-        . '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">'
-        . '<line x1="2" y1="7" x2="11" y2="7"/><polyline points="7,2 13,7 7,12"/>'
-        . '<line x1="22" y1="17" x2="13" y2="17"/><polyline points="17,12 11,17 17,22"/>'
-        . '</svg></button>';
+    return \LMOnext\Liga\LigaService::renderH2hIcon($heimId, $gastId, $heimName, $gastName, $showLogos);
 }
 
-/**
- * Emittiert das Vergleichs-Modal-Grundgerüst (Overlay-<div> + CSS-freies,
- * reines JS zum Öffnen/Befüllen/Schließen) genau einmal pro Request – auch
- * wenn mehrere Ergebnistabellen (z.B. gruppierte KO-Runden) auf einer Seite
- * gerendert werden. CSS dafür liegt in layout.tpl.php (.h2h-*).
- */
 function renderH2hModalAssets() : string
 {
-    static $emitted = false;
-    if ($emitted) {
-        return '';
-    }
-    $emitted = true;
-    $showPdfButtons = getAdminSetting('show_pdf_buttons', '1') === '1';
-
-    $html  = '<div class="h2h-overlay" id="h2h-overlay" hidden>';
-    $html .= '<div class="h2h-modal" role="dialog" aria-modal="true">';
-    $html .= '<button type="button" class="h2h-close" id="h2h-close" aria-label="' . h(tf('liga_h2h_close')) . '">&times;</button>';
-    $html .= '<h3 class="h2h-title" id="h2h-title"></h3>';
-    $html .= '<div class="h2h-record" id="h2h-record"></div>';
-    $html .= '<div class="h2h-list" id="h2h-list"></div>';
-    if ($showPdfButtons) {
-        $html .= '<div class="pdf-export-row"><a class="btn-pdf-export" id="h2h-pdf-link" href="#" title="' . h(tf('liga_pdf_export_button')) . '">'
-            . '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">'
-            . '<rect x="7" y="3" width="13" height="16" rx="2"/><path d="M4 7v13a2 2 0 0 0 2 2h11"/>'
-            . '</svg>'
-            . 'PDF</a></div>';
-    }
-    $html .= '</div></div>';
-
-    $html .= '<script>(function(){'
-        . 'var overlay=document.getElementById("h2h-overlay");'
-        . 'var titleEl=document.getElementById("h2h-title");'
-        . 'var recordEl=document.getElementById("h2h-record");'
-        . 'var listEl=document.getElementById("h2h-list");'
-        . 'var pdfLinkEl=document.getElementById("h2h-pdf-link");'
-        . 'var drawLabel=' . json_encode(tf('liga_h2h_draw'), JSON_UNESCAPED_UNICODE) . ';'
-        . 'var todayLabel=' . json_encode(tf('h2h_today_prefix'), JSON_UNESCAPED_UNICODE) . ';'
-        . 'var winsLabelTpl=' . json_encode(tf('liga_h2h_wins'), JSON_UNESCAPED_UNICODE) . ';'
-        . 'var noMatchesLabel=' . json_encode(tf('liga_h2h_no_matches'), JSON_UNESCAPED_UNICODE) . ';'
-        . 'var titleTpl=' . json_encode(tf('liga_h2h_modal_title'), JSON_UNESCAPED_UNICODE) . ';'
-        . 'function esc(s){var d=document.createElement("div");d.textContent=s;return d.innerHTML;}'
-        . 'function winsLabel(team){return winsLabelTpl.replace("{team}",esc(team));}'
-        . 'function open(data){'
-        . 'var teamALabel=esc(data.teamAName)+(data.teamALogo?\'<img src="\'+esc(data.teamALogo)+\'" alt="" class="team-logo-inline">\':\'\');'
-        . 'var teamBLabel=(data.teamBLogo?\'<img src="\'+esc(data.teamBLogo)+\'" alt="" class="team-logo-inline">\':\'\')+esc(data.teamBName);'
-        . 'titleEl.innerHTML=titleTpl.replace("{heim}",teamALabel).replace("{gast}",teamBLabel);'
-        . 'if(pdfLinkEl){pdfLinkEl.href="liga.php?h2h_pdf=1&a="+data.teamAId+"&b="+data.teamBId+(data.teamALogo?"&logos=1":"");}'
-        . 'recordEl.innerHTML=\'<span class="h2h-chip h2h-chip-a"><span class="h2h-chip-label">\'+winsLabel(data.teamAName)+\'</span><span class="h2h-chip-num">\'+data.winsA+\'</span></span>\''
-        . '+\'<span class="h2h-chip h2h-chip-draw">\'+data.draws+\' \'+esc(drawLabel)+\'</span>\''
-        . '+\'<span class="h2h-chip h2h-chip-b"><span class="h2h-chip-label">\'+winsLabel(data.teamBName)+\'</span><span class="h2h-chip-num">\'+data.winsB+\'</span></span>\';'
-        . 'if(!data.matches.length){listEl.innerHTML=\'<p class="h2h-empty">\'+esc(noMatchesLabel)+\'</p>\';}'
-        . 'else{listEl.innerHTML=data.matches.map(function(m){'
-        . 'var heimWon=m.hTore>m.gTore,gastWon=m.gTore>m.hTore;'
-        . 'var heimCls=heimWon?" h2h-winner":"",gastCls=gastWon?" h2h-winner":"";'
-        . 'return \'<div class="h2h-match-row">\'' 
-        . '+\'<a class="h2h-match-meta" href="liga.php?id=\'+m.ligaId+\'&view=ergebnisse&nr=\'+m.spieltag+\'">\'+esc(m.datum)+\' &middot; \'+esc(m.liga)+\', \'' 
-        . '+\'<span class="h2h-rd-long">\'+esc(m.rundeLabel)+\'</span><span class="h2h-rd-short">\'+esc(m.rundeLabelKurz)+\'</span></a>\'' 
-        . '+\'<div class="h2h-match-teams">\'' 
-        . '+\'<span class="h2h-match-team\'+heimCls+\'">\'+esc(m.heim)+(m.heimToday?\'<span class="h2h-match-today">(\'+todayLabel+\' \'+esc(m.heimToday)+\')</span>\':\'\')+\'</span>\'' 
-        . '+\'<span class="h2h-match-score">\'+m.hTore+\':\'+m.gTore+esc(m.suffix)+\'</span>\'' 
-        . '+\'<span class="h2h-match-team\'+gastCls+\'">\'+esc(m.gast)+(m.gastToday?\'<span class="h2h-match-today">(\'+todayLabel+\' \'+esc(m.gastToday)+\')</span>\':\'\')+\'</span>\'' 
-        . '+\'</div></div>\';'
-        . '}).join("");}'
-        . 'overlay.hidden=false;'
-        . '}'
-        . 'function close(){overlay.hidden=true;}'
-        . 'document.addEventListener("click",function(e){'
-        . 'var icon=e.target.closest(".h2h-icon");'
-        . 'if(icon){open(JSON.parse(icon.getAttribute("data-h2h")));return;}'
-        . 'if(e.target===overlay||e.target.closest("#h2h-close")){close();}'
-        . '});'
-        . 'document.addEventListener("keydown",function(e){if(e.key==="Escape"){close();}});'
-        . '})();</script>';
-
-    return $html;
+    return \LMOnext\Liga\LigaService::renderH2hModalAssets();
 }
 
-/**
- * Zusatz für Ergebnisse nach Verlängerung/Elfmeterschießen ("n.V." bzw. "i.E."),
- * passend zum LMO-Mapping: 1 = i.E. (Elfmeterschießen), 2 = n.V. (Verlängerung).
- * Leerer String bei normalem Spielausgang (Status 0) oder fehlendem Ergebnis.
- */
 function statusSuffix(array $partie) : string
 {
-    if ($partie['h_tore'] === null || $partie['g_tore'] === null) {
-        return '';
-    }
-    return match ((int)($partie['status'] ?? 0)) {
-        1 => ' ' . tf('liga_status_ie'),
-        2 => ' ' . tf('liga_status_nv'),
-        default => '',
-    };
+    return \LMOnext\Liga\LigaService::statusSuffix($partie);
 }
 
-/**
- * Ermittelt für einen Spieltag alle Teams der Liga, die an diesem Spieltag
- * KEINE Partie haben ("Spielfrei"). Kommt typischerweise bei ungerader
- * Teamzahl vor, kann aber auch bei gerader Teamzahl auftreten (z.B. wenn ein
- * Team im Spielplan schlicht nicht eingeteilt wurde). Ermittlung durch
- * Abwesenheit, genau wie im alten LMO: es gibt keinen expliziten
- * "Spielfrei"-Eintrag im Datenmodell, das betroffene Team taucht einfach in
- * keiner Paarung des Spieltags auf.
- *
- * @return array<int,array> Liste der betroffenen Teams (id,name,kurz,mittel)
- */
 function findSpielfreiTeams(int $ligaId, array $partien) : array
 {
-    $scheduledIds = [];
-    foreach ($partien as $p) {
-        if (partieIsEmptyPlaceholder($p)) {
-            continue; // "kein Spielplan"-Platzhalterpaarung zählt nicht als Termin
-        }
-        if ((int)($p['heim_id'] ?? 0) > 0) {
-            $scheduledIds[(int)$p['heim_id']] = true;
-        }
-        if ((int)($p['gast_id'] ?? 0) > 0) {
-            $scheduledIds[(int)$p['gast_id']] = true;
-        }
-    }
-
-    $spielfrei = [];
-    foreach (getLigaTeamsList($ligaId) as $team) {
-        $tid  = (int)$team['id'];
-        $name = trim((string)($team['name'] ?? ''));
-        if (!isset($scheduledIds[$tid]) && $name !== '' && $name !== '___') {
-            $spielfrei[] = $team;
-        }
-    }
-    return $spielfrei;
+    return \LMOnext\Liga\LigaService::findSpielfreiTeams($ligaId, $partien);
 }
 
-/**
- * Rendert die "Spielfrei: TEAMNAME"-Zeile unterhalb der Ergebnistabelle
- * eines Spieltags (siehe findSpielfreiTeams()). Liefert einen leeren String,
- * wenn kein Team spielfrei ist.
- */
 function renderSpielfreiNote(int $ligaId, array $partien) : string
 {
-    $teams = findSpielfreiTeams($ligaId, $partien);
-    if ($teams === []) {
-        return '';
-    }
-    $names = implode(', ', array_map(static fn(array $t) : string => '<strong>' . h($t['name']) . '</strong>', $teams));
-    return renderPartial('spielfrei_note', [
-        'Label' => h(tf('liga_spielfrei_label')),
-        'Teams' => $names,
-    ]);
+    return \LMOnext\Liga\LigaService::renderSpielfreiNote($ligaId, $partien);
 }
 
-/**
- * Anzeigename eines Teams für eine Partie-Zeile (echtes Team oder Platzhalter-Label).
- */
-/**
- * Ob eine Partie eine reine Platzhalter-Leerbegegnung ist – weder Heim noch
- * Gast haben ein echtes Team ODER auch nur einen Anzeige-Namen (heim_label/
- * gast_label). Kommt bei KO-Turnieren vor, deren Teilnehmerzahl im alten LMO
- * auf die nächste Zweierpotenz aufgefüllt werden musste (z.B. 83 echte Teams
- * → 128 Bracket-Plätze in Runde 1, die überzähligen Plätze wurden als reine
- * Dummy-Begegnungen ohne jede Zuordnung angelegt). Ein Platzhalter mit
- * Label wie "Sieger Spiel 3" gilt NICHT als leer – der ist ein bedeutungsvoller
- * "noch offen"-Platzhalter, kein reiner Datenmüll.
- */
 function partieIsEmptyPlaceholder(array $partie) : bool
 {
-    // Wichtig: heim_id/gast_id zeigen bei diesen Plätzen NICHT auf "nichts"
-    // (id=0/null), sondern auf einen ECHTEN Team-Datensatz namens "___" (das
-    // alte LMO legt dafür extra ein Dummy-Team in teams_global an, siehe
-    // getOrCreateDummyTeam() in admin/handler_import_export.php). Eine reine
-    // "hat die Partie überhaupt eine id?"-Prüfung erkennt das daher nicht –
-    // es muss der aufgelöste Anzeigename selbst geprüft werden.
-    $isDummy = static fn(string $n) : bool => trim($n) === '' || trim($n) === '___';
-    return $isDummy(partieTeamName($partie, 'heim')) && $isDummy(partieTeamName($partie, 'gast'));
+    return \LMOnext\Liga\LigaService::partieIsEmptyPlaceholder($partie);
 }
 
 function partieTeamName(array $partie, string $side) : string
 {
-    $idKey    = $side . '_id';
-    $nameKey  = $side . '_name';
-    $labelKey = $side . '_label';
-    if ((int)($partie[$idKey] ?? 0) > 0 && !empty($partie[$nameKey])) {
-        return $partie[$nameKey];
-    }
-    return $partie[$labelKey] ?? '';
+    return \LMOnext\Liga\LigaService::partieTeamName($partie, $side);
 }
 
-const TEAM_LOGO_EXT_LIST = ['svg', 'jpg', 'jpeg', 'png', 'gif'];
-
-/**
- * Sucht ein hochgeladenes Team-Logo (siehe Admin → Teams (global)). Gibt den
- * Web-Pfad relativ zum Projekt-Root zurück, oder null wenn keins hinterlegt
- * ist. Eigenständige, schlanke Kopie der gleichnamigen Logik aus
- * admin/bootstrap.php – das Frontend bindet die Admin-Bootstrap-Kette nicht
- * ein, daher hier separat statt geteilt.
- */
 function findTeamLogoPathFrontend(int $teamId) : ?string
 {
-    $dir = dirname(__DIR__) . '/assets/img/teams';
-    foreach (TEAM_LOGO_EXT_LIST as $ext) {
-        if (is_file($dir . '/' . $teamId . '.' . $ext)) {
-            return 'assets/img/teams/' . $teamId . '.' . $ext;
-        }
-    }
-    return null;
+    return \LMOnext\Liga\LigaService::findTeamLogoPathFrontend($teamId);
 }
 
-/**
- * Baut das kleine Logo-<img> (oder Platzhalter, falls kein Logo hinterlegt
- * ist) vor einem Teamnamen – nur wenn die Liga-Einstellung "Logo anzeigen"
- * (ShowLogos) aktiv ist, sonst leerer String. $teamId <= 0 (z.B. Freilos/
- * Label-only-Partien ohne echtes Team) liefert ebenfalls nichts.
- */
 function renderTeamLogoImg(int $teamId, bool $showLogos) : string
 {
-    if (!$showLogos || $teamId <= 0) {
-        return '';
-    }
-    $path = findTeamLogoPathFrontend($teamId) ?? 'assets/img/nopic-team.svg';
-    return '<img src="' . h($path) . '" alt="" class="team-logo-inline">';
+    return \LMOnext\Liga\LigaService::renderTeamLogoImg($teamId, $showLogos);
 }
 
-/**
- * Wie renderTeamLogoImg(), aber in einen <span> mit fester Breite verpackt
- * (.st-team-logo-wrap) – für Tabellen, in denen die Teamnamen untereinander
- * bündig ausgerichtet sein sollen (z.B. die Liga-Tabelle). Ohne diesen
- * Wrapper würden unterschiedlich breite Logos die Teamnamen jeweils
- * unterschiedlich weit einrücken. Gibt bei ausgeschaltetem ShowLogos
- * weiterhin einfach '' zurück (kein leerer Wrapper, kein verschwendeter
- * Platz in Tabellen ohne Logos).
- */
 function renderTeamLogoImgWrapped(int $teamId, bool $showLogos) : string
 {
-    $img = renderTeamLogoImg($teamId, $showLogos);
-    return $img !== '' ? '<span class="st-team-logo-wrap">' . $img . '</span>' : '';
+    return \LMOnext\Liga\LigaService::renderTeamLogoImgWrapped($teamId, $showLogos);
 }
 
-/**
- * Wie partieTeamName(), aber als fertiges HTML-Snippet mit vorangestelltem
- * Logo (falls die Liga-Einstellung ShowLogos aktiv ist) – für alle
- * HTML-Ausgaben in der Besucheransicht. partieTeamName() selbst bleibt
- * unverändert (liefert reinen Text), da es auch für den PDF-Export
- * verwendet wird, wo kein HTML/Logo-Markup hinpasst.
- */
 function partieTeamNameWithLogo(array $partie, string $side, bool $showLogos) : string
 {
-    $teamId = (int)($partie[$side . '_id'] ?? 0);
-    return renderTeamLogoImg($teamId, $showLogos) . h(partieTeamName($partie, $side));
+    return \LMOnext\Liga\LigaService::partieTeamNameWithLogo($partie, $side, $showLogos);
 }
 
-/**
- * Wie partieTeamNameWithLogo(), aber umgekehrte Reihenfolge (Name zuerst,
- * dann Logo) – nur für die Heim-Spalte bei Ergebnissen/Spielplänen
- * regulärer (nicht-KO-)Ligen verwendet. Der KO-Turnierbaum behält bewusst
- * die normale Logo-zuerst-Reihenfolge (nicht Teil dieser Anforderung).
- */
 function partieTeamNameWithLogoReversed(array $partie, string $side, bool $showLogos) : string
 {
-    $teamId = (int)($partie[$side . '_id'] ?? 0);
-    return h(partieTeamName($partie, $side)) . renderTeamLogoImg($teamId, $showLogos);
+    return \LMOnext\Liga\LigaService::partieTeamNameWithLogoReversed($partie, $side, $showLogos);
 }
 
-/**
- * Datum/Uhrzeit einer einzelnen Partie: eigene Zeit falls gesetzt, sonst der
- * Start des Spieltags als Fallback.
- */
 function partieZeitDisplay(array $partie, ?string $spieltagStart) : string
 {
-    $raw = $partie['zeit'] ?? null;
-    if (empty($raw)) {
-        $raw = $spieltagStart;
-    }
-    if (empty($raw)) {
-        return '–';
-    }
-    try {
-        return (new DateTime($raw))->format('d.m.Y H:i');
-    } catch (Throwable) {
-        return '–';
-    }
+    return \LMOnext\Liga\LigaService::partieZeitDisplay($partie, $spieltagStart);
 }
 
-/**
- * Datumsspanne eines Spieltags (frühestes – spätestes Datum unter den Partien,
- * ohne Uhrzeit). Gibt es nur ein Datum, wird es einmal statt als Spanne gezeigt.
- */
 function spieltagDateRange(array $partien, ?string $spieltagStart) : string
 {
-    $dates = [];
-    foreach ($partien as $p) {
-        $raw = $p['zeit'] ?? $spieltagStart;
-        if (!empty($raw)) {
-            try {
-                $dates[] = (new DateTime($raw))->format('Y-m-d');
-            } catch (Throwable) {
-            }
-        }
-    }
-    if (empty($dates)) {
-        return '';
-    }
-    sort($dates);
-    $first = $dates[0];
-    $last  = end($dates);
-    $fmt   = static fn(string $d) : string => (DateTime::createFromFormat('Y-m-d', $d))->format('d.m.Y');
-    return $first === $last ? $fmt($first) : $fmt($first) . ' - ' . $fmt($last);
+    return \LMOnext\Liga\LigaService::spieltagDateRange($partien, $spieltagStart);
 }
 
-/**
- * Statistik für einen Spieltag: Schnitt Heim-/Gast-Tore, Gesamttore, Tore/Spiel
- * – nur aus tatsächlich gespielten Partien berechnet.
- */
 function computeSpieltagStats(array $partien) : array
 {
-    $heimTore = 0;
-    $gastTore = 0;
-    $gespielt = 0;
-    foreach ($partien as $p) {
-        if ($p['h_tore'] !== null && $p['g_tore'] !== null) {
-            $heimTore += (int)$p['h_tore'];
-            $gastTore += (int)$p['g_tore'];
-            $gespielt++;
-        }
-    }
-    $gesamtTore = $heimTore + $gastTore;
-    return [
-        'schnittHeim'  => $gespielt > 0 ? round($heimTore / $gespielt, 2) : 0,
-        'schnittGast'  => $gespielt > 0 ? round($gastTore / $gespielt, 2) : 0,
-        'tore'         => $gesamtTore,
-        'toreProSpiel' => $gespielt > 0 ? round($gesamtTore / $gespielt, 2) : 0,
-    ];
+    return \LMOnext\Liga\LigaService::computeSpieltagStats($partien);
 }
 
-/**
- * Rundenname für eine KO-Runde. Benannte Stufen gibt es erst ab den letzten
- * 16 Mannschaften: 16 Teams → Achtelfinale, 8 → Viertelfinale, 4 → Halbfinale,
- * letzte Runde → immer "Finale". Bei mehr als 16 Teams heißt es schlicht
- * "Runde {nummer}" nach der tatsächlichen, fortlaufenden Rundennummer.
- */
 function koRoundName(int $teamCount, bool $isFinalRound, int $roundNummer) : string
 {
-    if ($isFinalRound) {
-        return tf('liga_round_finale');
-    }
-    return match ($teamCount) {
-        4  => tf('liga_round_halbfinale'),
-        8  => tf('liga_round_viertelfinale'),
-        16 => tf('liga_round_achtelfinale'),
-        default => tf('liga_round_generic', ['n' => $roundNummer]),
-    };
+    return \LMOnext\Liga\LigaService::koRoundName($teamCount, $isFinalRound, $roundNummer);
 }
 
-/** Anzeigename einer Runde/eines Spieltags (KO: nach Teamanzahl, Liga: "Spieltag N"). */
 function roundDisplayName(array $st, bool $isKO, int $maxNr) : string
 {
-    if (!$isKO) {
-        return tf('liga_label_matchday', ['n' => $st['nummer']]);
-    }
-    $isFinal   = (int)$st['nummer'] === $maxNr;
-    $teamCount = (int)($st['pairing_count'] ?? 0) * 2;
-    return koRoundName($teamCount, $isFinal, (int)$st['nummer']);
+    return \LMOnext\Liga\LigaService::roundDisplayName($st, $isKO, $maxNr);
 }
 
-/**
- * Gruppiert Partien einer Runde nach Paarung (dem Teil von spiel_nr vor dem
- * "_", z.B. "1" bei "1_1"/"1_2"), sortiert nach Paarungsnummer. Für die
- * letzte KO-Runde ist Gruppe 1 das Finale, Gruppe 2 (falls vorhanden) das
- * Spiel um Platz 3.
- *
- * @return array<int, array> Liste von Partien-Gruppen.
- */
 function groupPartienByPairing(array $partien) : array
 {
-    $groups = [];
-    foreach ($partien as $p) {
-        $prefix = explode('_', (string)$p['spiel_nr'])[0];
-        $groups[$prefix][] = $p;
-    }
-    uksort($groups, static fn($a, $b) => (int)$a <=> (int)$b);
-    return array_values($groups);
+    return \LMOnext\Liga\LigaService::groupPartienByPairing($partien);
 }
 
-/**
- * Rendert eine einzelne Ergebniszeile über das Partial "partie_row"
- * (template/<aktiv>/partials/partie_row.tpl.php). $spieltagStart dient als
- * Datums-Fallback, falls die einzelne Partie keine eigene Zeit hat.
- */
 function renderPartieRow(array $partie, ?string $spieltagStart = null, ?int $favTeamId = null, bool $showLogos = false, bool $reverseHeim = false) : string
 {
-    $heimRaw  = partieTeamName($partie, 'heim');
-    $gastRaw  = partieTeamName($partie, 'gast');
-    $heim     = $reverseHeim
-        ? partieTeamNameWithLogoReversed($partie, 'heim', $showLogos)
-        : partieTeamNameWithLogo($partie, 'heim', $showLogos);
-    $gast     = partieTeamNameWithLogo($partie, 'gast', $showLogos);
-    $gespielt = $partie['h_tore'] !== null && $partie['g_tore'] !== null;
-    $score    = $gespielt ? h((string)$partie['h_tore']) . ' : ' . h((string)$partie['g_tore']) . h(statusSuffix($partie)) : '- : -';
-    $datum    = h(partieZeitDisplay($partie, $spieltagStart));
-    $hId      = (int)($partie['heim_id'] ?? 0);
-    $gId      = (int)($partie['gast_id'] ?? 0);
-
-    return renderPartial('partie_row', [
-        'Datum'              => $datum,
-        'Heim'                => $heim,
-        'Gast'                => $gast,
-        'Ergebnis'            => $score,
-        'ErgebnisOffenClass'  => $gespielt ? '' : ' ergebnis-offen',
-        'HeimClass'           => ($favTeamId !== null && $hId === $favTeamId) ? ' schedule-own' : '',
-        'GastClass'           => ($favTeamId !== null && $gId === $favTeamId) ? ' schedule-own' : '',
-        'CompareIcon'         => renderH2hIcon($hId, $gId, $heimRaw, $gastRaw, $showLogos),
-    ]);
+    return \LMOnext\Liga\LigaService::renderPartieRow($partie, $spieltagStart, $favTeamId, $showLogos, $reverseHeim);
 }
 
-/**
- * Baut die komplette Ergebnistabelle (Kopf + Zeilen) für eine Liste von
- * Partien über das Partial "results_table". Ist $favTeamId gesetzt, wird die
- * entsprechende Mannschaft in jeder Zeile fett hervorgehoben (Lieblingsmannschaft).
- * Jede Zeile bekommt zusätzlich ein Vergleichs-Icon (direkter Vergleich der
- * beiden Teams, siehe renderH2hIcon()/renderH2hModalAssets()).
- */
 function renderResultsTable(array $partien, ?string $spieltagStart, ?int $favTeamId = null, bool $showLogos = false, bool $reverseHeim = false) : string
 {
-    $rows = '';
-    foreach ($partien as $partie) {
-        $rows .= renderPartieRow($partie, $spieltagStart, $favTeamId, $showLogos, $reverseHeim);
-    }
-    return renderPartial('results_table', [
-        'ColDatum'    => h(tf('liga_col_datum')),
-        'ColHeim'     => h(tf('liga_col_heim')),
-        'ColGast'     => h(tf('liga_col_gast')),
-        'ColErgebnis' => h(tf('liga_col_ergebnis')),
-        'Zeilen'      => $rows,
-    ]) . renderH2hModalAssets();
+    return \LMOnext\Liga\LigaService::renderResultsTable($partien, $spieltagStart, $favTeamId, $showLogos, $reverseHeim);
 }
 
-
-/**
- * Baut den Statistik-Block (Überschrift + Zeile) für eine Liste von Partien
- * über das Partial "stats_block".
- */
 function renderStatsBlock(string $heading, array $partien) : string
 {
-    $stats = computeSpieltagStats($partien);
-    return renderPartial('stats_block', [
-        'StatsHeading' => h(tf('liga_stats_heading', ['label' => $heading])),
-        'StatsLine'    => h(tf('liga_stats_line', [
-            'heim'     => $stats['schnittHeim'],
-            'gast'     => $stats['schnittGast'],
-            'tore'     => $stats['tore'],
-            'proSpiel' => $stats['toreProSpiel'],
-        ])),
-    ]);
+    return \LMOnext\Liga\LigaService::renderStatsBlock($heading, $partien);
 }
 
-/**
- * Baut das komplette Spieltag/Runden-Auswahl-Dropdown über die Partials
- * "spieltag_option" (je Eintrag) und "spieltag_picker" (Rahmen). Liefert
- * einen leeren String, wenn nur eine Runde/ein Spieltag existiert.
- */
 function renderSpieltagPicker(array $allSpieltage, int $ligaId, ?int $currentNr, bool $isKO, int $maxNr) : string
 {
-    if (count($allSpieltage) <= 1) {
-        return '';
-    }
-    $optionsHtml = '';
-    foreach ($allSpieltage as $st) {
-        $optionsHtml .= renderPartial('spieltag_option', [
-            'Nummer'       => (int)$st['nummer'],
-            'SelectedAttr' => (int)$st['nummer'] === $currentNr ? ' selected' : '',
-            'Label'        => h(roundDisplayName($st, $isKO, $maxNr)),
-        ]);
-    }
-    return renderPartial('spieltag_picker', [
-        'PickerLabel' => h($isKO ? tf('liga_label_pick_round') : tf('liga_label_pick_matchday')),
-        'LigaId'      => $ligaId,
-        'Optionen'    => $optionsHtml,
-    ]);
+    return \LMOnext\Liga\LigaService::renderSpieltagPicker($allSpieltage, $ligaId, $currentNr, $isKO, $maxNr);
 }
 
-/**
- * Baut die Reiter-Navigation (Kalender/Ergebnisse/Spielpläne/Info) über die
- * Partials "tab_item" (je Reiter) und "tabs_bar" (Rahmen). Reiter, die laut
- * $flags nicht aktiviert sind, werden weggelassen.
- *
- * @param array  $flags      Rückgabe von getLigaViewFlags()
- * @param int    $ligaId
- * @param string $currentView Schlüssel des aktuell aktiven Reiters
- */
 function renderTabsBar(array $flags, int $ligaId, string $currentView) : string
 {
-    $labels = [
-        'kalender'      => tf('liga_tab_kalender'),
-        'ergebnisse'    => tf('liga_tab_ergebnisse'),
-        'tabelle'       => tf('liga_tab_tabelle'),
-        'spielplaene'   => tf('liga_tab_spielplaene'),
-        'kreuztabelle'  => tf('liga_tab_kreuztabelle'),
-        'fieberkurve'   => tf('liga_tab_fieberkurve'),
-        'ligastatistik' => tf('liga_tab_ligastatistik'),
-        'spielerstatistik' => tf('liga_tab_spielerstatistik'),
-        'info'          => tf('liga_tab_info'),
-    ];
-    $tabsHtml = '';
-    foreach ($labels as $key => $label) {
-        if (empty($flags[$key])) {
-            continue;
-        }
-        $tabsHtml .= renderPartial('tab_item', [
-            'ActiveClass' => $key === $currentView ? ' tab-item-active' : '',
-            'LigaId'      => $ligaId,
-            'ViewKey'     => $key,
-            'Label'       => h($label),
-        ]);
-    }
-    return renderPartial('tabs_bar', ['Tabs' => $tabsHtml]);
+    return \LMOnext\Liga\LigaService::renderTabsBar($flags, $ligaId, $currentView);
 }
 
-/**
- * Baut die Info-Ansicht: eine allgemeine "Über LMOnext"-Seite (Version,
- * Copyright, Kurzbeschreibung, Lizenz) – analog zur Info-Seite des alten
- * LMO, die ebenfalls keine ligaspezifischen Daten zeigt, sondern
- * Informationen über die Software selbst.
- */
 function renderInfoView() : string
 {
-    $version = getAppVersion();
-    return renderPartial('info_view', [
-        'Title'     => h(tf('liga_info_title', ['version' => $version])),
-        'LinkHomepage' => tf('liga_info_link_homepage'),
-        'LinkForum'    => tf('liga_info_link_forum'),
-        'Text1'     => h(tf('liga_info_text_1')),
-        'Text2'     => h(tf('liga_info_text_2')),
-        'License'   => h(tf('liga_info_license')),
-        'Copyright' => h(tf('liga_info_copyright')),
-    ]);
+    return \LMOnext\Liga\LigaService::renderInfoView();
 }
 
-/**
- * Übersetzter Monatsname (1-12).
- */
 function monthName(int $month) : string
 {
-    return tf('liga_month_' . max(1, min(12, $month)));
+    return \LMOnext\Liga\LigaService::monthName($month);
 }
 
-/**
- * Baut die Kalender-Ansicht für einen Monat: Wochentagskopf + Wochen mit
- * Tageszellen, jede Zelle zeigt die an diesem Tag stattfindenden Spieltage/
- * Runden als kleine anklickbare Badges (Sprung zur jeweiligen Ergebnisliste).
- * Berücksichtigt nur Spieltage mit gesetztem Startdatum.
- */
 function renderKalenderView(array $allSpieltage, int $ligaId, bool $isKO, int $maxNr, int $year, int $month) : string
 {
-    // Einträge je Tag sammeln (nur Spieltage mit gesetztem Startdatum)
-    $entriesByDay = [];
-    foreach ($allSpieltage as $st) {
-        if (empty($st['start'])) {
-            continue;
-        }
-        try {
-            $dt = new DateTime($st['start']);
-        } catch (Throwable) {
-            continue;
-        }
-        if ((int)$dt->format('Y') !== $year || (int)$dt->format('n') !== $month) {
-            continue;
-        }
-        $entriesByDay[(int)$dt->format('j')][] = $st;
-    }
-
-    $firstOfMonth = DateTime::createFromFormat('Y-n-j', $year . '-' . $month . '-1');
-    $daysInMonth  = (int)$firstOfMonth->format('t');
-    $startWeekday = (int)$firstOfMonth->format('N'); // 1 (Montag) .. 7 (Sonntag)
-    $today        = new DateTime('today');
-
-    $weekdayLabels = ['liga_weekday_mo', 'liga_weekday_di', 'liga_weekday_mi', 'liga_weekday_do',
-                       'liga_weekday_fr', 'liga_weekday_sa', 'liga_weekday_so'];
-    $headerHtml = '';
-    foreach ($weekdayLabels as $key) {
-        $headerHtml .= '<th>' . h(tf($key)) . '</th>';
-    }
-
-    $weeksHtml = '';
-    $dayNum    = 1 - ($startWeekday - 1);
-    while ($dayNum <= $daysInMonth) {
-        $daysHtml = '';
-        for ($w = 0; $w < 7; $w++, $dayNum++) {
-            if ($dayNum < 1 || $dayNum > $daysInMonth) {
-                $daysHtml .= renderPartial('kalender_day', ['DayClass' => ' cal-empty', 'DayNum' => '', 'Entries' => '']);
-                continue;
-            }
-            $cellDate  = DateTime::createFromFormat('Y-n-j', $year . '-' . $month . '-' . $dayNum);
-            $isToday   = $cellDate->format('Y-m-d') === $today->format('Y-m-d');
-            $entries   = $entriesByDay[$dayNum] ?? [];
-            $entriesHtml = '';
-            foreach ($entries as $st) {
-                $entriesHtml .= renderPartial('kalender_entry', [
-                    'LigaId' => $ligaId,
-                    'Nummer' => (int)$st['nummer'],
-                    'Label'  => h(roundDisplayName($st, $isKO, $maxNr)),
-                ]);
-            }
-            $daysHtml .= renderPartial('kalender_day', [
-                'DayClass' => $isToday ? ' cal-today' : '',
-                'DayNum'   => (string)$dayNum,
-                'Entries'  => $entriesHtml,
-            ]);
-        }
-        $weeksHtml .= renderPartial('kalender_week', ['Tage' => $daysHtml]);
-    }
-
-    $prevMonth = $month === 1 ? 12 : $month - 1;
-    $prevYear  = $month === 1 ? $year - 1 : $year;
-    $nextMonth = $month === 12 ? 1 : $month + 1;
-    $nextYear  = $month === 12 ? $year + 1 : $year;
-
-    return renderPartial('kalender_view', [
-        'LigaId'    => $ligaId,
-        'MonthYear' => h(monthName($month)) . ' ' . $year,
-        'PrevYear'  => $prevYear,
-        'PrevMonth' => $prevMonth,
-        'NextYear'  => $nextYear,
-        'NextMonth' => $nextMonth,
-        'TodayLabel'=> h(tf('liga_kalender_today')),
-        'TodayYear' => (int)$today->format('Y'),
-        'TodayMonth'=> (int)$today->format('n'),
-        'Weekdays'  => $headerHtml,
-        'Wochen'    => $weeksHtml,
-    ]);
+    return \LMOnext\Liga\LigaService::renderKalenderView($allSpieltage, $ligaId, $isKO, $maxNr, $year, $month);
 }
 
-/**
- * Ermittelt die Team-ID des Dummy-Platzhalter-Teams ("___"), falls vorhanden.
- * Wird beim Umsortieren des Turnierbaums ausgeschlossen, damit nicht mehrere
- * unabhängige Platzhalter-Paarungen fälschlich als "dieselbe" Zuführung
- * erkannt werden (der Dummy-Team-Datensatz wird für alle Platzhalter geteilt).
- */
 function getDummyTeamId() : int
 {
-    static $id = null;
-    if ($id !== null) {
-        return $id;
-    }
-    try {
-        $s = getDB()->prepare('SELECT id FROM ' . tbl('teams_global') . ' WHERE name=? LIMIT 1');
-        $s->execute(['___']);
-        $v = $s->fetchColumn();
-        return $id = ($v !== false ? (int)$v : 0);
-    } catch (Throwable) {
-        return $id = 0;
-    }
+    return \LMOnext\Liga\LigaService::getDummyTeamId();
 }
 
-/**
- * Ordnet die Paarungen aller Runden so um, dass sie sich im Turnierbaum
- * korrekt untereinander ausrichten: für jede Runde werden die zwei Paarungen
- * der Vorrunde, deren Team (per Team-ID) in einer Paarung dieser Runde
- * weiterspielt, direkt nebeneinander positioniert – rückwärts von der
- * letzten Runde aus aufgebaut. Kann eine Zuordnung nicht per Team-ID
- * ermittelt werden (z.B. eine noch unbestimmte Paarung mit reinem
- * Platzhalter-Label ohne echte Team-ID), bleiben die betroffenen Paarungen
- * in ihrer ursprünglichen Reihenfolge.
- *
- * @param array $rounds Liste von Runden; jede Runde eine Liste von Paarungen
- *        mit mindestens den Schlüsseln 'heim_id' und 'gast_id'.
- * @return array Gleiche Struktur, aber je Runde neu sortiert.
- */
 function reorderBracketPairings(array $rounds) : array
 {
-    $n = count($rounds);
-    if ($n <= 1) {
-        return $rounds;
-    }
-
-    $ordered = [];
-    $ordered[$n - 1] = $rounds[$n - 1];
-    $dummyId = getDummyTeamId();
-
-    for ($r = $n - 2; $r >= 0; $r--) {
-        $nextOrdered  = $ordered[$r + 1];
-        $current      = $rounds[$r];
-        $currentCount = count($current);
-        $used         = array_fill(0, $currentCount, false);
-
-        // Alle Team-Slots der Folgerunde einsammeln, aber höchstens so viele
-        // verarbeiten, wie es Paarungen in der aktuellen Runde gibt. Ohne diese
-        // Begrenzung würde z.B. bei einer letzten Runde mit Finale + Spiel um
-        // Platz 3 jede Halbfinal-Paarung ZWEIMAL angefragt (einmal als Sieger-,
-        // einmal als Verlierer-Quelle) und die zweite Anfrage liefe ins Leere,
-        // weil die Paarung nach der ersten Zuordnung schon als "verwendet" gilt.
-        $slots = [];
-        foreach ($nextOrdered as $nextPairing) {
-            $slots[] = (int)($nextPairing['heim_id'] ?? 0);
-            $slots[] = (int)($nextPairing['gast_id'] ?? 0);
-        }
-        $slots = array_slice($slots, 0, $currentCount);
-
-        $newOrder = [];
-        foreach ($slots as $teamId) {
-            $matchIdx = null;
-            if ($teamId > 0 && $teamId !== $dummyId) {
-                foreach ($current as $idx => $pairing) {
-                    if ($used[$idx]) {
-                        continue;
-                    }
-                    if ((int)$pairing['heim_id'] === $teamId || (int)$pairing['gast_id'] === $teamId) {
-                        $matchIdx = $idx;
-                        break;
-                    }
-                }
-            }
-            $newOrder[] = $matchIdx;
-            if ($matchIdx !== null) {
-                $used[$matchIdx] = true;
-            }
-        }
-
-        // Nicht per Team-ID zuordenbare Slots (null) mit den übrig gebliebenen
-        // Paarungen in ihrer ursprünglichen Reihenfolge auffüllen.
-        $leftover = [];
-        foreach ($current as $idx => $pairing) {
-            if (!$used[$idx]) {
-                $leftover[] = $idx;
-            }
-        }
-        foreach ($newOrder as $i => $idx) {
-            if ($idx === null) {
-                $newOrder[$i] = array_shift($leftover);
-            }
-        }
-
-        $ordered[$r] = array_map(static fn($idx) => $current[$idx], $newOrder);
-    }
-
-    ksort($ordered);
-    return $ordered;
+    return \LMOnext\Liga\LigaService::reorderBracketPairings($rounds);
 }
 
-/**
- * Baut die Spielpläne-Ansicht als klassischen Turnierbaum (nur KO-Ligen):
- * eine Spalte je Runde, mit den Paarungen dieser Runde (aggregiertes
- * Ergebnis über alle Spiele einer Paarung, z.B. bei Hin+Rück). Die
- * Paarungen werden per reorderBracketPairings() so sortiert, dass sie sich
- * optisch korrekt zwischen den Runden ausrichten.
- */
 function renderBracketView(int $ligaId, array $allSpieltage, bool $isKO, int $maxNr) : string
 {
-    $opts        = getLigaOptions($ligaId);
-    $showKickoff = ligaFlagEnabled($opts, 'DatM', false);
-    $dateFormat  = $opts['DatF'] ?? 'd.m.Y H:i';
-    $showLogos   = ($opts['ShowLogos'] ?? '0') === '1';
-
-    // Erst alle Runden mit ihren Paarungsgruppen + repräsentativen Team-IDs sammeln
-    $rounds = [];
-    foreach ($allSpieltage as $st) {
-        $partien = getSpieltagPartien((int)$st['id']);
-        $groups  = groupPartienByPairing($partien);
-
-        $pairings = [];
-        foreach ($groups as $group) {
-            $pairings[] = [
-                'heim_id'       => (int)($group[0]['heim_id'] ?? 0),
-                'gast_id'       => (int)($group[0]['gast_id'] ?? 0),
-                'group'         => $group,
-                'spieltagStart' => $st['start'] ?? null,
-            ];
-        }
-        $rounds[] = ['roundName' => h(roundDisplayName($st, $isKO, $maxNr)), 'pairings' => $pairings];
-    }
-
-    // Nur die Paarungslisten fürs Umsortieren extrahieren, roundName separat behalten
-    $pairingLists = array_map(static fn($r) => $r['pairings'], $rounds);
-    $orderedLists = reorderBracketPairings($pairingLists);
-
-    $roundsHtml = '';
-    foreach ($rounds as $i => $round) {
-        $pairingsHtml = '';
-        foreach ($orderedLists[$i] as $pairing) {
-            $group = $pairing['group'] ?? null;
-            if (empty($group)) {
-                continue;
-            }
-            // Reine Leer-Paarungen (beide Seiten Dummy-Team "___" bzw. ganz
-            // ohne Zuordnung, siehe partieIsEmptyPlaceholder()) werden auch
-            // im Turnierbaum nicht angezeigt – das Layout ist eine reine
-            // Box-Liste pro Runde ohne feste Positionen/Verbindungslinien,
-            // ein Weglassen verschiebt also nichts anderes.
-            if (partieIsEmptyPlaceholder($group[0])) {
-                continue;
-            }
-            $heimRaw = partieTeamName($group[0], 'heim');
-            $gastRaw = partieTeamName($group[0], 'gast');
-            $heim    = partieTeamNameWithLogo($group[0], 'heim', $showLogos);
-            $gast    = partieTeamNameWithLogo($group[0], 'gast', $showLogos);
-
-            $hTotal     = 0;
-            $gTotal     = 0;
-            $allPlayed  = !empty($group);
-            $statusVal  = 0;
-            foreach ($group as $p) {
-                if ($p['h_tore'] === null || $p['g_tore'] === null) {
-                    $allPlayed = false;
-                } else {
-                    $hTotal += (int)$p['h_tore'];
-                    $gTotal += (int)$p['g_tore'];
-                }
-                if ((int)($p['status'] ?? 0) !== 0) {
-                    $statusVal = (int)$p['status'];
-                }
-            }
-            $suffix = $allPlayed ? statusSuffix(['h_tore' => $hTotal, 'g_tore' => $gTotal, 'status' => $statusVal]) : '';
-            $score  = $allPlayed ? h((string)$hTotal) . ' : ' . h((string)$gTotal) . h($suffix) : '- : -';
-
-            $kickoff = '';
-            if ($showKickoff) {
-                $raw = $group[0]['zeit'] ?? $pairing['spieltagStart'] ?? null;
-                if (!empty($raw)) {
-                    try {
-                        $kickoff = (new DateTime($raw))->format($dateFormat);
-                    } catch (Throwable) {
-                        $kickoff = '';
-                    }
-                }
-            }
-
-            $pairingsHtml .= renderPartial('bracket_pairing', [
-                'Heim'        => $heim,
-                'Gast'        => $gast,
-                'Score'       => $score,
-                'CompareIcon' => renderH2hIcon($pairing['heim_id'], $pairing['gast_id'], $heimRaw, $gastRaw, $showLogos),
-                'Kickoff'     => h($kickoff),
-            ]);
-        }
-
-        $roundsHtml .= renderPartial('bracket_round', [
-            'RoundName' => $round['roundName'],
-            'Pairings'  => $pairingsHtml,
-        ]);
-    }
-
-    return renderPartial('bracket_view', ['Rounds' => $roundsHtml]) . renderH2hModalAssets();
+    return \LMOnext\Liga\LigaService::renderBracketView($ligaId, $allSpieltage, $isKO, $maxNr);
 }
 
-/**
- * Alle Teams, die dieser Liga zugeordnet sind (für die Tabelle – auch Teams
- * ohne bisher gespielte Partie sollen mit 0 erscheinen).
- */
-/**
- * Wird pro Seitenaufruf oft mehrfach für dieselbe Liga aufgerufen (Tabelle,
- * Kreuztabelle, Spielplan-Sidebar, PDF-Export, Mini-Addons usw.) - Speicher-
- * Cache pro Liga-ID, damit die (teils zweistufige, siehe Fallback unten)
- * Abfrage innerhalb eines Requests nur einmal läuft.
- */
 function getLigaTeamsList(int $ligaId) : array
 {
-    static $cache = [];
-    if (array_key_exists($ligaId, $cache)) {
-        return $cache[$ligaId];
-    }
-    return $cache[$ligaId] = getLigaTeamsListUncached($ligaId);
+    return \LMOnext\Liga\LigaService::getLigaTeamsList($ligaId);
 }
 
 function getLigaTeamsListUncached(int $ligaId) : array
 {
-    try {
-        $s = getDB()->prepare(
-            'SELECT tg.id, tg.name, tg.kurz, tg.mittel
-               FROM ' . tbl('liga_teams') . ' lt
-               JOIN ' . tbl('teams_global') . ' tg ON tg.id = lt.team_id
-              WHERE lt.liga_id = ?
-              ORDER BY lt.id'
-        );
-        $s->execute([$ligaId]);
-        $rows = $s->fetchAll();
-        if (!empty($rows)) {
-            return $rows;
-        }
-    } catch (Throwable) {
-        // fällt durch zum Fallback unten
-    }
-
-    // Fallback: liga_teams ist (noch) leer – z.B. bei älteren importierten
-    // Ligen, wo diese Zuordnungstabelle nie befüllt wurde. Teams stattdessen
-    // direkt aus den vorhandenen Partien ableiten (Dummy-Team "___" ausschließen).
-    try {
-        $dummyId = getDummyTeamId();
-        $s = getDB()->prepare(
-            'SELECT DISTINCT tg.id, tg.name, tg.kurz, tg.mittel
-               FROM ' . tbl('liga_partien') . ' p
-               JOIN ' . tbl('liga_spieltage') . ' st ON st.id = p.spieltag_id
-               JOIN ' . tbl('teams_global') . ' tg ON tg.id = p.heim_id
-              WHERE st.liga_id = ? AND tg.id <> ?
-              UNION
-             SELECT DISTINCT tg.id, tg.name, tg.kurz, tg.mittel
-               FROM ' . tbl('liga_partien') . ' p
-               JOIN ' . tbl('liga_spieltage') . ' st ON st.id = p.spieltag_id
-               JOIN ' . tbl('teams_global') . ' tg ON tg.id = p.gast_id
-              WHERE st.liga_id = ? AND tg.id <> ?
-              ORDER BY name'
-        );
-        $s->execute([$ligaId, $dummyId, $ligaId, $dummyId]);
-        return $s->fetchAll();
-    } catch (Throwable) {
-        return [];
-    }
+    return \LMOnext\Liga\LigaService::getLigaTeamsListUncached($ligaId);
 }
 
-/**
- * Alle Partien einer Liga über alle Spieltage hinweg (für Tabelle, Spielpläne,
- * Kreuztabelle, Fieberkurven, Ligastatistik).
- */
 function getAllLigaPartien(array $allSpieltage) : array
 {
-    $all = [];
-    foreach ($allSpieltage as $st) {
-        foreach (getSpieltagPartien((int)$st['id']) as $p) {
-            $p['_spieltag_nummer'] = (int)$st['nummer'];
-            $all[] = $p;
-        }
-    }
-    return $all;
+    return \LMOnext\Liga\LigaService::getAllLigaPartien($allSpieltage);
 }
 
-/**
- * Berechnet die Tabelle: Sp/S/U/N/Tore/Diff/Pkt je Team, sortiert nach
- * Punkte → Tordifferenz → Tore (wie im Adminbereich). Startet mit allen
- * gemeldeten Teams (auch ohne gespielte Partie, dann mit lauter Nullen).
- */
 function computeStandings(array $teamsList, array $partien, array $ligaOptions) : array
 {
-    $ptW = (int)($ligaOptions['PointsForWin']  ?? 3);
-    $ptD = (int)($ligaOptions['PointsForDraw'] ?? 1);
-    $ptL = (int)($ligaOptions['PointsForLost'] ?? 0);
-    // Eigene Punktwerte für "nach Verlängerung" (status=2, "n.V.") und "nach
-    // Elfmeterschießen" (status=1, "i.E."), analog zum alten LMO. Fallen
-    // mangels expliziter Einstellung auf die normalen Werte zurück – damit
-    // ändert sich für alle Ligen, die diese neuen Felder noch nie gesetzt
-    // haben, an der Punktevergabe nichts (volle Rückwärtskompatibilität).
-    $ptWET = (int)($ligaOptions['PointsForWinET']  ?? $ptW);
-    $ptDET = (int)($ligaOptions['PointsForDrawET'] ?? $ptD);
-    $ptLET = (int)($ligaOptions['PointsForLostET'] ?? $ptL);
-    $ptWPS = (int)($ligaOptions['PointsForWinPS']  ?? $ptW);
-    $ptDPS = (int)($ligaOptions['PointsForDrawPS'] ?? $ptD);
-    $ptLPS = (int)($ligaOptions['PointsForLostPS'] ?? $ptL);
-
-    $rows = [];
-    foreach ($teamsList as $t) {
-        $rows[(int)$t['id']] = [
-            'id' => (int)$t['id'], 'name' => $t['name'], 'kurz' => $t['kurz'] ?? '',
-            'sp' => 0, 's' => 0, 'u' => 0, 'n' => 0,
-            'tore_h' => 0, 'tore_g' => 0, 'pkt' => 0,
-        ];
-    }
-
-    foreach ($partien as $p) {
-        if ($p['h_tore'] === null || $p['g_tore'] === null) {
-            continue;
-        }
-        $hId = (int)($p['heim_id'] ?? 0);
-        $gId = (int)($p['gast_id'] ?? 0);
-        if ($hId <= 0 || $gId <= 0) {
-            continue;
-        }
-        if (!isset($rows[$hId])) {
-            $rows[$hId] = ['id' => $hId, 'name' => $p['heim_name'] ?? '', 'kurz' => '', 'sp' => 0, 's' => 0, 'u' => 0, 'n' => 0, 'tore_h' => 0, 'tore_g' => 0, 'pkt' => 0];
-        }
-        if (!isset($rows[$gId])) {
-            $rows[$gId] = ['id' => $gId, 'name' => $p['gast_name'] ?? '', 'kurz' => '', 'sp' => 0, 's' => 0, 'u' => 0, 'n' => 0, 'tore_h' => 0, 'tore_g' => 0, 'pkt' => 0];
-        }
-
-        $ht = (int)$p['h_tore'];
-        $gt = (int)$p['g_tore'];
-
-        $rows[$hId]['sp']++;
-        $rows[$gId]['sp']++;
-        $rows[$hId]['tore_h'] += $ht;
-        $rows[$hId]['tore_g'] += $gt;
-        $rows[$gId]['tore_h'] += $gt;
-        $rows[$gId]['tore_g'] += $ht;
-
-        // status: 0 = regulär, 1 = i.E. (Elfmeterschießen), 2 = n.V. (nach
-        // Verlängerung) – siehe statusSuffix(). Je nachdem gilt eine andere
-        // Sieg/Unentschieden/Niederlage-Punktetabelle.
-        [$curW, $curD, $curL] = match ((int)($p['status'] ?? 0)) {
-            1       => [$ptWPS, $ptDPS, $ptLPS],
-            2       => [$ptWET, $ptDET, $ptLET],
-            default => [$ptW, $ptD, $ptL],
-        };
-
-        if ($ht > $gt) {
-            $rows[$hId]['s']++;
-            $rows[$hId]['pkt'] += $curW;
-            $rows[$gId]['n']++;
-            $rows[$gId]['pkt'] += $curL;
-        } elseif ($ht < $gt) {
-            $rows[$gId]['s']++;
-            $rows[$gId]['pkt'] += $curW;
-            $rows[$hId]['n']++;
-            $rows[$hId]['pkt'] += $curL;
-        } else {
-            $rows[$hId]['u']++;
-            $rows[$hId]['pkt'] += $curD;
-            $rows[$gId]['u']++;
-            $rows[$gId]['pkt'] += $curD;
-        }
-    }
-
-    $standings = array_values($rows);
-    usort($standings, static function (array $a, array $b) : int {
-        if ($a['pkt'] !== $b['pkt']) {
-            return $b['pkt'] <=> $a['pkt'];
-        }
-        $diffA = $a['tore_h'] - $a['tore_g'];
-        $diffB = $b['tore_h'] - $b['tore_g'];
-        if ($diffA !== $diffB) {
-            return $diffB <=> $diffA;
-        }
-        return $b['tore_h'] <=> $a['tore_h'];
-    });
-
-    return $standings;
+    return \LMOnext\Liga\LigaService::computeStandings($teamsList, $partien, $ligaOptions);
 }
 
-/**
- * Baut die Tabellen-Ansicht: Wertungshinweis (Sieg/Unentschieden-Punkte,
- * Sortierregel) + die eigentliche Tabelle.
- */
-/**
- * Ermittelt die Randfarbe (Tabellenmarkierung, siehe Admin → Liga-
- * Einstellungen → Tabelle) für eine Tabellenzeile anhand ihres Rangs
- * (0-basiert). Von oben nach unten: Meister (nur Rang 1, falls aktiviert,
- * zählt zum CL-Kontingent dazu) → Champions League → CL-Qualifikation →
- * Euroleague. Von unten nach oben: feststehende Absteiger → Relegation.
- * Gibt einen Hex-Farbwert zurück, oder '' wenn dieser Rang keine
- * Markierung hat.
- */
 function computeStandingsMarkerColor(int $index, int $totalTeams, array $opts) : string
 {
-    $champEnabled = ($opts['Champ'] ?? '0') !== '0';
-    $cl = (int)($opts['CL'] ?? 0);
-    $ck = (int)($opts['CK'] ?? 0);
-    $uc = (int)($opts['UC'] ?? 0);
-    $ar = (int)($opts['AR'] ?? 0);
-    $ab = (int)($opts['AB'] ?? 0);
-
-    $champColor = ($opts['ChampColor'] ?? '') !== '' ? $opts['ChampColor'] : '#22c55e';
-    $clColor    = ($opts['CLColor']  ?? '') !== '' ? $opts['CLColor']  : '#3b82f6';
-    $ckColor    = ($opts['CKColor']  ?? '') !== '' ? $opts['CKColor']  : '#0ea5e9';
-    $ucColor    = ($opts['UCColor']  ?? '') !== '' ? $opts['UCColor']  : '#f59e0b';
-    $arColor    = ($opts['ARColor']  ?? '') !== '' ? $opts['ARColor']  : '#f97316';
-    $abColor    = ($opts['ABColor']  ?? '') !== '' ? $opts['ABColor']  : '#ef4444';
-
-    if ($champEnabled && $index === 0) {
-        return $champColor;
-    }
-    if ($index < $cl) {
-        return $clColor;
-    }
-    if ($index < $cl + $ck) {
-        return $ckColor;
-    }
-    if ($index < $cl + $ck + $uc) {
-        return $ucColor;
-    }
-
-    $fromBottom = $totalTeams - 1 - $index; // 0 = letzter Platz
-    if ($fromBottom < $ab) {
-        return $abColor;
-    }
-    if ($fromBottom < $ab + $ar) {
-        return $arColor;
-    }
-
-    return '';
+    return \LMOnext\Liga\LigaService::computeStandingsMarkerColor($index, $totalTeams, $opts);
 }
 
 function renderStandingsView(int $ligaId, array $allSpieltage) : string
 {
-    $opts      = getLigaOptions($ligaId);
-    $teams     = getLigaTeamsList($ligaId);
-    $partien   = getAllLigaPartien($allSpieltage);
-    $rows      = computeStandings($teams, $partien, $opts);
-    $favTeamId = resolveTeamNumberToId($ligaId, (int)($opts['favTeam'] ?? 0));
-    $totalTeams = count($rows);
-    $showLogos  = ($opts['ShowLogos'] ?? '0') === '1';
-
-    $rowsHtml = '';
-    foreach ($rows as $i => $r) {
-        $diff = $r['tore_h'] - $r['tore_g'];
-        $markerColor = computeStandingsMarkerColor($i, $totalTeams, $opts);
-        $rowsHtml .= renderPartial('standings_row', [
-            'Platz'    => (string)($i + 1),
-            'Logo'     => renderTeamLogoImgWrapped((int)$r['id'], $showLogos),
-            'Team'     => h($r['name']),
-            'TeamClass'=> ($favTeamId !== null && $r['id'] === $favTeamId) ? ' fav-team' : '',
-            'RowStyle' => $markerColor !== '' ? ' style="border-left-color:' . h($markerColor) . '"' : '',
-            'Sp'       => (string)$r['sp'],
-            'S'        => (string)$r['s'],
-            'U'        => (string)$r['u'],
-            'N'        => (string)$r['n'],
-            'Tore'     => $r['tore_h'] . ':' . $r['tore_g'],
-            'Diff'     => ($diff > 0 ? '+' : '') . $diff,
-            'DiffClass'=> $diff > 0 ? ' diff-pos' : ($diff < 0 ? ' diff-neg' : ''),
-            'Pkt'      => (string)$r['pkt'],
-        ]);
-    }
-
-    return renderPartial('standings_view', [
-        'ColPlatz'    => h(tf('liga_standings_col_platz')),
-        'ColTeam'     => h(tf('liga_standings_col_team')),
-        'ColSp'       => h(tf('liga_standings_col_sp')),
-        'ColS'        => h(tf('liga_standings_col_s')),
-        'ColU'        => h(tf('liga_standings_col_u')),
-        'ColN'        => h(tf('liga_standings_col_n')),
-        'ColTore'     => h(tf('liga_standings_col_tore')),
-        'ColDiff'     => h(tf('liga_standings_col_diff')),
-        'ColPkt'      => h(tf('liga_standings_col_pkt')),
-        'Rows'        => $rowsHtml,
-    ]);
+    return \LMOnext\Liga\LigaService::renderStandingsView($ligaId, $allSpieltage);
 }
 
-/**
- * Baut die Team-Spielplan-Ansicht für reguläre Ligen: Sidebar mit allen
- * Team-Kurznamen + (bei Auswahl) alle Partien dieses Teams über die ganze
- * Saison, chronologisch, mit fett hervorgehobenem eigenem Team.
- */
 function renderTeamScheduleView(int $ligaId, array $allSpieltage, ?int $selectedTeamId) : string
 {
-    $teams     = getLigaTeamsList($ligaId);
-    $showLogos = (getLigaOptions($ligaId)['ShowLogos'] ?? '0') === '1';
-
-    $sidebarHtml = '';
-    foreach ($teams as $t) {
-        $sidebarHtml .= renderPartial('team_sidebar_item', [
-            'ActiveClass' => ((int)$t['id'] === $selectedTeamId) ? ' team-sidebar-active' : '',
-            'LigaId'      => $ligaId,
-            'TeamId'      => (int)$t['id'],
-            'Logo'        => renderTeamLogoImg((int)$t['id'], $showLogos),
-            'Kurz'        => h($t['mittel'] !== '' ? $t['mittel'] : $t['name']),
-        ]);
-    }
-
-    if ($selectedTeamId === null) {
-        $contentHtml = '<p class="empty-msg">' . h(tf('liga_schedule_pick_team')) . '</p>';
-    } else {
-        $partien = getAllLigaPartien($allSpieltage);
-        $rowsHtml = '';
-        foreach ($partien as $p) {
-            $hId = (int)($p['heim_id'] ?? 0);
-            $gId = (int)($p['gast_id'] ?? 0);
-            if ($hId !== $selectedTeamId && $gId !== $selectedTeamId) {
-                continue;
-            }
-            $gespielt = $p['h_tore'] !== null && $p['g_tore'] !== null;
-            $score    = $gespielt
-                ? h((string)$p['h_tore']) . ' : ' . h((string)$p['g_tore']) . h(statusSuffix($p))
-                : '- : -';
-            $heimRaw = partieTeamName($p, 'heim');
-            $gastRaw = partieTeamName($p, 'gast');
-            $rowsHtml .= renderPartial('team_schedule_row', [
-                'Nr'           => (string)$p['_spieltag_nummer'],
-                'Datum'        => h(partieZeitDisplay($p, null)),
-                'HeimClass'    => $hId === $selectedTeamId ? ' schedule-own' : '',
-                'GastClass'    => $gId === $selectedTeamId ? ' schedule-own' : '',
-                'Heim'         => partieTeamNameWithLogoReversed($p, 'heim', $showLogos),
-                'Gast'         => partieTeamNameWithLogo($p, 'gast', $showLogos),
-                'Ergebnis'     => $score,
-                'ErgebnisOffenClass' => $gespielt ? '' : ' ergebnis-offen',
-                'CompareIcon'  => renderH2hIcon($hId, $gId, $heimRaw, $gastRaw, $showLogos),
-            ]);
-        }
-        $contentHtml = renderPartial('team_schedule_table', ['Rows' => $rowsHtml]) . renderH2hModalAssets();
-    }
-
-    return renderPartial('team_schedule_view', [
-        'Sidebar' => $sidebarHtml,
-        'Content' => $contentHtml,
-    ]);
+    return \LMOnext\Liga\LigaService::renderTeamScheduleView($ligaId, $allSpieltage, $selectedTeamId);
 }
 
-/**
- * Baut die Kreuztabelle: N×N-Gitter aller Teams (Heim = Zeilen, Gast =
- * Spalten), sortiert nach aktueller Tabellenposition. Jede Zelle zeigt das
- * Ergebnis der jeweiligen Heim-gegen-Gast-Begegnung (leer, falls noch nicht
- * gespielt; Diagonale immer leer).
- */
 function renderKreuztabelleView(int $ligaId, array $allSpieltage) : string
 {
-    $opts      = getLigaOptions($ligaId);
-    $teams     = getLigaTeamsList($ligaId);
-    $partien   = getAllLigaPartien($allSpieltage);
-    $standing  = computeStandings($teams, $partien, $opts);
-    $favTeamId = resolveTeamNumberToId($ligaId, (int)($opts['favTeam'] ?? 0));
-    $showLogos = ($opts['ShowLogos'] ?? '0') === '1';
-
-    $mittelById = [];
-    foreach ($teams as $t) {
-        $mittelById[(int)$t['id']] = $t['mittel'] ?? '';
-    }
-
-    // Lookup: "heimId_gastId" => letzte/aggregierte Begegnung dieser Richtung
-    $lookup = [];
-    foreach ($partien as $p) {
-        $hId = (int)($p['heim_id'] ?? 0);
-        $gId = (int)($p['gast_id'] ?? 0);
-        if ($hId <= 0 || $gId <= 0) {
-            continue;
-        }
-        $lookup[$hId . '_' . $gId] = $p;
-    }
-
-    $headerCells = '';
-    foreach ($standing as $t) {
-        // Bei aktivierter Logo-Einstellung steht in der Kopfzeile NUR das
-        // Logo (kein Kürzel-Text mehr) – sonst wie bisher das Kürzel.
-        $kurz = $t['kurz'] ?? '';
-        $headerLabel = $showLogos
-            ? renderTeamLogoImg((int)$t['id'], true)
-            : h($kurz !== '' ? $kurz : $t['name']);
-        $headerCells .= renderPartial('kreuz_header_cell', [
-            'Label'       => $headerLabel,
-            'HeaderClass' => ($favTeamId !== null && $t['id'] === $favTeamId) ? ' kz-fav' : '',
-            'TeamId'      => (string)$t['id'],
-        ]);
-    }
-
-    $bodyRows = '';
-    foreach ($standing as $rowTeam) {
-        $isFavRow  = $favTeamId !== null && $rowTeam['id'] === $favTeamId;
-        $cellsHtml = '';
-        foreach ($standing as $colTeam) {
-            $isFavCol = $favTeamId !== null && $colTeam['id'] === $favTeamId;
-            $favClass = ($isFavRow ? ' kz-fav-row' : '') . ($isFavCol ? ' kz-fav-col' : '');
-            $cellVars = ['RowTeamId' => (string)$rowTeam['id'], 'ColTeamId' => (string)$colTeam['id']];
-            if ($rowTeam['id'] === $colTeam['id']) {
-                $cellsHtml .= renderPartial('kreuz_cell', $cellVars + ['CellClass' => ' kz-diag' . $favClass, 'Content' => '']);
-                continue;
-            }
-            $p = $lookup[$rowTeam['id'] . '_' . $colTeam['id']] ?? null;
-            if ($p === null || $p['h_tore'] === null || $p['g_tore'] === null) {
-                $cellsHtml .= renderPartial('kreuz_cell', $cellVars + ['CellClass' => $favClass, 'Content' => '']);
-            } else {
-                $content = h((string)$p['h_tore']) . ':' . h((string)$p['g_tore']) . h(statusSuffix($p));
-                $cellsHtml .= renderPartial('kreuz_cell', $cellVars + ['CellClass' => $favClass, 'Content' => $content]);
-            }
-        }
-        $bodyRows .= renderPartial('kreuz_row', [
-            'Label'          => $showLogos
-                ? renderTeamLogoImg((int)$rowTeam['id'], true) . h($mittelById[(int)$rowTeam['id']] !== '' ? $mittelById[(int)$rowTeam['id']] : $rowTeam['name'])
-                : h($rowTeam['name']),
-            'RowLabelClass'  => $isFavRow ? ' kz-fav' : '',
-            'TeamId'         => (string)$rowTeam['id'],
-            'Cells'          => $cellsHtml,
-        ]);
-    }
-
-    // Klick auf Spalten-Kopf oder Zeilen-Label hebt diese Mannschaft hervor
-    // (ersetzt eine ggf. serverseitig vorgegebene favTeam-Hervorhebung). Ohne
-    // hinterlegte Lieblingsmannschaft ist beim Aufruf noch nichts markiert.
-    $script = '<script>(function(){'
-        . 'var t=document.querySelectorAll(".kreuz-table th.kz-col,.kreuz-table th.kz-rowlabel");'
-        . 'function clear(){document.querySelectorAll(".kreuz-table .kz-fav,.kreuz-table .kz-fav-row,.kreuz-table .kz-fav-col")'
-        . '.forEach(function(el){el.classList.remove("kz-fav","kz-fav-row","kz-fav-col");});}'
-        . 'function apply(id){'
-        . 'document.querySelectorAll(\'.kreuz-table th[data-team="\'+id+\'"]\').forEach(function(el){el.classList.add("kz-fav");});'
-        . 'document.querySelectorAll(\'.kreuz-table td[data-row="\'+id+\'"]\').forEach(function(el){el.classList.add("kz-fav-row");});'
-        . 'document.querySelectorAll(\'.kreuz-table td[data-col="\'+id+\'"]\').forEach(function(el){el.classList.add("kz-fav-col");});'
-        . '}'
-        . 't.forEach(function(el){el.style.cursor="pointer";el.addEventListener("click",function(){'
-        . 'var id=el.getAttribute("data-team");clear();apply(id);'
-        . '});});'
-        . '})();</script>';
-
-    return renderPartial('kreuz_view', [
-        'HeaderCells' => $headerCells,
-        'BodyRows'    => $bodyRows,
-    ]) . $script;
+    return \LMOnext\Liga\LigaService::renderKreuztabelleView($ligaId, $allSpieltage);
 }
 
-/**
- * Feste Farbpalette für die Fieberkurven-Linien (zyklisch, falls mehr Teams
- * als Farben vorhanden sind).
- */
 function fieberkurveColors() : array
 {
-    return [
-        '#2563eb', '#dc2626', '#16a34a', '#9333ea', '#ea580c', '#0891b2',
-        '#ca8a04', '#db2777', '#4338ca', '#65a30d', '#7c2d12', '#0d9488',
-        '#be123c', '#4d7c0f', '#6d28d9', '#b45309', '#0369a1', '#a21caf',
-    ];
+    return \LMOnext\Liga\LigaService::fieberkurveColors();
 }
 
-/**
- * Baut die Fieberkurve: Liniendiagramm der Tabellenposition jedes Teams über
- * die gespielten Spieltage hinweg (Position 1 oben, wächst nach unten – wie
- * ein "Fieberthermometer"). Reines SVG, keine externe Chart-Bibliothek.
- */
 function renderFieberkurveView(int $ligaId, array $allSpieltage) : string
 {
-    $opts  = getLigaOptions($ligaId);
-    $teams = getLigaTeamsList($ligaId);
-    if (empty($teams)) {
-        return renderPartial('fieberkurve_view', ['Content' => '<p class="empty-msg">' . h(tf('liga_fieberkurve_no_data')) . '</p>']);
-    }
-
-    usort($allSpieltage, static fn($a, $b) => (int)$a['nummer'] <=> (int)$b['nummer']);
-
-    $positionsByTeam = [];
-    $matchdays       = [];
-    $cumulative      = [];
-
-    foreach ($allSpieltage as $st) {
-        $nr        = (int)$st['nummer'];
-        $stPartien = getSpieltagPartien((int)$st['id']);
-        $hasPlayed = false;
-        foreach ($stPartien as $p) {
-            if ($p['h_tore'] !== null && $p['g_tore'] !== null) {
-                $hasPlayed = true;
-                break;
-            }
-        }
-        $cumulative = array_merge($cumulative, $stPartien);
-        if (!$hasPlayed) {
-            continue;
-        }
-        $standing    = computeStandings($teams, $cumulative, $opts);
-        $matchdays[] = $nr;
-        foreach ($standing as $i => $row) {
-            $positionsByTeam[$row['id']]['name'] = $row['name'];
-            $positionsByTeam[$row['id']]['pos'][$nr] = $i + 1;
-        }
-    }
-
-    if (empty($matchdays)) {
-        return renderPartial('fieberkurve_view', ['Content' => '<p class="empty-msg">' . h(tf('liga_fieberkurve_no_data')) . '</p>']);
-    }
-
-    $numTeams = count($teams);
-    $minMd    = min($matchdays);
-    $maxMd    = max($matchdays);
-    $allMd    = range($minMd, $maxMd);
-
-    $colors  = fieberkurveColors();
-    $i       = 0;
-    $datasets = [];
-    foreach ($positionsByTeam as $teamId => $data) {
-        $color = $colors[$i % count($colors)];
-        $series = [];
-        foreach ($allMd as $md) {
-            $series[] = $data['pos'][$md] ?? null;
-        }
-        $datasets[] = [
-            'label'           => $data['name'],
-            'data'            => $series,
-            'borderColor'     => $color,
-            'backgroundColor' => $color,
-            'spanGaps'        => true,
-            'borderWidth'     => 2,
-            'pointRadius'     => 0,
-            'pointHoverRadius' => 4,
-            'tension'         => 0.35,
-            'hidden'          => $i >= 2,
-        ];
-        $i++;
-    }
-
-    $chartData = [
-        'labels'   => $allMd,
-        'datasets' => $datasets,
-    ];
-    $chartJson = str_replace('</script>', '<\/script>', json_encode($chartData, JSON_UNESCAPED_UNICODE));
-
-    $canvasId = 'fk-canvas-' . $ligaId;
-    $content  = '<script src="assets/vendor/chart.umd.min.js"></script>';
-    $content .= '<div class="fk-chart-wrap"><canvas id="' . h($canvasId) . '"></canvas></div>';
-    $content .= '<script>';
-    $content .= '(function(){var ctx=document.getElementById(' . json_encode($canvasId) . ');';
-    $content .= 'new Chart(ctx,{type:"line",data:' . $chartJson . ',options:{';
-    $content .= 'responsive:true,maintainAspectRatio:false,interaction:{mode:"nearest",intersect:false},';
-    $content .= 'scales:{y:{reverse:true,min:1,max:' . $numTeams . ',ticks:{stepSize:1}},x:{title:{display:true,text:' . json_encode(tf('liga_col_spieltag_short')) . '}}},';
-    $content .= 'plugins:{legend:{position:"top",labels:{boxWidth:12,font:{size:11}}}}';
-    $content .= '}});})();';
-    $content .= '</script>';
-
-    return renderPartial('fieberkurve_view', ['Content' => $content]);
+    return \LMOnext\Liga\LigaService::renderFieberkurveView($ligaId, $allSpieltage);
 }
 
-/**
- * Serien (Siege/Unentschieden/Niederlagen am Stück, Ungeschlagen/Sieglos-
- * Läufe) für ein Team, chronologisch über alle gespielten Partien.
- * "current" = Stand nach dem letzten Spiel, "best" = längste Serie der Saison
- * (inkl. Spieltag-Spanne).
- */
 function computeTeamStreaks(int $teamId, array $partienChrono) : array
 {
-    $current = ['win' => 0, 'unbeaten' => 0, 'draw' => 0, 'winless' => 0, 'loss' => 0];
-    $best     = [];
-    foreach (array_keys($current) as $k) {
-        $best[$k] = ['len' => 0, 'from' => null, 'to' => null];
-    }
-
-    foreach ($partienChrono as $p) {
-        $hId = (int)($p['heim_id'] ?? 0);
-        $gId = (int)($p['gast_id'] ?? 0);
-        if ($p['h_tore'] === null || $p['g_tore'] === null || ($hId !== $teamId && $gId !== $teamId)) {
-            continue;
-        }
-        $own = $hId === $teamId ? (int)$p['h_tore'] : (int)$p['g_tore'];
-        $opp = $hId === $teamId ? (int)$p['g_tore'] : (int)$p['h_tore'];
-        $res = $own > $opp ? 'W' : ($own < $opp ? 'L' : 'D');
-        $nr  = (int)$p['_spieltag_nummer'];
-
-        $current['win']      = $res === 'W' ? $current['win'] + 1 : 0;
-        $current['unbeaten']  = $res !== 'L' ? $current['unbeaten'] + 1 : 0;
-        $current['draw']     = $res === 'D' ? $current['draw'] + 1 : 0;
-        $current['winless']   = $res !== 'W' ? $current['winless'] + 1 : 0;
-        $current['loss']     = $res === 'L' ? $current['loss'] + 1 : 0;
-
-        foreach ($current as $k => $len) {
-            if ($len > $best[$k]['len']) {
-                $best[$k] = ['len' => $len, 'to' => $nr, 'from' => $nr - $len + 1];
-            }
-        }
-    }
-
-    return ['current' => $current, 'best' => $best];
+    return \LMOnext\Liga\LigaService::computeTeamStreaks($teamId, $partienChrono);
 }
 
-/**
- * Findet je Serien-Kategorie (aktuell + Saison) das/die Team(s) mit der
- * längsten Serie, ligaweit (für den "Serien"-Block der Ligastatistik).
- */
 function computeAllTeamsStreakRecords(array $teams, array $partien) : array
 {
-    $categories = ['win', 'unbeaten', 'draw', 'winless', 'loss'];
-    $records = [];
-    foreach ($categories as $cat) {
-        $records[$cat] = [
-            'aktuell' => ['len' => 0, 'teams' => []],
-            'saison'  => ['len' => 0, 'teams' => [], 'from' => null, 'to' => null],
-        ];
-    }
-
-    foreach ($teams as $t) {
-        $tid       = (int)$t['id'];
-        $ownMatches = array_values(array_filter($partien, static fn($p) => (int)($p['heim_id'] ?? 0) === $tid || (int)($p['gast_id'] ?? 0) === $tid));
-        usort($ownMatches, static fn($a, $b) => (int)$a['_spieltag_nummer'] <=> (int)$b['_spieltag_nummer']);
-        $streaks = computeTeamStreaks($tid, $ownMatches);
-
-        foreach ($categories as $cat) {
-            $curLen = $streaks['current'][$cat];
-            if ($curLen > $records[$cat]['aktuell']['len']) {
-                $records[$cat]['aktuell'] = ['len' => $curLen, 'teams' => [$t['name']]];
-            } elseif ($curLen > 0 && $curLen === $records[$cat]['aktuell']['len']) {
-                $records[$cat]['aktuell']['teams'][] = $t['name'];
-            }
-
-            $best = $streaks['best'][$cat];
-            if ($best['len'] > $records[$cat]['saison']['len']) {
-                $records[$cat]['saison'] = ['len' => $best['len'], 'teams' => [$t['name']], 'from' => $best['from'], 'to' => $best['to']];
-            } elseif ($best['len'] > 0 && $best['len'] === $records[$cat]['saison']['len']) {
-                $records[$cat]['saison']['teams'][] = $t['name'];
-            }
-        }
-    }
-
-    return $records;
+    return \LMOnext\Liga\LigaService::computeAllTeamsStreakRecords($teams, $partien);
 }
 
-/**
- * Höchste(r) Heimsieg(e), Auswärtssieg(e) und die meiste(n) Tore in einer
- * Partie – ligaweit, inkl. Gleichstände (mehrere Partien mit demselben Wert).
- */
 function findExtremeMatches(array $partien) : array
 {
-    $maxHomeMargin = -1;
-    $homeWins      = [];
-    $maxAwayMargin = -1;
-    $awayWins      = [];
-    $maxGoals      = -1;
-    $mostGoals     = [];
-
-    foreach ($partien as $p) {
-        if ($p['h_tore'] === null || $p['g_tore'] === null) {
-            continue;
-        }
-        $h = (int)$p['h_tore'];
-        $g = (int)$p['g_tore'];
-
-        if ($h > $g) {
-            $margin = $h - $g;
-            if ($margin > $maxHomeMargin) {
-                $maxHomeMargin = $margin;
-                $homeWins = [$p];
-            } elseif ($margin === $maxHomeMargin) {
-                $homeWins[] = $p;
-            }
-        } elseif ($g > $h) {
-            $margin = $g - $h;
-            if ($margin > $maxAwayMargin) {
-                $maxAwayMargin = $margin;
-                $awayWins = [$p];
-            } elseif ($margin === $maxAwayMargin) {
-                $awayWins[] = $p;
-            }
-        }
-
-        $total = $h + $g;
-        if ($total > $maxGoals) {
-            $maxGoals = $total;
-            $mostGoals = [$p];
-        } elseif ($total === $maxGoals) {
-            $mostGoals[] = $p;
-        }
-    }
-
-    return ['homeWins' => $homeWins, 'awayWins' => $awayWins, 'mostGoals' => $mostGoals];
+    return \LMOnext\Liga\LigaService::findExtremeMatches($partien);
 }
 
-/**
- * Alle Detail-Statistiken für ein einzelnes Team: Tabellenposition, Punkte,
- * Sp./Pkt.-Schnitt, Tore, Siege/Niederlagen (inkl. höchster Sieg/Niederlage),
- * aktuelle Serie in Textform, Restprogramm (kommende Partien) und der
- * durchschnittliche Punkteschnitt der noch verbleibenden Gegner (als
- * einfacher Näherungswert für die Restprogramm-Bewertung).
- */
 function computeTeamDetailStats(int $teamId, array $teams, array $partien, array $standing) : array
 {
-    $position = null;
-    $row      = null;
-    foreach ($standing as $i => $r) {
-        if ($r['id'] === $teamId) {
-            $position = $i + 1;
-            $row = $r;
-            break;
-        }
-    }
-    if ($row === null) {
-        $row = ['name' => '', 'sp' => 0, 'pkt' => 0, 'tore_h' => 0, 'tore_g' => 0];
-    }
-
-    $ppgByTeam = [];
-    foreach ($standing as $r) {
-        $ppgByTeam[$r['id']] = $r['sp'] > 0 ? $r['pkt'] / $r['sp'] : 0.0;
-    }
-
-    $ownMatches = array_values(array_filter($partien, static fn($p) => (int)($p['heim_id'] ?? 0) === $teamId || (int)($p['gast_id'] ?? 0) === $teamId));
-    usort($ownMatches, static fn($a, $b) => (int)$a['_spieltag_nummer'] <=> (int)$b['_spieltag_nummer']);
-
-    $wins = 0;
-    $losses = 0;
-    $played = 0;
-    $maxWinMargin = -1;
-    $bestWin  = null;
-    $maxLossMargin = -1;
-    $bestLoss = null;
-    $remaining = [];
-    $remainingOppPpg = [];
-
-    foreach ($ownMatches as $p) {
-        $hId = (int)$p['heim_id'];
-        $isHeim = $hId === $teamId;
-        $oppId  = $isHeim ? (int)$p['gast_id'] : (int)$p['heim_id'];
-        $oppName = $isHeim ? ($p['gast_name'] ?? partieTeamName($p, 'gast')) : ($p['heim_name'] ?? partieTeamName($p, 'heim'));
-
-        if ($p['h_tore'] === null || $p['g_tore'] === null) {
-            $remaining[] = ['opp' => $oppName, 'heim' => $isHeim, 'nr' => (int)$p['_spieltag_nummer']];
-            $remainingOppPpg[] = $ppgByTeam[$oppId] ?? 0.0;
-            continue;
-        }
-
-        $played++;
-        $own = $isHeim ? (int)$p['h_tore'] : (int)$p['g_tore'];
-        $opp = $isHeim ? (int)$p['g_tore'] : (int)$p['h_tore'];
-
-        if ($own > $opp) {
-            $wins++;
-            $margin = $own - $opp;
-            if ($margin > $maxWinMargin) {
-                $maxWinMargin = $margin;
-                $bestWin = ['own' => $own, 'opp' => $opp, 'oppName' => $oppName, 'heim' => $isHeim, 'nr' => (int)$p['_spieltag_nummer']];
-            }
-        } elseif ($own < $opp) {
-            $losses++;
-            $margin = $opp - $own;
-            if ($margin > $maxLossMargin) {
-                $maxLossMargin = $margin;
-                $bestLoss = ['own' => $own, 'opp' => $opp, 'oppName' => $oppName, 'heim' => $isHeim, 'nr' => (int)$p['_spieltag_nummer']];
-            }
-        }
-    }
-
-    $streaks = computeTeamStreaks($teamId, $ownMatches);
-    $cur     = $streaks['current'];
-    $streakLines = [];
-    if ($cur['win'] > 0) {
-        $streakLines[] = tf('liga_stat_streak_wins', ['n' => $cur['win']]);
-    } elseif ($cur['loss'] > 0) {
-        $streakLines[] = tf('liga_stat_streak_losses', ['n' => $cur['loss']]);
-    } elseif ($cur['draw'] > 0) {
-        $streakLines[] = tf('liga_stat_streak_draws', ['n' => $cur['draw']]);
-    }
-    if ($cur['unbeaten'] > 1 && $cur['unbeaten'] !== $cur['win']) {
-        $streakLines[] = tf('liga_stat_streak_unbeaten', ['n' => $cur['unbeaten']]);
-    }
-    if ($cur['winless'] > 1 && $cur['winless'] !== $cur['loss']) {
-        $streakLines[] = tf('liga_stat_streak_winless', ['n' => $cur['winless']]);
-    }
-
-    return [
-        'name'            => $row['name'],
-        'position'        => $position,
-        'pkt'             => $row['pkt'],
-        'sp'              => $row['sp'],
-        'ppg'             => $row['sp'] > 0 ? round($row['pkt'] / $row['sp'], 2) : 0.0,
-        'toreH'           => $row['tore_h'],
-        'toreG'           => $row['tore_g'],
-        'goalsPerGame'    => $row['sp'] > 0 ? round($row['tore_h'] / $row['sp'], 2) . ':' . round($row['tore_g'] / $row['sp'], 2) : '-',
-        'wins'            => $wins,
-        'winPct'          => $played > 0 ? round($wins / $played * 100, 1) : 0.0,
-        'bestWin'         => $bestWin,
-        'losses'          => $losses,
-        'lossPct'         => $played > 0 ? round($losses / $played * 100, 1) : 0.0,
-        'bestLoss'        => $bestLoss,
-        'streakLines'     => $streakLines,
-        'remaining'       => $remaining,
-        'remainingPpgAvg' => !empty($remainingOppPpg) ? array_sum($remainingOppPpg) / count($remainingOppPpg) : null,
-        'ppg'             => $row['sp'] > 0 ? round($row['pkt'] / $row['sp'], 2) : 0.0,
-    ];
+    return \LMOnext\Liga\LigaService::computeTeamDetailStats($teamId, $teams, $partien, $standing);
 }
 
-/**
- * Baut eine einzelne Team-Statistik-Box (Position, Punkte, Siege/
- * Niederlagen inkl. Extremwerten, aktuelle Serie, Restprogramm).
- */
 function renderTeamStatBox(array $stat, int $teamId = 0, bool $showLogos = false) : string
 {
-    $bw = $stat['bestWin'];
-    $bestWinTxt = $bw
-        ? h($stat['name']) . ' ' . h((string)$bw['own']) . ':' . h((string)$bw['opp']) . ' ' . h($bw['oppName']) . ' (' . ($bw['heim'] ? h(tf('liga_stat_home')) : h(tf('liga_stat_away'))) . ', ' . (int)$bw['nr'] . '. ' . h(tf('liga_col_spieltag_short')) . ')'
-        : '–';
-    $bl = $stat['bestLoss'];
-    $bestLossTxt = $bl
-        ? h($stat['name']) . ' ' . h((string)$bl['own']) . ':' . h((string)$bl['opp']) . ' ' . h($bl['oppName']) . ' (' . ($bl['heim'] ? h(tf('liga_stat_home')) : h(tf('liga_stat_away'))) . ', ' . (int)$bl['nr'] . '. ' . h(tf('liga_col_spieltag_short')) . ')'
-        : '–';
-
-    $remainingTxt = '–';
-    if (!empty($stat['remaining'])) {
-        $parts = [];
-        foreach ($stat['remaining'] as $r) {
-            $parts[] = h($r['opp']) . ' (' . ($r['heim'] ? h(tf('liga_stat_home_short')) : h(tf('liga_stat_away_short'))) . ')';
-        }
-        $remainingTxt = implode(', ', $parts);
-    }
-
-    $streakTxt = !empty($stat['streakLines']) ? implode('<br>', array_map('h', $stat['streakLines'])) : '–';
-
-    $html  = '<div class="ligastat-box">';
-    $html .= '<h3>' . renderTeamLogoImg($teamId, $showLogos) . h($stat['name']) . '</h3>';
-    $html .= '<table class="ligastat-kv">';
-    $html .= '<tr><td>' . h(tf('liga_stat_position')) . '</td><td>' . h((string)$stat['position']) . '</td></tr>';
-    $html .= '<tr><td>' . h(tf('liga_stat_points')) . '</td><td>' . h((string)$stat['pkt']) . '</td></tr>';
-    $html .= '<tr><td>' . h(tf('liga_stat_played')) . '</td><td>' . h((string)$stat['sp']) . '</td></tr>';
-    $html .= '<tr><td>' . h(tf('liga_stat_ppg')) . '</td><td>' . h((string)$stat['ppg']) . '</td></tr>';
-    $html .= '<tr><td>' . h(tf('liga_stat_goals')) . '</td><td>' . h((string)$stat['toreH']) . ':' . h((string)$stat['toreG']) . '</td></tr>';
-    $html .= '<tr><td>' . h(tf('liga_stat_goals_per_game')) . '</td><td>' . h($stat['goalsPerGame']) . '</td></tr>';
-    $html .= '<tr><td>' . h(tf('liga_stat_wins')) . '</td><td>' . h((string)$stat['wins']) . ' (' . h((string)$stat['winPct']) . '%)</td></tr>';
-    $html .= '<tr><td>' . h(tf('liga_stat_best_win')) . '</td><td>' . $bestWinTxt . '</td></tr>';
-    $html .= '<tr><td>' . h(tf('liga_stat_losses')) . '</td><td>' . h((string)$stat['losses']) . ' (' . h((string)$stat['lossPct']) . '%)</td></tr>';
-    $html .= '<tr><td>' . h(tf('liga_stat_worst_loss')) . '</td><td>' . $bestLossTxt . '</td></tr>';
-    $html .= '<tr><td>' . h(tf('liga_stat_current_streak')) . '</td><td>' . $streakTxt . '</td></tr>';
-    $html .= '<tr><td>' . h(tf('liga_stat_remaining')) . '</td><td>' . $remainingTxt . '</td></tr>';
-    $html .= '</table></div>';
-
-    return $html;
+    return \LMOnext\Liga\LigaService::renderTeamStatBox($stat, $teamId, $showLogos);
 }
 
-/**
- * Baut den immer sichtbaren "Statistische Daten zur Liga"-Block: Spiele,
- * Tore, Extremwerte, Serien-Rekorde (ligaweit).
- */
 function renderOverallStatsBlock(array $teams, array $partien) : string
 {
-    $totalGames = 0;
-    $homeWins   = 0;
-    $draws      = 0;
-    $awayWins   = 0;
-    $totalGoals = 0;
-    $homeGoals  = 0;
-    $awayGoals  = 0;
-
-    foreach ($partien as $p) {
-        if ($p['h_tore'] === null || $p['g_tore'] === null) {
-            continue;
-        }
-        $h = (int)$p['h_tore'];
-        $g = (int)$p['g_tore'];
-        $totalGames++;
-        $homeGoals  += $h;
-        $awayGoals  += $g;
-        $totalGoals += $h + $g;
-        if ($h > $g) {
-            $homeWins++;
-        } elseif ($h < $g) {
-            $awayWins++;
-        } else {
-            $draws++;
-        }
-    }
-
-    $pct = static fn(int $n, int $total) : string => $total > 0 ? round($n / $total * 100) . '%' : '0%';
-    $avg = static fn(int $n, int $total) : string => $total > 0 ? (string)round($n / $total, 2) : '0';
-
-    $extremes = findExtremeMatches($partien);
-    $matchLine = static function (array $p) : string {
-        return h(partieTeamName($p, 'heim')) . ' - ' . h(partieTeamName($p, 'gast')) . '&nbsp;&nbsp;'
-             . h((string)$p['h_tore']) . ':' . h((string)$p['g_tore'])
-             . ' (' . (int)$p['_spieltag_nummer'] . '.)';
-    };
-
-    $html  = '<div class="card"><h2>' . h(tf('liga_stat_overall_title')) . '</h2>';
-    $html .= '<table class="ligastat-overall">';
-    $html .= '<tr><th>' . h(tf('liga_stat_games')) . '</th><th>' . h(tf('liga_stat_home_wins')) . '</th><th>' . h(tf('liga_stat_draws')) . '</th><th>' . h(tf('liga_stat_away_wins')) . '</th></tr>';
-    $html .= '<tr><td><strong>' . $totalGames . '</strong></td><td>' . $homeWins . ' (' . $pct($homeWins, $totalGames) . ')</td><td>' . $draws . ' (' . $pct($draws, $totalGames) . ')</td><td>' . $awayWins . ' (' . $pct($awayWins, $totalGames) . ')</td></tr>';
-    $html .= '</table>';
-
-    $html .= '<table class="ligastat-overall">';
-    $html .= '<tr><th>' . h(tf('liga_stat_goals_total')) . '</th><th>' . h(tf('liga_stat_home_goals')) . '</th><th>' . h(tf('liga_stat_away_goals')) . '</th></tr>';
-    $html .= '<tr><td><strong>' . $totalGoals . '</strong> (Ø ' . $avg($totalGoals, $totalGames) . ')</td><td>' . $homeGoals . ' (' . $pct($homeGoals, $totalGoals) . ', Ø ' . $avg($homeGoals, $totalGames) . ')</td><td>' . $awayGoals . ' (' . $pct($awayGoals, $totalGoals) . ', Ø ' . $avg($awayGoals, $totalGames) . ')</td></tr>';
-    $html .= '</table>';
-
-    if (!empty($extremes['homeWins'])) {
-        $html .= '<p><strong>' . h(tf('liga_stat_highest_home_win')) . '</strong><br>' . implode('<br>', array_map($matchLine, $extremes['homeWins'])) . '</p>';
-    }
-    if (!empty($extremes['awayWins'])) {
-        $html .= '<p><strong>' . h(tf('liga_stat_highest_away_win')) . '</strong><br>' . implode('<br>', array_map($matchLine, $extremes['awayWins'])) . '</p>';
-    }
-    if (!empty($extremes['mostGoals'])) {
-        $html .= '<p><strong>' . h(tf('liga_stat_most_goals')) . '</strong><br>' . implode('<br>', array_map($matchLine, $extremes['mostGoals'])) . '</p>';
-    }
-
-    $records = computeAllTeamsStreakRecords($teams, $partien);
-    $catLabels = [
-        'win'      => 'liga_stat_streak_cat_won',
-        'unbeaten' => 'liga_stat_streak_cat_unbeaten',
-        'draw'     => 'liga_stat_streak_cat_draw',
-        'winless'  => 'liga_stat_streak_cat_winless',
-        'loss'     => 'liga_stat_streak_cat_lost',
-    ];
-    $html .= '<table class="ligastat-overall"><tr><th>' . h(tf('liga_stat_streaks_title')) . '</th><th>' . h(tf('liga_stat_streaks_current')) . '</th><th>' . h(tf('liga_stat_streaks_season')) . '</th></tr>';
-    foreach ($catLabels as $cat => $labelKey) {
-        $rec = $records[$cat];
-        $aktuellTxt = $rec['aktuell']['len'] > 0 ? $rec['aktuell']['len'] . ' ' . h(implode(', ', $rec['aktuell']['teams'])) : '–';
-        $saisonTxt  = $rec['saison']['len'] > 0
-            ? $rec['saison']['len'] . ' ' . h(implode(', ', $rec['saison']['teams'])) . ' (' . $rec['saison']['from'] . '.-' . $rec['saison']['to'] . '.)'
-            : '–';
-        $html .= '<tr><td>' . h(tf($labelKey)) . '</td><td>' . $aktuellTxt . '</td><td>' . $saisonTxt . '</td></tr>';
-    }
-    $html .= '</table></div>';
-
-    return $html;
+    return \LMOnext\Liga\LigaService::renderOverallStatsBlock($teams, $partien);
 }
 
-/**
- * Baut die komplette Ligastatistik-Ansicht: Team-Auswahl (0/1/2 Teams),
- * Detail-Boxen (bei 2 Teams zusätzlich Chancen gegeneinander + einfache
- * Restprogramm-Bewertung), plus den immer sichtbaren Liga-weiten Block.
- */
 function renderLigastatistikView(int $ligaId, array $allSpieltage, ?int $team1Id, ?int $team2Id) : string
 {
-    $opts     = getLigaOptions($ligaId);
-    $teams    = getLigaTeamsList($ligaId);
-    $partien  = getAllLigaPartien($allSpieltage);
-    $standing = computeStandings($teams, $partien, $opts);
-    $showLogos = ($opts['ShowLogos'] ?? '0') === '1';
-
-    $pickerOptions = '<option value="0">– ' . h(tf('liga_stat_pick_team')) . ' –</option>';
-    foreach ($teams as $t) {
-        $pickerOptions .= '<option value="' . (int)$t['id'] . '">' . h($t['name']) . '</option>';
-    }
-
-    $picker  = '<div class="ligastat-picker">';
-    $picker .= '<select id="team1-select" onchange="location.href=\'liga.php?id=' . $ligaId . '&view=ligastatistik&team1=\'+this.value+\'&team2=\'+document.getElementById(\'team2-select\').value">'
-             . str_replace('value="' . $team1Id . '"', 'value="' . $team1Id . '" selected', $pickerOptions) . '</select>';
-    $picker .= '<select id="team2-select" onchange="location.href=\'liga.php?id=' . $ligaId . '&view=ligastatistik&team2=\'+this.value+\'&team1=\'+document.getElementById(\'team1-select\').value">'
-             . str_replace('value="' . $team2Id . '"', 'value="' . $team2Id . '" selected', $pickerOptions) . '</select>';
-    $picker .= '</div>';
-
-    $html = '<div class="card">' . $picker;
-
-    if ($team1Id === null && $team2Id === null) {
-        $html .= '<p class="empty-msg">' . h(tf('liga_stat_pick_team_msg')) . '</p>';
-    } elseif ($team1Id !== null && $team2Id !== null) {
-        $stat1 = computeTeamDetailStats($team1Id, $teams, $partien, $standing);
-        $stat2 = computeTeamDetailStats($team2Id, $teams, $partien, $standing);
-
-        $ppg1 = max(0.01, $stat1['ppg']);
-        $ppg2 = max(0.01, $stat2['ppg']);
-        $chance1 = round($ppg1 / ($ppg1 + $ppg2) * 100);
-        $chance2 = 100 - $chance1;
-
-        $html .= '<p class="ligastat-chances"><strong>' . h(tf('liga_stat_chances')) . ':</strong> '
-               . h($stat1['name']) . ' ' . $chance1 . '% – ' . $chance2 . '% ' . h($stat2['name']) . '</p>';
-
-        $html .= '<div class="ligastat-compare">' . renderTeamStatBox($stat1, $team1Id, $showLogos) . renderTeamStatBox($stat2, $team2Id, $showLogos) . '</div>';
-
-        if ($stat1['remainingPpgAvg'] !== null && $stat2['remainingPpgAvg'] !== null) {
-            $r1 = round($stat1['remainingPpgAvg'], 2);
-            $r2 = round($stat2['remainingPpgAvg'], 2);
-            if (abs($r1 - $r2) < 0.05) {
-                $tendenz = h(tf('liga_stat_tendenz_equal'));
-            } elseif ($r1 > $r2) {
-                $tendenz = h(tf('liga_stat_tendenz_harder', ['team' => $stat1['name']]));
-            } else {
-                $tendenz = h(tf('liga_stat_tendenz_harder', ['team' => $stat2['name']]));
-            }
-            $html .= '<div class="card ligastat-remaining-eval"><h3>' . h(tf('liga_stat_remaining_eval_title')) . '</h3>';
-            $html .= '<table class="ligastat-overall"><tr><th>' . h($stat1['name']) . '</th><th>' . h(tf('liga_stat_remaining_ppg')) . '</th><th>' . h($stat2['name']) . '</th></tr>';
-            $html .= '<tr><td>' . $r1 . '</td><td>' . $tendenz . '</td><td>' . $r2 . '</td></tr></table></div>';
-        }
-    } else {
-        $soloId = $team1Id ?? $team2Id;
-        $stat    = computeTeamDetailStats($soloId, $teams, $partien, $standing);
-        $html .= renderTeamStatBox($stat, $soloId, $showLogos);
-    }
-
-    $html .= '</div>';
-    $html .= renderOverallStatsBlock($teams, $partien);
-
-    return $html;
+    return \LMOnext\Liga\LigaService::renderLigastatistikView($ligaId, $allSpieltage, $team1Id, $team2Id);
 }

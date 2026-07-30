@@ -2,7 +2,10 @@
 /**
  * Project: LMOnext
  * Filename: lang/frontend/de.php
- * Fileversion: 1.19.2
+ * Fileversion: 1.19.3
+ * Changelog: 1.19.3 - Neuer Schlüssel "home_overview_disabled" für den Hinweis auf der
+ *                     Startseite, wenn die Liga-Übersicht deaktiviert ist (siehe home.php 2.1.0)
+ * Changelog: 1.19.2
  * Changelog: 1.19.2 - Neuer Schlüssel "h2h_pdf_renamed_note" für den zusammenfassenden
  *                     Umbenennungs-Hinweis im Teamvergleich-PDF (siehe pdf_export.php 1.6.9)
  * Changelog: 1.19.1
@@ -84,6 +87,7 @@ return [
     // ── Startseite (home.php, template/*/home.php) ──────────────────────────
     'home_heading_active_ligen' => 'Aktive Ligen',
     'home_no_active_ligen'      => 'Aktuell sind keine aktiven Ligen vorhanden.',
+    'home_overview_disabled'    => 'Die Liga-Übersicht ist deaktiviert.',
     'home_heading_archiv'       => 'Archiv',
     'home_type_ko'               => 'KO-Turnier',
     'home_type_liga'             => 'Liga',

@@ -2,7 +2,9 @@
 /**
  * Project: LMOnext
  * Filename: handler_user.php
- * Fileversion: 1.5.3
+ * Fileversion: 1.5.4
+ * Changelog: 1.5.4 - save_admin_settings speichert jetzt zusätzlich show_back_link
+ * Changelog: 1.5.3
  * Changelog: 1.5.3 - save_admin_settings speichert jetzt zusätzlich show_language_switcher
  * Changelog: 1.5.2
  * Changelog: 1.5.2 - save_admin_settings speichert jetzt zusätzlich show_pdf_buttons (neue
@@ -259,6 +261,10 @@ if ($action === 'save_admin_settings' && $_SERVER['REQUEST_METHOD'] === 'POST') 
 
         if (isset($_POST['show_language_switcher'])) {
             $s->execute(['show_language_switcher', $_POST['show_language_switcher'] === '1' ? '1' : '0']);
+        }
+
+        if (isset($_POST['show_back_link'])) {
+            $s->execute(['show_back_link', $_POST['show_back_link'] === '1' ? '1' : '0']);
         }
 
         flash(t('flash_settings_saved'));

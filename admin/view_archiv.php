@@ -2,7 +2,11 @@
 /**
  * Project: LMOnext
  * Filename: view_archiv.php
- * Fileversion: 1.5.0
+ * Fileversion: 1.5.1
+ * Changelog: 1.5.1 - Liga-ID (#123) wird jetzt auch in den Archiv-Zeilen angezeigt (sowohl
+ *                     innerhalb von Ordnern als auch bei Ligen ohne Ordner), analog zur
+ *                     ID-Spalte in der Ligen-Übersicht
+ * Changelog: 1.5.0
  * Changelog: 1.5.0 - Löschen-Button pro Liga ergänzt (in Ordnern gruppiert + ohne Ordner),
  *                     nutzt den bestehenden "delete_liga"-Handler mit redirect=?action=archiv
  *                     (siehe handler_liga.php 1.6.0 für das zugehörige kaskadierende Löschen)
@@ -91,6 +95,7 @@ function archivRenderFolder(array $f, array $ligenByFolder, array $folderMap, in
              style="display:flex;align-items:center;gap:8px;padding:5px 12px;
                     border-bottom:1px solid var(--border);background:var(--bg)">
           <span class="chip <?= $ltype==='1'?'chip-yellow':'chip-blue' ?>" style="font-size:.72rem"><?= $ltype==='1'?h(t('dash_type_ko')):h(t('dash_type_liga')) ?></span>
+          <span style="color:var(--muted);font-size:.78rem;font-family:monospace">#<?= (int)$l['id'] ?></span>
           <a href="?action=liga_detail&id=<?= (int)$l['id'] ?>"
              style="color:var(--accent);text-decoration:none;font-size:.87rem;flex:1"><?= h($l['name']) ?></a>
           <?php if ($offen > 0) { ?>
@@ -168,6 +173,7 @@ $tree = archivBuildTree($folders);
     <div style="font-size:.82rem;color:var(--muted);margin-bottom:6px"><?= h(t('arch_no_folder_label')) ?></div>
     <?php foreach ($orphans as $l) { ?>
     <div style="display:flex;align-items:center;gap:8px;padding:5px 10px;border:1px solid var(--border);border-radius:var(--radius);margin-bottom:4px">
+      <span style="color:var(--muted);font-size:.78rem;font-family:monospace">#<?= (int)$l['id'] ?></span>
       <a href="?action=liga_detail&id=<?= (int)$l['id'] ?>"
          style="color:var(--accent);text-decoration:none;font-size:.87rem;flex:1"><?= h($l['name']) ?></a>
       <form method="post" action="?action=move_liga_archiv" style="display:inline">

@@ -2,7 +2,14 @@
 /**
  * Project: LMOnext
  * Filename: liga.php
- * Fileversion: 3.10.4
+ * Fileversion: 3.10.5
+ * Changelog: 3.10.5 - Neue globale Einstellung "Übersicht-Link anzeigen?" (Admin →
+ *                     Einstellungen → Besucherbereich), entspricht "Ligaauswahl" im alten LMO.
+ *                     Neue Funktion renderBackLinkBlock() baut den "← Zur Übersicht"-Link jetzt
+ *                     als vollständigen HTML-Block (statt nur den Text), damit er sich bei
+ *                     Bedarf komplett ausblenden lässt - alle Templates nutzen jetzt den neuen
+ *                     Platzhalter "ZurueckLinkBlock" statt der fest verankerten Verlinkung
+ * Changelog: 3.10.4
  * Changelog: 3.10.4 - Bindet pdf_export.php jetzt direkt hier ein (nicht mehr über den
  *                     gemeinsamen frontend/bootstrap.php), da liga.php der einzige tatsächliche
  *                     Verwender ist, siehe bootstrap.php 1.6.0
@@ -133,6 +140,22 @@ declare(strict_types = 1);
 require_once __DIR__ . '/frontend/bootstrap.php';
 require_once __DIR__ . '/frontend/pdf_export.php';
 
+/**
+ * Baut den "← Zur Übersicht"-Link als vollständigen HTML-Block (nicht nur
+ * den Text), damit er sich über die neue globale Einstellung
+ * "Übersicht-Link anzeigen?" (Admin → Einstellungen → Besucherbereich)
+ * komplett ausblenden lässt - nicht nur der Text wäre sonst leer, der Link
+ * selbst (mit href) bliebe trotzdem anklickbar sichtbar. Default "an" (kein
+ * stiller Verhaltenswechsel für bestehende Installationen ohne explizite Wahl).
+ */
+function renderBackLinkBlock() : string
+{
+    if (getAdminSetting('show_back_link', '1') !== '1') {
+        return '';
+    }
+    return '<a class="back-link" href="home.php">' . h(tf('liga_back_link')) . '</a>';
+}
+
 // ── PDF-Export des Team-Vergleichs (Direkter Vergleich) ──────────────────────
 // Teamübergreifend, nicht an eine bestimmte Liga gebunden – deshalb hier vor
 // der normalen id/view-Auflösung abgefangen.
@@ -152,6 +175,7 @@ if ($liga === null) {
     renderTemplate($activeTemplate, 'liga_not_found', [
         'Titel'             => h(tf('liga_not_found')),
         'ZurueckLink'       => h(tf('liga_back_link')),
+        'ZurueckLinkBlock'  => renderBackLinkBlock(),
         'NichtGefundenText' => h(tf('liga_not_found')),
     ]);
     exit;
@@ -368,6 +392,7 @@ $tabsBar = renderTabsBar($flags, $ligaId, $currentView);
 renderTemplate($activeTemplate, 'liga', [
     'Titel'        => h($liga['name']),
     'ZurueckLink'  => h(tf('liga_back_link')),
+    'ZurueckLinkBlock' => renderBackLinkBlock(),
     'LigaName'     => h($liga['name']),
     'TypChipClass' => $isKO ? 'chip-yellow' : 'chip-blue',
     'TypLabel'     => $isKO ? h(tf('home_type_ko')) : h(tf('home_type_liga')),

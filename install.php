@@ -2,7 +2,20 @@
 /**
  * Project: LMOnext
  * Filename: install.php
- * Fileversion: 1.7.0
+ * Fileversion: 1.9.0
+ * Changelog: 1.9.0 - Zeitzonen-Auswahl direkt im Installationsformular (bei den Admin-
+ *                     Zugangsdaten), gruppiert nach Kontinent über PHPs eingebaute
+ *                     DateTimeZone::listIdentifiers() (buildTimezoneGroups()) - die gewählte
+ *                     Zeitzone wird sofort mit in admin_settings geschrieben, statt erst
+ *                     nachträglich über die Einstellungsseite gesetzt werden zu müssen
+ * Changelog: 1.8.0
+ * Changelog: 1.8.0 - admin_settings wird jetzt explizit bei der Installation angelegt und mit
+ *                     sinnvollen Startwerten befüllt (show_back_link=1: Liga-Übersicht bei einer
+ *                     frischen Installation sichtbar, timezone=Europe/Berlin), statt sich erst
+ *                     beim ersten Admin-Seitenaufruf implizit auf die PHP-seitigen
+ *                     Standardwerte zu verlassen. INSERT IGNORE - überschreibt bei erneuter
+ *                     Installation über eine vorhandene DB keine bereits gesetzten Werte
+ * Changelog: 1.7.0
  * Changelog: 1.7.0 - Zwei fehlende Voraussetzungsprüfungen ergänzt: Schreibrecht für store/
  *                     (Datenbank-Backups, wird bei Bedarf automatisch angelegt wie der
  *                     Team-Logo-Ordner) und die optionale bzip2-Erweiterung (zweites
@@ -291,9 +304,35 @@ function setupDatabase(array $cfg): array {
                 UNIQUE KEY `token` (`token`),
                 KEY `user_id` (`user_id`)
             ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci",
+
+            // Gleiches Schema wie die Lazy-Erstellung in admin/bootstrap.php
+            // (ensureAdminSettings()) - hier zusätzlich explizit angelegt UND
+            // mit sinnvollen Startwerten befüllt (siehe INSERT IGNORE unten),
+            // damit eine frische Installation von Anfang an einen
+            // vollständigen, erwartbaren Zustand hat (Liga-Übersicht
+            // sichtbar usw.), statt sich erst beim ersten Admin-Seitenaufruf
+            // implizit auf die PHP-seitigen Standardwerte zu verlassen.
+            "CREATE TABLE IF NOT EXISTS `{$p}admin_settings` (
+                `key`   VARCHAR(64)   NOT NULL PRIMARY KEY,
+                `value` VARCHAR(255)  NOT NULL DEFAULT ''
+            ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci",
         ];
 
         foreach ($tables as $sql) { $pdo->exec($sql); }
+
+        // ── Sinnvolle Startwerte für admin_settings bei frischer Installation ──
+        // INSERT IGNORE: bestehende, bereits explizit gesetzte Werte (z.B. bei
+        // einer erneuten Installation über eine vorhandene DB) werden nicht
+        // überschrieben - nur wirklich NEUE Installationen bekommen diese
+        // Startwerte.
+        $defaultSettings = [
+            'show_back_link' => '1', // Liga-Übersicht (home.php + "Zur Übersicht"-Link) sichtbar
+            'timezone'       => $cfg['timezone'] ?? 'Europe/Berlin', // vom Installationsformular gewählt
+        ];
+        $seedStmt = $pdo->prepare("INSERT IGNORE INTO `{$p}admin_settings` (`key`, `value`) VALUES (?, ?)");
+        foreach ($defaultSettings as $settingKey => $settingValue) {
+            $seedStmt->execute([$settingKey, $settingValue]);
+        }
 
         // ── Migration bestehender Installationen ──────────────────────────────
         $partienCols = $pdo->query("SHOW COLUMNS FROM `{$p}liga_partien`")->fetchAll(PDO::FETCH_COLUMN);
@@ -357,6 +396,26 @@ function translateDbError(Throwable $e): string {
         return t('install_db_error_unknown_host');
     }
     return t('install_db_error_generic', ['msg' => $msg]);
+}
+
+/**
+ * Baut die Zeitzonen-Auswahl fürs Installationsformular, gruppiert nach
+ * Kontinent (z.B. "Europe" => ["Europe/Berlin", "Europe/Paris", ...]) -
+ * genau wie die Zeitzonen-Auswahl in admin/view_settings.php, aber über
+ * PHPs eingebaute DateTimeZone::listIdentifiers() erzeugt statt eine zweite,
+ * riesige Liste zu pflegen, die mit der Zeit auseinanderlaufen könnte.
+ *
+ * @return array<string,array<int,string>>
+ */
+function buildTimezoneGroups() : array {
+    $groups = [];
+    foreach (DateTimeZone::listIdentifiers() as $tz) {
+        $slashPos = strpos($tz, '/');
+        $group = $slashPos !== false ? substr($tz, 0, $slashPos) : 'Other';
+        $groups[$group][] = $tz;
+    }
+    ksort($groups);
+    return $groups;
 }
 
 // ── config.php schreiben ──────────────────────────────────────────────────────
@@ -437,7 +496,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $step === 2) {
         'admin_pass'  =>      $_POST['admin_pass'] ?? '',
         'admin_pass2' =>      $_POST['admin_pass2']?? '',
         'site_title'  => trim($_POST['site_title'] ?? 'LMOnext Admin'),
+        'timezone'    => trim($_POST['timezone']   ?? 'Europe/Berlin'),
     ];
+    // Ungültige/manipulierte Zeitzonen-Werte auf den sicheren Standard zurücksetzen
+    try { new DateTimeZone($cfg['timezone']); } catch (Throwable) { $cfg['timezone'] = 'Europe/Berlin'; }
     if ($cfg['db_name']   === '')          $errors[] = t('err_dbname_required');
     if ($cfg['db_user']   === '')          $errors[] = t('err_dbuser_required');
     if ($cfg['admin_user']=== '')          $errors[] = t('err_adminuser_required');
@@ -638,6 +700,21 @@ code{background:var(--bg);padding:1px 5px;border-radius:4px;font-size:.8rem}
         <div class="form-group">
           <label><?= h(t('install_label_password2')) ?> <span>*</span></label>
           <input type="password" name="admin_pass2" required autocomplete="new-password">
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label><?= h(t('install_label_timezone')) ?></label>
+          <select name="timezone">
+            <?php foreach (buildTimezoneGroups() as $tzGroupName => $tzList) { ?>
+            <optgroup label="<?= h($tzGroupName) ?>">
+              <?php foreach ($tzList as $tz) { ?>
+              <option value="<?= h($tz) ?>"<?= $v('timezone', 'Europe/Berlin') === $tz ? ' selected' : '' ?>><?= h($tz) ?></option>
+              <?php } ?>
+            </optgroup>
+            <?php } ?>
+          </select>
+          <p class="form-hint"><?= h(t('install_hint_timezone')) ?></p>
         </div>
       </div>
     </div>

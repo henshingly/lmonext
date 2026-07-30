@@ -2,7 +2,10 @@
 /**
  * Project: LMOnext
  * Filename: lang/frontend/en.php
- * Fileversion: 1.19.2
+ * Fileversion: 1.19.3
+ * Changelog: 1.19.3 - Added key "home_overview_disabled" for the homepage message shown when
+ *                     the league overview is disabled (see home.php 2.1.0)
+ * Changelog: 1.19.2
  * Changelog: 1.19.2 - Added key "h2h_pdf_renamed_note" for the summarized rename note in the
  *                     head-to-head PDF export (see pdf_export.php 1.6.9)
  * Changelog: 1.19.1
@@ -82,6 +85,7 @@ return [
     // ── Home page (home.php, template/*/home.php) ────────────────────────────
     'home_heading_active_ligen' => 'Active leagues',
     'home_no_active_ligen'      => 'No active leagues at the moment.',
+    'home_overview_disabled'    => 'The league overview is disabled.',
     'home_heading_archiv'       => 'Archive',
     'home_type_ko'               => 'KO tournament',
     'home_type_liga'             => 'League',

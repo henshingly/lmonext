@@ -2,7 +2,11 @@
 /**
  * Project: LMOnext
  * Filename: bootstrap.php
- * Fileversion: 1.10.0
+ * Fileversion: 1.10.1
+ * Changelog: 1.10.1 - ensureAdminSettings() seedet jetzt zusätzlich show_back_link=1 (Liga-
+ *                     Übersicht sichtbar), analog zu timezone - für Bestandsinstallationen, die
+ *                     die neue install.php-Seedung (1.8.0) nie durchlaufen haben
+ * Changelog: 1.10.0
  * Changelog: 1.10.0 - Session-Cookie jetzt mit HttpOnly, SameSite=Lax und (bei HTTPS) Secure,
  *                     analog zu frontend/bootstrap.php 1.6.0. Globaler Exception-Handler:
  *                     unerwartete Fehler landen zusätzlich im Server-Log (Kurzfassung bleibt im
@@ -259,8 +263,12 @@ function ensureAdminSettings() : void
             `key`   VARCHAR(64)   NOT NULL PRIMARY KEY,
             `value` VARCHAR(255)  NOT NULL DEFAULT \'\'
         ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci');
-        // Standard: Europe/Berlin
+        // Startwerte, die eine Installation von Anfang an sinnvoll erwartbar
+        // machen sollen (bei frischen Installationen bereits durch install.php
+        // selbst gesetzt, siehe dort - hier zusätzlich für Bestandsinstallationen,
+        // die diese install.php-Version nie durchlaufen haben)
         $db->exec('INSERT IGNORE INTO '.tbl('admin_settings') . ' (`key`, `value`) VALUES (\'timezone\', \'Europe/Berlin\')');
+        $db->exec('INSERT IGNORE INTO '.tbl('admin_settings') . ' (`key`, `value`) VALUES (\'show_back_link\', \'1\')');
     } catch (Throwable) {}
 }
 

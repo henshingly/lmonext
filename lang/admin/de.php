@@ -2,7 +2,16 @@
 /**
  * Project: LMOnext
  * Filename: lang/admin/de.php
- * Fileversion: 1.14.1
+ * Fileversion: 1.14.4
+ * Changelog: 1.14.4 - Übersetzungen für die neue Zeitzonen-Auswahl im Installationsformular
+ *                     ergänzt
+ * Changelog: 1.14.3
+ * Changelog: 1.14.3 - Beschriftung/Hinweis für "Liga-Übersicht anzeigen?" aktualisiert - die
+ *                     Einstellung blendet jetzt auch die Liga-Auswahl auf der Startseite aus,
+ *                     nicht mehr nur den "Zur Übersicht"-Link (siehe home.php 2.1.0)
+ * Changelog: 1.14.2
+ * Changelog: 1.14.2 - Übersetzungen für die neue Einstellung "Übersicht-Link anzeigen?" ergänzt
+ * Changelog: 1.14.1
  * Changelog: 1.14.1 - Übersetzungen für die Richtungswahl bei Team-Verknüpfungen ergänzt
  * Changelog: 1.14.0
  * Changelog: 1.14.0 - Übersetzungen für die neue Team-Verknüpfungen-Funktion ergänzt
@@ -230,6 +239,8 @@ return [
     'install_label_password'     => 'Passwort',
     'install_placeholder_pass'   => 'mind. 8 Zeichen',
     'install_label_password2'    => 'Passwort wiederholen',
+    'install_label_timezone'     => 'Zeitzone',
+    'install_hint_timezone'      => 'Wird für Datums-/Uhrzeitangaben im gesamten Adminbereich verwendet. Später jederzeit unter Einstellungen änderbar.',
     'install_label_email'        => 'E-Mail-Adresse',
     'install_hint_email'         => 'Optional. Wird nur für "Passwort vergessen" benötigt.',
 
@@ -750,6 +761,8 @@ return [
     'settings_hint_show_pdf_buttons'       => 'Wenn nein, wird der PDF-Button in Ergebnisse, Tabelle, Spielplänen und dem Teamvergleich für Besucher komplett ausgeblendet – bei KO- und regulären Ligen gleichermaßen, auf allen Seiten.',
     'settings_label_show_language_switcher' => 'Sprachauswahl anzeigen?',
     'settings_hint_show_language_switcher'  => 'Wenn nein, wird die Sprachauswahl für Besucher auf allen Seiten der Besucheransicht ausgeblendet.',
+    'settings_label_show_back_link'        => 'Liga-Übersicht anzeigen?',
+    'settings_hint_show_back_link'         => 'Wenn nein, wird sowohl der "← Zur Übersicht"-Link auf der Liga-Detailseite als auch die komplette Liga-Auswahl auf der Startseite (aktive Ligen + Archiv) für Besucher ausgeblendet. Ligen sind dann nur noch direkt über liga.php?id=LIGA_ID erreichbar – gedacht für Betreiber, die nur eine einzelne, feste Liga per iframe/include auf einer fremden Webseite einbinden möchten (entspricht "Ligaauswahl" im alten LMO).',
 
     // ── Wartung (Datenbank-Backup/Wiederherstellung) ──────────────────────────
     'wartung_tab_backup'             => 'Backup',

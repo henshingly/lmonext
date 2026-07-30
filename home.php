@@ -2,7 +2,15 @@
 /**
  * Project: LMOnext
  * Filename: home.php
- * Fileversion: 2.0.1
+ * Fileversion: 2.1.0
+ * Changelog: 2.1.0 - Die globale Einstellung "Liga-Übersicht anzeigen?" (Admin →
+ *                     Einstellungen → Besucherbereich, bisher nur für den "← Zur Übersicht"-
+ *                     Link auf der Liga-Detailseite) blendet jetzt auch die komplette
+ *                     Liga-Auswahl hier auf der Startseite aus (aktive Ligen + Archiv) - gedacht
+ *                     für Betreiber, die nur eine einzelne, feste Liga per iframe/include auf
+ *                     einer fremden Webseite einbinden möchten, ohne dass Besucher zu einer
+ *                     Gesamtübersicht gelangen können
+ * Changelog: 2.0.1
  * Changelog: 2.0.1 - Projektname auf "LMOnext" umgestellt (vorher "Online-Liga-Verwaltung Board" / "OLVBoard")
  * Changelog: 2.0.0 - Umbau auf reine Platzhalter-Templates: baut jetzt fertige
  *                     HTML-Fragmente (aktive Ligen, Archiv-Bereich) und übergibt sie
@@ -24,8 +32,19 @@ $activeLigen         = getActiveLigenList();
 $archivByParent      = getArchivFolderTree();
 $archivLigenByFolder = getArchivedLigenByFolder();
 
+// Dieselbe globale Einstellung wie der "← Zur Übersicht"-Link auf der
+// Liga-Detailseite (Admin → Einstellungen → Besucherbereich): wenn aus,
+// zeigt home.php gar keine Liga-Auswahl mehr an (weder aktive Ligen noch
+// Archiv). Gedacht für Betreiber, die NUR eine einzelne, feste Liga über
+// liga.php?id=LIGA_ID per iframe/include auf einer fremden Webseite
+// einbinden möchten, ohne dass Besucher zu einer Gesamtübersicht mit allen
+// Ligen gelangen können.
+$showOverview = getAdminSetting('show_back_link', '1') === '1';
+
 // ── Aktive Ligen: Liste oder Leer-Hinweis ────────────────────────────────────
-if (empty($activeLigen)) {
+if (!$showOverview) {
+    $aktiveLigenInhalt = '<p class="empty-msg">' . h(tf('home_overview_disabled')) . '</p>';
+} elseif (empty($activeLigen)) {
     $aktiveLigenInhalt = '<p class="empty-msg">' . h(tf('home_no_active_ligen')) . '</p>';
 } else {
     $items = '';
@@ -35,9 +54,10 @@ if (empty($activeLigen)) {
     $aktiveLigenInhalt = '<ul class="liga-list">' . $items . '</ul>';
 }
 
-// ── Archiv: nur anzeigen, wenn überhaupt etwas archiviert ist ────────────────
+// ── Archiv: nur anzeigen, wenn überhaupt etwas archiviert ist (und die
+// Übersicht insgesamt nicht deaktiviert ist) ─────────────────────────────────
 $orphans   = $archivLigenByFolder[0] ?? [];
-$hasArchiv = !empty($archivByParent) || !empty($orphans);
+$hasArchiv = $showOverview && (!empty($archivByParent) || !empty($orphans));
 
 $archivBereich = '';
 if ($hasArchiv) {
