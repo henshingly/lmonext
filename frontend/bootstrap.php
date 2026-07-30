@@ -84,10 +84,16 @@ session_start();
 require_once dirname(__DIR__) . '/lang/i18n.php';
 
 // ── Konfiguration ─────────────────────────────────────────────────────────────
-// Lädt entweder die Composer/.env-Variante oder die klassische config.php,
-// je nachdem was install.php beim Installieren angelegt hat (siehe
-// config_loader.php im Projekt-Root für Details zu beiden Varianten).
-require_once dirname(__DIR__) . '/config_loader.php';
+$_configFile = dirname(__DIR__) . '/config.php';
+if (!is_file($_configFile)) {
+    http_response_code(503);
+    die('<!DOCTYPE html><html><head><meta charset="UTF-8"><title>Nicht konfiguriert</title></head>'
+      . '<body style="font-family:system-ui;text-align:center;padding:60px 20px;color:#333">'
+      . '<h2>⚠️ config.php nicht gefunden</h2>'
+      . '<p>Bitte zuerst den <a href="install.php">Installer</a> ausführen.</p>'
+      . '</body></html>');
+}
+require_once $_configFile;
 
 // ── PDO ──────────────────────────────────────────────────────────────────────
 function getDB() : PDO
