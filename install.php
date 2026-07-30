@@ -2,7 +2,34 @@
 /**
  * Project: LMOnext
  * Filename: install.php
- * Fileversion: 1.9.0
+ * Fileversion: 2.1.0
+ * Changelog: 2.1.0 - Ein bereits systemweit installiertes composer-Kommando (z.B.
+ *                     /usr/bin/composer) wird jetzt bevorzugt verwendet, falls vorhanden
+ *                     (findSystemComposer()) - meist besser gepflegt/aktueller als die
+ *                     mitgelieferte bin/composer.phar. Schlägt das fehl oder ist keins
+ *                     vorhanden, wird wie bisher auf bin/composer.phar zurückgefallen. Die
+ *                     eigentliche Prozess-Ausführung wurde in runComposerCommand()
+ *                     ausgelagert, damit beide Varianten dieselbe robuste
+ *                     Timeout/Fehlerbehandlung nutzen
+ * Changelog: 2.0.1
+ * Changelog: 2.0.1 - composer.phar liegt jetzt in bin/ statt im Projekt-Hauptordner (mit
+ *                     .htaccess-Sperre analog zu store/), damit der Hauptordner übersichtlich
+ *                     bleibt. Composer selbst braucht dafür keine Anpassung, da das
+ *                     Arbeitsverzeichnis für die Abhängigkeitsauflösung ohnehin bewusst auf den
+ *                     Projekt-Hauptordner gesetzt ist (proc_open(..., __DIR__)), unabhängig
+ *                     davon, wo composer.phar selbst liegt
+ * Changelog: 2.0.0
+ * Changelog: 2.0.0 - Optionale Composer/.env-Variante ergänzt: versucht bei der Installation
+ *                     automatisch, composer.phar auszuführen (composerFilesReady(),
+ *                     findPhpCli(), installComposerDependencies(), tryComposerSetup()). Bei
+ *                     Erfolg wird eine .env-Datei geschrieben (writeEnvFile()) statt der
+ *                     klassischen config.php - schlägt IRGENDEIN Schritt fehl (kein
+ *                     composer.phar, proc_open deaktiviert, Netzwerkproblem o.ä.), wird
+ *                     transparent auf die bisherige config.php-Variante zurückgefallen, exakt
+ *                     wie zuvor. Für den Nutzer identisches Ergebnis in beiden Fällen -
+ *                     config_loader.php (siehe dort) entscheidet zur Laufzeit, welche Variante
+ *                     aktiv ist
+ * Changelog: 1.9.0
  * Changelog: 1.9.0 - Zeitzonen-Auswahl direkt im Installationsformular (bei den Admin-
  *                     Zugangsdaten), gruppiert nach Kontinent über PHPs eingebaute
  *                     DateTimeZone::listIdentifiers() (buildTimezoneGroups()) - die gewählte
@@ -81,6 +108,17 @@ define('ADMIN_FILE',      __DIR__ . '/admin.php');
 define('CONFIG_FILE',     __DIR__ . '/config.php');
 define('MIN_PHP',         '8.2.0');
 define('INSTALL_VERSION', '1.2.0');
+
+// ── Composer/.env-Variante (optional, siehe tryComposerSetup() weiter unten) ──
+// Wird nur genutzt, wenn composer.phar mitgeliefert wurde UND der Server
+// externe Prozesse starten darf. Schlägt irgendein Schritt fehl, arbeitet der
+// Installer transparent mit der klassischen config.php weiter - für den
+// Nutzer macht das keinen Unterschied, außer dass composer.phar danach
+// gefahrlos gelöscht werden kann.
+define('ENV_FILE',         __DIR__ . '/.env');
+define('COMPOSER_JSON',    __DIR__ . '/composer.json');
+define('COMPOSER_PHAR',    __DIR__ . '/bin/composer.phar');
+define('COMPOSER_AUTOLOAD', __DIR__ . '/vendor/autoload.php');
 
 // ── Hilfsfunktionen ───────────────────────────────────────────────────────────
 function h(mixed $v): string {
@@ -418,6 +456,309 @@ function buildTimezoneGroups() : array {
     return $groups;
 }
 
+/**
+ * Prüft, ob die Composer-Dateien des Projekts vorhanden sind (composer.json
+ * wird mitgeliefert, composer.phar optional für Server ohne systemweites
+ * Composer-Kommando).
+ */
+function composerFilesReady() : bool
+{
+    return is_file(COMPOSER_JSON);
+}
+
+/**
+ * Sucht das PHP-CLI-Binary. PHP_BINARY kann unter PHP-FPM auf php-fpm zeigen;
+ * Composer benötigt jedoch das CLI-Binary.
+ */
+function findPhpCli() : ?string
+{
+    $candidates = [];
+
+    if (defined('PHP_BINDIR')) {
+        $candidates[] = rtrim(PHP_BINDIR, '/\\') . DIRECTORY_SEPARATOR . 'php';
+    }
+    if (defined('PHP_BINARY')) {
+        $binary = PHP_BINARY;
+        if (basename($binary) === 'php') {
+            $candidates[] = $binary;
+        }
+        $dir = dirname($binary);
+        $candidates[] = $dir . DIRECTORY_SEPARATOR . 'php';
+        $candidates[] = dirname($dir) . DIRECTORY_SEPARATOR . 'bin' . DIRECTORY_SEPARATOR . 'php';
+    }
+    foreach (['/opt/homebrew/bin/php', '/usr/local/bin/php', '/usr/bin/php'] as $candidate) {
+        $candidates[] = $candidate;
+    }
+    if (function_exists('shell_exec')) {
+        $fromPath = trim((string)@shell_exec('command -v php 2>/dev/null'));
+        if ($fromPath !== '') {
+            $candidates[] = $fromPath;
+        }
+    }
+
+    $seen = [];
+    foreach ($candidates as $candidate) {
+        if ($candidate === '' || isset($seen[$candidate]) || !is_file($candidate) || !is_executable($candidate)) {
+            continue;
+        }
+        $seen[$candidate] = true;
+        $cmd = escapeshellarg($candidate) . ' -r ' . escapeshellarg('echo PHP_SAPI;');
+        $out = @shell_exec($cmd . ' 2>/dev/null');
+        if (trim((string)$out) === 'cli') {
+            return $candidate;
+        }
+    }
+    return null;
+}
+
+/**
+ * Sucht ein bereits systemweit installiertes composer-Kommando (z.B.
+ * /usr/bin/composer oder /usr/local/bin/composer). Wird bevorzugt gegenüber
+ * der mitgelieferten bin/composer.phar verwendet, falls vorhanden - viele
+ * Hoster pflegen ihr systemweites Composer aktueller, als es eine mit
+ * LMOnext ausgelieferte .phar-Datei je sein könnte. Liefert null, wenn
+ * nichts Brauchbares gefunden wird (dann greift der Rückfall auf
+ * bin/composer.phar in installComposerDependencies()).
+ */
+function findSystemComposer() : ?string
+{
+    if (!function_exists('shell_exec')) {
+        return null;
+    }
+    $path = trim((string)@shell_exec('command -v composer 2>/dev/null'));
+    if ($path === '' || !is_file($path) || !is_executable($path)) {
+        return null;
+    }
+    // Sanity-Check: läuft es tatsächlich und meldet sich als Composer?
+    // (z.B. um einen gleichnamigen, aber unpassenden Fund im PATH auszuschließen)
+    $out = trim((string)@shell_exec(escapeshellarg($path) . ' --version 2>/dev/null'));
+    if (stripos($out, 'Composer') === false) {
+        return null;
+    }
+    return $path;
+}
+
+/**
+ * Liefert eine kurze, für den Installer verständliche Composer-Statusmeldung
+ * (nur informativ, z.B. für eine spätere Anzeige - die eigentliche
+ * Entscheidung trifft installComposerDependencies()/tryComposerSetup()).
+ */
+function composerStatus() : array
+{
+    if (!composerFilesReady()) {
+        return ['ok' => false, 'info' => 'composer.json fehlt'];
+    }
+    if (is_file(COMPOSER_AUTOLOAD)) {
+        return ['ok' => true, 'info' => 'vendor/autoload.php bereits vorhanden'];
+    }
+    if (!function_exists('proc_open')) {
+        return ['ok' => false, 'info' => 'proc_open() ist auf diesem Server deaktiviert'];
+    }
+    if (findSystemComposer() !== null) {
+        return ['ok' => true, 'info' => 'systemweites composer-Kommando gefunden'];
+    }
+    if (findPhpCli() === null) {
+        return ['ok' => false, 'info' => 'PHP-CLI nicht gefunden (PHP-FPM allein reicht nicht)'];
+    }
+    if (is_file(COMPOSER_PHAR) && is_readable(COMPOSER_PHAR)) {
+        return ['ok' => true, 'info' => 'bin/composer.phar + PHP-CLI vorhanden'];
+    }
+    return ['ok' => false, 'info' => 'Weder ein systemweites composer-Kommando noch bin/composer.phar + PHP-CLI verfügbar'];
+}
+
+/**
+ * Führt Composer einmalig aus und erzeugt vendor/autoload.php. Composer wird
+ * bewusst mit dem PHP-CLI gestartet, nie direkt als Shell-Script. Liefert ein
+ * leeres Array bei Erfolg, sonst eine Liste von Fehlermeldungen.
+ */
+/**
+ * Startet einen Composer-Befehl (fertig zusammengesetzter, bereits
+ * escapter Shell-Befehl) und wartet bis zu 180 Sekunden auf dessen Ende.
+ * Liefert ein leeres Array bei Erfolg (vendor/autoload.php muss danach
+ * existieren), sonst eine Liste von Fehlermeldungen. Wird sowohl für ein
+ * evtl. systemweit installiertes composer-Kommando als auch für die
+ * mitgelieferte bin/composer.phar verwendet (siehe installComposerDependencies()).
+ */
+function runComposerCommand(string $cmd) : array
+{
+    $descriptors = [0 => ['pipe', 'r'], 1 => ['pipe', 'w'], 2 => ['pipe', 'w']];
+    $process = @proc_open($cmd, $descriptors, $pipes, __DIR__);
+    if (!is_resource($process)) {
+        return ['Composer konnte nicht gestartet werden.'];
+    }
+
+    fclose($pipes[0]);
+    stream_set_blocking($pipes[1], false);
+    stream_set_blocking($pipes[2], false);
+    $stdout = ''; $stderr = ''; $started = microtime(true);
+
+    while (true) {
+        $stdout .= (string)stream_get_contents($pipes[1]);
+        $stderr .= (string)stream_get_contents($pipes[2]);
+        $state = proc_get_status($process);
+        if (!$state['running']) {
+            break;
+        }
+        if ((microtime(true) - $started) > 180) {
+            proc_terminate($process);
+            fclose($pipes[1]); fclose($pipes[2]); proc_close($process);
+            return ['Composer-Installation wurde nach 180 Sekunden abgebrochen.'];
+        }
+        usleep(100000);
+    }
+
+    $stdout .= (string)stream_get_contents($pipes[1]);
+    $stderr .= (string)stream_get_contents($pipes[2]);
+    fclose($pipes[1]); fclose($pipes[2]);
+    $exitCode = proc_close($process);
+
+    if ($exitCode !== 0 || !is_file(COMPOSER_AUTOLOAD)) {
+        $details = trim($stderr !== '' ? $stderr : $stdout);
+        if ($details === '') { $details = 'Unbekannter Composer-Fehler.'; }
+        return ['Composer konnte die Abhängigkeiten nicht installieren: ' . $details];
+    }
+    return [];
+}
+
+/**
+ * Installiert die Composer-Abhängigkeiten. Versucht zuerst ein evtl. bereits
+ * systemweit installiertes composer-Kommando (meist besser gepflegt/aktueller
+ * als eine mitgelieferte .phar-Datei), fällt bei Fehlschlag oder wenn keins
+ * gefunden wird auf die mitgelieferte bin/composer.phar zurück (über
+ * PHP-CLI gestartet). Liefert ein leeres Array bei Erfolg, sonst eine Liste
+ * aller aufgetretenen Fehlermeldungen (aus beiden Versuchen, falls beide
+ * fehlschlugen).
+ */
+function installComposerDependencies() : array
+{
+    if (!composerFilesReady()) {
+        return ['composer.json fehlt.'];
+    }
+    if (is_file(COMPOSER_AUTOLOAD)) {
+        return [];
+    }
+    if (!function_exists('proc_open')) {
+        return ['proc_open() ist auf diesem Server deaktiviert.'];
+    }
+
+    $flags = '--no-dev --prefer-dist --optimize-autoloader --no-interaction --no-progress';
+    $errors = [];
+
+    // 1. Bevorzugt: systemweit installiertes composer-Kommando
+    $systemComposer = findSystemComposer();
+    if ($systemComposer !== null) {
+        $cmd = escapeshellarg($systemComposer) . ' install ' . $flags;
+        $result = runComposerCommand($cmd);
+        if (empty($result)) {
+            return [];
+        }
+        foreach ($result as $msg) {
+            $errors[] = 'Systemweites composer-Kommando: ' . $msg;
+        }
+    }
+
+    // 2. Rückfall: mitgelieferte bin/composer.phar über PHP-CLI
+    $phpCli = findPhpCli();
+    if ($phpCli === null) {
+        $errors[] = 'PHP-CLI nicht gefunden (für bin/composer.phar nötig).';
+        return $errors;
+    }
+    if (!is_file(COMPOSER_PHAR) || !is_readable(COMPOSER_PHAR)) {
+        $errors[] = 'bin/composer.phar nicht gefunden oder nicht lesbar.';
+        return $errors;
+    }
+    $cmd = escapeshellarg($phpCli) . ' ' . escapeshellarg(COMPOSER_PHAR) . ' install ' . $flags;
+    $result = runComposerCommand($cmd);
+    if (!empty($result)) {
+        foreach ($result as $msg) {
+            $errors[] = 'bin/composer.phar: ' . $msg;
+        }
+        error_log('LMOnext Installer Composer: ' . implode(' ', $errors));
+        return $errors;
+    }
+    return [];
+}
+
+/**
+ * Schreibt eine .env-Datei (Standardformat für vlucas/phpdotenv) mit den vom
+ * Installationsformular übernommenen Werten - Gegenstück zu writeConfig() für
+ * die Composer-Variante. Werte werden in doppelten Anführungszeichen
+ * geschrieben, darin enthaltene Anführungszeichen/Backslashes escaped.
+ */
+function writeEnvFile(array $cfg) : bool
+{
+    $esc = static fn(string $v) : string => '"' . str_replace(['\\', '"'], ['\\\\', '\\"'], $v) . '"';
+
+    $host   = (string)$cfg['db_host'];
+    $port   = (int)($cfg['db_port'] ?? 3306);
+    $name   = preg_replace('/[^a-zA-Z0-9_]/', '', (string)$cfg['db_name']);
+    $user   = (string)$cfg['db_user'];
+    $pass   = (string)$cfg['db_pass'];
+    $prefix = preg_replace('/[^a-zA-Z0-9_]/', '', (string)($cfg['db_prefix'] ?? 'lmonext_'));
+    $tz     = (string)($cfg['timezone'] ?? 'Europe/Berlin');
+    $ts     = date('Y-m-d H:i:s');
+    $ver    = INSTALL_VERSION;
+
+    $content = <<<ENV
+    # LMOnext – Umgebungskonfiguration (Composer/.env-Variante)
+    # Generiert: {$ts} (LMOnext Installer v{$ver})
+    # Diese Datei wurde automatisch erstellt. Manuelle Änderungen sind möglich.
+    # Nicht in eine öffentliche Versionsverwaltung einchecken (enthält Zugangsdaten)!
+
+    DB_HOST={$esc($host)}
+    DB_PORT={$port}
+    DB_NAME={$esc($name)}
+    DB_USER={$esc($user)}
+    DB_PASS={$esc($pass)}
+    DB_CHARSET="utf8mb4"
+    DB_PREFIX={$esc($prefix)}
+    DEFAULT_LANGUAGE="de"
+    DEFAULT_TEMPLATE="default"
+
+    ENV;
+
+    $ok = @file_put_contents(ENV_FILE, $content, LOCK_EX);
+    if ($ok === false) {
+        return false;
+    }
+    @chmod(ENV_FILE, 0640);
+    return true;
+}
+
+/**
+ * Versucht, die Composer/.env-Variante aufzusetzen (composer.phar ausführen +
+ * .env schreiben). Liefert true bei vollem Erfolg. Bei JEDEM Fehlschlag
+ * (egal welcher Schritt) räumt die Funktion evtl. halb erzeugte Dateien nicht
+ * zwingend weg, aber der Aufrufer fällt einfach auf writeConfig()/config.php
+ * zurück - die klassische Variante bleibt daher IMMER die sichere Grundlage.
+ */
+function tryComposerSetup(array $cfg) : bool
+{
+    if (!composerFilesReady()) {
+        return false;
+    }
+    $composerErrors = installComposerDependencies();
+    if (!empty($composerErrors)) {
+        error_log('LMOnext Installer: Composer-Variante übersprungen - ' . implode(' ', $composerErrors));
+        return false;
+    }
+    if (!is_file(COMPOSER_AUTOLOAD)) {
+        return false;
+    }
+    // Sanity-Check: die für uns entscheidende Klasse muss sich auch wirklich
+    // laden lassen, nicht nur die Datei existieren.
+    try {
+        require_once COMPOSER_AUTOLOAD;
+        if (!class_exists(\LMOnext\Core\Env::class)) {
+            return false;
+        }
+    } catch (\Throwable $e) {
+        error_log('LMOnext Installer: Composer-Autoload-Sanity-Check fehlgeschlagen - ' . $e->getMessage());
+        return false;
+    }
+    return writeEnvFile($cfg);
+}
+
 // ── config.php schreiben ──────────────────────────────────────────────────────
 function writeConfig(array $cfg): bool {
     $host   = addslashes($cfg['db_host']);
@@ -514,10 +855,20 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $step === 2) {
         $dbErrors = setupDatabase($cfg);
         if (!empty($dbErrors)) {
             $errors = array_merge($errors, $dbErrors);
-        } elseif (!writeConfig($cfg)) {
-            $errors[] = t('err_config_write_failed');
         } else {
-            selfDestructAndRedirect();
+            // Composer/.env-Variante versuchen (siehe tryComposerSetup()) -
+            // schlägt sie fehl (egal aus welchem Grund: kein composer.phar,
+            // proc_open deaktiviert, Netzwerkproblem beim Abruf der
+            // Abhängigkeiten usw.), wird transparent auf die klassische
+            // config.php zurückgefallen. Für den Nutzer ist das Ergebnis
+            // identisch - nur WIE die Zugangsdaten gespeichert werden,
+            // unterscheidet sich.
+            $usedComposer = tryComposerSetup($cfg);
+            if ($usedComposer || writeConfig($cfg)) {
+                selfDestructAndRedirect();
+            } else {
+                $errors[] = t('err_config_write_failed');
+            }
         }
     }
     $step = 2;
