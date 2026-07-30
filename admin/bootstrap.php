@@ -99,21 +99,11 @@ set_exception_handler(static function (Throwable $e) : void {
        . '</body></html>';
 });
 
-// ── Konfiguration aus config.php laden ───────────────────────────────────────
-$_configFile = dirname(__DIR__) . '/config.php';
-if (!file_exists($_configFile)) {
-    http_response_code(503);
-    die('<html><head><meta charset="UTF-8"><title>Nicht konfiguriert</title>'
-      . '<style>body{font-family:system-ui;background:#0f1117;color:#e2e8f0;display:flex;'
-      . 'align-items:center;justify-content:center;min-height:100vh;margin:0}'
-      . '.box{background:#1a1d27;border:1px solid #2e3247;border-radius:8px;padding:32px 40px;text-align:center}'
-      . 'h2{color:#ef4444;margin-bottom:12px}p{color:#64748b;font-size:.9rem}'
-      . 'a{color:#3b82f6}</style></head><body><div class="box">'
-      . '<h2>⚠️ config.php nicht gefunden</h2>'
-      . '<p>Bitte zuerst den <a href="install.php">Installer</a> ausführen.</p>'
-      . '</div></body></html>');
-}
-require_once $_configFile;
+// ── Konfiguration ─────────────────────────────────────────────────────────────
+// Lädt entweder die Composer/.env-Variante oder die klassische config.php,
+// je nachdem was install.php beim Installieren angelegt hat (siehe
+// config_loader.php im Projekt-Root für Details zu beiden Varianten).
+require_once dirname(__DIR__) . '/config_loader.php';
 
 defined('DB_PORT')      || define('DB_PORT',      3306);
 defined('DB_CHARSET')   || define('DB_CHARSET',   'utf8mb4');
