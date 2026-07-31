@@ -15,7 +15,7 @@
  *                     require_once geladen (kein PSR-4-Autoloading nötig), damit die bisherige
  *                     "Dateien hochladen und fertig"-Installation auf Shared Hosting unverändert
  *                     funktioniert. Ursprüngliche Idee/Struktur-Vorlage stammt von einer
- *                     Freund-Version des Nutzers (danke!), hier ohne die dortige .env/Composer-
+ *                     Version von Torsten Hofmann (danke!), hier ohne die dortige .env/Composer-
  *                     Anbindung übernommen. Alte Version vollständig als data_liga_pretraits.php
  *                     erhalten
  * Changelog: 2.21.0 - Performance: gezielte Speicher-Caches (pro Request) für getLigaOptions(),
