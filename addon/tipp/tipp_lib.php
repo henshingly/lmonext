@@ -2,7 +2,13 @@
 /**
  * Project: LMOnext
  * Filename: addon/tipp/tipp_lib.php
- * Fileversion: 0.4.1
+ * Fileversion: 0.5.0
+ * Changelog: 0.5.0 - Neue Funktionen tippIstAktiv() (mind. eine Liga fürs Tippspiel
+ *                     freigegeben?), tippRenderSiteLink() (Header-/Footer-Link, je nach
+ *                     Template - siehe layout.tpl.php) und tippRenderHomeCard() (Werbe-Karte
+ *                     auf der Startseite, siehe home.tpl.php). Behebt eine echte Lücke: das
+ *                     Tippspiel war bislang nirgends von der Besucherseite aus verlinkt, nur
+ *                     per direkter URL erreichbar
  * Changelog: 0.4.1 - Bugfix: getAllTippSettings() cachte die Einstellungen statisch pro Request,
  *                     ohne dass setTippSetting()/setTippSettings() diesen Cache invalidierten -
  *                     ein erneuter getTippSetting()-Aufruf im selben Request (z.B. bei einer
@@ -169,6 +175,55 @@ function getTippLigaFreigabeIds() : array
     } catch (Throwable) {
         return [];
     }
+}
+
+/**
+ * Ist das Tippspiel gerade "aktiv" (mind. eine Liga fürs Tippen freigegeben)?
+ * Steuert, ob der Tippspiel-Link im Header/Footer und die Startseiten-Karte
+ * überhaupt erscheinen - ein leeres Tippspiel ohne freigegebene Liga soll
+ * Besuchern nicht als Sackgasse präsentiert werden.
+ */
+function tippIstAktiv() : bool
+{
+    if (getTippSetting('tippbare_immer_alle', '1') === '1') {
+        return !empty(getTippbareLigenKandidaten());
+    }
+    return !empty(getTippLigaFreigabeIds());
+}
+
+/**
+ * Kleiner Text-Link fürs Grundgerüst (Header bei "default", Footer bei den
+ * übrigen vier Templates - siehe jeweiliges layout.tpl.php), analog zu
+ * renderLanguageSwitcher(). Gibt einen leeren String zurück, wenn
+ * tippIstAktiv() false ist - Aufrufer muss das selbst NICHT prüfen.
+ */
+function tippRenderSiteLink() : string
+{
+    if (!tippIstAktiv()) {
+        return '';
+    }
+    return '<a class="tipp-site-link" href="addon/tipp/tipp.php">'
+         . htmlspecialchars(tf('tf_tipp_header_link'), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') . '</a>';
+}
+
+/**
+ * HTML-Karte für die Startseite (nur home.php, siehe home.tpl.php je
+ * Template) - wirbt fürs Tippspiel, sofern aktiv. Bewusst als eigene
+ * Funktion statt einer weiteren Fallunterscheidung in home.php selbst, da
+ * das Markup templateübergreifend identisch ist (nur die umgebende
+ * .card-Klasse wird bereits von den .tpl.php-Dateien gestellt).
+ */
+function tippRenderHomeCard() : string
+{
+    if (!tippIstAktiv()) {
+        return '';
+    }
+    $esc = static fn(string $v) : string => htmlspecialchars($v, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8');
+    return '<div class="card tipp-home-card">'
+         . '<h2>' . $esc(tf('tf_tipp_home_card_titel')) . '</h2>'
+         . '<p>' . $esc(tf('tf_tipp_home_card_text')) . '</p>'
+         . '<p><a class="btn btn-primary" href="addon/tipp/tipp.php">' . $esc(tf('tf_tipp_home_card_button')) . '</a></p>'
+         . '</div>';
 }
 
 /**

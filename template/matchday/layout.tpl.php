@@ -2,7 +2,9 @@
 <html lang="<!--HtmlLang-->">
 <head>
 <!--
-  Template: matchday | Filename: layout.tpl.php | Fileversion: 1.0.4
+  Template: matchday | Filename: layout.tpl.php | Fileversion: 1.0.5
+  Changelog: 1.0.5 - Neuer Platzhalter "TippspielLink" im Footer, neben der Sprachauswahl
+                     (siehe frontend/template_engine.php 2.6.0)
   Changelog: 1.0.4 - CSS für ".h2h-match-today" ergänzt (siehe default 1.15.6)
   Changelog: 1.0.3 - CSS für den neuen "Spielfrei"-Hinweis (spielfrei_note.tpl.php) ergänzt
   Changelog: 1.0.2 - Auf Wunsch: kein Header mehr. Sprachauswahl in den Footer verschoben
@@ -334,7 +336,7 @@ footer.site .template-switch select:hover{color:var(--ink)}
 </main>
 
 <footer class="site">
-  <div class="lang-switch-wrap"><!--Sprachauswahl--></div>
+  <div class="lang-switch-wrap"><!--TippspielLink--> <!--Sprachauswahl--></div>
   LMOnext <!--Version--><br><!--TemplateZeile--><br><!--Berechnungszeit-->
 </footer>
 

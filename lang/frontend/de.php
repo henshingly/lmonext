@@ -2,7 +2,9 @@
 /**
  * Project: LMOnext
  * Filename: lang/frontend/de.php
- * Fileversion: 1.21.0
+ * Fileversion: 1.22.0
+ * Changelog: 1.22.0 - Übersetzungen für den neuen Tippspiel-Link in Header/Footer und die
+ *                     Startseiten-Werbekarte ergänzt (siehe addon/tipp/tipp_lib.php 0.5.0)
  * Changelog: 1.21.0 - Übersetzungen für die neue Tippspiel-Rangliste ergänzt (siehe
  *                     addon/tipp/tipp.php 0.3.0, tippGetRangliste() in frontend_tipp.php 0.3.0)
  * Changelog: 1.20.2 - Fehlenden Schlüssel "tf_tipp_col_nickname" für die Spaltenüberschrift
@@ -324,6 +326,10 @@ return [
     'tf_tipp_einsicht_titel'       => 'Tippeinsicht',
     'tf_tipp_zur_abgabe'           => 'Zur Tippabgabe',
     'tf_tipp_rangliste_titel'      => 'Rangliste',
+    'tf_tipp_header_link'          => '🎯 Tippspiel',
+    'tf_tipp_home_card_titel'      => 'Tippspiel',
+    'tf_tipp_home_card_text'       => 'Tippe die Ergebnisse deiner Lieblingsliga und miss dich mit anderen Tippern in der Rangliste!',
+    'tf_tipp_home_card_button'     => 'Jetzt mitmachen',
     'tf_tipp_rangliste_leer'       => 'Noch keine Tipps für die Rangliste vorhanden.',
     'tf_tipp_col_platz'            => 'Platz',
     'tf_tipp_col_spiele_getippt'   => 'Sp. getippt',

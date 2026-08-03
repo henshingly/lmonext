@@ -2,7 +2,11 @@
 /**
  * Project: LMOnext
  * Filename: bootstrap.php
- * Fileversion: 1.6.0
+ * Fileversion: 1.6.1
+ * Changelog: 1.6.1 - addon/tipp/tipp_lib.php zentral eingebunden (analog zu
+ *                     addon/player/frontend_spielerstat.php), damit tippIstAktiv()/
+ *                     tippRenderSiteLink()/tippRenderHomeCard() auf jeder Besucherseite
+ *                     verfügbar sind - Tippspiel-Link in Header/Footer und Startseiten-Karte
  * Changelog: 1.6.0 - Performance-/Robustheitsverbesserungen: getAdminSetting() liest alle
  *                     Einstellungen jetzt in EINER Abfrage pro Request statt einer eigenen
  *                     Abfrage pro Schlüssel. pdf_export.php wird nicht mehr pauschal für jeden
@@ -179,6 +183,7 @@ $activeTemplate        = resolveActiveTemplate($activeTemplateDefault, $allowTem
 require_once __DIR__ . '/data_home.php';
 require_once __DIR__ . '/data_liga.php';
 require_once __DIR__ . '/../addon/player/frontend_spielerstat.php';
+require_once __DIR__ . '/../addon/tipp/tipp_lib.php';
 // pdf_export.php wird bewusst NICHT hier eingebunden: die Datei ist recht groß
 // (PHP muss sie sonst bei JEDEM Seitenaufruf parsen, auch auf home.php und den
 // Mini-Addons, die sie nie brauchen) und wird ausschließlich von liga.php

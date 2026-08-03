@@ -2,7 +2,11 @@
 /**
  * Project: LMOnext
  * Filename: template_engine.php
- * Fileversion: 2.5.1
+ * Fileversion: 2.6.0
+ * Changelog: 2.6.0 - Neuer automatischer Platzhalter "TippspielLink" (analog zu
+ *                     "Sprachauswahl"): renderTemplate() ruft tippRenderSiteLink() auf, das
+ *                     selbst prüft ob das Tippspiel aktiv ist (tippIstAktiv()) und ggf. leer
+ *                     bleibt - Controller/Templates müssen nichts Zusätzliches tun
  * Changelog: 2.5.1 - Neue globale Einstellung "Sprachauswahl anzeigen?" ausgewertet: die
  *                     Sprachauswahl im Footer/Header wird unterdrückt, wenn deaktiviert – gilt
  *                     zentral für alle Templates und alle Seiten (renderTemplate() wird sowohl
@@ -258,6 +262,7 @@ function renderTemplate(string $activeTemplate, string $page, array $vars = []) 
         'Sprachauswahl' => getAdminSetting('show_language_switcher', '1') === '1' ? renderLanguageSwitcher('frontend') : '',
         'Version'       => h(getAppVersion()),
         'TemplateZeile' => $templateZeile,
+        'TippspielLink' => tippRenderSiteLink(),
     ];
     $pageHtml          = loadTemplateFile($page . '.tpl.php', $vars);
     $vars['Hauptteil'] = $pageHtml;

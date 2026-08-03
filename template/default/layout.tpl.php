@@ -2,7 +2,10 @@
 <html lang="<!--HtmlLang-->">
 <head>
 <!--
-  Template: default | Filename: layout.tpl.php | Fileversion: 1.15.6
+  Template: default | Filename: layout.tpl.php | Fileversion: 1.15.7
+  Changelog: 1.15.7 - Neuer Platzhalter "TippspielLink" im Header, neben der Sprachauswahl
+                      (siehe frontend/template_engine.php 2.6.0) - bleibt leer, wenn das
+                      Tippspiel nicht aktiv ist
   Changelog: 1.15.6 - CSS für ".h2h-match-today" ergänzt: der "(heute TEAM_HEUTE)"-Zusatz im
                      Teamvergleich-Modal erscheint jetzt als eigene Unterzeile statt inline
                      hinter dem Namen (siehe data_liga.php 2.20.0)
@@ -355,6 +358,7 @@ footer.site .template-switch select:hover{color:var(--accent)}
 
 <header class="site">
   <a class="logo" href="home.php"><img src="assets/logo.svg" alt="LMOnext" style="height:53px;width:auto;display:block"></a>
+  <div class="tipp-link-wrap"><!--TippspielLink--></div>
   <div class="lang-switch-wrap"><!--Sprachauswahl--></div>
 </header>
 

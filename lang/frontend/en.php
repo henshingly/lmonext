@@ -2,7 +2,9 @@
 /**
  * Project: LMOnext
  * Filename: lang/frontend/en.php
- * Fileversion: 1.21.0
+ * Fileversion: 1.22.0
+ * Changelog: 1.22.0 - Added translations for the new Tippspiel link in the header/footer and
+ *                     the homepage promo card (see addon/tipp/tipp_lib.php 0.5.0)
  * Changelog: 1.21.0 - Added translations for the new Tippspiel leaderboard (see
  *                     addon/tipp/tipp.php 0.3.0, tippGetRangliste() in frontend_tipp.php 0.3.0)
  * Changelog: 1.20.2 - Added missing key "tf_tipp_col_nickname" for the column header in the
@@ -322,6 +324,10 @@ return [
     'tf_tipp_einsicht_titel'       => 'Tip Overview',
     'tf_tipp_zur_abgabe'           => 'To tip submission',
     'tf_tipp_rangliste_titel'      => 'Leaderboard',
+    'tf_tipp_header_link'          => '🎯 Prediction game',
+    'tf_tipp_home_card_titel'      => 'Prediction game',
+    'tf_tipp_home_card_text'       => 'Predict the results of your favourite league and compete with other players on the leaderboard!',
+    'tf_tipp_home_card_button'     => 'Join now',
     'tf_tipp_rangliste_leer'       => 'No tips for the leaderboard yet.',
     'tf_tipp_col_platz'            => 'Rank',
     'tf_tipp_col_spiele_getippt'   => 'Games tipped',
