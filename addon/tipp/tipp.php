@@ -2,7 +2,14 @@
 /**
  * Project: LMOnext
  * Filename: addon/tipp/tipp.php
- * Fileversion: 0.1.0
+ * Fileversion: 0.3.0
+ * Changelog: 0.3.0 - Neue Aktion "rangliste": zeigt die globale Rangliste (tippGetRangliste())
+ *                     als Tabelle mit geteilten Plätzen bei Punktgleichheit, eigene Zeile fett
+ *                     hervorgehoben. Verlinkung von/zu Tippabgabe und Tippeinsicht ergänzt
+ * Changelog: 0.2.0 - Neue Aktion "einsicht" (Tippeinsicht): zeigt für jedes Spiel eines
+ *                     Spieltags die Tipps aller Tipper, sofern gemäß Admin-Einstellung schon
+ *                     sichtbar
+ * Changelog: 0.1.0
  * Changelog: 0.1.0 - Initiale (vorläufige) Version der Tipper-Ansicht. Einzelner Einstiegspunkt
  *                     mit ?action=-Steuerung (login/register/confirm/logout/abgabe/save), analog
  *                     zu liga.php/admin.php. Bewusst schlankes, eigenständiges HTML ohne
@@ -191,6 +198,120 @@ if ($action === 'login') {
     }
     redirectTo('?action=abgabe&liga=' . $ligaId . '&spieltag=' . $spieltagNr);
 
+// ═══════════════════════════════════════════════════════════════════════
+// TIPPEINSICHT
+// ═══════════════════════════════════════════════════════════════════════
+} elseif ($action === 'einsicht') {
+    tippRequireLogin();
+    $tipper = tippCurrentUser();
+
+    $ligaIds = getTippSetting('tippbare_immer_alle', '1') === '1'
+        ? array_map(fn($l) => (int)$l['id'], getTippbareLigenKandidaten())
+        : getTippLigaFreigabeIds();
+
+    if (empty($ligaIds)) {
+        echo '<h1>' . h(tf('tf_tipp_einsicht_titel')) . '</h1>';
+        echo '<p>' . h(tf('tf_tipp_keine_ligen')) . '</p>';
+    } else {
+        $ligaId = (int)($_GET['liga'] ?? $ligaIds[0]);
+        if (!in_array($ligaId, $ligaIds, true)) {
+            $ligaId = $ligaIds[0];
+        }
+        $liga = getLigaById($ligaId);
+        $spieltage = getAllSpieltage($ligaId);
+        $maxNr = getMaxSpieltagNummer($spieltage);
+        $spieltagNr = (int)($_GET['spieltag'] ?? 1);
+        if ($spieltagNr < 1) { $spieltagNr = 1; }
+        if ($spieltagNr > $maxNr) { $spieltagNr = $maxNr; }
+        $spieltag = getSpieltagByNummer($spieltage, $spieltagNr);
+        ?>
+  <h1><?= h(tf('tf_tipp_einsicht_titel')) ?> — <?= h($liga['name'] ?? '') ?></h1>
+  <p style="font-size:.85rem"><a href="?action=abgabe"><?= h(tf('tf_tipp_zur_abgabe')) ?></a> — <a href="?action=rangliste"><?= h(tf('tf_tipp_rangliste_titel')) ?></a> — <a href="?action=logout"><?= h(tf('tf_tipp_logout')) ?></a></p>
+
+  <div style="margin-bottom:10px">
+<?php for ($n = 1; $n <= $maxNr; $n++) { ?>
+    <a href="?action=einsicht&liga=<?= $ligaId ?>&spieltag=<?= $n ?>" style="margin-right:6px;font-size:.82rem;<?= $n === $spieltagNr ? 'font-weight:700' : '' ?>"><?= $n ?></a>
+<?php } ?>
+  </div>
+
+<?php if ($spieltag === null) { ?>
+  <p><?= h(tf('tf_tipp_kein_spieltag')) ?></p>
+<?php } else {
+        $partien = getSpieltagPartien((int)$spieltag['id']);
+        foreach ($partien as &$p) { $p['spieltag_start'] = $spieltag['start'] ?? null; }
+        unset($p);
+        $einsicht = tippGetEinsichtDaten($partien);
+        foreach ($partien as $p) {
+            $pid = (int)$p['id'];
+            $heimName = $p['heim_name'] ?? $p['heim_label'] ?? '';
+            $gastName = $p['gast_name'] ?? $p['gast_label'] ?? '';
+            ?>
+  <h3 style="font-size:.9rem;margin:16px 0 4px"><?= h($heimName) ?> - <?= h($gastName) ?></h3>
+<?php if (!isset($einsicht[$pid])) { ?>
+  <p style="font-size:.82rem;color:#94a3b8"><?= h(tf('tf_tipp_einsicht_noch_nicht_sichtbar')) ?></p>
+<?php } else { ?>
+  <table>
+    <tr><th><?= h(tf('tf_tipp_col_nickname')) ?></th><th><?= h(tf('tf_tipp_col_tipp')) ?></th><th><?= h(tf('tf_tipp_col_joker')) ?></th></tr>
+<?php foreach ($einsicht[$pid] as $row) { ?>
+    <tr>
+      <td><?= h($row['nickname']) ?></td>
+      <td><?= (int)$row['tipp_heim'] ?>:<?= (int)$row['tipp_gast'] ?></td>
+      <td><?= (int)$row['ist_joker'] === 1 ? '🃏' : '' ?></td>
+    </tr>
+<?php } ?>
+  </table>
+<?php } ?>
+<?php } ?>
+<?php } } ?>
+
+<?php
+// ═══════════════════════════════════════════════════════════════════════
+// RANGLISTE
+// ═══════════════════════════════════════════════════════════════════════
+} elseif ($action === 'rangliste') {
+    tippRequireLogin();
+    $tipper = tippCurrentUser();
+    $rangliste = tippGetRangliste();
+    ?>
+  <h1><?= h(tf('tf_tipp_rangliste_titel')) ?></h1>
+  <p style="font-size:.85rem"><a href="?action=abgabe"><?= h(tf('tf_tipp_zur_abgabe')) ?></a> — <a href="?action=einsicht"><?= h(tf('tf_tipp_einsicht_titel')) ?></a> — <a href="?action=logout"><?= h(tf('tf_tipp_logout')) ?></a></p>
+
+<?php if (empty($rangliste)) { ?>
+  <p style="font-size:.82rem;color:#94a3b8"><?= h(tf('tf_tipp_rangliste_leer')) ?></p>
+<?php } else { ?>
+  <table>
+    <tr>
+      <th><?= h(tf('tf_tipp_col_platz')) ?></th>
+      <th><?= h(tf('tf_tipp_col_nickname')) ?></th>
+      <th><?= h(tf('tf_tipp_col_punkte')) ?></th>
+      <th><?= h(tf('tf_tipp_col_spiele_getippt')) ?></th>
+      <th><?= h(tf('tf_tipp_col_quote')) ?></th>
+      <th><?= h(tf('tf_tipp_col_spieltagssiege')) ?></th>
+    </tr>
+<?php
+    $platz = 0; $vorherigePunkte = null; $angezeigterPlatz = 0;
+    foreach ($rangliste as $eintrag) {
+        $platz++;
+        // Punktgleiche Tipper teilen sich denselben angezeigten Platz
+        if ($vorherigePunkte === null || $eintrag['punkte'] !== $vorherigePunkte) {
+            $angezeigterPlatz = $platz;
+        }
+        $vorherigePunkte = $eintrag['punkte'];
+        $istIch = $tipper && (int)$eintrag['tipper_id'] === (int)$tipper['id'];
+    ?>
+    <tr<?= $istIch ? ' style="font-weight:700"' : '' ?>>
+      <td><?= $angezeigterPlatz ?>.</td>
+      <td><?= h($eintrag['nickname']) ?></td>
+      <td><?= $eintrag['punkte'] ?></td>
+      <td><?= $eintrag['spiele_getippt'] ?></td>
+      <td><?= $eintrag['ausgewertete_spiele'] > 0 ? round($eintrag['quote'] * 100) . '%' : '—' ?></td>
+      <td><?= $eintrag['spieltagswertungen'] ?></td>
+    </tr>
+<?php } ?>
+  </table>
+<?php } ?>
+
+<?php
 } else {
     // ── Tippabgabe-Ansicht ─────────────────────────────────────────────
     tippRequireLogin();
@@ -217,7 +338,7 @@ if ($action === 'login') {
         $spieltag = getSpieltagByNummer($spieltage, $spieltagNr);
         ?>
   <h1><?= h(tf('tf_tipp_abgabe_titel')) ?> — <?= h($liga['name'] ?? '') ?></h1>
-  <p style="font-size:.85rem"><?= h(tf('tf_tipp_eingeloggt_als')) ?> <strong><?= h($tipper['nickname']) ?></strong> — <a href="?action=logout"><?= h(tf('tf_tipp_logout')) ?></a></p>
+  <p style="font-size:.85rem"><?= h(tf('tf_tipp_eingeloggt_als')) ?> <strong><?= h($tipper['nickname']) ?></strong> — <a href="?action=einsicht"><?= h(tf('tf_tipp_einsicht_titel')) ?></a> — <a href="?action=rangliste"><?= h(tf('tf_tipp_rangliste_titel')) ?></a> — <a href="?action=logout"><?= h(tf('tf_tipp_logout')) ?></a></p>
 
 <?php if (count($ligaIds) > 1) { ?>
   <div style="margin-bottom:10px">

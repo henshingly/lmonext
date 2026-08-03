@@ -2,7 +2,12 @@
 /**
  * Project: LMOnext
  * Filename: lang/frontend/de.php
- * Fileversion: 1.20.0
+ * Fileversion: 1.21.0
+ * Changelog: 1.21.0 - Übersetzungen für die neue Tippspiel-Rangliste ergänzt (siehe
+ *                     addon/tipp/tipp.php 0.3.0, tippGetRangliste() in frontend_tipp.php 0.3.0)
+ * Changelog: 1.20.2 - Fehlenden Schlüssel "tf_tipp_col_nickname" für die Spaltenüberschrift
+ *                     in der Tippeinsicht ergänzt (siehe addon/tipp/tipp.php)
+ * Changelog: 1.20.1 - Übersetzungen für die Tippeinsicht ergänzt
  * Changelog: 1.20.0 - Übersetzungen für die neue (vorläufige) Tippspiel-Tipperansicht ergänzt
  *                     (Login/Registrierung/Tippabgabe, siehe addon/tipp/tipp.php)
  * Changelog: 1.19.3
@@ -296,6 +301,7 @@ return [
     'tf_tipp_kein_spieltag'    => 'Für diesen Spieltag liegen keine Spiele vor.',
     'tf_tipp_col_termin'       => 'Termin',
     'tf_tipp_col_spiel'        => 'Spiel',
+    'tf_tipp_col_nickname'     => 'Nickname',
     'tf_tipp_col_tipp'         => 'Tipp',
     'tf_tipp_col_joker'        => 'Joker',
     'tf_tipp_col_ergebnis'     => 'Ergebnis',
@@ -315,5 +321,14 @@ return [
     'tf_tipp_mail_welcome_text'    => "Hallo {nick},\n\ndeine Anmeldung zum Tippspiel war erfolgreich.",
     'tf_tipp_mail_admin_betreff'   => 'Neue Tippspiel-Anmeldung',
     'tf_tipp_mail_admin_text'      => "Ein neuer Tipper hat sich angemeldet: {nick}",
+    'tf_tipp_einsicht_titel'       => 'Tippeinsicht',
+    'tf_tipp_zur_abgabe'           => 'Zur Tippabgabe',
+    'tf_tipp_rangliste_titel'      => 'Rangliste',
+    'tf_tipp_rangliste_leer'       => 'Noch keine Tipps für die Rangliste vorhanden.',
+    'tf_tipp_col_platz'            => 'Platz',
+    'tf_tipp_col_spiele_getippt'   => 'Sp. getippt',
+    'tf_tipp_col_quote'            => 'Trefferquote',
+    'tf_tipp_col_spieltagssiege'   => 'Spieltagssiege',
+    'tf_tipp_einsicht_noch_nicht_sichtbar' => 'Für dieses Spiel sind die Tipps noch nicht einsehbar.',
 
 ];

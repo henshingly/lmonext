@@ -2,7 +2,18 @@
 /**
  * Project: LMOnext
  * Filename: addon/tipp/frontend_tipp.php
- * Fileversion: 0.1.0
+ * Fileversion: 0.3.0
+ * Changelog: 0.3.0 - Neue Funktion tippGetRangliste(): globale Rangliste über alle jemals
+ *                     getippten (und ausgewerteten) Spiele, live berechnet aus den Rohdaten.
+ *                     Wendet die drei in "Was zählt bei Punktgleichheit" konfigurierten
+ *                     Tie-Break-Kriterien an (alle acht bestätigten Original-Optionen
+ *                     implementiert, inkl. Trefferquote und geteilter Spieltagswertungen).
+ *                     Deckt nur den Ergebnis-Tippmodus ab - Tendenz-Modus-Tipps werden bewusst
+ *                     übersprungen statt fälschlich mit 0 Punkten gezählt (siehe Funktions-
+ *                     Docblock), da die Tendenz-Punkteberechnung noch aussteht
+ * Changelog: 0.2.0 - Tippeinsicht: tippGetEinsichtDaten() liefert alle Tipps aller Tipper für
+ *                     eine Spiel-Liste, respektiert dabei je Partie einzeln den eingestellten
+ *                     Veröffentlichungszeitpunkt (sofort/nach Abgabeschluss/nach Ergebnis)
  * Changelog: 0.1.0 - Initiale (vorläufige) Version der Tipper-Ansicht: Session-Verwaltung,
  *                     Anmeldung, Login/Logout, Tippabgabe (nur Ligenweise-Modus, nur
  *                     Ergebnis-Tippmodus vollständig getestet) und eine einfache Live-
@@ -275,6 +286,51 @@ function tippGetAbgabeFuerPartien(int $tipperId, array $partieIds) : array
 // ── Live-Punkteberechnung ────────────────────────────────────────────────────
 
 /**
+ * Liefert alle Tipps aller Tipper für eine Liste von Partien (Tippeinsicht),
+ * respektiert dabei die Admin-Einstellung "Veröffentlichungszeitpunkt der
+ * Tipps" (tippeinsicht_zeitpunkt: sofort/abgabeschluss/ergebnis) je Partie
+ * einzeln - ein Spiel kann schon sichtbar sein, während ein anderes im
+ * selben Spieltag es noch nicht ist.
+ *
+ * @return array<int,array<int,array>> [partieId => [tipperId => tippRow]]
+ */
+function tippGetEinsichtDaten(array $partien) : array
+{
+    $zeitpunkt = getTippSetting('tippeinsicht_zeitpunkt', 'abgabeschluss');
+    $sichtbareIds = [];
+    foreach ($partien as $p) {
+        $sichtbar = match ($zeitpunkt) {
+            'sofort' => true,
+            'ergebnis' => $p['h_tore'] !== null && $p['g_tore'] !== null,
+            default => !tippIstAenderbar($p['zeit'] ?? null, $p['spieltag_start'] ?? null),
+        };
+        if ($sichtbar) {
+            $sichtbareIds[] = (int)$p['id'];
+        }
+    }
+    if (empty($sichtbareIds)) {
+        return [];
+    }
+    try {
+        $ph = implode(',', array_fill(0, count($sichtbareIds), '?'));
+        $stmt = getDB()->prepare(
+            'SELECT tt.*, u.nickname FROM ' . tbl('tipp_tipp') . ' tt
+               JOIN ' . tbl('tipp_user') . ' u ON u.id = tt.tipper_id
+              WHERE tt.partie_id IN (' . $ph . ')
+              ORDER BY u.nickname ASC'
+        );
+        $stmt->execute($sichtbareIds);
+        $result = [];
+        foreach ($stmt->fetchAll() as $row) {
+            $result[(int)$row['partie_id']][(int)$row['tipper_id']] = $row;
+        }
+        return $result;
+    } catch (Throwable) {
+        return [];
+    }
+}
+
+/**
  * Die zentrale, einzige Punkteberechnung für einen einzelnen Tipp im
  * Ergebnis-Modus - siehe Projekt-Historie für die genaue Herleitung der
  * Regeln (inkl. des bestätigten Testfalls: 1:2-Tipp bei 2:1-Ergebnis zählt
@@ -327,4 +383,156 @@ function calculateTippPunkte(int $tippHeim, int $tippGast, ?int $ergHeim, ?int $
     }
 
     return $punkte;
+}
+
+/**
+ * Liefert die globale Rangliste (alle Tipper, alle jemals getippten Spiele,
+ * unabhängig vom aktuellen Freigabe-Status einer Liga - die Rangliste zeigt
+ * den historischen Datenbestand). Alles wird live aus den Rohdaten
+ * berechnet (siehe Projekt-Historie: keine gespeicherten Punkte), inkl. der
+ * drei in "Was zählt bei Punktgleichheit" konfigurierten Tie-Break-
+ * Kriterien aus den acht bestätigten Original-Optionen.
+ *
+ * Nur der Ergebnis-Tippmodus wird aktuell ausgewertet - der Tendenz-Modus
+ * hat noch keine eigene Punkteberechnung (siehe frontend_tipp.php-Changelog
+ * 0.1.0/0.2.0, offen für eine spätere Sitzung); Tipps mit nur befülltem
+ * tipp_tendenz-Feld (ohne tipp_heim/tipp_gast) werden hier übersprungen,
+ * nicht falsch mit 0 Punkten gezählt.
+ *
+ * @return array<int,array> Liste, bereits sortiert (Platz 1 zuerst), jeder
+ *                           Eintrag: tipper_id, nickname, punkte,
+ *                           spiele_getippt, ausgewertete_spiele,
+ *                           richtige_ergebnisse, richtige_tendenz_tordiff,
+ *                           richtige_tendenz, joker_bonus_punkte, quote
+ *                           (0.0-1.0), spieltagswertungen
+ */
+function tippGetRangliste() : array
+{
+    try {
+        $rows = getDB()->query(
+            'SELECT tt.tipper_id, u.nickname, tt.tipp_heim, tt.tipp_gast, tt.ist_joker,
+                    p.h_tore, p.g_tore, p.spieltag_id
+               FROM ' . tbl('tipp_tipp') . ' tt
+               JOIN ' . tbl('tipp_user') . ' u ON u.id = tt.tipper_id
+               JOIN ' . tbl('liga_partien') . ' p ON p.id = tt.partie_id
+              WHERE tt.tipp_heim IS NOT NULL AND tt.tipp_gast IS NOT NULL'
+        )->fetchAll();
+    } catch (Throwable) {
+        return [];
+    }
+
+    $stats = [];
+    $spieltagPunkte = []; // [spieltagId => [tipperId => punkte]]
+
+    foreach ($rows as $r) {
+        $tid = (int)$r['tipper_id'];
+        if (!isset($stats[$tid])) {
+            $stats[$tid] = [
+                'tipper_id'                => $tid,
+                'nickname'                 => $r['nickname'],
+                'punkte'                   => 0,
+                'spiele_getippt'           => 0,
+                'ausgewertete_spiele'      => 0,
+                'richtige_ergebnisse'      => 0,
+                'richtige_tendenz_tordiff' => 0,
+                'richtige_tendenz'         => 0,
+                'joker_bonus_punkte'       => 0,
+                'treffer'                  => 0,
+                'spieltagswertungen'       => 0,
+            ];
+        }
+        $stats[$tid]['spiele_getippt']++;
+
+        $ausgewertet = $r['h_tore'] !== null && $r['g_tore'] !== null;
+        if (!$ausgewertet) {
+            continue;
+        }
+        $heim = (int)$r['tipp_heim'];
+        $gast = (int)$r['tipp_gast'];
+        $eh   = (int)$r['h_tore'];
+        $eg   = (int)$r['g_tore'];
+        $joker = (bool)$r['ist_joker'];
+
+        $punkte = calculateTippPunkte($heim, $gast, $eh, $eg, $joker);
+        $stats[$tid]['ausgewertete_spiele']++;
+        $stats[$tid]['punkte'] += $punkte;
+        if ($punkte > 0) {
+            $stats[$tid]['treffer']++;
+        }
+        if ($joker) {
+            $ohneJoker = calculateTippPunkte($heim, $gast, $eh, $eg, false);
+            $stats[$tid]['joker_bonus_punkte'] += ($punkte - $ohneJoker);
+        }
+
+        $exakt = ($heim === $eh && $gast === $eg);
+        $ergTendenz  = $eh <=> $eg;
+        $tippTendenz = $heim <=> $gast;
+        $tendenzRichtig = !$exakt && $tippTendenz === $ergTendenz;
+        $tordiffGleich  = $tendenzRichtig && ($heim - $gast) === ($eh - $eg);
+        if ($exakt) {
+            $stats[$tid]['richtige_ergebnisse']++;
+        } elseif ($tendenzRichtig && $tordiffGleich) {
+            $stats[$tid]['richtige_tendenz_tordiff']++;
+        } elseif ($tendenzRichtig) {
+            $stats[$tid]['richtige_tendenz']++;
+        }
+
+        $sid = (int)$r['spieltag_id'];
+        $spieltagPunkte[$sid][$tid] = ($spieltagPunkte[$sid][$tid] ?? 0) + $punkte;
+    }
+
+    // Spieltagswertungen: pro Spieltag gewinnen alle Tipper mit der (echt
+    // erreichten, > 0) Höchstpunktzahl - geteilte Siege sind möglich, ein
+    // Spieltag ohne jegliche Punkte (z.B. noch nicht ausgewertet) zählt
+    // nicht als "gewonnen"
+    foreach ($spieltagPunkte as $tipperPunkte) {
+        $max = max($tipperPunkte);
+        if ($max <= 0) {
+            continue;
+        }
+        foreach ($tipperPunkte as $tid => $p) {
+            if ($p === $max) {
+                $stats[$tid]['spieltagswertungen']++;
+            }
+        }
+    }
+
+    foreach ($stats as &$s) {
+        $s['quote'] = $s['ausgewertete_spiele'] > 0 ? $s['treffer'] / $s['ausgewertete_spiele'] : 0.0;
+    }
+    unset($s);
+
+    $kriterien = [
+        getTippSetting('kriterium_1', 'hoehere_quote'),
+        getTippSetting('kriterium_2', 'anzahl_spiele_getippt'),
+        getTippSetting('kriterium_3', 'anzahl_richtige_ergebnisse'),
+    ];
+    $kriteriumFeld = [
+        'hoehere_quote'                    => 'quote',
+        'anzahl_spiele_getippt'            => 'spiele_getippt',
+        'anzahl_richtige_ergebnisse'       => 'richtige_ergebnisse',
+        'anzahl_richtige_tendenz_tordiff'  => 'richtige_tendenz_tordiff',
+        'anzahl_richtige_tendenz'          => 'richtige_tendenz',
+        'joker_punkte'                     => 'joker_bonus_punkte',
+        'spieltagswertungen'               => 'spieltagswertungen',
+    ];
+
+    $liste = array_values($stats);
+    usort($liste, function (array $a, array $b) use ($kriterien, $kriteriumFeld) : int {
+        if ($a['punkte'] !== $b['punkte']) {
+            return $b['punkte'] <=> $a['punkte'];
+        }
+        foreach ($kriterien as $k) {
+            if ($k === 'kein_kriterium' || !isset($kriteriumFeld[$k])) {
+                continue;
+            }
+            $feld = $kriteriumFeld[$k];
+            if ($a[$feld] !== $b[$feld]) {
+                return $b[$feld] <=> $a[$feld];
+            }
+        }
+        return strcasecmp((string)$a['nickname'], (string)$b['nickname']);
+    });
+
+    return $liste;
 }

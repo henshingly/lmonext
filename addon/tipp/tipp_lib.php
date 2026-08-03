@@ -2,7 +2,17 @@
 /**
  * Project: LMOnext
  * Filename: addon/tipp/tipp_lib.php
- * Fileversion: 0.4.0
+ * Fileversion: 0.4.1
+ * Changelog: 0.4.1 - Bugfix: getAllTippSettings() cachte die Einstellungen statisch pro Request,
+ *                     ohne dass setTippSetting()/setTippSettings() diesen Cache invalidierten -
+ *                     ein erneuter getTippSetting()-Aufruf im selben Request (z.B. bei einer
+ *                     Live-Neuberechnung ohne zwischenzeitlichen Redirect) lieferte dadurch
+ *                     stille alte Werte. Cache liegt jetzt per Referenz in
+ *                     tippSettingsCacheRef() und wird von beiden Setter-Funktionen über die
+ *                     neue resetTippSettingsCache() gezielt geleert. Admin-Options-Tabs waren
+ *                     nicht betroffen (Post/Redirect/Get-Muster in handler_tipp.php lädt den
+ *                     Cache ohnehin bei jedem Request neu), gefunden beim Testen von
+ *                     calculateTippPunkte() in frontend_tipp.php
  * Changelog: 0.4.0 - Mail-Versand für "Newsletter/Reminder": sendTippMail() (exakt nach dem
  *                     Muster von sendPasswordResetEmail() in admin/bootstrap.php, bewusst ohne
  *                     externe Mail-Bibliothek), replaceTippPlaceholders() ([nick]/[name]/
@@ -382,11 +392,22 @@ function setTipperAbos(int $tipperId, array $ligaIds) : bool
 /**
  * Liest alle tipp_settings-Zeilen einmal pro Request in einen statischen
  * Speicher-Cache, analog zu getAdminSetting() in frontend/bootstrap.php -
- * vermeidet eine einzelne Abfrage pro Einstellung.
+ * vermeidet eine einzelne Abfrage pro Einstellung. Der Cache liegt in
+ * tippSettingsCacheRef() (per Referenz), damit setTippSetting()/
+ * setTippSettings() ihn nach dem Schreiben gezielt invalidieren können -
+ * andernfalls würde ein erneuter getTippSetting()-Aufruf im selben Request
+ * (z.B. bei einer Live-Neuberechnung ohne Redirect dazwischen) den alten,
+ * bereits überholten Wert liefern.
  */
-function getAllTippSettings() : array
+function &tippSettingsCacheRef() : ?array
 {
     static $cache = null;
+    return $cache;
+}
+
+function getAllTippSettings() : array
+{
+    $cache = &tippSettingsCacheRef();
     if ($cache === null) {
         ensureTippSchema();
         $cache = [];
@@ -409,11 +430,20 @@ function getTippSetting(string $key, string $default = '') : string
 }
 
 /**
+ * Invalidiert den Settings-Cache, damit der nächste getTippSetting()-/
+ * getAllTippSettings()-Aufruf im selben Request wieder frisch aus der DB
+ * liest. Wird von setTippSetting()/setTippSettings() automatisch aufgerufen.
+ */
+function resetTippSettingsCache() : void
+{
+    $cache = &tippSettingsCacheRef();
+    $cache = null;
+}
+
+/**
  * Speichert eine einzelne Tippspiel-Einstellung (INSERT ... ON DUPLICATE KEY
- * UPDATE). Invalidiert den Zwischenspeicher nicht automatisch - innerhalb
- * desselben Requests nach dem Speichern lieber $forceValue direkt weiter-
- * verwenden, statt erneut getTippSetting() für denselben Schlüssel
- * aufzurufen.
+ * UPDATE) und invalidiert danach den Zwischenspeicher, damit nachfolgende
+ * getTippSetting()-Aufrufe im selben Request den neuen Wert sehen.
  */
 function setTippSetting(string $key, string $value) : bool
 {
@@ -423,6 +453,7 @@ function setTippSetting(string $key, string $value) : bool
             'INSERT INTO ' . tbl('tipp_settings') . ' (`key`, `value`) VALUES (?, ?)
              ON DUPLICATE KEY UPDATE `value` = VALUES(`value`)'
         )->execute([$key, $value]);
+        resetTippSettingsCache();
         return true;
     } catch (Throwable) {
         return false;
@@ -431,7 +462,7 @@ function setTippSetting(string $key, string $value) : bool
 
 /**
  * Speichert mehrere Einstellungen auf einmal (z.B. beim Absenden eines
- * ganzen Formulars).
+ * ganzen Formulars) und invalidiert danach den Zwischenspeicher.
  *
  * @param array<string,string> $values
  */
@@ -446,6 +477,7 @@ function setTippSettings(array $values) : bool
         foreach ($values as $key => $value) {
             $stmt->execute([$key, $value]);
         }
+        resetTippSettingsCache();
         return true;
     } catch (Throwable) {
         return false;

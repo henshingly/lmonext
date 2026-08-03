@@ -2,7 +2,12 @@
 /**
  * Project: LMOnext
  * Filename: lang/frontend/en.php
- * Fileversion: 1.20.0
+ * Fileversion: 1.21.0
+ * Changelog: 1.21.0 - Added translations for the new Tippspiel leaderboard (see
+ *                     addon/tipp/tipp.php 0.3.0, tippGetRangliste() in frontend_tipp.php 0.3.0)
+ * Changelog: 1.20.2 - Added missing key "tf_tipp_col_nickname" for the column header in the
+ *                     tip overview (see addon/tipp/tipp.php)
+ * Changelog: 1.20.1 - Added translations for the tip overview (Tippeinsicht)
  * Changelog: 1.20.0 - Added translations for the new (preliminary) prediction game tipster view
  *                     (login/registration/tip submission, see addon/tipp/tipp.php)
  * Changelog: 1.19.3
@@ -294,6 +299,7 @@ return [
     'tf_tipp_kein_spieltag'    => 'There are no games for this matchday.',
     'tf_tipp_col_termin'       => 'Kickoff',
     'tf_tipp_col_spiel'        => 'Match',
+    'tf_tipp_col_nickname'     => 'Nickname',
     'tf_tipp_col_tipp'         => 'Tip',
     'tf_tipp_col_joker'        => 'Joker',
     'tf_tipp_col_ergebnis'     => 'Result',
@@ -313,5 +319,14 @@ return [
     'tf_tipp_mail_welcome_text'    => "Hello {nick},\n\nyour prediction game registration was successful.",
     'tf_tipp_mail_admin_betreff'   => 'New prediction game registration',
     'tf_tipp_mail_admin_text'      => "A new tipster has registered: {nick}",
+    'tf_tipp_einsicht_titel'       => 'Tip Overview',
+    'tf_tipp_zur_abgabe'           => 'To tip submission',
+    'tf_tipp_rangliste_titel'      => 'Leaderboard',
+    'tf_tipp_rangliste_leer'       => 'No tips for the leaderboard yet.',
+    'tf_tipp_col_platz'            => 'Rank',
+    'tf_tipp_col_spiele_getippt'   => 'Games tipped',
+    'tf_tipp_col_quote'            => 'Hit rate',
+    'tf_tipp_col_spieltagssiege'   => 'Matchday wins',
+    'tf_tipp_einsicht_noch_nicht_sichtbar' => 'Tips for this game are not visible yet.',
 
 ];
