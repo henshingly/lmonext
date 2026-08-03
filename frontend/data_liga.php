@@ -2,7 +2,9 @@
 /**
  * Project: LMOnext
  * Filename: frontend/data_liga.php
- * Fileversion: 3.0.0
+ * Fileversion: 3.0.1
+ * Changelog: 3.0.1 - renderBackLinkBlock() von liga.php hierher verschoben, damit auch
+ *                     home.php (Tippspiel-View) denselben "← Zur Übersicht"-Link nutzen kann
  * Changelog: 3.0.0 - Große Umstrukturierung: die komplette bisherige Implementierung (~2900
  *                     Zeilen) wurde in fokussierte, einzeln verständliche Traits unter src/Liga/
  *                     aufgeteilt (LigaRepositoryTrait, TeamRepositoryTrait, HeadToHeadTrait,
@@ -360,4 +362,26 @@ function renderOverallStatsBlock(array $teams, array $partien) : string
 function renderLigastatistikView(int $ligaId, array $allSpieltage, ?int $team1Id, ?int $team2Id) : string
 {
     return \LMOnext\Liga\LigaService::renderLigastatistikView($ligaId, $allSpieltage, $team1Id, $team2Id);
+}
+
+/**
+ * Baut den "← Zur Übersicht"-Link als vollständigen HTML-Block (nicht nur
+ * den Text), damit er sich über die globale Einstellung "Übersicht-Link
+ * anzeigen?" (Admin → Einstellungen → Besucherbereich) komplett ausblenden
+ * lässt - nicht nur der Text wäre sonst leer, der Link selbst (mit href)
+ * bliebe trotzdem anklickbar sichtbar. Default "an" (kein stiller
+ * Verhaltenswechsel für bestehende Installationen ohne explizite Wahl).
+ *
+ * Ursprünglich nur in liga.php definiert (Fileversion vor 3.10.1), hierher
+ * verschoben, damit auch home.php (Tippspiel-View, siehe
+ * addon/tipp/view_tippspiel_frontend.php) denselben Link nutzen kann - eine
+ * einfache eigenständige Hilfsfunktion, bewusst NICHT über die
+ * LigaService-Fassade delegiert (kein Liga-spezifischer Zustand nötig).
+ */
+function renderBackLinkBlock() : string
+{
+    if (getAdminSetting('show_back_link', '1') !== '1') {
+        return '';
+    }
+    return '<a class="back-link" href="home.php">' . h(tf('liga_back_link')) . '</a>';
 }

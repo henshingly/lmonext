@@ -2,7 +2,11 @@
 /**
  * Project: LMOnext
  * Filename: addon/tipp/view_tippspiel_frontend.php
- * Fileversion: 1.1.0
+ * Fileversion: 1.1.1
+ * Changelog: 1.1.1 - Bugfix: Die Kontoseite (?action=konto) hatte keinerlei Navigation zurück
+ *                     zur Tippabgabe/Einsicht/Rangliste - jetzt bekommt sie dieselbe Tab-Leiste
+ *                     wie die anderen Ansichten (keiner der drei Tabs aktiv markiert, da Konto
+ *                     kein eigener Tab ist)
  * Changelog: 1.1.0 - Neue Self-Service-Kontoseite (?action=konto): Email/Passwort/Name/Adresse
  *                     ändern, Team beitreten/gründen/verlassen, Newsletter/Reminder, Liga-Abos -
  *                     Nickname bewusst NICHT editierbar. Neue "Passwort vergessen"-Flow
@@ -421,6 +425,7 @@ function renderTippKontoView(array $state) : string
 
     ob_start();
     echo renderTippspielUserBar($tipper);
+    echo renderTippspielTabsBar('konto');
     ?>
 <?php if ($state['flashMsg']) { ?>
   <div class="flash flash-<?= h($state['flashType']) ?>"><?= h($state['flashMsg']) ?></div>

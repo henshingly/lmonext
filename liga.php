@@ -2,7 +2,10 @@
 /**
  * Project: LMOnext
  * Filename: liga.php
- * Fileversion: 3.10.5
+ * Fileversion: 3.10.6
+ * Changelog: 3.10.6 - renderBackLinkBlock() nach frontend/data_liga.php verschoben (siehe
+ *                     dortiger Changelog 3.0.1), damit auch home.php (Tippspiel-View) denselben
+ *                     Link nutzen kann - hier nur noch der Aufruf, keine Verhaltensänderung
  * Changelog: 3.10.5 - Neue globale Einstellung "Übersicht-Link anzeigen?" (Admin →
  *                     Einstellungen → Besucherbereich), entspricht "Ligaauswahl" im alten LMO.
  *                     Neue Funktion renderBackLinkBlock() baut den "← Zur Übersicht"-Link jetzt
@@ -140,21 +143,9 @@ declare(strict_types = 1);
 require_once __DIR__ . '/frontend/bootstrap.php';
 require_once __DIR__ . '/frontend/pdf_export.php';
 
-/**
- * Baut den "← Zur Übersicht"-Link als vollständigen HTML-Block (nicht nur
- * den Text), damit er sich über die neue globale Einstellung
- * "Übersicht-Link anzeigen?" (Admin → Einstellungen → Besucherbereich)
- * komplett ausblenden lässt - nicht nur der Text wäre sonst leer, der Link
- * selbst (mit href) bliebe trotzdem anklickbar sichtbar. Default "an" (kein
- * stiller Verhaltenswechsel für bestehende Installationen ohne explizite Wahl).
- */
-function renderBackLinkBlock() : string
-{
-    if (getAdminSetting('show_back_link', '1') !== '1') {
-        return '';
-    }
-    return '<a class="back-link" href="home.php">' . h(tf('liga_back_link')) . '</a>';
-}
+// renderBackLinkBlock() ist jetzt in frontend/data_liga.php definiert (wird
+// über bootstrap.php geladen) - dadurch kann auch home.php (Tippspiel-View)
+// dieselbe Funktion nutzen, siehe dortiger Changelog
 
 // ── PDF-Export des Team-Vergleichs (Direkter Vergleich) ──────────────────────
 // Teamübergreifend, nicht an eine bestimmte Liga gebunden – deshalb hier vor

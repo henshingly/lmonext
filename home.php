@@ -2,7 +2,10 @@
 /**
  * Project: LMOnext
  * Filename: home.php
- * Fileversion: 2.3.0
+ * Fileversion: 2.3.1
+ * Changelog: 2.3.1 - "ZurueckLinkBlock" (Link zur Liga-Übersicht) an die Tippspiel-Route
+ *                     ergänzt - fehlte bisher komplett auf allen Tippspiel-Unterseiten (siehe
+ *                     renderBackLinkBlock() jetzt in frontend/data_liga.php 3.0.1)
  * Changelog: 2.3.0 - Neue Route "?view=tippspiel": bindet das Tippspiel jetzt als View ins
  *                     Template-System ein (analog zur Spielerstatistik in liga.php), statt als
  *                     eigenständige Seite mit eigenem HTML/CSS. Läuft komplett getrennt von der
@@ -47,8 +50,9 @@ if (($_GET['view'] ?? '') === 'tippspiel') {
     $tippState = tippspielHandleRequest();
 
     renderTemplate($activeTemplate, 'tippspiel', [
-        'Titel'      => h(tf('tf_tipp_seiten_titel')),
-        'ViewInhalt' => renderTippspielView($tippState),
+        'Titel'            => h(tf('tf_tipp_seiten_titel')),
+        'ZurueckLinkBlock' => renderBackLinkBlock(),
+        'ViewInhalt'       => renderTippspielView($tippState),
     ]);
     exit;
 }
