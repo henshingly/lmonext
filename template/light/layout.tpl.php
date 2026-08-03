@@ -2,7 +2,9 @@
 <html lang="<!--HtmlLang-->">
 <head>
 <!--
-  Template: light | Filename: layout.tpl.php | Fileversion: 1.2.9
+  Template: light | Filename: layout.tpl.php | Fileversion: 1.3.0
+  Changelog: 1.3.0 - Neuer Platzhalter "TippspielLink" im Footer, neben der Sprachauswahl
+                     (siehe frontend/template_engine.php 2.6.0)
   Changelog: 1.2.9 - CSS für ".h2h-match-today" ergänzt (siehe default 1.15.6)
   Changelog: 1.2.8 - CSS für den neuen "Spielfrei"-Hinweis (spielfrei_note.tpl.php, fällt für
                      dieses Template auf das gleichnamige Partial von "default" zurück) ergänzt
@@ -292,7 +294,7 @@ footer.site .template-switch select:hover,footer.site .lang-switch select:hover{
 <!--Hauptteil-->
 </main>
 
-<footer class="site"><!--Sprachauswahl--><br>LMOnext <!--Version--><br><!--TemplateZeile--><br><!--Berechnungszeit--></footer>
+<footer class="site"><!--TippspielLink--> <!--Sprachauswahl--><br>LMOnext <!--Version--><br><!--TemplateZeile--><br><!--Berechnungszeit--></footer>
 
 </body>
 </html>

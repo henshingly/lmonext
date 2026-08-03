@@ -2,7 +2,10 @@
 /**
  * Project: LMOnext
  * Filename: home.php
- * Fileversion: 2.1.0
+ * Fileversion: 2.2.0
+ * Changelog: 2.2.0 - Neuer Platzhalter "TippspielCard": wirbt auf der Startseite fürs
+ *                     Tippspiel (tippRenderHomeCard(), siehe addon/tipp/tipp_lib.php 0.5.0),
+ *                     bleibt leer wenn keine Liga freigegeben ist
  * Changelog: 2.1.0 - Die globale Einstellung "Liga-Übersicht anzeigen?" (Admin →
  *                     Einstellungen → Besucherbereich, bisher nur für den "← Zur Übersicht"-
  *                     Link auf der Liga-Detailseite) blendet jetzt auch die komplette
@@ -77,4 +80,5 @@ renderTemplate($activeTemplate, 'home', [
     'UeberschriftAktiveLigen' => h(tf('home_heading_active_ligen')),
     'AktiveLigenInhalt'       => $aktiveLigenInhalt,
     'ArchivBereich'           => $archivBereich,
+    'TippspielCard'           => tippRenderHomeCard(),
 ]);
