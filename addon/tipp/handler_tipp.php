@@ -2,7 +2,10 @@
 /**
  * Project: LMOnext
  * Filename: addon/tipp/handler_tipp.php
- * Fileversion: 0.2.0
+ * Fileversion: 0.3.0
+ * Changelog: 0.3.0 - Neue Speicher-Aktion save_tipp_abgabe für den Tab "Tippabgabe", inkl.
+ *                     serverseitiger Prüfung, dass mindestens eine Abgabe-Variante aktiv bleibt
+ * Changelog: 0.2.0
  * Changelog: 0.2.0 - Neue Speicher-Aktion save_tipp_regeln für den Tab "Regeltechnisches"
  * Changelog: 0.1.0 - Initiale Version: bindet tipp_lib.php ein, erste Speicher-Aktion für den
  *                     Tab "Punkteverteilung" (save_tipp_punkte)
@@ -73,4 +76,32 @@ if ($action === 'save_tipp_regeln' && $_SERVER['REQUEST_METHOD'] === 'POST') {
 
     flash(t('tipp_flash_settings_saved'));
     redirect('?action=tippspiel&tab=optionen&subtab=regeltechnisches');
+}
+
+if ($action === 'save_tipp_abgabe' && $_SERVER['REQUEST_METHOD'] === 'POST') {
+    requireLogin();
+
+    $ligenweise   = isset($_POST['abgabe_ligenweise']) ? '1' : '0';
+    $datumsweise  = isset($_POST['abgabe_datumsweise']) ? '1' : '0';
+
+    // Serverseitige Absicherung (nicht nur JS): ohne mindestens eine der
+    // beiden Varianten wäre gar keine Tippabgabe mehr möglich, siehe
+    // Original-Hilfetext ("Falls Sie beide Varianten deaktivieren, ist keine
+    // Tippabgabe möglich").
+    if ($ligenweise !== '1' && $datumsweise !== '1') {
+        flash(t('tipp_flash_mind_eine_variante'), 'error');
+        redirect('?action=tippspiel&tab=optionen&subtab=tippabgabe');
+    }
+
+    setTippSettings([
+        'abgabe_ligenweise'            => $ligenweise,
+        'abgabe_datumsweise'           => $datumsweise,
+        'abgabe_pfeile'                => isset($_POST['abgabe_pfeile']) ? '1' : '0',
+        'abgabe_tendenzen_anzeigen'    => isset($_POST['abgabe_tendenzen_anzeigen']) ? '1' : '0',
+        'abgabe_durchschnitt_anzeigen' => isset($_POST['abgabe_durchschnitt_anzeigen']) ? '1' : '0',
+        'abgabe_auto_tippeinsicht'     => isset($_POST['abgabe_auto_tippeinsicht']) ? '1' : '0',
+    ]);
+
+    flash(t('tipp_flash_settings_saved'));
+    redirect('?action=tippspiel&tab=optionen&subtab=tippabgabe');
 }

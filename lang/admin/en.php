@@ -2,7 +2,9 @@
 /**
  * Project: LMOnext
  * Filename: lang/admin/en.php
- * Fileversion: 1.13.9
+ * Fileversion: 1.14.0
+ * Changelog: 1.14.0 - Added translations for the new "Tip Submission" options section
+ * Changelog: 1.13.9
  * Changelog: 1.13.9 - Added translations for "Rules & Technical"
  * Changelog: 1.13.8
  * Changelog: 1.13.8 - Added translations for the prediction game point distribution and the
@@ -137,9 +139,19 @@ return [
     'tipp_placeholder_text_optionen'       => 'All prediction game settings will live here: point distribution, joker, activation, tippable leagues, and more.',
     'tipp_subtab_punkteverteilung' => 'Point Distribution',
     'tipp_subtab_regeltechnisches' => 'Rules & Technical',
+    'tipp_subtab_tippabgabe'       => 'Tip Submission',
     'tipp_subtab_anmeldung'        => 'Registration',
     'tipp_subtab_punktgleichheit'  => 'Tie-Breaking',
     'tipp_subtab_tippbare_ligen'   => 'Tippable Leagues',
+    'tipp_abgabe_hinweis'          => 'These settings only determine which options are later available to tipsters – the actual tip submission view itself will follow in a later section.',
+    'tipp_label_ligenweise'        => 'Allow tip submission by league (one league, one matchday per page)',
+    'tipp_label_datumsweise'       => 'Allow tip submission by date (all games across multiple leagues within a period)',
+    'tipp_label_pfeile'            => 'Show arrows for score entry (exact-score mode only)',
+    'tipp_label_tendenzen_anzeigen' => 'Show other tipsters\' already-tipped tendencies as a hint',
+    'tipp_label_durchschnitt_anzeigen' => 'Show other tipsters\' average tips as a hint',
+    'tipp_label_auto_tippeinsicht' => 'Automatically refresh the tip overview on every submission',
+    'tipp_alert_mind_eine_variante' => 'Please leave at least one of the two tip submission variants enabled – otherwise no tip submission is possible at all.',
+    'tipp_flash_mind_eine_variante' => 'At least one tip submission variant (by league or by date) must stay enabled.',
     'tipp_placeholder_text_regeltechnisches' => 'Coming here: tip submission deadline, max team size, joker on/off + multiplier, max matchdays in advance.',
     'tipp_placeholder_text_anmeldung'        => 'Coming here: optional address/real name, activation method, email notifications.',
     'tipp_placeholder_text_punktgleichheit'  => 'Coming here: the three tie-breaking criteria and their order.',

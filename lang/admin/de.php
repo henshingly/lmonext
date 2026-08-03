@@ -2,7 +2,9 @@
 /**
  * Project: LMOnext
  * Filename: lang/admin/de.php
- * Fileversion: 1.14.9
+ * Fileversion: 1.15.0
+ * Changelog: 1.15.0 - Übersetzungen für den neuen Optionen-Bereich "Tippabgabe" ergänzt
+ * Changelog: 1.14.9
  * Changelog: 1.14.9 - Übersetzungen für "Regeltechnisches" ergänzt (inkl. Hinweis auf zwei
  *                     angenommene Dropdown-Wertelisten)
  * Changelog: 1.14.8
@@ -145,9 +147,19 @@ return [
     'tipp_placeholder_text_optionen'       => 'Hier entstehen alle Einstellungen des Tippspiels: Punkteverteilung, Joker, Freischaltung, tippbare Ligen und mehr.',
     'tipp_subtab_punkteverteilung' => 'Punkteverteilung',
     'tipp_subtab_regeltechnisches' => 'Regeltechnisches',
+    'tipp_subtab_tippabgabe'       => 'Tippabgabe',
     'tipp_subtab_anmeldung'        => 'Anmeldung',
     'tipp_subtab_punktgleichheit'  => 'Was zählt bei Punktgleichheit',
     'tipp_subtab_tippbare_ligen'   => 'Tippbare Ligen',
+    'tipp_abgabe_hinweis'          => 'Diese Einstellungen legen nur fest, welche Optionen den Tippern später zur Verfügung stehen – die eigentliche Tippabgabe-Ansicht selbst folgt in einem späteren Abschnitt.',
+    'tipp_label_ligenweise'        => 'Tippabgabe ligenweise erlauben (eine Liga, ein Spieltag pro Seite)',
+    'tipp_label_datumsweise'       => 'Tippabgabe datumsweise erlauben (alle Spiele mehrerer Ligen in einem Zeitraum)',
+    'tipp_label_pfeile'            => 'Pfeile zur Ergebniseingabe anzeigen (nur im Ergebnis-Modus)',
+    'tipp_label_tendenzen_anzeigen' => 'Bereits getippte Tendenzen anderer Tipper als Hinweis anzeigen',
+    'tipp_label_durchschnitt_anzeigen' => 'Durchschnittstipps anderer Tipper als Hinweis anzeigen',
+    'tipp_label_auto_tippeinsicht' => 'Tippeinsicht bei jeder Tippabgabe automatisch aktualisieren',
+    'tipp_alert_mind_eine_variante' => 'Bitte mindestens eine der beiden Tippabgabe-Varianten aktiviert lassen – sonst ist gar keine Tippabgabe mehr möglich.',
+    'tipp_flash_mind_eine_variante' => 'Mindestens eine Tippabgabe-Variante (ligenweise oder datumsweise) muss aktiviert bleiben.',
     'tipp_placeholder_text_regeltechnisches' => 'Hier entstehen: Tippabgabefrist, Team-Höchstgröße, Joker an/aus + Multiplikator, max. Spieltage im Voraus.',
     'tipp_placeholder_text_anmeldung'        => 'Hier entstehen: Adresse/Realname optional, Freischaltungsart, Mail-Benachrichtigungen.',
     'tipp_placeholder_text_punktgleichheit'  => 'Hier entstehen die drei Rangfolge-Kriterien bei Punktgleichheit.',

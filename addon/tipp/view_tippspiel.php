@@ -2,7 +2,14 @@
 /**
  * Project: LMOnext
  * Filename: addon/tipp/view_tippspiel.php
- * Fileversion: 0.4.0
+ * Fileversion: 0.5.0
+ * Changelog: 0.5.0 - Neuer sechster Optionen-Bereich "Tippabgabe": Ligenweise/Datumsweise
+ *                     Tippabgabe (beide gemäß Original-Hilfedokumentation möglich, mind. eine
+ *                     muss aktiv bleiben - client- UND serverseitig geprüft), plus die
+ *                     Anzeige-Details (Pfeile, Tendenzen anderer, Durchschnittstipps,
+ *                     automatische Tippeinsicht-Aktualisierung). Bewusst nur die Admin-Schalter
+ *                     - die eigentliche Tipper-Ansicht folgt in einem eigenen Abschnitt
+ * Changelog: 0.4.0
  * Changelog: 0.4.0 - "Regeltechnisches" vollständig umgesetzt: Tippabgabefrist, Team-
  *                     Höchstgröße, Joker an/aus + Multiplikator, max. Spieltage im Voraus, plus
  *                     die neue Warnung-Einstellung (Stunden vor Fristende) aus den
@@ -95,6 +102,7 @@ if ($tippTab === 'auswertung') { ?>
     $tippSubtabs = [
         'punkteverteilung' => t('tipp_subtab_punkteverteilung'),
         'regeltechnisches' => t('tipp_subtab_regeltechnisches'),
+        'tippabgabe'       => t('tipp_subtab_tippabgabe'),
         'anmeldung'        => t('tipp_subtab_anmeldung'),
         'punktgleichheit'  => t('tipp_subtab_punktgleichheit'),
         'tippbare_ligen'   => t('tipp_subtab_tippbare_ligen'),
@@ -276,6 +284,49 @@ if ($tippTab === 'auswertung') { ?>
       <tr><td></td><td style="padding:14px 10px 0"><button type="submit" class="btn btn-primary"><?= h(t('common_save')) ?></button></td></tr>
     </table>
   </form>
+<?php } elseif ($tippSubtab === 'tippabgabe') { ?>
+  <form method="post" action="?action=save_tipp_abgabe" id="tipp-abgabe-form" onsubmit="return tippValidateAbgabeForm()">
+    <table style="width:100%;border-collapse:collapse">
+      <tr><td colspan="2" style="padding:0 0 6px;font-size:.82rem;color:var(--muted)"><?= h(t('tipp_abgabe_hinweis')) ?></td></tr>
+      <tr>
+        <td <?= $tdR ?>><?= h(t('tipp_label_ligenweise')) ?></td>
+        <td <?= $tdL ?>><input type="checkbox" name="abgabe_ligenweise" id="tipp-cb-ligenweise" value="1"<?= $tsc('abgabe_ligenweise', '1') ? ' checked' : '' ?>></td>
+      </tr>
+      <tr>
+        <td <?= $tdR ?>><?= h(t('tipp_label_datumsweise')) ?></td>
+        <td <?= $tdL ?>><input type="checkbox" name="abgabe_datumsweise" id="tipp-cb-datumsweise" value="1"<?= $tsc('abgabe_datumsweise') ? ' checked' : '' ?>></td>
+      </tr>
+      <tr><td colspan="2" style="padding:10px 0"><hr style="border:none;border-top:1px solid var(--border)"></td></tr>
+      <tr>
+        <td <?= $tdR ?>><?= h(t('tipp_label_pfeile')) ?></td>
+        <td <?= $tdL ?>><input type="checkbox" name="abgabe_pfeile" value="1"<?= $tsc('abgabe_pfeile', '1') ? ' checked' : '' ?>></td>
+      </tr>
+      <tr>
+        <td <?= $tdR ?>><?= h(t('tipp_label_tendenzen_anzeigen')) ?></td>
+        <td <?= $tdL ?>><input type="checkbox" name="abgabe_tendenzen_anzeigen" value="1"<?= $tsc('abgabe_tendenzen_anzeigen', '1') ? ' checked' : '' ?>></td>
+      </tr>
+      <tr>
+        <td <?= $tdR ?>><?= h(t('tipp_label_durchschnitt_anzeigen')) ?></td>
+        <td <?= $tdL ?>><input type="checkbox" name="abgabe_durchschnitt_anzeigen" value="1"<?= $tsc('abgabe_durchschnitt_anzeigen', '1') ? ' checked' : '' ?>></td>
+      </tr>
+      <tr>
+        <td <?= $tdR ?>><?= h(t('tipp_label_auto_tippeinsicht')) ?></td>
+        <td <?= $tdL ?>><input type="checkbox" name="abgabe_auto_tippeinsicht" value="1"<?= $tsc('abgabe_auto_tippeinsicht') ? ' checked' : '' ?>></td>
+      </tr>
+      <tr><td></td><td style="padding:14px 10px 0"><button type="submit" class="btn btn-primary"><?= h(t('common_save')) ?></button></td></tr>
+    </table>
+  </form>
+  <script>
+    function tippValidateAbgabeForm() {
+      var lw = document.getElementById('tipp-cb-ligenweise').checked;
+      var dw = document.getElementById('tipp-cb-datumsweise').checked;
+      if (!lw && !dw) {
+        alert(<?= json_encode(t('tipp_alert_mind_eine_variante')) ?>);
+        return false;
+      }
+      return true;
+    }
+  </script>
 <?php } elseif ($tippSubtab === 'anmeldung') { ?>
   <p style="color:var(--muted);font-size:.9rem"><?= h(t('tipp_placeholder_text_anmeldung')) ?></p>
 <?php } elseif ($tippSubtab === 'punktgleichheit') { ?>
