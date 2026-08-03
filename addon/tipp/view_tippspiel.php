@@ -2,7 +2,13 @@
 /**
  * Project: LMOnext
  * Filename: addon/tipp/view_tippspiel.php
- * Fileversion: 0.9.1
+ * Fileversion: 1.0.0
+ * Changelog: 1.0.0 - Tab "Newsletter/Reminder" vollständig umgesetzt: drei Versandarten
+ *                     (Newsletter an Alle/Persönliche Email/Tipp-Reminder mit Liga+Spieltag-
+ *                     Auswahl je tippbarer Liga), Tipper-Bereich von-bis PLUS die neue "an alle
+ *                     Tipper"-Kurzoption, Vorlagen-Umschaltung per JS beim Wechsel der
+ *                     Versandart - exakt nach dem vom Nutzer bereitgestellten Original-HTML
+ * Changelog: 0.9.1
  * Changelog: 0.9.1 - Bugfix: $tdR/$tdL/$selSt/$inpSt waren nur innerhalb des "Optionen"-Tabs
  *                     definiert und fehlten im "Userverwaltung"-Tab (führte zu PHP-Warnungen +
  *                     kaputtem HTML) - an eine gemeinsame Stelle vor der Tab-Weiche verschoben
@@ -123,9 +129,100 @@ if ($tippTab === 'auswertung') { ?>
 // ═══════════════════════════════════════════════════════════════════════
 // TAB: NEWSLETTER/REMINDER
 // ═══════════════════════════════════════════════════════════════════════
-} elseif ($tippTab === 'newsletter') { ?>
-  <h2 style="margin-bottom:8px"><?= h(t('tipp_tab_newsletter')) ?></h2>
-  <p style="color:var(--muted);font-size:.9rem"><?= h(t('tipp_placeholder_text_newsletter')) ?></p>
+} elseif ($tippTab === 'newsletter') {
+    $nlLigen = getTippbareLigenKandidaten();
+    $nlTipper = getAllTipper();
+    $nlSpieltage = [];
+    try {
+        foreach ($nlLigen as $nlLiga) {
+            $stmt = getDB()->prepare('SELECT nummer FROM ' . tbl('liga_spieltage') . ' WHERE liga_id = ? ORDER BY nummer ASC');
+            $stmt->execute([(int)$nlLiga['id']]);
+            $nlSpieltage[(int)$nlLiga['id']] = array_map('intval', $stmt->fetchAll(PDO::FETCH_COLUMN));
+        }
+    } catch (Throwable) {}
+    ?>
+  <form method="post" action="?action=send_tipp_mail" id="tipp-mail-form">
+    <table style="width:100%;border-collapse:collapse">
+      <tr>
+        <td style="padding:6px 10px" colspan="2"><label><input type="radio" name="mailart" value="alle" checked onchange="tippMailUpdateTemplate('alle')"> <?= h(t('tipp_mail_an_alle')) ?></label></td>
+      </tr>
+      <tr>
+        <td style="padding:6px 10px"><label><input type="radio" name="mailart" value="persoenlich" onchange="tippMailUpdateTemplate('persoenlich')"> <?= h(t('tipp_mail_persoenlich')) ?></label></td>
+        <td style="padding:6px 10px">
+          <select name="adressat" style="<?= $selSt ?>;width:auto" onchange="document.querySelector('input[name=mailart][value=persoenlich]').checked=true;tippMailUpdateTemplate('persoenlich')">
+            <option value=""><?= h(t('tipp_bitte_waehlen')) ?></option>
+<?php foreach ($nlTipper as $nt) { ?>
+            <option value="<?= (int)$nt['id'] ?>"><?= h($nt['nickname']) ?> (<?= h(trim(($nt['vorname'] ?? '') . ' ' . ($nt['nachname'] ?? ''))) ?> - <?= h($nt['email']) ?>)</option>
+<?php } ?>
+          </select>
+        </td>
+      </tr>
+      <tr>
+        <td style="padding:6px 10px;vertical-align:top"><label><input type="radio" name="mailart" value="reminder" onchange="tippMailUpdateTemplate('reminder')"> <?= h(t('tipp_mail_reminder')) ?></label></td>
+        <td style="padding:6px 10px">
+<?php foreach ($nlLigen as $nlLiga) {
+    $nlLigaId = (int)$nlLiga['id']; ?>
+          <div style="margin-bottom:4px">
+            <label><input type="radio" name="reminder_liga" value="<?= $nlLigaId ?>" onchange="document.querySelector('input[name=mailart][value=reminder]').checked=true;tippMailUpdateTemplate('reminder')"> <?= h($nlLiga['name']) ?></label>
+            <select name="spieltag_<?= $nlLigaId ?>" style="<?= $selSt ?>;width:auto" onchange="document.querySelector('input[name=reminder_liga][value=<?= $nlLigaId ?>]').checked=true;document.querySelector('input[name=mailart][value=reminder]').checked=true;tippMailUpdateTemplate('reminder')">
+              <option value="0"><?= h(t('tipp_alle_spieltage')) ?></option>
+<?php foreach ($nlSpieltage[$nlLigaId] ?? [] as $stNr) { ?>
+              <option value="<?= $stNr ?>"><?= $stNr ?>. <?= h(t('tipp_spieltag_singular')) ?></option>
+<?php } ?>
+            </select>
+          </div>
+<?php } ?>
+          <label><input type="radio" name="reminder_liga" value="0" onchange="document.querySelector('input[name=mailart][value=reminder]').checked=true;tippMailUpdateTemplate('reminder')"> <strong><?= h(t('tipp_alle_spieltage_aller_ligen')) ?></strong></label>
+        </td>
+      </tr>
+      <tr>
+        <td></td>
+        <td style="padding:6px 10px">
+          <label><input type="radio" name="tipper_bereich" value="alle" checked> <?= h(t('tipp_an_alle_tipper')) ?></label>
+          &nbsp;&nbsp;
+          <label><input type="radio" name="tipper_bereich" value="bereich"> <?= h(t('tipp_tipper')) ?></label>
+          <input type="text" name="tipper_von" value="1" size="2" maxlength="4" onfocus="document.querySelector('input[name=tipper_bereich][value=bereich]').checked=true">
+          <?= h(t('tipp_bis')) ?>
+          <input type="text" name="tipper_bis" value="<?= max(1, count($nlTipper)) ?>" size="2" maxlength="4" onfocus="document.querySelector('input[name=tipper_bereich][value=bereich]').checked=true">
+          &nbsp;&nbsp;<?= h(t('tipp_fuer_spiele_in_den_naechsten')) ?>
+          <input type="text" name="tage" value="4" size="2" maxlength="2" onfocus="document.querySelector('input[name=mailart][value=reminder]').checked=true">
+          <?= h(t('tipp_tagen')) ?>
+        </td>
+      </tr>
+      <tr><td colspan="2" style="padding:10px 0"><hr style="border:none;border-top:1px solid var(--border)"></td></tr>
+      <tr>
+        <td <?= $tdR ?>><?= h(t('tipp_betreff')) ?></td>
+        <td <?= $tdL ?>><input type="text" name="betreff" id="tipp-mail-betreff" value="<?= h(t('tipp_vorlage_newsletter_betreff')) ?>" maxlength="150" style="<?= $inpSt ?>;width:400px"></td>
+      </tr>
+      <tr>
+        <td></td>
+        <td style="padding:5px 10px"><textarea name="message" id="tipp-mail-message" rows="10" style="<?= $selSt ?>;width:100%;box-sizing:border-box"><?= h(t('tipp_vorlage_newsletter_text')) ?></textarea></td>
+      </tr>
+      <tr>
+        <td></td>
+        <td style="padding:14px 10px 0"><button type="submit" class="btn btn-primary"><?= h(t('tipp_abschicken')) ?></button></td>
+      </tr>
+      <tr>
+        <td></td>
+        <td style="padding:8px 10px;font-size:.78rem;color:var(--muted)">
+          <?= h(t('tipp_platzhalter_label')) ?> [nick] <?= h(t('tipp_platzhalter_nick')) ?> · [name] <?= h(t('tipp_platzhalter_name')) ?> · [spiele] <?= h(t('tipp_platzhalter_spiele')) ?>
+        </td>
+      </tr>
+    </table>
+  </form>
+  <script>
+    var tippMailVorlagen = {
+      alle: { betreff: <?= json_encode(t('tipp_vorlage_newsletter_betreff')) ?>, text: <?= json_encode(t('tipp_vorlage_newsletter_text')) ?> },
+      persoenlich: { betreff: <?= json_encode(t('tipp_vorlage_persoenlich_betreff')) ?>, text: <?= json_encode(t('tipp_vorlage_persoenlich_text')) ?> },
+      reminder: { betreff: <?= json_encode(t('tipp_vorlage_reminder_betreff')) ?>, text: <?= json_encode(t('tipp_vorlage_reminder_text')) ?> }
+    };
+    function tippMailUpdateTemplate(art) {
+      var v = tippMailVorlagen[art];
+      if (!v) return;
+      document.getElementById('tipp-mail-betreff').value = v.betreff;
+      document.getElementById('tipp-mail-message').value = v.text;
+    }
+  </script>
 
 <?php
 // ═══════════════════════════════════════════════════════════════════════

@@ -2,7 +2,9 @@
 /**
  * Project: LMOnext
  * Filename: lang/admin/de.php
- * Fileversion: 1.15.5
+ * Fileversion: 1.15.6
+ * Changelog: 1.15.6 - Übersetzungen für "Newsletter/Reminder" ergänzt
+ * Changelog: 1.15.5
  * Changelog: 1.15.5 - Übersetzungen für die Tippspiel-Userverwaltung ergänzt, common_delete/
  *                     common_edit als wiederverwendbare Begriffe ergänzt
  * Changelog: 1.15.4
@@ -222,6 +224,30 @@ return [
     'tipp_flash_nickname_vergeben'  => 'Dieser Nickname ist bereits vergeben.',
     'tipp_flash_speichern_fehlgeschlagen' => 'Speichern fehlgeschlagen.',
     'tipp_flash_tipper_geloescht'   => 'Tipper gelöscht.',
+    'tipp_mail_an_alle'      => 'Newsletter an Alle',
+    'tipp_mail_persoenlich'  => 'Persönliche Email an:',
+    'tipp_mail_reminder'     => 'Tipp-Reminder',
+    'tipp_alle_spieltage'    => 'alle Spieltage',
+    'tipp_spieltag_singular' => 'Spieltag',
+    'tipp_alle_spieltage_aller_ligen' => 'Alle Spieltage aller Ligen',
+    'tipp_an_alle_tipper'    => 'an alle Tipper',
+    'tipp_tipper'            => 'Tipper',
+    'tipp_bis'               => 'bis',
+    'tipp_fuer_spiele_in_den_naechsten' => 'für Spiele in den nächsten',
+    'tipp_tagen'             => 'Tagen',
+    'tipp_betreff'           => 'Betreff:',
+    'tipp_abschicken'        => 'abschicken',
+    'tipp_platzhalter_label' => 'Platzhalter:',
+    'tipp_platzhalter_nick'  => 'Nickname',
+    'tipp_platzhalter_name'  => 'Name',
+    'tipp_platzhalter_spiele' => 'Auflistung der noch zu tippenden Spiele (nur Tipp-Reminder)',
+    'tipp_vorlage_newsletter_betreff' => 'Tippspiel-Newsletter',
+    'tipp_vorlage_newsletter_text'    => "Hallo Tipper [nick],",
+    'tipp_vorlage_persoenlich_betreff' => 'Tippspiel',
+    'tipp_vorlage_persoenlich_text'    => "Hallo",
+    'tipp_vorlage_reminder_betreff'    => 'Tipp-Reminder',
+    'tipp_vorlage_reminder_text'       => "Hallo [nick],\n\ndiese Mail ist eine Erinnerung an Deine Tippabgabe.\nBisher haben wir leider noch keine Tippabgabe von Dir für folgende Spielpaarungen:\n\n[spiele]",
+    'tipp_flash_mail_versendet' => '{n} Mail(s) versendet.',
     'tipp_placeholder_text_regeltechnisches' => 'Hier entstehen: Tippabgabefrist, Team-Höchstgröße, Joker an/aus + Multiplikator, max. Spieltage im Voraus.',
     'tipp_placeholder_text_anmeldung'        => 'Hier entstehen: Adresse/Realname optional, Freischaltungsart, Mail-Benachrichtigungen.',
     'tipp_placeholder_text_punktgleichheit'  => 'Hier entstehen die drei Rangfolge-Kriterien bei Punktgleichheit.',

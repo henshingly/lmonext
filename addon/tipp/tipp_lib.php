@@ -2,7 +2,14 @@
 /**
  * Project: LMOnext
  * Filename: addon/tipp/tipp_lib.php
- * Fileversion: 0.3.0
+ * Fileversion: 0.4.0
+ * Changelog: 0.4.0 - Mail-Versand für "Newsletter/Reminder": sendTippMail() (exakt nach dem
+ *                     Muster von sendPasswordResetEmail() in admin/bootstrap.php, bewusst ohne
+ *                     externe Mail-Bibliothek), replaceTippPlaceholders() ([nick]/[name]/
+ *                     [spiele], bewusst kein [pass]), getTippReminderSpiele()/
+ *                     formatSpieleListe() für die echte Ermittlung noch nicht getippter Spiele
+ *                     je Tipper im gewählten Zeitfenster
+ * Changelog: 0.3.0
  * Changelog: 0.3.0 - Vollständiges Tipper/Team-CRUD für die Userverwaltung: getAllTipper()
  *                     (mit live abgeleitetem "letzter Tipp" per MAX(updated_at)),
  *                     getTipperByNickname(), getAllTeamsWithCount() (live per COUNT(*)),
@@ -442,5 +449,117 @@ function setTippSettings(array $values) : bool
         return true;
     } catch (Throwable) {
         return false;
+    }
+}
+
+/**
+ * Verschickt eine Tippspiel-Mail über die eingebaute mail()-Funktion, exakt
+ * nach demselben Muster wie sendPasswordResetEmail() in admin/bootstrap.php
+ * (bewusst ohne externe Mail-Bibliothek).
+ */
+function sendTippMail(string $toEmail, string $subject, string $body) : bool
+{
+    $siteTitle = defined('ADMIN_TITLE') ? ADMIN_TITLE : 'LMOnext';
+    $host      = $_SERVER['HTTP_HOST'] ?? 'localhost';
+    $host      = preg_replace('/:\d+$/', '', $host);
+    $fromAddr  = 'no-reply@' . $host;
+
+    $headers = "From: {$siteTitle} <{$fromAddr}>\r\n"
+        . "Content-Type: text/plain; charset=UTF-8\r\n";
+
+    return @mail($toEmail, $subject, $body, $headers);
+}
+
+/**
+ * Ersetzt die Platzhalter [nick]/[name]/[spiele] in einem Mailtext. [pass]
+ * gibt es bewusst nicht (siehe Projekt-Historie: mit gehashten Passwörtern
+ * technisch nicht möglich und auch nicht wünschenswert).
+ */
+function replaceTippPlaceholders(string $text, array $tipper, string $spieleListe = '') : string
+{
+    $name = trim(($tipper['vorname'] ?? '') . ' ' . ($tipper['nachname'] ?? ''));
+    return str_replace(
+        ['[nick]', '[name]', '[spiele]'],
+        [$tipper['nickname'] ?? '', $name, $spieleListe],
+        $text
+    );
+}
+
+/**
+ * Ermittelt für einen Tipper die noch nicht getippten Spiele (für den
+ * [spiele]-Platzhalter im Tipp-Reminder). Berücksichtigt Liga(en),
+ * optional einen bestimmten Spieltag/Runde, und ein Zeitfenster
+ * "in den nächsten X Tagen" (anhand des Anstoßtermins der Partie, ersatzweise
+ * des Spieltag-Starttermins).
+ *
+ * @param array<int,int> $ligaIds
+ */
+function getTippReminderSpiele(array $ligaIds, ?int $spieltagNr, int $tageVoraus, int $tipperId) : array
+{
+    if (empty($ligaIds)) {
+        return [];
+    }
+    try {
+        $db = getDB();
+        $placeholders = implode(',', array_fill(0, count($ligaIds), '?'));
+        $sql = 'SELECT p.id, p.heim_label, p.gast_label, p.heim_id, p.gast_id, COALESCE(p.zeit, st.start) AS termin
+                  FROM ' . tbl('liga_partien') . ' p
+                  JOIN ' . tbl('liga_spieltage') . ' st ON st.id = p.spieltag_id
+                  LEFT JOIN ' . tbl('tipp_tipp') . ' tt ON tt.partie_id = p.id AND tt.tipper_id = ?
+                 WHERE st.liga_id IN (' . $placeholders . ')
+                   AND tt.id IS NULL
+                   AND COALESCE(p.zeit, st.start) IS NOT NULL
+                   AND COALESCE(p.zeit, st.start) BETWEEN NOW() AND DATE_ADD(NOW(), INTERVAL ? DAY)';
+        $params = array_merge([$tipperId], $ligaIds, [$tageVoraus]);
+        if ($spieltagNr !== null) {
+            $sql .= ' AND st.nummer = ?';
+            $params[] = $spieltagNr;
+        }
+        $sql .= ' ORDER BY termin ASC';
+        $stmt = $db->prepare($sql);
+        $stmt->execute($params);
+        return $stmt->fetchAll();
+    } catch (Throwable) {
+        return [];
+    }
+}
+
+/**
+ * Baut aus den Spielen von getTippReminderSpiele() den Text für den
+ * [spiele]-Platzhalter (eine Zeile je Spiel). Team-Namen werden anhand von
+ * heim_id/gast_id nachgeschlagen, sofern vorhanden, sonst heim_label/
+ * gast_label verwendet (KO-Platzhalter).
+ */
+function formatSpieleListe(array $spiele) : string
+{
+    if (empty($spiele)) {
+        return '';
+    }
+    try {
+        $db = getDB();
+        $teamIds = [];
+        foreach ($spiele as $s) {
+            if ($s['heim_id']) $teamIds[] = (int)$s['heim_id'];
+            if ($s['gast_id']) $teamIds[] = (int)$s['gast_id'];
+        }
+        $teamNamen = [];
+        if (!empty($teamIds)) {
+            $ph = implode(',', array_fill(0, count($teamIds), '?'));
+            $stmt = $db->prepare('SELECT id, name FROM ' . tbl('teams_global') . ' WHERE id IN (' . $ph . ')');
+            $stmt->execute($teamIds);
+            foreach ($stmt->fetchAll() as $t) {
+                $teamNamen[(int)$t['id']] = $t['name'];
+            }
+        }
+        $lines = [];
+        foreach ($spiele as $s) {
+            $heim = $s['heim_id'] ? ($teamNamen[(int)$s['heim_id']] ?? $s['heim_label']) : $s['heim_label'];
+            $gast = $s['gast_id'] ? ($teamNamen[(int)$s['gast_id']] ?? $s['gast_label']) : $s['gast_label'];
+            $termin = $s['termin'] ? date('d.m.Y H:i', strtotime($s['termin'])) : '';
+            $lines[] = trim("$termin  $heim - $gast");
+        }
+        return implode("\n", $lines);
+    } catch (Throwable) {
+        return '';
     }
 }

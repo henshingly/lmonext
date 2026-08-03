@@ -2,7 +2,9 @@
 /**
  * Project: LMOnext
  * Filename: lang/admin/en.php
- * Fileversion: 1.14.5
+ * Fileversion: 1.14.6
+ * Changelog: 1.14.6 - Added translations for "Newsletter/Reminder"
+ * Changelog: 1.14.5
  * Changelog: 1.14.5 - Added translations for the prediction game user management, added
  *                     common_delete/common_edit shared terms
  * Changelog: 1.14.4
@@ -214,6 +216,30 @@ return [
     'tipp_flash_nickname_vergeben'  => 'This nickname is already taken.',
     'tipp_flash_speichern_fehlgeschlagen' => 'Saving failed.',
     'tipp_flash_tipper_geloescht'   => 'Tipster deleted.',
+    'tipp_mail_an_alle'      => 'Newsletter to everyone',
+    'tipp_mail_persoenlich'  => 'Personal email to:',
+    'tipp_mail_reminder'     => 'Tip reminder',
+    'tipp_alle_spieltage'    => 'all matchdays',
+    'tipp_spieltag_singular' => 'matchday',
+    'tipp_alle_spieltage_aller_ligen' => 'All matchdays of all leagues',
+    'tipp_an_alle_tipper'    => 'to all tipsters',
+    'tipp_tipper'            => 'tipsters',
+    'tipp_bis'               => 'to',
+    'tipp_fuer_spiele_in_den_naechsten' => 'for games in the next',
+    'tipp_tagen'             => 'days',
+    'tipp_betreff'           => 'Subject:',
+    'tipp_abschicken'        => 'send',
+    'tipp_platzhalter_label' => 'Placeholders:',
+    'tipp_platzhalter_nick'  => 'Nickname',
+    'tipp_platzhalter_name'  => 'Name',
+    'tipp_platzhalter_spiele' => 'List of games not yet tipped (reminder only)',
+    'tipp_vorlage_newsletter_betreff' => 'Prediction game newsletter',
+    'tipp_vorlage_newsletter_text'    => "Hello tipster [nick],",
+    'tipp_vorlage_persoenlich_betreff' => 'Prediction game',
+    'tipp_vorlage_persoenlich_text'    => "Hello",
+    'tipp_vorlage_reminder_betreff'    => 'Tip reminder',
+    'tipp_vorlage_reminder_text'       => "Hello [nick],\n\nthis is a reminder about your tip submission.\nSo far we have not received your tips for the following matches:\n\n[spiele]",
+    'tipp_flash_mail_versendet' => '{n} email(s) sent.',
     'tipp_placeholder_text_regeltechnisches' => 'Coming here: tip submission deadline, max team size, joker on/off + multiplier, max matchdays in advance.',
     'tipp_placeholder_text_anmeldung'        => 'Coming here: optional address/real name, activation method, email notifications.',
     'tipp_placeholder_text_punktgleichheit'  => 'Coming here: the three tie-breaking criteria and their order.',

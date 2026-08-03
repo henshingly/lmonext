@@ -2,7 +2,11 @@
 /**
  * Project: LMOnext
  * Filename: addon/tipp/handler_tipp.php
- * Fileversion: 0.7.1
+ * Fileversion: 0.8.0
+ * Changelog: 0.8.0 - Neue Aktion send_tipp_mail: verschickt echte Mails für alle drei
+ *                     Versandarten, inkl. Tipper-Bereich/"an alle" und echter [spiele]-
+ *                     Ermittlung beim Reminder (überspringt Tipper ohne offene Tipps)
+ * Changelog: 0.7.1
  * Changelog: 0.7.1 - Bugfix: beim nachträglichen Eintragen der neu erzeugten Team-ID wurde der
  *                     Array-Operator "+" statt array_merge() genutzt - da "team_id" in $data
  *                     bereits (mit null) existierte, gewann bei "+" immer die linke Seite,
@@ -255,4 +259,64 @@ if ($action === 'delete_tipp_user') {
         flash(t('tipp_flash_tipper_geloescht'));
     }
     redirect('?action=tippspiel&tab=userverwaltung');
+}
+
+if ($action === 'send_tipp_mail' && $_SERVER['REQUEST_METHOD'] === 'POST') {
+    requireLogin();
+
+    $mailart = $_POST['mailart'] ?? 'alle';
+    $betreff = trim($_POST['betreff'] ?? '');
+    $message = $_POST['message'] ?? '';
+    $alleTipper = getAllTipper();
+    $versendet = 0;
+
+    if ($mailart === 'persoenlich') {
+        $adressatId = (int)($_POST['adressat'] ?? 0);
+        $empfaenger = array_values(array_filter($alleTipper, fn($t) => (int)$t['id'] === $adressatId));
+        foreach ($empfaenger as $t) {
+            if (sendTippMail($t['email'], replaceTippPlaceholders($betreff, $t), replaceTippPlaceholders($message, $t))) {
+                $versendet++;
+            }
+        }
+    } elseif ($mailart === 'reminder') {
+        $ligaId = (int)($_POST['reminder_liga'] ?? 0);
+        $ligaIds = $ligaId > 0 ? [$ligaId] : array_map(fn($l) => (int)$l['id'], getTippbareLigenKandidaten());
+        $spieltagNr = $ligaId > 0 ? (int)($_POST['spieltag_' . $ligaId] ?? 0) : 0;
+        $spieltagNr = $spieltagNr > 0 ? $spieltagNr : null;
+        $tage = max(1, (int)($_POST['tage'] ?? 4));
+
+        $empfaenger = $alleTipper;
+        if (($_POST['tipper_bereich'] ?? 'alle') === 'bereich') {
+            $von = max(1, (int)($_POST['tipper_von'] ?? 1));
+            $bis = max($von, (int)($_POST['tipper_bis'] ?? count($alleTipper)));
+            $empfaenger = array_slice($alleTipper, $von - 1, $bis - $von + 1);
+        }
+
+        foreach ($empfaenger as $t) {
+            $spiele = getTippReminderSpiele($ligaIds, $spieltagNr, $tage, (int)$t['id']);
+            if (empty($spiele)) {
+                continue; // Keine offenen Tipps für diesen Tipper in diesem Zeitraum -> keine Mail nötig
+            }
+            $spieleText = formatSpieleListe($spiele);
+            if (sendTippMail($t['email'], replaceTippPlaceholders($betreff, $t, $spieleText), replaceTippPlaceholders($message, $t, $spieleText))) {
+                $versendet++;
+            }
+        }
+    } else {
+        // Newsletter an Alle
+        $empfaenger = $alleTipper;
+        if (($_POST['tipper_bereich'] ?? 'alle') === 'bereich') {
+            $von = max(1, (int)($_POST['tipper_von'] ?? 1));
+            $bis = max($von, (int)($_POST['tipper_bis'] ?? count($alleTipper)));
+            $empfaenger = array_slice($alleTipper, $von - 1, $bis - $von + 1);
+        }
+        foreach ($empfaenger as $t) {
+            if (sendTippMail($t['email'], replaceTippPlaceholders($betreff, $t), replaceTippPlaceholders($message, $t))) {
+                $versendet++;
+            }
+        }
+    }
+
+    flash(t('tipp_flash_mail_versendet', ['n' => $versendet]));
+    redirect('?action=tippspiel&tab=newsletter');
 }
