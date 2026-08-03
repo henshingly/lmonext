@@ -2,8 +2,7 @@
 /**
  * Project: LMOnext
  * Filename: lang/frontend/en.php
- * Fileversion: 1.20.1
- * Changelog: 1.20.1 - Added translations for the tip overview (Tippeinsicht)
+ * Fileversion: 1.20.0
  * Changelog: 1.20.0 - Added translations for the new (preliminary) prediction game tipster view
  *                     (login/registration/tip submission, see addon/tipp/tipp.php)
  * Changelog: 1.19.3
@@ -314,8 +313,5 @@ return [
     'tf_tipp_mail_welcome_text'    => "Hello {nick},\n\nyour prediction game registration was successful.",
     'tf_tipp_mail_admin_betreff'   => 'New prediction game registration',
     'tf_tipp_mail_admin_text'      => "A new tipster has registered: {nick}",
-    'tf_tipp_einsicht_titel'       => 'Tip Overview',
-    'tf_tipp_zur_abgabe'           => 'To tip submission',
-    'tf_tipp_einsicht_noch_nicht_sichtbar' => 'Tips for this game are not visible yet.',
 
 ];

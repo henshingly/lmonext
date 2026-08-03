@@ -2,8 +2,7 @@
 /**
  * Project: LMOnext
  * Filename: lang/frontend/de.php
- * Fileversion: 1.20.1
- * Changelog: 1.20.1 - Übersetzungen für die Tippeinsicht ergänzt
+ * Fileversion: 1.20.0
  * Changelog: 1.20.0 - Übersetzungen für die neue (vorläufige) Tippspiel-Tipperansicht ergänzt
  *                     (Login/Registrierung/Tippabgabe, siehe addon/tipp/tipp.php)
  * Changelog: 1.19.3
@@ -316,8 +315,5 @@ return [
     'tf_tipp_mail_welcome_text'    => "Hallo {nick},\n\ndeine Anmeldung zum Tippspiel war erfolgreich.",
     'tf_tipp_mail_admin_betreff'   => 'Neue Tippspiel-Anmeldung',
     'tf_tipp_mail_admin_text'      => "Ein neuer Tipper hat sich angemeldet: {nick}",
-    'tf_tipp_einsicht_titel'       => 'Tippeinsicht',
-    'tf_tipp_zur_abgabe'           => 'Zur Tippabgabe',
-    'tf_tipp_einsicht_noch_nicht_sichtbar' => 'Für dieses Spiel sind die Tipps noch nicht einsehbar.',
 
 ];
