@@ -2,19 +2,7 @@
 /**
  * Project: LMOnext
  * Filename: addon/tipp/view_tippspiel_frontend.php
- * Fileversion: 1.4.0
- * Changelog: 1.4.0 - Kundenwunsch: "Passwort vergessen" bietet jetzt zwei Eingabefelder
- *                     (Nickname ODER Email) statt nur Email, sucht entsprechend und meldet bei
- *                     Nichtfund konkret zurück, welches Feld nichts fand - siehe
- *                     tippRequestPasswordReset() in tipp_lib.php 0.6.1
- * Changelog: 1.3.0 - Verhalten korrigiert (Rückmeldung: Fallback war andersrum gewünscht):
- *                     tippFilterLigenByAbo() liefert jetzt bei leerem Abo eine LEERE Liste
- *                     statt aller Ligen. Dafür fragt die Registrierung (renderTippRegisterView())
- *                     die zu abonnierenden Ligen direkt mit ab (Checkboxen unter den
- *                     Passwortfeldern), damit ein frisch registrierter Tipper nicht ohne Abo
- *                     dasteht. Tippabgabe/-einsicht zeigen bei leerem Abo (aber vorhandenen
- *                     Ligen) jetzt einen Hinweis mit Link zur Kontoseite statt der irreführenden
- *                     "keine Liga freigegeben"-Meldung
+ * Fileversion: 1.2.0
  * Changelog: 1.2.0 - Liga-Abo wirkt jetzt tatsächlich: neue Funktion tippFilterLigenByAbo()
  *                     schränkt Tippabgabe/Tippeinsicht auf die abonnierten Ligen ein - bisher
  *                     war das Abo nur eine wirkungslose Merkliste. Ohne jegliches Abo bleibt die
@@ -178,18 +166,12 @@ function tippspielHandleRequest() : array
     }
 
     if ($action === 'passwort_vergessen' && $_SERVER['REQUEST_METHOD'] === 'POST') {
-        $result = tippRequestPasswordReset($_POST['nickname'] ?? '', $_POST['email'] ?? '');
-        if ($result['ok']) {
-            $flashMsg  = tf('tf_tipp_reset_mail_verschickt');
-            $flashType = 'success';
-        } else {
-            $flashMsg  = tf(match ($result['reason']) {
-                'not_found_nickname' => 'tf_tipp_reset_nickname_nicht_gefunden',
-                'not_found_email'    => 'tf_tipp_reset_email_nicht_gefunden',
-                default               => 'tf_tipp_reset_beides_leer',
-            });
-            $flashType = 'error';
-        }
+        tippRequestPasswordReset($_POST['email'] ?? '');
+        // Bewusst immer dieselbe Erfolgsmeldung, unabhängig davon, ob die
+        // Email tatsächlich existiert (siehe Docblock von
+        // tippRequestPasswordReset() in tipp_lib.php)
+        $flashMsg  = tf('tf_tipp_reset_mail_verschickt');
+        $flashType = 'success';
     }
 
     if ($action === 'passwort_reset' && $_SERVER['REQUEST_METHOD'] === 'POST') {
@@ -316,9 +298,6 @@ function renderTippRegisterView() : string
 {
     $showAdresse  = getTippSetting('anmeldung_adresse_abfragen') === '1';
     $showRealname = getTippSetting('anmeldung_realname_abfragen') === '1';
-    $ligaIds = getTippSetting('tippbare_immer_alle', '1') === '1'
-        ? array_map(fn($l) => (int)$l['id'], getTippbareLigenKandidaten())
-        : getTippLigaFreigabeIds();
     $result = null;
     if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $result = tippRegister(
@@ -326,13 +305,6 @@ function renderTippRegisterView() : string
             $_POST['password'] ?? '', $_POST['password_wdh'] ?? '',
             ['vorname' => trim($_POST['vorname'] ?? '') ?: null, 'nachname' => trim($_POST['nachname'] ?? '') ?: null]
         );
-        if ($result['ok']) {
-            $neuerTipper = getTipperByNickname($_POST['nickname'] ?? '');
-            if ($neuerTipper !== null) {
-                $abo = array_map('intval', $_POST['abo'] ?? []);
-                setTipperAbos((int)$neuerTipper['id'], $abo);
-            }
-        }
     }
 
     ob_start();
@@ -365,16 +337,6 @@ function renderTippRegisterView() : string
     <input type="password" name="password" required>
     <label><?= h(tf('tf_tipp_passwort_wdh')) ?></label>
     <input type="password" name="password_wdh" required>
-<?php if (!empty($ligaIds)) { ?>
-    <label style="margin-top:16px"><?= h(tf('tf_tipp_abonnierte_ligen')) ?></label>
-<?php foreach ($ligaIds as $lid) {
-    $l = getLigaById($lid); ?>
-    <label style="display:flex;align-items:center;gap:8px;font-weight:400;color:var(--text)">
-      <input type="checkbox" name="abo[]" value="<?= $lid ?>" style="margin:0">
-      <?= h($l['name'] ?? '') ?>
-    </label>
-<?php } ?>
-<?php } ?>
 <?php if ($showRealname) { ?>
     <label><?= h(tf('tf_tipp_vorname')) ?></label>
     <input type="text" name="vorname" maxlength="50">
@@ -422,11 +384,8 @@ function renderTippPasswortVergessenView(array $state) : string
 <?php } ?>
   <div class="card">
   <form class="tipp-form" method="post" action="<?= h(tippUrl('passwort_vergessen')) ?>">
-    <p style="font-size:.85rem;color:var(--muted);margin-bottom:4px"><?= h(tf('tf_tipp_reset_hinweis')) ?></p>
-    <label><?= h(tf('tf_tipp_nickname')) ?></label>
-    <input type="text" name="nickname" maxlength="50">
     <label><?= h(tf('tf_tipp_email')) ?></label>
-    <input type="email" name="email">
+    <input type="email" name="email" required>
     <button type="submit" class="btn-primary"><?= h(tf('tf_tipp_reset_anfordern')) ?></button>
   </form>
   <p style="margin-top:16px;font-size:.85rem"><a href="<?= h(tippUrl('login')) ?>"><?= h(tf('tf_tipp_zum_login')) ?></a></p>
@@ -542,11 +501,11 @@ function renderTippKontoView(array $state) : string
 
 /**
  * Schränkt eine Liste tippbarer Liga-IDs auf die vom Tipper abonnierten
- * Ligen ein. Ohne jegliches Abo bleibt die Liste bewusst LEER - die
- * Registrierung fragt die Abos direkt mit ab (siehe renderTippRegisterView()),
- * daher sollte im Normalfall bei jedem Tipper mindestens ein Abo vorhanden
- * sein; ein Tipper ohne Abo soll gezielt zur Kontoseite geführt werden statt
- * standardmäßig alle Ligen angezeigt zu bekommen.
+ * Ligen ein - sofern er überhaupt mindestens eine Liga abonniert hat. Ohne
+ * jegliches Abo (z.B. direkt nach der Registrierung, bevor der Tipper sein
+ * Konto konfiguriert hat) bleibt die volle Liste unverändert, damit niemand
+ * durch ein leeres Abo versehentlich ausgesperrt wird - erst eine bewusste
+ * Auswahl im Konto schränkt tatsächlich ein.
  *
  * @param array<int,int> $ligaIds
  * @return array<int,int>
@@ -554,28 +513,26 @@ function renderTippKontoView(array $state) : string
 function tippFilterLigenByAbo(array $ligaIds, int $tipperId) : array
 {
     $aboIds = getTipperAboLigaIds($tipperId);
+    if (empty($aboIds)) {
+        return $ligaIds;
+    }
     return array_values(array_intersect($ligaIds, $aboIds));
 }
 
 function renderTippAbgabeView(array $state) : string
 {
     $tipper = $state['tipper'];
-    $ligaIdsAlle = getTippSetting('tippbare_immer_alle', '1') === '1'
+    $ligaIds = getTippSetting('tippbare_immer_alle', '1') === '1'
         ? array_map(fn($l) => (int)$l['id'], getTippbareLigenKandidaten())
         : getTippLigaFreigabeIds();
-    $ligaIds = tippFilterLigenByAbo($ligaIdsAlle, (int)$tipper['id']);
+    $ligaIds = tippFilterLigenByAbo($ligaIds, (int)$tipper['id']);
 
     ob_start();
     echo renderTippspielUserBar($tipper);
     echo renderTippspielTabsBar('abgabe');
 
     if (empty($ligaIds)) {
-        if (empty($ligaIdsAlle)) {
-            echo '<div class="card"><p class="empty-msg">' . h(tf('tf_tipp_keine_ligen')) . '</p></div>';
-        } else {
-            echo '<div class="card"><p class="empty-msg">' . h(tf('tf_tipp_kein_abo'))
-               . ' <a href="' . h(tippUrl('konto')) . '">' . h(tf('tf_tipp_konto_link')) . '</a></p></div>';
-        }
+        echo '<div class="card"><p class="empty-msg">' . h(tf('tf_tipp_keine_ligen')) . '</p></div>';
         return (string)ob_get_clean();
     }
 
@@ -671,22 +628,17 @@ function renderTippAbgabeView(array $state) : string
 function renderTippEinsichtView(array $state) : string
 {
     $tipper = $state['tipper'];
-    $ligaIdsAlle = getTippSetting('tippbare_immer_alle', '1') === '1'
+    $ligaIds = getTippSetting('tippbare_immer_alle', '1') === '1'
         ? array_map(fn($l) => (int)$l['id'], getTippbareLigenKandidaten())
         : getTippLigaFreigabeIds();
-    $ligaIds = tippFilterLigenByAbo($ligaIdsAlle, (int)$tipper['id']);
+    $ligaIds = tippFilterLigenByAbo($ligaIds, (int)$tipper['id']);
 
     ob_start();
     echo renderTippspielUserBar($tipper);
     echo renderTippspielTabsBar('einsicht');
 
     if (empty($ligaIds)) {
-        if (empty($ligaIdsAlle)) {
-            echo '<div class="card"><p class="empty-msg">' . h(tf('tf_tipp_keine_ligen')) . '</p></div>';
-        } else {
-            echo '<div class="card"><p class="empty-msg">' . h(tf('tf_tipp_kein_abo'))
-               . ' <a href="' . h(tippUrl('konto')) . '">' . h(tf('tf_tipp_konto_link')) . '</a></p></div>';
-        }
+        echo '<div class="card"><p class="empty-msg">' . h(tf('tf_tipp_keine_ligen')) . '</p></div>';
         return (string)ob_get_clean();
     }
 
