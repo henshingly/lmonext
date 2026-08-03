@@ -2,7 +2,11 @@
 /**
  * Project: LMOnext
  * Filename: addon/tipp/view_tippspiel_frontend.php
- * Fileversion: 1.4.0
+ * Fileversion: 1.4.1
+ * Changelog: 1.4.1 - Bugfix: Die Tippeinsicht hatte (anders als die Tippabgabe) gar keinen
+ *                     Liga-Umschalter - bei mehr als einer abonnierten Liga wurde immer nur die
+ *                     erste angezeigt, die zweite war unerreichbar. Denselben Umschalter-Block
+ *                     wie in der Tippabgabe ergänzt
  * Changelog: 1.4.0 - "Passwort vergessen" bietet jetzt zwei Eingabefelder
  *                     (Nickname ODER Email) statt nur Email, sucht entsprechend und meldet bei
  *                     Nichtfund konkret zurück, welches Feld nichts fand - siehe
@@ -704,6 +708,14 @@ function renderTippEinsichtView(array $state) : string
     ?>
   <div class="card">
   <h2><?= h($liga['name'] ?? '') ?></h2>
+<?php if (count($ligaIds) > 1) { ?>
+  <div style="margin-bottom:10px">
+<?php foreach ($ligaIds as $lid) {
+    $l = getLigaById($lid); ?>
+    <a href="<?= h(tippUrl('einsicht', ['liga' => $lid])) ?>" style="margin-right:10px;<?= $lid === $ligaId ? 'font-weight:700' : '' ?>"><?= h($l['name'] ?? '') ?></a>
+<?php } ?>
+  </div>
+<?php } ?>
   <div style="margin-bottom:10px">
 <?php for ($n = 1; $n <= $maxNr; $n++) { ?>
     <a href="<?= h(tippUrl('einsicht', ['liga' => $ligaId, 'spieltag' => $n])) ?>" style="margin-right:6px;font-size:.82rem;<?= $n === $spieltagNr ? 'font-weight:700' : '' ?>"><?= $n ?></a>
