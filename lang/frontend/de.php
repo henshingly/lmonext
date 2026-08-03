@@ -2,7 +2,10 @@
 /**
  * Project: LMOnext
  * Filename: lang/frontend/de.php
- * Fileversion: 1.19.3
+ * Fileversion: 1.20.0
+ * Changelog: 1.20.0 - Übersetzungen für die neue (vorläufige) Tippspiel-Tipperansicht ergänzt
+ *                     (Login/Registrierung/Tippabgabe, siehe addon/tipp/tipp.php)
+ * Changelog: 1.19.3
  * Changelog: 1.19.3 - Neuer Schlüssel "home_overview_disabled" für den Hinweis auf der
  *                     Startseite, wenn die Liga-Übersicht deaktiviert ist (siehe home.php 2.1.0)
  * Changelog: 1.19.2
@@ -262,5 +265,55 @@ return [
     'spst_pager_prev'         => 'Zurück',
     'spst_pager_next'         => 'Weiter',
     'spst_pager_range'        => '{from}–{to} von {total}',
+
+    // ── Tippspiel (Tipper-Ansicht, vorläufig) ────────────────────────────────
+    'tf_tipp_login_titel'      => 'Tippspiel — Login',
+    'tf_tipp_nickname'         => 'Nickname',
+    'tf_tipp_passwort'         => 'Passwort',
+    'tf_tipp_einloggen'        => 'Einloggen',
+    'tf_tipp_noch_kein_konto'  => 'Noch kein Konto?',
+    'tf_tipp_registrieren'     => 'Registrieren',
+    'tf_tipp_registrieren_titel' => 'Tippspiel — Registrieren',
+    'tf_tipp_registrierung_erfolgreich_titel' => 'Registrierung erfolgreich',
+    'tf_tipp_registrierung_sofort' => 'Dein Konto ist sofort freigeschaltet, du kannst dich jetzt einloggen.',
+    'tf_tipp_registrierung_email'  => 'Wir haben dir eine E-Mail mit einem Bestätigungslink geschickt. Bitte klicke darauf, um dein Konto freizuschalten.',
+    'tf_tipp_registrierung_admin'  => 'Deine Registrierung wurde übermittelt. Ein Administrator muss dein Konto noch freischalten.',
+    'tf_tipp_zum_login'        => 'Zum Login',
+    'tf_tipp_email'            => 'E-Mail-Adresse',
+    'tf_tipp_passwort_wdh'     => 'Passwort wiederholen',
+    'tf_tipp_vorname'          => 'Vorname',
+    'tf_tipp_nachname'         => 'Nachname',
+    'tf_tipp_strasse'          => 'Strasse',
+    'tf_tipp_plz'              => 'PLZ',
+    'tf_tipp_ort'              => 'Wohnort',
+    'tf_tipp_bestaetigung_titel' => 'E-Mail-Bestätigung',
+    'tf_tipp_bestaetigung_erfolg' => 'Dein Konto wurde erfolgreich freigeschaltet.',
+    'tf_tipp_bestaetigung_fehler' => 'Dieser Bestätigungslink ist ungültig oder wurde bereits verwendet.',
+    'tf_tipp_abgabe_titel'     => 'Tippabgabe',
+    'tf_tipp_keine_ligen'      => 'Aktuell ist keine Liga fürs Tippen freigegeben.',
+    'tf_tipp_eingeloggt_als'   => 'Eingeloggt als',
+    'tf_tipp_logout'           => 'Logout',
+    'tf_tipp_kein_spieltag'    => 'Für diesen Spieltag liegen keine Spiele vor.',
+    'tf_tipp_col_termin'       => 'Termin',
+    'tf_tipp_col_spiel'        => 'Spiel',
+    'tf_tipp_col_tipp'         => 'Tipp',
+    'tf_tipp_col_joker'        => 'Joker',
+    'tf_tipp_col_ergebnis'     => 'Ergebnis',
+    'tf_tipp_col_punkte'       => 'Pkt.',
+    'tf_tipp_speichern'        => 'Tipps speichern',
+    'tf_tipp_err_nickname'     => 'Bitte einen gültigen Nickname angeben (max. 50 Zeichen).',
+    'tf_tipp_err_email'        => 'Bitte eine gültige E-Mail-Adresse angeben.',
+    'tf_tipp_err_passwort_kurz' => 'Das Passwort muss mindestens 6 Zeichen lang sein.',
+    'tf_tipp_err_passwort_mismatch' => 'Die beiden Passwörter stimmen nicht überein.',
+    'tf_tipp_err_nickname_vergeben' => 'Dieser Nickname ist bereits vergeben.',
+    'tf_tipp_err_speichern'    => 'Beim Speichern ist ein Fehler aufgetreten.',
+    'tf_tipp_err_login'        => 'Nickname oder Passwort ist falsch.',
+    'tf_tipp_err_nicht_freigeschaltet' => 'Dein Konto ist noch nicht freigeschaltet.',
+    'tf_tipp_mail_confirm_betreff' => 'Bitte bestätige deine Anmeldung',
+    'tf_tipp_mail_confirm_text'    => "Hallo {nick},\n\nbitte bestätige deine Anmeldung zum Tippspiel über diesen Link:\n{link}",
+    'tf_tipp_mail_welcome_betreff' => 'Willkommen beim Tippspiel',
+    'tf_tipp_mail_welcome_text'    => "Hallo {nick},\n\ndeine Anmeldung zum Tippspiel war erfolgreich.",
+    'tf_tipp_mail_admin_betreff'   => 'Neue Tippspiel-Anmeldung',
+    'tf_tipp_mail_admin_text'      => "Ein neuer Tipper hat sich angemeldet: {nick}",
 
 ];

@@ -2,7 +2,10 @@
 /**
  * Project: LMOnext
  * Filename: lang/frontend/en.php
- * Fileversion: 1.19.3
+ * Fileversion: 1.20.0
+ * Changelog: 1.20.0 - Added translations for the new (preliminary) prediction game tipster view
+ *                     (login/registration/tip submission, see addon/tipp/tipp.php)
+ * Changelog: 1.19.3
  * Changelog: 1.19.3 - Added key "home_overview_disabled" for the homepage message shown when
  *                     the league overview is disabled (see home.php 2.1.0)
  * Changelog: 1.19.2
@@ -260,5 +263,55 @@ return [
     'spst_pager_prev'         => 'Previous',
     'spst_pager_next'         => 'Next',
     'spst_pager_range'        => '{from}–{to} of {total}',
+
+    // ── Prediction game (tipster view, preliminary) ──────────────────────────
+    'tf_tipp_login_titel'      => 'Prediction Game — Login',
+    'tf_tipp_nickname'         => 'Nickname',
+    'tf_tipp_passwort'         => 'Password',
+    'tf_tipp_einloggen'        => 'Log in',
+    'tf_tipp_noch_kein_konto'  => "Don't have an account yet?",
+    'tf_tipp_registrieren'     => 'Register',
+    'tf_tipp_registrieren_titel' => 'Prediction Game — Register',
+    'tf_tipp_registrierung_erfolgreich_titel' => 'Registration successful',
+    'tf_tipp_registrierung_sofort' => 'Your account is active immediately, you can log in now.',
+    'tf_tipp_registrierung_email'  => 'We have sent you an email with a confirmation link. Please click it to activate your account.',
+    'tf_tipp_registrierung_admin'  => 'Your registration has been submitted. An administrator still needs to activate your account.',
+    'tf_tipp_zum_login'        => 'Go to login',
+    'tf_tipp_email'            => 'Email address',
+    'tf_tipp_passwort_wdh'     => 'Repeat password',
+    'tf_tipp_vorname'          => 'First name',
+    'tf_tipp_nachname'         => 'Last name',
+    'tf_tipp_strasse'          => 'Street',
+    'tf_tipp_plz'              => 'Zip code',
+    'tf_tipp_ort'              => 'City',
+    'tf_tipp_bestaetigung_titel' => 'Email confirmation',
+    'tf_tipp_bestaetigung_erfolg' => 'Your account has been activated successfully.',
+    'tf_tipp_bestaetigung_fehler' => 'This confirmation link is invalid or has already been used.',
+    'tf_tipp_abgabe_titel'     => 'Tip Submission',
+    'tf_tipp_keine_ligen'      => 'No league is currently open for tipping.',
+    'tf_tipp_eingeloggt_als'   => 'Logged in as',
+    'tf_tipp_logout'           => 'Logout',
+    'tf_tipp_kein_spieltag'    => 'There are no games for this matchday.',
+    'tf_tipp_col_termin'       => 'Kickoff',
+    'tf_tipp_col_spiel'        => 'Match',
+    'tf_tipp_col_tipp'         => 'Tip',
+    'tf_tipp_col_joker'        => 'Joker',
+    'tf_tipp_col_ergebnis'     => 'Result',
+    'tf_tipp_col_punkte'       => 'Pts.',
+    'tf_tipp_speichern'        => 'Save tips',
+    'tf_tipp_err_nickname'     => 'Please enter a valid nickname (max. 50 characters).',
+    'tf_tipp_err_email'        => 'Please enter a valid email address.',
+    'tf_tipp_err_passwort_kurz' => 'The password must be at least 6 characters long.',
+    'tf_tipp_err_passwort_mismatch' => 'The two passwords do not match.',
+    'tf_tipp_err_nickname_vergeben' => 'This nickname is already taken.',
+    'tf_tipp_err_speichern'    => 'An error occurred while saving.',
+    'tf_tipp_err_login'        => 'Nickname or password is incorrect.',
+    'tf_tipp_err_nicht_freigeschaltet' => 'Your account has not been activated yet.',
+    'tf_tipp_mail_confirm_betreff' => 'Please confirm your registration',
+    'tf_tipp_mail_confirm_text'    => "Hello {nick},\n\nplease confirm your prediction game registration via this link:\n{link}",
+    'tf_tipp_mail_welcome_betreff' => 'Welcome to the prediction game',
+    'tf_tipp_mail_welcome_text'    => "Hello {nick},\n\nyour prediction game registration was successful.",
+    'tf_tipp_mail_admin_betreff'   => 'New prediction game registration',
+    'tf_tipp_mail_admin_text'      => "A new tipster has registered: {nick}",
 
 ];
