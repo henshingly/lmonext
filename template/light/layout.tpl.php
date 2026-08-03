@@ -2,7 +2,8 @@
 <html lang="<!--HtmlLang-->">
 <head>
 <!--
-  Template: light | Filename: layout.tpl.php | Fileversion: 1.4.0
+  Template: light | Filename: layout.tpl.php | Fileversion: 1.4.1
+  Changelog: 1.4.1 - CSS für .st-straf-hinweis ergänzt (siehe default 1.16.1)
   Changelog: 1.4.0 - CSS für die Tippspiel-Integration ergänzt (siehe default 1.16.0)
   Changelog: 1.3.0 - Neuer Platzhalter "TippspielLink" im Footer, neben der Sprachauswahl
                      (siehe frontend/template_engine.php 2.6.0)
@@ -258,6 +259,7 @@ table.standings-table td{padding:8px 10px;border-top:1px solid var(--border)}
 .st-team{font-weight:500;white-space:nowrap}
 .st-num{text-align:center;width:1%;white-space:nowrap}
 .st-pkt{text-align:center;font-weight:700;color:var(--accent);width:1%;white-space:nowrap}
+.st-straf-hinweis{cursor:help;font-size:.8rem;margin-left:3px}
 .st-num.diff-pos{color:var(--green)}
 .st-num.diff-neg{color:#e11d48}
 

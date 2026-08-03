@@ -2,7 +2,11 @@
 /**
  * Project: LMOnext
  * Filename: install.php
- * Fileversion: 2.1.0
+ * Fileversion: 2.1.1
+ * Changelog: 2.1.1 - Neue Tabelle liga_strafpunkte ergänzt (Strafpunkte/Straftore je Team und
+ *                     Liga, siehe src/Liga/StandingsTrait.php 1.1.0). Auf Bestandsinstallationen
+ *                     wird sie zusätzlich automatisch bei Bedarf nachgezogen
+ *                     (ensureStrafpunkteSchema()), install.php muss dafür nicht erneut laufen
  * Changelog: 2.1.0 - Ein bereits systemweit installiertes composer-Kommando (z.B.
  *                     /usr/bin/composer) wird jetzt bevorzugt verwendet, falls vorhanden
  *                     (findSystemComposer()) - meist besser gepflegt/aktueller als die
@@ -293,6 +297,20 @@ function setupDatabase(array $cfg): array {
                 `option_value` TEXT         NOT NULL DEFAULT '',
                 UNIQUE KEY `liga_option` (`liga_id`, `option_key`),
                 KEY `liga_id` (`liga_id`)
+            ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci",
+
+            // Strafpunkte/Straftore je Team und Liga (Admin → Liga-Einstellungen →
+            // Strafen) - wirken sich in computeStandings() auf Punkte/Tordifferenz
+            // aus, siehe src/Liga/StandingsTrait.php
+            "CREATE TABLE IF NOT EXISTS `{$p}liga_strafpunkte` (
+                `id`          INT AUTO_INCREMENT PRIMARY KEY,
+                `liga_id`     INT NOT NULL,
+                `team_id`     INT NOT NULL,
+                `strafpunkte` INT NOT NULL DEFAULT 0,
+                `straftore`   INT NOT NULL DEFAULT 0,
+                `grund`       VARCHAR(255) NULL DEFAULT NULL,
+                `updated_at`  TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+                UNIQUE KEY `liga_team` (`liga_id`, `team_id`)
             ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci",
 
             // modus: 0=Liga-Spieltag, 1-7=KO-Spielmodus
