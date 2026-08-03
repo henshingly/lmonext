@@ -2,7 +2,10 @@
 /**
  * Project: LMOnext
  * Filename: view_liga_settings.php
- * Fileversion: 1.5.2
+ * Fileversion: 1.5.3
+ * Changelog: 1.5.3 - Spaltenreihenfolge im Tab "Strafen" geändert: Punkte, Minuspunkte,
+ *                     Erzielte Tore, Gegentore (Kundenwunsch) - reine Anzeigeänderung, die
+ *                     Felder werden weiterhin über ihren Namen ausgewertet, nicht die Position
  * Changelog: 1.5.2 - Tab "Strafen": Eingabe auf Dropdown (+/−) + positives Betragsfeld
  *                     umgestellt statt eines Zahlenfelds mit Minuszeichen (auf Mobilgeräten oft
  *                     nicht per Zifferntastatur eingebbar). Vierte Spalte "Minuspunkte" ergänzt
@@ -699,9 +702,9 @@ if ($tab === 'grundwerte') { ?>
             <tr>
               <th style="text-align:left;padding:6px 8px;font-size:.8rem;color:var(--muted)"><?= h(t('ls_strafen_col_team')) ?></th>
               <th style="text-align:center;padding:6px 8px;font-size:.8rem;color:var(--muted)"><?= h(t('ls_strafen_col_punkte')) ?></th>
+              <th style="text-align:center;padding:6px 8px;font-size:.8rem;color:var(--muted)"><?= h(t('ls_strafen_col_minuspunkte')) ?></th>
               <th style="text-align:center;padding:6px 8px;font-size:.8rem;color:var(--muted)"><?= h(t('ls_strafen_col_erzielt')) ?></th>
               <th style="text-align:center;padding:6px 8px;font-size:.8rem;color:var(--muted)"><?= h(t('ls_strafen_col_gegentore')) ?></th>
-              <th style="text-align:center;padding:6px 8px;font-size:.8rem;color:var(--muted)"><?= h(t('ls_strafen_col_minuspunkte')) ?></th>
               <th style="text-align:left;padding:6px 8px;font-size:.8rem;color:var(--muted)"><?= h(t('ls_strafen_col_grund')) ?></th>
             </tr>
 <?php foreach ($ligaTeams as $i => $team) {
@@ -711,9 +714,9 @@ if ($tab === 'grundwerte') { ?>
               <td style="padding:5px 8px;font-size:.87rem"><?= h($team['name']) ?>
                 <input type="hidden" name="strafe_team_id[<?= $i ?>]" value="<?= $teamId ?>"></td>
               <td style="padding:5px 8px;text-align:center;white-space:nowrap"><?= $strafField('strafe_punkte', $i, (int)$s['strafpunkte']) ?></td>
+              <td style="padding:5px 8px;text-align:center;white-space:nowrap"><?= $strafField('strafe_minus', $i, (int)($s['minuspunkte_korrektur'] ?? 0)) ?></td>
               <td style="padding:5px 8px;text-align:center;white-space:nowrap"><?= $strafField('strafe_erzielt', $i, (int)($s['tore_korrektur'] ?? 0)) ?></td>
               <td style="padding:5px 8px;text-align:center;white-space:nowrap"><?= $strafField('strafe_tore', $i, (int)$s['straftore']) ?></td>
-              <td style="padding:5px 8px;text-align:center;white-space:nowrap"><?= $strafField('strafe_minus', $i, (int)($s['minuspunkte_korrektur'] ?? 0)) ?></td>
               <td style="padding:5px 8px">
                 <input type="text" name="strafe_grund[<?= $i ?>]" value="<?= h($s['grund'] ?? '') ?>" maxlength="255" style="width:100%;box-sizing:border-box;<?= $selSt ?>">
               </td>
