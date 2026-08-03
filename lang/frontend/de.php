@@ -369,7 +369,7 @@ return [
     'tf_tipp_neues_team_platzhalter' => 'Teamname (freilassen, um kein neues Team zu gründen)',
     'tf_tipp_newsletter_erhalten'  => 'Newsletter erhalten',
     'tf_tipp_reminder_erhalten'    => 'Tipp-Erinnerungen erhalten',
-    'tf_tipp_abonnierte_ligen'     => 'Ligen, für die ich tippe',
+    'tf_tipp_abonnierte_ligen'     => 'Ligen, für die ich tippe (nichts angehakt = alle anzeigen)',
     'tf_tipp_mail_reset_betreff'   => 'Passwort zurücksetzen',
     'tf_tipp_mail_reset_text'      => "Hallo [nick],\n\ndu hast (oder jemand in deinem Namen) angefordert, dein Tippspiel-Passwort zurückzusetzen. Klicke auf den folgenden Link, um ein neues Passwort zu vergeben (1 Stunde gültig):",
     'tf_tipp_einsicht_noch_nicht_sichtbar' => 'Für dieses Spiel sind die Tipps noch nicht einsehbar.',

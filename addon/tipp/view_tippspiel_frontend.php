@@ -2,7 +2,13 @@
 /**
  * Project: LMOnext
  * Filename: addon/tipp/view_tippspiel_frontend.php
- * Fileversion: 1.1.1
+ * Fileversion: 1.2.0
+ * Changelog: 1.2.0 - Liga-Abo wirkt jetzt tatsächlich: neue Funktion tippFilterLigenByAbo()
+ *                     schränkt Tippabgabe/Tippeinsicht auf die abonnierten Ligen ein - bisher
+ *                     war das Abo nur eine wirkungslose Merkliste. Ohne jegliches Abo bleibt die
+ *                     volle Liste sichtbar (kein versehentliches Aussperren neu registrierter
+ *                     Tipper). Speichern eines Tipps (?action=save) bleibt bewusst
+ *                     uneingeschränkt - das Abo ist eine Anzeige-Filterung, keine Zugriffssperre
  * Changelog: 1.1.1 - Bugfix: Die Kontoseite (?action=konto) hatte keinerlei Navigation zurück
  *                     zur Tippabgabe/Einsicht/Rangliste - jetzt bekommt sie dieselbe Tab-Leiste
  *                     wie die anderen Ansichten (keiner der drei Tabs aktiv markiert, da Konto
@@ -493,12 +499,33 @@ function renderTippKontoView(array $state) : string
 
 // ── TIPPABGABE ───────────────────────────────────────────────────────────────
 
+/**
+ * Schränkt eine Liste tippbarer Liga-IDs auf die vom Tipper abonnierten
+ * Ligen ein - sofern er überhaupt mindestens eine Liga abonniert hat. Ohne
+ * jegliches Abo (z.B. direkt nach der Registrierung, bevor der Tipper sein
+ * Konto konfiguriert hat) bleibt die volle Liste unverändert, damit niemand
+ * durch ein leeres Abo versehentlich ausgesperrt wird - erst eine bewusste
+ * Auswahl im Konto schränkt tatsächlich ein.
+ *
+ * @param array<int,int> $ligaIds
+ * @return array<int,int>
+ */
+function tippFilterLigenByAbo(array $ligaIds, int $tipperId) : array
+{
+    $aboIds = getTipperAboLigaIds($tipperId);
+    if (empty($aboIds)) {
+        return $ligaIds;
+    }
+    return array_values(array_intersect($ligaIds, $aboIds));
+}
+
 function renderTippAbgabeView(array $state) : string
 {
     $tipper = $state['tipper'];
     $ligaIds = getTippSetting('tippbare_immer_alle', '1') === '1'
         ? array_map(fn($l) => (int)$l['id'], getTippbareLigenKandidaten())
         : getTippLigaFreigabeIds();
+    $ligaIds = tippFilterLigenByAbo($ligaIds, (int)$tipper['id']);
 
     ob_start();
     echo renderTippspielUserBar($tipper);
@@ -604,6 +631,7 @@ function renderTippEinsichtView(array $state) : string
     $ligaIds = getTippSetting('tippbare_immer_alle', '1') === '1'
         ? array_map(fn($l) => (int)$l['id'], getTippbareLigenKandidaten())
         : getTippLigaFreigabeIds();
+    $ligaIds = tippFilterLigenByAbo($ligaIds, (int)$tipper['id']);
 
     ob_start();
     echo renderTippspielUserBar($tipper);

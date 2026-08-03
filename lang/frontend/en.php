@@ -366,7 +366,7 @@ return [
     'tf_tipp_neues_team_platzhalter' => 'Team name (leave blank to not create a new team)',
     'tf_tipp_newsletter_erhalten'  => 'Receive newsletter',
     'tf_tipp_reminder_erhalten'    => 'Receive tip reminders',
-    'tf_tipp_abonnierte_ligen'     => 'Leagues I tip on',
+    'tf_tipp_abonnierte_ligen'     => 'Leagues I tip on (none checked = show all)',
     'tf_tipp_mail_reset_betreff'   => 'Reset your password',
     'tf_tipp_mail_reset_text'      => "Hello [nick],\n\nyou (or someone on your behalf) requested to reset your prediction game password. Click the following link to set a new password (valid for 1 hour):",
     'tf_tipp_einsicht_noch_nicht_sichtbar' => 'Tips for this game are not visible yet.',
