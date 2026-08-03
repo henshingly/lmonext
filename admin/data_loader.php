@@ -2,7 +2,11 @@
 /**
  * Project: LMOnext
  * Filename: data_loader.php
- * Fileversion: 1.7.2
+ * Fileversion: 1.7.3
+ * Changelog: 1.7.3 - nav-Eintrag + pageTitle für "Tippspiel" ergänzt (neues Addon, siehe
+ *                     addon/tipp/view_tippspiel.php - aktuell nur ein Platzhalter, die
+ *                     eigentliche Verwaltungsoberfläche folgt in kommenden Sitzungen)
+ * Changelog: 1.7.2
  * Changelog: 1.7.2 - Teams-Liste liefert jetzt zusätzlich link_count je Team (Anzahl
  *                     Team-Verknüpfungen, siehe team_links), damit in "Teams (global)" auf
  *                     einen Blick erkennbar ist, welche Teams schon verknüpft sind
@@ -348,6 +352,7 @@ $nav = [
     'import'      => ['icon' => '📥', 'label' => t('nav_import')],
     'archiv'      => ['icon' => '🗄️',  'label' => t('nav_archiv')],
     'teams'       => ['icon' => '👥', 'label' => t('nav_teams')],
+    'tippspiel'   => ['icon' => '🎯', 'label' => t('nav_tippspiel')],
     'users'       => ['icon' => '👤', 'label' => t('nav_users')],
     'wartung'     => ['icon' => '🛠️', 'label' => t('nav_wartung')],
     'settings'    => ['icon' => '⚙️', 'label' => t('nav_settings')],
@@ -528,6 +533,7 @@ $pageTitle = match($action) {
     'import_review'=> t('title_import_review'),
     'archiv'       => t('title_archiv'),
     'teams'        => t('nav_teams'),
+    'tippspiel'    => t('nav_tippspiel'),
     'users'        => t('title_users'),
     'liga_settings'=> t('title_liga_settings'),
     'settings'     => t('title_settings'),

@@ -2,7 +2,20 @@
 /**
  * Project: LMOnext
  * Filename: lang/admin/de.php
- * Fileversion: 1.14.4
+ * Fileversion: 1.14.8
+ * Changelog: 1.14.8 - Übersetzungen für die Tippspiel-Punkteverteilung und die vier weiteren
+ *                     Optionen-Unterbereiche ergänzt
+ * Changelog: 1.14.7
+ * Changelog: 1.14.7 - Übersetzungen für die vier Tippspiel-Karteikarten (Auswertung/
+ *                     Newsletter-Reminder/Userverwaltung/Optionen) ergänzt, alter einzelner
+ *                     Platzhalter dafür entfernt (siehe addon/tipp/view_tippspiel.php 0.2.0)
+ * Changelog: 1.14.6
+ * Changelog: 1.14.6 - Seitenleisten-Begriff "Benutzer" zu "Administrator" geändert (zur
+ *                     klaren Abgrenzung von der künftigen Tipper-Userverwaltung im neuen
+ *                     Tippspiel-Addon)
+ * Changelog: 1.14.5
+ * Changelog: 1.14.5 - Übersetzungen für den neuen "Tippspiel"-Navigationspunkt ergänzt
+ * Changelog: 1.14.4
  * Changelog: 1.14.4 - Übersetzungen für die neue Zeitzonen-Auswahl im Installationsformular
  *                     ergänzt
  * Changelog: 1.14.3
@@ -118,7 +131,46 @@ return [
     'nav_import'      => 'Import (.l98)',
     'nav_archiv'      => 'Archiv',
     'nav_teams'       => 'Teams (global)',
-    'nav_users'       => 'Benutzer',
+    'nav_tippspiel'   => 'Tippspiel',
+    'tipp_tab_auswertung'     => 'Auswertung',
+    'tipp_tab_newsletter'     => 'Newsletter/Reminder',
+    'tipp_tab_userverwaltung' => 'Userverwaltung',
+    'tipp_tab_optionen'       => 'Optionen',
+    'tipp_placeholder_text_auswertung'     => 'Hier entstehen die Ranglisten (Einzel- und Teamwertung), sobald Tipps und Ergebnisse vorliegen.',
+    'tipp_placeholder_text_newsletter'     => 'Hier entsteht der Mailversand: Newsletter an Alle, Tipp-Reminder und persönliche E-Mails an einzelne Tipper.',
+    'tipp_placeholder_text_userverwaltung' => 'Hier entsteht die Verwaltung der Tipper-Konten: bearbeiten, löschen, neu anlegen, inkl. Team-Zuordnung.',
+    'tipp_placeholder_text_optionen'       => 'Hier entstehen alle Einstellungen des Tippspiels: Punkteverteilung, Joker, Freischaltung, tippbare Ligen und mehr.',
+    'tipp_subtab_punkteverteilung' => 'Punkteverteilung',
+    'tipp_subtab_regeltechnisches' => 'Regeltechnisches',
+    'tipp_subtab_anmeldung'        => 'Anmeldung',
+    'tipp_subtab_punktgleichheit'  => 'Was zählt bei Punktgleichheit',
+    'tipp_subtab_tippbare_ligen'   => 'Tippbare Ligen',
+    'tipp_placeholder_text_regeltechnisches' => 'Hier entstehen: Tippabgabefrist, Team-Höchstgröße, Joker an/aus + Multiplikator, max. Spieltage im Voraus.',
+    'tipp_placeholder_text_anmeldung'        => 'Hier entstehen: Adresse/Realname optional, Freischaltungsart, Mail-Benachrichtigungen.',
+    'tipp_placeholder_text_punktgleichheit'  => 'Hier entstehen die drei Rangfolge-Kriterien bei Punktgleichheit.',
+    'tipp_placeholder_text_tippbare_ligen'   => 'Hier entsteht die Auswahl der tippbaren Ligen ("immer alle" oder gezielte Auswahl).',
+    'tipp_label_tippmodus'          => 'Tippmodus',
+    'tipp_modus_ergebnis'           => 'Ergebnis',
+    'tipp_modus_tendenz'            => 'Tendenz',
+    'tipp_label_pkt_ergebnis'       => 'Ergebnis richtig',
+    'tipp_label_pkt_tendenz_tordiff' => 'Tendenz und Tordifferenz richtig',
+    'tipp_label_pkt_tendenz'        => 'Tendenz richtig',
+    'tipp_label_pkt_toranzahl'      => 'eine Toranzahl richtig',
+    'tipp_label_regel_tendenz_toranzahl' => 'Tendenz und eine Toranzahl richtig',
+    'tipp_regel_addieren'           => 'Punkte für Tendenz + Punkte für eine Toranzahl',
+    'tipp_regel_nur_tendenz'        => 'nur Punkte für Tendenz',
+    'tipp_label_regel_unentschieden' => 'richtige Unentschieden-Tendenz',
+    'tipp_regel_tendenz_plus_toranzahl' => 'Punkte für Tendenz + Punkte für eine Toranzahl',
+    'tipp_label_bonus_unentschieden' => 'Bonus für richtigen Unentschieden-Tipp',
+    'tipp_label_nv_unentschieden'   => 'bei Entscheidung n. V. Unentschieden-Tipp richtig',
+    'tipp_label_ie_unentschieden'   => 'bei Entscheidung i. E. Unentschieden-Tipp richtig',
+    'tipp_label_gruener_tisch'      => 'Punkte bei Entscheidung am grünen Tisch',
+    'tipp_regel_gt_tendenz_tordiff' => 'Punkte für Tendenz und Tordiff. gemäß GT-Entsch.',
+    'tipp_regel_gt_keine_punkte'    => 'keine Punkte',
+    'tipp_label_pkt_tendenz_treffer' => 'richtige Tendenz getippt',
+    'tipp_punkte_suffix'            => 'Punkte',
+    'tipp_flash_settings_saved'     => 'Einstellungen gespeichert.',
+    'nav_users'       => 'Administrator',
     'nav_wartung'     => 'Wartung',
     'nav_settings'    => 'Einstellungen',
 

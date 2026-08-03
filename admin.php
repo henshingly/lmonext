@@ -2,7 +2,13 @@
 /**
  * Project: LMOnext
  * Filename: admin.php
- * Fileversion: 1.5.1
+ * Fileversion: 1.5.3
+ * Changelog: 1.5.3 - Bindet addon/tipp/handler_tipp.php ein (neues Tippspiel-Addon, erste
+ *                     Speicher-Aktion für die Punkteverteilung)
+ * Changelog: 1.5.2
+ * Changelog: 1.5.2 - Route für die neue Aktion "tippspiel" ergänzt (neues Tippspiel-Addon,
+ *                     siehe addon/tipp/view_tippspiel.php)
+ * Changelog: 1.5.1
  * Changelog: 1.5.1 - Spielerstatistik-Addon nach addon/player/ verschoben (neben addon/mini/,
  *                     einheitliche Addon-Ordnerstruktur); neue Konstante ADDON_INC
  * Changelog: 1.5.0 - Routen für das neue Spielerstatistik-Addon ergänzt: "spielerstatistik"
@@ -48,6 +54,7 @@ require_once ADMIN_INC . '/handler_export.php';
 require_once ADMIN_INC . '/handler_liga.php';
 require_once ADMIN_INC . '/handler_backup.php';
 require_once ADDON_INC . '/player/handler_spielerstat.php';
+require_once ADDON_INC . '/tipp/handler_tipp.php';
 
 // ── Daten laden (vor HTML-Ausgabe) ───────────────────────────────────────────
 require_once ADMIN_INC . '/data_loader.php';
@@ -89,6 +96,9 @@ if ($action === 'create_liga') {
 
 } elseif ($action === 'teams') {
     require ADMIN_INC . '/view_teams.php';
+
+} elseif ($action === 'tippspiel') {
+    require ADDON_INC . '/tipp/view_tippspiel.php';
 
 } elseif ($action === 'import') {
     require ADMIN_INC . '/view_import.php';

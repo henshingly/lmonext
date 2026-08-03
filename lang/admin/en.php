@@ -2,7 +2,20 @@
 /**
  * Project: LMOnext
  * Filename: lang/admin/en.php
- * Fileversion: 1.13.4
+ * Fileversion: 1.13.8
+ * Changelog: 1.13.8 - Added translations for the prediction game point distribution and the
+ *                     four other options sub-sections
+ * Changelog: 1.13.7
+ * Changelog: 1.13.7 - Added translations for the four Prediction Game tabs (Standings/
+ *                     Newsletter-Reminder/User Management/Options), removed the old single
+ *                     placeholder for it (see addon/tipp/view_tippspiel.php 0.2.0)
+ * Changelog: 1.13.6
+ * Changelog: 1.13.6 - Sidebar label "Users" changed to "Administrators" (to clearly
+ *                     distinguish from the future tipper user management in the new
+ *                     Prediction Game addon)
+ * Changelog: 1.13.5
+ * Changelog: 1.13.5 - Added translations for the new "Prediction Game" nav entry
+ * Changelog: 1.13.4
  * Changelog: 1.13.4 - Added translations for the new timezone selector in the installer
  * Changelog: 1.13.3
  * Changelog: 1.13.3 - Updated label/hint for "Show league overview?" - now also hides the
@@ -111,7 +124,46 @@ return [
     'nav_import'      => 'Import (.l98)',
     'nav_archiv'      => 'Archive',
     'nav_teams'       => 'Teams (global)',
-    'nav_users'       => 'Users',
+    'nav_tippspiel'   => 'Prediction Game',
+    'tipp_tab_auswertung'     => 'Standings',
+    'tipp_tab_newsletter'     => 'Newsletter/Reminder',
+    'tipp_tab_userverwaltung' => 'User Management',
+    'tipp_tab_optionen'       => 'Options',
+    'tipp_placeholder_text_auswertung'     => 'The standings (individual and team rankings) will appear here once tips and results are available.',
+    'tipp_placeholder_text_newsletter'     => 'Mail sending will live here: newsletter to everyone, tip reminders, and personal emails to individual tipsters.',
+    'tipp_placeholder_text_userverwaltung' => 'Tipster account management will live here: edit, delete, create new, including team assignment.',
+    'tipp_placeholder_text_optionen'       => 'All prediction game settings will live here: point distribution, joker, activation, tippable leagues, and more.',
+    'tipp_subtab_punkteverteilung' => 'Point Distribution',
+    'tipp_subtab_regeltechnisches' => 'Rules & Technical',
+    'tipp_subtab_anmeldung'        => 'Registration',
+    'tipp_subtab_punktgleichheit'  => 'Tie-Breaking',
+    'tipp_subtab_tippbare_ligen'   => 'Tippable Leagues',
+    'tipp_placeholder_text_regeltechnisches' => 'Coming here: tip submission deadline, max team size, joker on/off + multiplier, max matchdays in advance.',
+    'tipp_placeholder_text_anmeldung'        => 'Coming here: optional address/real name, activation method, email notifications.',
+    'tipp_placeholder_text_punktgleichheit'  => 'Coming here: the three tie-breaking criteria and their order.',
+    'tipp_placeholder_text_tippbare_ligen'   => 'Coming here: selection of tippable leagues ("always all" or targeted selection).',
+    'tipp_label_tippmodus'          => 'Tip mode',
+    'tipp_modus_ergebnis'           => 'Exact score',
+    'tipp_modus_tendenz'            => 'Tendency',
+    'tipp_label_pkt_ergebnis'       => 'Exact score correct',
+    'tipp_label_pkt_tendenz_tordiff' => 'Tendency and goal difference correct',
+    'tipp_label_pkt_tendenz'        => 'Tendency correct',
+    'tipp_label_pkt_toranzahl'      => 'One score correct',
+    'tipp_label_regel_tendenz_toranzahl' => 'Tendency and one score correct',
+    'tipp_regel_addieren'           => 'Points for tendency + points for one score',
+    'tipp_regel_nur_tendenz'        => 'points for tendency only',
+    'tipp_label_regel_unentschieden' => 'Correct draw tendency',
+    'tipp_regel_tendenz_plus_toranzahl' => 'Points for tendency + points for one score',
+    'tipp_label_bonus_unentschieden' => 'Bonus for correctly tipped draw',
+    'tipp_label_nv_unentschieden'   => 'Draw tip counts if decided after extra time',
+    'tipp_label_ie_unentschieden'   => 'Draw tip counts if decided on penalties',
+    'tipp_label_gruener_tisch'      => 'Points for a forfeit/tribunal decision',
+    'tipp_regel_gt_tendenz_tordiff' => 'Points for tendency and goal diff. per forfeit decision',
+    'tipp_regel_gt_keine_punkte'    => 'no points',
+    'tipp_label_pkt_tendenz_treffer' => 'Correct tendency tipped',
+    'tipp_punkte_suffix'            => 'points',
+    'tipp_flash_settings_saved'     => 'Settings saved.',
+    'nav_users'       => 'Administrators',
     'nav_wartung'     => 'Maintenance',
     'nav_settings'    => 'Settings',
 
