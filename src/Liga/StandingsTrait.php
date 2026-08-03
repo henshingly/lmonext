@@ -2,7 +2,11 @@
 /**
  * Project: LMOnext
  * Filename: src/Liga/StandingsTrait.php
- * Fileversion: 1.4.0
+ * Fileversion: 1.4.1
+ * Changelog: 1.4.1 - Kundenwunsch: Die Fußnote erscheint jetzt schon, sobald "Grund" befüllt
+ *                     ist - unabhängig davon, ob überhaupt eine der vier Zahlenkorrekturen
+ *                     (Punkte/erzielte Tore/Gegentore/Minuspunkte) von 0 abweicht. Vorher wurde
+ *                     ein reiner Grund ohne Zahlenänderung fälschlich unterdrückt
  * Changelog: 1.4.0 - Kundenwunsch: Strafpunkte-Begründungen erscheinen jetzt automatisch als
  *                     Fußnoten unter der Tabelle, im Wikipedia-Stil ("(1) Begründungstext") -
  *                     neue Funktionen assignStrafFootnotes() (vergibt fortlaufende Nummern in
@@ -341,13 +345,15 @@ trait StandingsTrait
      */
     /**
      * Kleine hochgestellte Fußnoten-Referenz "(N)" für die Tabellenzeile
-     * eines Teams mit Strafpunkten/Straftoren, analog zur Wikipedia-Tabellen-
+     * eines Teams mit hinterlegtem Grund, analog zur Wikipedia-Tabellen-
      * Fußnote (siehe z.B. "Arminia Bielefeld (1)"). $footnoteNr ist die
      * fortlaufende Nummer dieses Teams unter allen Teams MIT Grund in dieser
      * Tabelle (1-basiert, siehe assignStrafFootnotes()) - leerer String, wenn
-     * kein Grund hinterlegt ist ODER keine Strafe/kein Bonus vorliegt.
-     * Behält den detaillierten Tooltip (genaue Punkte-/Tore-Deltas) zusätzlich
-     * zur sichtbaren Fußnoten-Nummer bei.
+     * kein Grund hinterlegt ist. Erscheint UNABHÄNGIG davon, ob überhaupt eine
+     * der vier Zahlenkorrekturen von 0 abweicht - ein Grund allein reicht für
+     * die Fußnote (Kundenwunsch). Behält den detaillierten Tooltip (genaue
+     * Punkte-/Tore-Deltas, falls vorhanden) zusätzlich zur sichtbaren
+     * Fußnoten-Nummer bei.
      */
     public static function renderStrafHinweis(array $row, int $footnoteNr = 0) : string
     {
@@ -355,7 +361,8 @@ trait StandingsTrait
         $st = (int)($row['straftore'] ?? 0);
         $tk = (int)($row['torekorrektur'] ?? 0);
         $mk = (int)($row['minuspunktekorrektur'] ?? 0);
-        if ($sp === 0 && $st === 0 && $tk === 0 && $mk === 0) {
+        $grund = trim((string)($row['strafgrund'] ?? ''));
+        if ($sp === 0 && $st === 0 && $tk === 0 && $mk === 0 && $grund === '') {
             return '';
         }
         $teile = [];
@@ -372,9 +379,8 @@ trait StandingsTrait
             $teile[] = ($mk > 0 ? '+' : '') . $mk . ' ' . tf('liga_standings_straf_minuspunkte');
         }
         $tooltip = implode(', ', $teile);
-        $grund = trim((string)($row['strafgrund'] ?? ''));
         if ($grund !== '') {
-            $tooltip .= ' (' . $grund . ')';
+            $tooltip = $tooltip !== '' ? ($tooltip . ' (' . $grund . ')') : $grund;
         }
         // Grund vorhanden -> sichtbare Fußnoten-Nummer wie bei Wikipedia,
         // sonst (nur Zahlenkorrektur ohne Begründung) weiterhin nur das
@@ -389,8 +395,9 @@ trait StandingsTrait
     /**
      * Weist allen Tabellenzeilen MIT hinterlegtem Grund fortlaufende
      * Fußnoten-Nummern zu (1-basiert, in Tabellenreihenfolge - so wie bei
-     * Wikipedia). Reine Zahlenkorrekturen ohne Grund bekommen keine Nummer
-     * (siehe renderStrafHinweis()).
+     * Wikipedia). Ein Grund allein reicht - unabhängig davon, ob eine der vier
+     * Zahlenkorrekturen (Punkte/erzielte Tore/Gegentore/Minuspunkte)
+     * tatsächlich von 0 abweicht (Kundenwunsch).
      *
      * @param array<int,array> $rows Ergebnis von computeStandings(), bereits sortiert
      * @return array<int,int> team_id => Fußnoten-Nummer (nur Teams mit Grund)
@@ -403,13 +410,6 @@ trait StandingsTrait
             $grund = trim((string)($r['strafgrund'] ?? ''));
             if ($grund === '') {
                 continue;
-            }
-            $sp = (int)($r['strafpunkte'] ?? 0);
-            $st = (int)($r['straftore'] ?? 0);
-            $tk = (int)($r['torekorrektur'] ?? 0);
-            $mk = (int)($r['minuspunktekorrektur'] ?? 0);
-            if ($sp === 0 && $st === 0 && $tk === 0 && $mk === 0) {
-                continue; // kein tatsächlicher Effekt, keine Fußnote nötig
             }
             $nrn[(int)$r['id']] = $next++;
         }
