@@ -2,7 +2,15 @@
 /**
  * Project: LMOnext
  * Filename: src/Liga/TeamFormattingTrait.php
- * Fileversion: 1.0.0
+ * Fileversion: 1.0.1
+ * Changelog: 1.0.1 - Kritischer Bugfix: findTeamLogoPathFrontend() suchte Team-Logos unter
+ *                     src/assets/img/teams/ statt im echten assets/img/teams/-Ordner im
+ *                     Projekt-Root. Ursache: dirname(__DIR__) geht nur eine Verzeichnisebene
+ *                     hoch - korrekt für admin/bootstrap.php (liegt 1 Ebene unter Root), aber
+ *                     diese Datei liegt unter src/Liga/, also 2 Ebenen unter Root. Jede
+ *                     Besucheransicht zeigte dadurch für JEDES Team immer nur den
+ *                     "kein Logo"-Platzhalter, obwohl im Admin hochgeladene Logos korrekt
+ *                     vorhanden waren. Jetzt dirname(__DIR__, 2)
  * Changelog: 1.0.0 - Initiale Version: Teil der Umstrukturierung von frontend/data_liga.php in
  *                     fokussierte Traits (siehe frontend/data_liga.php 3.0.0 für den vollen
  *                     Kontext der Umstellung). Team-Anzeige/Logos in Partie-Zeilen (partieTeamName, findTeamLogoPathFrontend, renderTeamLogoImg(Wrapped), partieTeamNameWithLogo(Reversed)).
@@ -64,7 +72,11 @@ trait TeamFormattingTrait
      */
     public static function findTeamLogoPathFrontend(int $teamId) : ?string
     {
-        $dir = dirname(__DIR__) . '/assets/img/teams';
+        // WICHTIG: diese Datei liegt unter src/Liga/, also ZWEI Ebenen unter
+        // dem Projekt-Root - dirname(__DIR__, 2) ist hier nötig, nicht
+        // dirname(__DIR__) (das ginge nur eine Ebene hoch, landet fälschlich
+        // in src/assets/... statt im echten assets/-Ordner im Projekt-Root).
+        $dir = dirname(__DIR__, 2) . '/assets/img/teams';
         foreach (self::TEAM_LOGO_EXT_LIST as $ext) {
             if (is_file($dir . '/' . $teamId . '.' . $ext)) {
                 return 'assets/img/teams/' . $teamId . '.' . $ext;
