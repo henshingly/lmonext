@@ -2,7 +2,11 @@
 <html lang="<!--HtmlLang-->">
 <head>
 <!--
-  Template: default | Filename: layout.tpl.php | Fileversion: 1.15.7
+  Template: default | Filename: layout.tpl.php | Fileversion: 1.16.0
+  Changelog: 1.16.0 - CSS für die Tippspiel-Integration (.tipp-form, .btn-primary, .flash,
+                      table.tipp-table) ergänzt - Tippspiel läuft jetzt als ?view=tippspiel
+                      innerhalb des Templates statt als eigenständige Seite (siehe home.php,
+                      addon/tipp/view_tippspiel_frontend.php)
   Changelog: 1.15.7 - Neuer Platzhalter "TippspielLink" im Header, neben der Sprachauswahl
                       (siehe frontend/template_engine.php 2.6.0) - bleibt leer, wenn das
                       Tippspiel nicht aktiv ist
@@ -255,6 +259,29 @@ table.results-table td.col-vergleich,table.results-table thead th.col-vergleich{
   border-bottom:2px solid transparent;margin-bottom:-1px}
 .tab-item:hover{color:var(--text)}
 .tab-item-active{color:var(--accent);font-weight:600;border-bottom-color:var(--accent)}
+
+.tipp-form{max-width:380px}
+.tipp-form label{display:block;margin:12px 0 4px;font-size:.85rem;color:var(--muted)}
+.tipp-form input[type=text],.tipp-form input[type=email],.tipp-form input[type=password]{
+  width:100%;box-sizing:border-box;background:var(--bg);border:1px solid var(--border);
+  color:var(--text);border-radius:var(--radius);padding:8px 10px;font-size:.9rem}
+.btn-primary{display:inline-block;background:var(--accent);color:#fff;border:none;border-radius:var(--radius);
+  padding:9px 18px;font-size:.9rem;font-weight:600;cursor:pointer;margin-top:14px;text-decoration:none}
+.btn-primary:hover{opacity:.9}
+.flash{padding:10px 14px;border-radius:var(--radius);margin-bottom:16px;font-size:.87rem;
+  background:var(--surface);border:1px solid var(--border);border-left:4px solid var(--muted)}
+.flash-success{border-left-color:var(--green)}
+.flash-error{border-left-color:#dc2626}
+table.tipp-table{width:100%;border-collapse:collapse;font-size:.87rem;background:var(--surface)}
+table.tipp-table thead th{background:#252b3a;color:#fff;text-align:left;padding:9px 12px;font-weight:600;font-size:.8rem}
+table.tipp-table tbody tr:nth-child(even){background:var(--bg)}
+table.tipp-table td{padding:8px 12px;border-top:1px solid var(--border)}
+table.tipp-table td.tipp-col-datum{color:var(--muted);font-size:.8rem;white-space:nowrap}
+table.tipp-table input[type=number]{width:52px;box-sizing:border-box;background:var(--bg);
+  border:1px solid var(--border);color:var(--text);border-radius:var(--radius);padding:6px;
+  font-size:.9rem;text-align:center}
+.tipp-row-me{font-weight:700}
+.tipp-readonly{color:var(--muted)}
 
 .card p{margin-bottom:10px;font-size:.9rem;line-height:1.55}
 .card p:last-child{margin-bottom:0}

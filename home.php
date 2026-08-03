@@ -2,7 +2,14 @@
 /**
  * Project: LMOnext
  * Filename: home.php
- * Fileversion: 2.2.0
+ * Fileversion: 2.3.0
+ * Changelog: 2.3.0 - Neue Route "?view=tippspiel": bindet das Tippspiel jetzt als View ins
+ *                     Template-System ein (analog zur Spielerstatistik in liga.php), statt als
+ *                     eigenständige Seite mit eigenem HTML/CSS. Läuft komplett getrennt von der
+ *                     normalen Startseite, ruft tippspielHandleRequest() (kann per redirectTo()
+ *                     umleiten) VOR renderTemplate() auf - siehe
+ *                     addon/tipp/view_tippspiel_frontend.php. Ersetzt die bisherige
+ *                     eigenständige addon/tipp/tipp.php
  * Changelog: 2.2.0 - Neuer Platzhalter "TippspielCard": wirbt auf der Startseite fürs
  *                     Tippspiel (tippRenderHomeCard(), siehe addon/tipp/tipp_lib.php 0.5.0),
  *                     bleibt leer wenn keine Liga freigegeben ist
@@ -31,6 +38,22 @@ declare(strict_types = 1);
 
 require_once __DIR__ . '/frontend/bootstrap.php';
 
+// ── Tippspiel-View: läuft komplett getrennt von der normalen Startseite
+// (aktive Ligen + Archiv), analog zur Spielerstatistik in liga.php. Muss VOR
+// jeder anderen Ausgabe geprüft werden, da tippspielHandleRequest() umleiten
+// kann (header()+exit, siehe dortiger Docblock) ────────────────────────────
+if (($_GET['view'] ?? '') === 'tippspiel') {
+    require_once __DIR__ . '/addon/tipp/view_tippspiel_frontend.php';
+    $tippState = tippspielHandleRequest();
+
+    renderTemplate($activeTemplate, 'tippspiel', [
+        'Titel'      => h(tf('tf_tipp_seiten_titel')),
+        'ViewInhalt' => renderTippspielView($tippState),
+    ]);
+    exit;
+}
+
+// ── Normale Startseite (aktive Ligen + Archiv) ──────────────────────────────
 $activeLigen         = getActiveLigenList();
 $archivByParent      = getArchivFolderTree();
 $archivLigenByFolder = getArchivedLigenByFolder();

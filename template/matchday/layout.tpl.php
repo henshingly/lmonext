@@ -2,7 +2,10 @@
 <html lang="<!--HtmlLang-->">
 <head>
 <!--
-  Template: matchday | Filename: layout.tpl.php | Fileversion: 1.0.5
+  Template: matchday | Filename: layout.tpl.php | Fileversion: 1.1.0
+  Changelog: 1.1.0 - CSS für die Tippspiel-Integration ergänzt, mit eigenen Variablennamen
+                     (--ink/--line/--accent-ink/--pitch/--danger) an das Scoreboard-Design
+                     angepasst (siehe default 1.16.0)
   Changelog: 1.0.5 - Neuer Platzhalter "TippspielLink" im Footer, neben der Sprachauswahl
                      (siehe frontend/template_engine.php 2.6.0)
   Changelog: 1.0.4 - CSS für ".h2h-match-today" ergänzt (siehe default 1.15.6)
@@ -213,6 +216,31 @@ table.results-table td.col-vergleich,table.results-table thead th.col-vergleich{
   border-radius:2px;text-transform:uppercase;letter-spacing:.03em}
 .tab-item:hover{color:var(--ink)}
 .tab-item-active{color:var(--accent-ink);font-weight:700;background:var(--accent)}
+
+.tipp-form{max-width:380px}
+.tipp-form label{display:block;margin:12px 0 4px;font-size:.85rem;color:var(--muted)}
+.tipp-form input[type=text],.tipp-form input[type=email],.tipp-form input[type=password]{
+  width:100%;box-sizing:border-box;background:var(--bg-alt);border:1px solid var(--line);
+  color:var(--ink);border-radius:var(--radius);padding:8px 10px;font-size:.9rem}
+.btn-primary{display:inline-block;background:var(--accent);color:var(--accent-ink);border:none;border-radius:var(--radius);
+  padding:9px 18px;font-size:.9rem;font-weight:700;cursor:pointer;margin-top:14px;text-decoration:none;
+  text-transform:uppercase;letter-spacing:.03em}
+.btn-primary:hover{opacity:.85}
+.flash{padding:10px 14px;border-radius:var(--radius);margin-bottom:16px;font-size:.87rem;
+  background:var(--surface);border:1px solid var(--line);border-left:4px solid var(--muted)}
+.flash-success{border-left-color:var(--pitch)}
+.flash-error{border-left-color:var(--danger)}
+table.tipp-table{width:100%;border-collapse:collapse;font-size:.87rem;background:var(--surface)}
+table.tipp-table thead th{background:var(--ink);color:#fff;text-align:left;padding:9px 12px;font-weight:600;font-size:.8rem;
+  text-transform:uppercase;letter-spacing:.03em}
+table.tipp-table tbody tr:nth-child(even){background:var(--bg-alt)}
+table.tipp-table td{padding:8px 12px;border-top:1px solid var(--line)}
+table.tipp-table td.tipp-col-datum{color:var(--muted);font-size:.8rem;white-space:nowrap}
+table.tipp-table input[type=number]{width:52px;box-sizing:border-box;background:var(--bg-alt);
+  border:1px solid var(--line);color:var(--ink);border-radius:var(--radius);padding:6px;
+  font-size:.9rem;text-align:center}
+.tipp-row-me{font-weight:700}
+.tipp-readonly{color:var(--muted)}
 
 .info-copyright{color:var(--muted);font-size:.85rem}
 .info-license{color:var(--muted);font-size:.8rem;margin-top:14px}

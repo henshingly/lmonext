@@ -2,7 +2,16 @@
 /**
  * Project: LMOnext
  * Filename: addon/tipp/frontend_tipp.php
- * Fileversion: 0.3.0
+ * Fileversion: 0.4.1
+ * Changelog: 0.4.1 - Bestätigungs-Mail-Link und tippSiteBaseUrl()-Fallback von der entfernten
+ *                     tipp.php auf home.php?view=tippspiel umgestellt (siehe view_tippspiel_
+ *                     frontend.php 1.0.0)
+ * Changelog: 0.4.0 - redirectTo() zeigt jetzt auf home.php?view=tippspiel statt auf die
+ *                     entfernte eigenständige tipp.php - Tippspiel läuft jetzt als View
+ *                     innerhalb des Templates, analog zur Spielerstatistik (siehe
+ *                     addon/tipp/view_tippspiel_frontend.php, home.php). Alle bestehenden
+ *                     redirectTo()-Aufrufstellen unverändert, nur die Basis-URL hat sich
+ *                     geändert
  * Changelog: 0.3.0 - Neue Funktion tippGetRangliste(): globale Rangliste über alle jemals
  *                     getippten (und ausgewerteten) Spiele, live berechnet aus den Rohdaten.
  *                     Wendet die drei in "Was zählt bei Punktgleichheit" konfigurierten
@@ -48,7 +57,7 @@ function tippSiteBaseUrl() : string
 {
     $scheme = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off') ? 'https' : 'http';
     $host   = $_SERVER['HTTP_HOST'] ?? 'localhost';
-    $dir    = str_replace('\\', '/', dirname($_SERVER['SCRIPT_NAME'] ?? '/addon/tipp/tipp.php'));
+    $dir    = str_replace('\\', '/', dirname($_SERVER['SCRIPT_NAME'] ?? '/home.php'));
     $dir    = rtrim($dir, '/');
     return $scheme . '://' . $host . $dir;
 }
@@ -86,9 +95,19 @@ function tippRequireLogin() : void
     }
 }
 
+/**
+ * Baut eine Umleitungs-URL relativ zur neuen Tippspiel-Seite
+ * (home.php?view=tippspiel) und leitet sofort um. $target hat unverändert
+ * das Format "?action=login" bzw. "?action=abgabe&liga=5&spieltag=2" - nur
+ * die Basis-URL hat sich geändert (vorher die eigenständige tipp.php, jetzt
+ * eine View innerhalb von home.php, siehe addon/tipp/view_tippspiel_frontend.php).
+ * Bestehende Aufrufstellen (tippRequireLogin() etc.) mussten dadurch NICHT
+ * angepasst werden.
+ */
 function redirectTo(string $target) : never
 {
-    header('Location: tipp.php' . $target);
+    $qs = ltrim($target, '?');
+    header('Location: home.php?view=tippspiel&' . $qs);
     exit;
 }
 
@@ -143,7 +162,7 @@ function tippRegister(string $nickname, string $email, string $password, string 
     $tipper = getTipperByNickname($nickname);
 
     if ($modus === 'email' && $tipper !== null) {
-        $link = tippSiteBaseUrl() . '/tipp.php?action=confirm&code=' . $freischaltCode;
+        $link = tippSiteBaseUrl() . '/home.php?view=tippspiel&action=confirm&code=' . $freischaltCode;
         sendTippMail($email, tf('tf_tipp_mail_confirm_betreff'), tf('tf_tipp_mail_confirm_text', ['link' => $link, 'nick' => $nickname]));
     } elseif ($tipper !== null && getTippSetting('anmeldung_bestaetigungsmail', '1') === '1') {
         sendTippMail($email, tf('tf_tipp_mail_welcome_betreff'), tf('tf_tipp_mail_welcome_text', ['nick' => $nickname]));

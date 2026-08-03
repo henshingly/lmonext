@@ -2,7 +2,12 @@
 /**
  * Project: LMOnext
  * Filename: addon/tipp/tipp_lib.php
- * Fileversion: 0.5.0
+ * Fileversion: 0.5.1
+ * Changelog: 0.5.1 - Nav-Link/Startseiten-Karte zeigen jetzt auf home.php?view=tippspiel statt
+ *                     auf die entfernte eigenständige addon/tipp/tipp.php - Tippspiel läuft
+ *                     jetzt als View innerhalb des Templates, analog zur Spielerstatistik
+ *                     (siehe view_tippspiel_frontend.php). Nebenbei: falsche CSS-Klasse "btn"
+ *                     in der Startseiten-Karte korrigiert (nur "btn-primary" existiert)
  * Changelog: 0.5.0 - Neue Funktionen tippIstAktiv() (mind. eine Liga fürs Tippspiel
  *                     freigegeben?), tippRenderSiteLink() (Header-/Footer-Link, je nach
  *                     Template - siehe layout.tpl.php) und tippRenderHomeCard() (Werbe-Karte
@@ -202,7 +207,7 @@ function tippRenderSiteLink() : string
     if (!tippIstAktiv()) {
         return '';
     }
-    return '<a class="tipp-site-link" href="addon/tipp/tipp.php">'
+    return '<a class="tipp-site-link" href="home.php?view=tippspiel">'
          . htmlspecialchars(tf('tf_tipp_header_link'), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') . '</a>';
 }
 
@@ -222,7 +227,7 @@ function tippRenderHomeCard() : string
     return '<div class="card tipp-home-card">'
          . '<h2>' . $esc(tf('tf_tipp_home_card_titel')) . '</h2>'
          . '<p>' . $esc(tf('tf_tipp_home_card_text')) . '</p>'
-         . '<p><a class="btn btn-primary" href="addon/tipp/tipp.php">' . $esc(tf('tf_tipp_home_card_button')) . '</a></p>'
+         . '<p><a class="btn-primary" href="home.php?view=tippspiel">' . $esc(tf('tf_tipp_home_card_button')) . '</a></p>'
          . '</div>';
 }
 

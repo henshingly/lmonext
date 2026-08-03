@@ -2,7 +2,12 @@
 /**
  * Project: LMOnext
  * Filename: lang/frontend/en.php
- * Fileversion: 1.22.0
+ * Fileversion: 1.23.0
+ * Changelog: 1.23.0 - Added translations for the Tippspiel template integration (page title,
+ *                     tab labels) - see addon/tipp/view_tippspiel_frontend.php 1.0.0. Several
+ *                     old per-view titles (tf_tipp_*_titel, tf_tipp_zur_abgabe) are now unused
+ *                     since the new tab bar replaces them - intentionally left in place
+ *                     (harmless if still referenced anywhere)
  * Changelog: 1.22.0 - Added translations for the new Tippspiel link in the header/footer and
  *                     the homepage promo card (see addon/tipp/tipp_lib.php 0.5.0)
  * Changelog: 1.21.0 - Added translations for the new Tippspiel leaderboard (see
@@ -324,6 +329,10 @@ return [
     'tf_tipp_einsicht_titel'       => 'Tip Overview',
     'tf_tipp_zur_abgabe'           => 'To tip submission',
     'tf_tipp_rangliste_titel'      => 'Leaderboard',
+    'tf_tipp_seiten_titel'         => 'Prediction Game',
+    'tf_tipp_tab_abgabe'           => 'Submit Tips',
+    'tf_tipp_tab_einsicht'         => 'View Tips',
+    'tf_tipp_tab_rangliste'        => 'Leaderboard',
     'tf_tipp_header_link'          => '🎯 Prediction game',
     'tf_tipp_home_card_titel'      => 'Prediction game',
     'tf_tipp_home_card_text'       => 'Predict the results of your favourite league and compete with other players on the leaderboard!',
