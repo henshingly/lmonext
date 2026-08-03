@@ -2,7 +2,11 @@
 /**
  * Project: LMOnext
  * Filename: lang/admin/en.php
- * Fileversion: 1.14.6
+ * Fileversion: 1.14.8
+ * Changelog: 1.14.8 - Added translations for the new "Teams" tab in league settings and the new
+ *                     quick-access button on the league detail page
+ * Changelog: 1.14.7 - Added translations for the new "Penalties" liga settings tab (penalty
+ *                     points/goals)
  * Changelog: 1.14.6 - Added translations for "Newsletter/Reminder"
  * Changelog: 1.14.5
  * Changelog: 1.14.5 - Added translations for the prediction game user management, added
@@ -761,6 +765,7 @@ return [
     'ld_back_link'          => '← Back to overview',
     'ld_id_created'         => 'ID {id} · Created: {datum}',
     'ld_btn_settings'       => '⚙️ Settings',
+    'ld_btn_teams'          => '👥 Teams',
     'ld_btn_enter_results'  => '📝 Enter results',
     'ld_btn_export'         => '💾 Export as .l98',
     'ld_btn_archive_dd'     => '🗄️ Archive ▾',
@@ -787,9 +792,17 @@ return [
 
     // ── League settings (view_liga_settings.php) ─────────────────────────────
     'ls_tab_grundwerte'    => 'Basics',
+    'ls_tab_teams'         => 'Teams',
     'ls_tab_anzeige'       => 'Display',
     'ls_tab_spielsystem'   => 'Game system',
     'ls_tab_tabelle'       => 'Table',
+    'ls_tab_strafen'       => 'Penalties',
+    'ls_strafen_hinweis'   => 'Penalty points are deducted from the regularly calculated points, penalty goals are added to the goals against. Only affects this league, not other leagues/seasons of the same team. 0 points, 0 goals and an empty reason remove an existing entry again.',
+    'ls_strafen_keine_teams' => 'No teams are assigned to this league yet.',
+    'ls_strafen_col_team'  => 'Team',
+    'ls_strafen_col_punkte' => 'Penalty points',
+    'ls_strafen_col_tore'  => 'Penalty goals',
+    'ls_strafen_col_grund' => 'Reason (optional)',
     'ls_tab_spieltage'     => 'Matchday & match count',
 
     'ls_label_liga_name'   => 'League name',

@@ -2,7 +2,16 @@
 /**
  * Project: LMOnext
  * Filename: src/Liga/StandingsTrait.php
- * Fileversion: 1.0.0
+ * Fileversion: 1.1.0
+ * Changelog: 1.1.0 - Neues Feature "Strafpunkte/Straftore": computeStandings() bekommt einen
+ *                     optionalen $ligaId-Parameter (Rückwärtskompatibel, Standard null = kein
+ *                     Verhaltenswechsel für bestehende Aufrufer ohne Liga-Bezug) und zieht damit
+ *                     admin-seitig hinterlegte Strafpunkte von den regulär berechneten Punkten
+ *                     ab bzw. addiert Straftore zu den Gegentoren, VOR der finalen Sortierung -
+ *                     wirkt sich also korrekt auf Tabellenplatz und Tordifferenz aus. Neue
+ *                     Funktionen getLigaStrafpunkte()/setLigaStrafpunkte() plus neue Tabelle
+ *                     liga_strafpunkte (per ensureStrafpunkteSchema() bei Bedarf angelegt, auch
+ *                     auf Bestandsinstallationen ohne erneuten install.php-Lauf)
  * Changelog: 1.0.0 - Initiale Version: Teil der Umstrukturierung von frontend/data_liga.php in
  *                     fokussierte Traits (siehe frontend/data_liga.php 3.0.0 für den vollen
  *                     Kontext der Umstellung). Tabellenberechnung (computeStandings, computeStandingsMarkerColor, renderStandingsView).
@@ -52,7 +61,7 @@ trait StandingsTrait
      * Punkte → Tordifferenz → Tore (wie im Adminbereich). Startet mit allen
      * gemeldeten Teams (auch ohne gespielte Partie, dann mit lauter Nullen).
      */
-    public static function computeStandings(array $teamsList, array $partien, array $ligaOptions) : array
+    public static function computeStandings(array $teamsList, array $partien, array $ligaOptions, ?int $ligaId = null) : array
     {
         $ptW = (int)($ligaOptions['PointsForWin']  ?? 3);
         $ptD = (int)($ligaOptions['PointsForDraw'] ?? 1);
@@ -75,6 +84,7 @@ trait StandingsTrait
                 'id' => (int)$t['id'], 'name' => $t['name'], 'kurz' => $t['kurz'] ?? '',
                 'sp' => 0, 's' => 0, 'u' => 0, 'n' => 0,
                 'tore_h' => 0, 'tore_g' => 0, 'pkt' => 0,
+                'strafpunkte' => 0, 'straftore' => 0, 'strafgrund' => '',
             ];
         }
     
@@ -88,10 +98,10 @@ trait StandingsTrait
                 continue;
             }
             if (!isset($rows[$hId])) {
-                $rows[$hId] = ['id' => $hId, 'name' => $p['heim_name'] ?? '', 'kurz' => '', 'sp' => 0, 's' => 0, 'u' => 0, 'n' => 0, 'tore_h' => 0, 'tore_g' => 0, 'pkt' => 0];
+                $rows[$hId] = ['id' => $hId, 'name' => $p['heim_name'] ?? '', 'kurz' => '', 'sp' => 0, 's' => 0, 'u' => 0, 'n' => 0, 'tore_h' => 0, 'tore_g' => 0, 'pkt' => 0, 'strafpunkte' => 0, 'straftore' => 0, 'strafgrund' => ''];
             }
             if (!isset($rows[$gId])) {
-                $rows[$gId] = ['id' => $gId, 'name' => $p['gast_name'] ?? '', 'kurz' => '', 'sp' => 0, 's' => 0, 'u' => 0, 'n' => 0, 'tore_h' => 0, 'tore_g' => 0, 'pkt' => 0];
+                $rows[$gId] = ['id' => $gId, 'name' => $p['gast_name'] ?? '', 'kurz' => '', 'sp' => 0, 's' => 0, 'u' => 0, 'n' => 0, 'tore_h' => 0, 'tore_g' => 0, 'pkt' => 0, 'strafpunkte' => 0, 'straftore' => 0, 'strafgrund' => ''];
             }
     
             $ht = (int)$p['h_tore'];
@@ -131,6 +141,26 @@ trait StandingsTrait
             }
         }
     
+        // Straftore/Strafpunkte anwenden (Admin → Liga-Einstellungen → Strafen,
+        // siehe getLigaStrafpunkte()) - NACH der regulären Punkteberechnung,
+        // damit sie unabhängig vom gewählten Punktesystem (2er/3er, n.V./i.E.)
+        // als fester Abzug on top wirken. $ligaId ist optional (null), damit
+        // computeStandings() für Kontexte ohne Liga-Bezug (z.B. reine
+        // Was-wäre-wenn-Berechnungen) unverändert ohne DB-Zugriff nutzbar bleibt.
+        if ($ligaId !== null) {
+            $strafen = self::getLigaStrafpunkte($ligaId);
+            foreach ($strafen as $teamId => $s) {
+                if (!isset($rows[$teamId])) {
+                    continue; // Team ist nicht (mehr) Teil dieser Liga
+                }
+                $rows[$teamId]['strafpunkte'] = $s['strafpunkte'];
+                $rows[$teamId]['straftore']   = $s['straftore'];
+                $rows[$teamId]['strafgrund']  = $s['grund'];
+                $rows[$teamId]['pkt']        -= $s['strafpunkte'];
+                $rows[$teamId]['tore_g']     += $s['straftore'];
+            }
+        }
+
         $standings = array_values($rows);
         usort($standings, static function (array $a, array $b) : int {
             if ($a['pkt'] !== $b['pkt']) {
@@ -145,6 +175,130 @@ trait StandingsTrait
         });
     
         return $standings;
+    }
+
+    /**
+     * Legt die Strafpunkte-Tabelle bei Bedarf an (analog zum ensureTippSchema()-
+     * Muster im Tippspiel-Addon) - so funktioniert die Funktion auch auf
+     * bereits bestehenden Installationen, die vor Einführung dieses Features
+     * angelegt wurden, ohne dass install.php erneut laufen müsste.
+     */
+    private static function ensureStrafpunkteSchema() : void
+    {
+        static $done = false; if ($done) return; $done = true;
+        try {
+            getDB()->exec('CREATE TABLE IF NOT EXISTS ' . tbl('liga_strafpunkte') . ' (
+                `id`          INT AUTO_INCREMENT PRIMARY KEY,
+                `liga_id`     INT NOT NULL,
+                `team_id`     INT NOT NULL,
+                `strafpunkte` INT NOT NULL DEFAULT 0,
+                `straftore`   INT NOT NULL DEFAULT 0,
+                `grund`       VARCHAR(255) NULL DEFAULT NULL,
+                `updated_at`  TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+                UNIQUE KEY `liga_team` (`liga_id`, `team_id`)
+            ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci');
+        } catch (\Throwable) {
+            // Wird bei jedem Aufruf erneut versucht (static $done bleibt auf
+            // dieser Instanz zwar true, aber ein neuer Request versucht es
+            // erneut) - getLigaStrafpunkte()/setLigaStrafpunkte() fangen einen
+            // fehlenden Tabellenzugriff ohnehin selbst ab.
+        }
+    }
+
+    /**
+     * Liefert alle für eine Liga hinterlegten Strafpunkte/Straftore, indiziert
+     * nach Team-ID. Teams ohne Eintrag fehlen im Ergebnis (kein Datensatz
+     * angelegt für 0/0 - siehe setLigaStrafpunkte()).
+     *
+     * @return array<int,array{strafpunkte:int,straftore:int,grund:string}>
+     */
+    public static function getLigaStrafpunkte(int $ligaId) : array
+    {
+        self::ensureStrafpunkteSchema();
+        try {
+            $stmt = getDB()->prepare(
+                'SELECT team_id, strafpunkte, straftore, grund FROM ' . tbl('liga_strafpunkte') . ' WHERE liga_id = ?'
+            );
+            $stmt->execute([$ligaId]);
+            $result = [];
+            foreach ($stmt->fetchAll() as $r) {
+                $result[(int)$r['team_id']] = [
+                    'strafpunkte' => (int)$r['strafpunkte'],
+                    'straftore'   => (int)$r['straftore'],
+                    'grund'       => (string)($r['grund'] ?? ''),
+                ];
+            }
+            return $result;
+        } catch (\Throwable) {
+            return [];
+        }
+    }
+
+    /**
+     * Speichert die Strafpunkte/Straftore-Einträge für eine Liga (ein
+     * Formular-Submit mit einer Zeile je Team, siehe Admin → Liga-
+     * Einstellungen → Strafen). Teams mit 0 Strafpunkten, 0 Straftoren und
+     * leerem Grund werden aus der Tabelle entfernt statt als Leerzeile
+     * gespeichert - hält die Tabelle sauber und "kein Eintrag" bedeutet
+     * eindeutig "keine Strafe".
+     *
+     * @param array<int,array{strafpunkte?:int|string,straftore?:int|string,grund?:string}> $eintraege team_id => Werte
+     */
+    public static function setLigaStrafpunkte(int $ligaId, array $eintraege) : bool
+    {
+        self::ensureStrafpunkteSchema();
+        try {
+            $db = getDB();
+            $upsert = $db->prepare(
+                'INSERT INTO ' . tbl('liga_strafpunkte') . ' (liga_id, team_id, strafpunkte, straftore, grund)
+                 VALUES (?, ?, ?, ?, ?)
+                 ON DUPLICATE KEY UPDATE strafpunkte = VALUES(strafpunkte), straftore = VALUES(straftore), grund = VALUES(grund)'
+            );
+            $delete = $db->prepare('DELETE FROM ' . tbl('liga_strafpunkte') . ' WHERE liga_id = ? AND team_id = ?');
+
+            foreach ($eintraege as $teamId => $e) {
+                $teamId = (int)$teamId;
+                $sp     = (int)($e['strafpunkte'] ?? 0);
+                $st     = (int)($e['straftore'] ?? 0);
+                $grund  = trim((string)($e['grund'] ?? ''));
+
+                if ($sp === 0 && $st === 0 && $grund === '') {
+                    $delete->execute([$ligaId, $teamId]);
+                    continue;
+                }
+                $upsert->execute([$ligaId, $teamId, $sp, $st, $grund !== '' ? $grund : null]);
+            }
+            return true;
+        } catch (\Throwable) {
+            return false;
+        }
+    }
+    /**
+     * Kleiner Hinweis-Marker (⚠ mit Tooltip) für die Tabellenzeile eines
+     * Teams mit Strafpunkten/Straftoren - leerer String, wenn keine Strafe
+     * vorliegt. Erwartet eine Zeile aus computeStandings() (mit den Feldern
+     * strafpunkte/straftore/strafgrund).
+     */
+    public static function renderStrafHinweis(array $row) : string
+    {
+        $sp = (int)($row['strafpunkte'] ?? 0);
+        $st = (int)($row['straftore'] ?? 0);
+        if ($sp === 0 && $st === 0) {
+            return '';
+        }
+        $teile = [];
+        if ($sp !== 0) {
+            $teile[] = '-' . $sp . ' ' . tf('liga_standings_straf_punkte');
+        }
+        if ($st !== 0) {
+            $teile[] = '+' . $st . ' ' . tf('liga_standings_straf_tore');
+        }
+        $tooltip = implode(', ', $teile);
+        $grund = trim((string)($row['strafgrund'] ?? ''));
+        if ($grund !== '') {
+            $tooltip .= ' (' . $grund . ')';
+        }
+        return ' <span class="st-straf-hinweis" title="' . h($tooltip) . '">⚠</span>';
     }
     /**
      * Ermittelt die Randfarbe (Tabellenmarkierung, siehe Admin → Liga-

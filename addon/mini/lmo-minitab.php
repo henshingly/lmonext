@@ -2,7 +2,10 @@
 /**
  * Project: LMOnext
  * Filename: addon/mini/lmo-minitab.php
- * Fileversion: 1.2.1
+ * Fileversion: 1.2.2
+ * Changelog: 1.2.2 - $ligaId an computeStandings() übergeben, damit admin-seitig hinterlegte
+ *                     Strafpunkte/Straftore auch in diesem Mini-Widget korrekt berücksichtigt
+ *                     werden (siehe src/Liga/StandingsTrait.php 1.1.0)
  * Changelog: 1.2.1 - Bugfix: Team-Logo-Bild und der "Zur Tabelle"-Link in der Kopfzeile
  *                     zeigten ins Leere, da renderTeamLogoImg()/die "liga.php?id=..."-Verlinkung
  *                     Pfade relativ zum Projekt-Root zurückgeben – korrekt für liga.php/home.php
@@ -175,7 +178,7 @@ function renderMinitabelle(int $ligaId, ?int $platz, int $ueber, int $unter, str
     $teamsList   = getLigaTeamsList($ligaId);
     $allSpieltage = getAllSpieltage($ligaId);
     $partien     = getAllLigaPartien($allSpieltage);
-    $rows        = computeStandings($teamsList, $partien, $opts);
+    $rows        = computeStandings($teamsList, $partien, $opts, $ligaId);
     $totalTeams  = count($rows);
     if ($totalTeams === 0) {
         return '<p style="font-family:sans-serif;color:#a33">Keine Teams in dieser Liga</p>';

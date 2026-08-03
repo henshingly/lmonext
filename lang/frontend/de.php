@@ -2,7 +2,10 @@
 /**
  * Project: LMOnext
  * Filename: lang/frontend/de.php
- * Fileversion: 1.23.0
+ * Fileversion: 1.24.0
+ * Changelog: 1.24.0 - Übersetzungen für den neuen Strafpunkte/Straftore-Tooltip in der
+ *                     Liga-Tabelle ergänzt (siehe renderStrafHinweis() in
+ *                     src/Liga/StandingsTrait.php 1.1.0)
  * Changelog: 1.23.0 - Übersetzungen für die Template-Integration des Tippspiels ergänzt
  *                     (Seitentitel, Tab-Beschriftungen) - siehe
  *                     addon/tipp/view_tippspiel_frontend.php 1.0.0. Mehrere alte Einzel-Titel
@@ -205,6 +208,8 @@ return [
     'liga_standings_col_tore'     => 'Tore',
     'liga_standings_col_diff'     => 'Diff',
     'liga_standings_col_pkt'      => 'Pkt',
+    'liga_standings_straf_punkte' => 'Strafpunkte',
+    'liga_standings_straf_tore'   => 'Straftore',
     'liga_schedule_pick_team'     => 'Bitte wählen Sie jetzt eine Mannschaft aus.',
 
     // ── Direkter Vergleich (Vergleichs-Modal) ─────────────────────────────────

@@ -2,7 +2,10 @@
 /**
  * Project: LMOnext
  * Filename: frontend/data_liga.php
- * Fileversion: 3.0.1
+ * Fileversion: 3.0.2
+ * Changelog: 3.0.2 - computeStandings()-Wrapper reicht jetzt den neuen optionalen $ligaId-
+ *                     Parameter durch, neue Wrapper getLigaStrafpunkte()/setLigaStrafpunkte()
+ *                     ergänzt (siehe src/Liga/StandingsTrait.php 1.1.0, neues Strafpunkte-Feature)
  * Changelog: 3.0.1 - renderBackLinkBlock() von liga.php hierher verschoben, damit auch
  *                     home.php (Tippspiel-View) denselben "← Zur Übersicht"-Link nutzen kann
  * Changelog: 3.0.0 - Große Umstrukturierung: die komplette bisherige Implementierung (~2900
@@ -294,9 +297,19 @@ function getAllLigaPartien(array $allSpieltage) : array
     return \LMOnext\Liga\LigaService::getAllLigaPartien($allSpieltage);
 }
 
-function computeStandings(array $teamsList, array $partien, array $ligaOptions) : array
+function computeStandings(array $teamsList, array $partien, array $ligaOptions, ?int $ligaId = null) : array
 {
-    return \LMOnext\Liga\LigaService::computeStandings($teamsList, $partien, $ligaOptions);
+    return \LMOnext\Liga\LigaService::computeStandings($teamsList, $partien, $ligaOptions, $ligaId);
+}
+
+function getLigaStrafpunkte(int $ligaId) : array
+{
+    return \LMOnext\Liga\LigaService::getLigaStrafpunkte($ligaId);
+}
+
+function setLigaStrafpunkte(int $ligaId, array $eintraege) : bool
+{
+    return \LMOnext\Liga\LigaService::setLigaStrafpunkte($ligaId, $eintraege);
 }
 
 function computeStandingsMarkerColor(int $index, int $totalTeams, array $opts) : string

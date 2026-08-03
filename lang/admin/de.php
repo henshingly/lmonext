@@ -2,7 +2,11 @@
 /**
  * Project: LMOnext
  * Filename: lang/admin/de.php
- * Fileversion: 1.15.6
+ * Fileversion: 1.15.8
+ * Changelog: 1.15.8 - Übersetzungen für den neuen "Teams"-Tab bei Liga-Einstellungen sowie den
+ *                     neuen Schnellzugriffs-Button auf der Liga-Detailseite ergänzt
+ * Changelog: 1.15.7 - Übersetzungen für den neuen Liga-Einstellungen-Tab "Strafen"
+ *                     (Strafpunkte/Straftore) ergänzt
  * Changelog: 1.15.6 - Übersetzungen für "Newsletter/Reminder" ergänzt
  * Changelog: 1.15.5
  * Changelog: 1.15.5 - Übersetzungen für die Tippspiel-Userverwaltung ergänzt, common_delete/
@@ -769,6 +773,7 @@ return [
     'ld_back_link'          => '← Zurück zur Übersicht',
     'ld_id_created'         => 'ID {id} · Erstellt: {datum}',
     'ld_btn_settings'       => '⚙️ Einstellungen',
+    'ld_btn_teams'          => '👥 Teams',
     'ld_btn_enter_results'  => '📝 Ergebnisse eintragen',
     'ld_btn_export'         => '💾 Als .l98 exportieren',
     'ld_btn_archive_dd'     => '🗄️ Archivieren ▾',
@@ -795,9 +800,17 @@ return [
 
     // ── Liga-Einstellungen (view_liga_settings.php) ──────────────────────────
     'ls_tab_grundwerte'    => 'Grundwerte',
+    'ls_tab_teams'         => 'Teams',
     'ls_tab_anzeige'       => 'Anzeigen/Darstellung',
     'ls_tab_spielsystem'   => 'Spielsystem',
     'ls_tab_tabelle'       => 'Tabelle',
+    'ls_tab_strafen'       => 'Strafen',
+    'ls_strafen_hinweis'   => 'Strafpunkte werden von den regulär berechneten Punkten abgezogen, Straftore zu den Gegentoren addiert. Wirkt sich nur in dieser Liga aus, nicht auf andere Ligen/Saisons desselben Teams. 0 Punkte, 0 Tore und leerer Grund entfernen einen bestehenden Eintrag wieder.',
+    'ls_strafen_keine_teams' => 'Dieser Liga sind noch keine Teams zugeordnet.',
+    'ls_strafen_col_team'  => 'Team',
+    'ls_strafen_col_punkte' => 'Strafpunkte',
+    'ls_strafen_col_tore'  => 'Straftore',
+    'ls_strafen_col_grund' => 'Grund (optional)',
     'ls_tab_spieltage'     => 'Spieltags- und Spiel-Anzahl',
 
     'ls_label_liga_name'   => 'Name der Liga',

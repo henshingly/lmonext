@@ -1541,7 +1541,7 @@ function exportTabellePdf(string $ligaName, int $ligaId, array $allSpieltage, bo
     $opts    = getLigaOptions($ligaId);
     $teams   = getLigaTeamsList($ligaId);
     $partien = getAllLigaPartien($allSpieltage);
-    $rows    = computeStandings($teams, $partien, $opts);
+    $rows    = computeStandings($teams, $partien, $opts, $ligaId);
 
     $headers = [
         tf('liga_standings_col_platz'),

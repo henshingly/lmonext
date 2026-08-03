@@ -2,7 +2,9 @@
 /**
  * Project: LMOnext
  * Filename: lang/frontend/en.php
- * Fileversion: 1.23.0
+ * Fileversion: 1.24.0
+ * Changelog: 1.24.0 - Added translations for the new penalty points/goals tooltip in the
+ *                     league table (see renderStrafHinweis() in src/Liga/StandingsTrait.php 1.1.0)
  * Changelog: 1.23.0 - Added translations for the Tippspiel template integration (page title,
  *                     tab labels) - see addon/tipp/view_tippspiel_frontend.php 1.0.0. Several
  *                     old per-view titles (tf_tipp_*_titel, tf_tipp_zur_abgabe) are now unused
@@ -202,6 +204,8 @@ return [
     'liga_standings_col_tore'     => 'Goals',
     'liga_standings_col_diff'     => 'GD',
     'liga_standings_col_pkt'      => 'Pts',
+    'liga_standings_straf_punkte' => 'penalty points',
+    'liga_standings_straf_tore'   => 'penalty goals',
     'liga_schedule_pick_team'     => 'Please select a team now.',
 
     // ── Head-to-head comparison modal ─────────────────────────────────────────

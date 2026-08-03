@@ -2,7 +2,8 @@
 <html lang="<!--HtmlLang-->">
 <head>
 <!--
-  Template: matchday | Filename: layout.tpl.php | Fileversion: 1.1.0
+  Template: matchday | Filename: layout.tpl.php | Fileversion: 1.1.1
+  Changelog: 1.1.1 - CSS für .st-straf-hinweis ergänzt (siehe default 1.16.1)
   Changelog: 1.1.0 - CSS für die Tippspiel-Integration ergänzt, mit eigenen Variablennamen
                      (--ink/--line/--accent-ink/--pitch/--danger) an das Scoreboard-Design
                      angepasst (siehe default 1.16.0)
@@ -298,6 +299,7 @@ table.standings-table td{padding:9px 10px;border-top:1px solid var(--line)}
 .st-num{text-align:center;width:1%;white-space:nowrap;font-variant-numeric:tabular-nums}
 .st-pkt{text-align:center;font-weight:700;color:var(--ink);width:1%;white-space:nowrap;
   font-family:var(--font-display);font-size:1.05rem;font-variant-numeric:tabular-nums}
+.st-straf-hinweis{cursor:help;font-size:.8rem;margin-left:3px}
 .st-num.diff-pos{color:var(--pitch);font-weight:700}
 .st-num.diff-neg{color:var(--danger);font-weight:700}
 

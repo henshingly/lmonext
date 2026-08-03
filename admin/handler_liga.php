@@ -2,7 +2,12 @@
 /**
  * Project: LMOnext
  * Filename: handler_liga.php
- * Fileversion: 1.6.4
+ * Fileversion: 1.6.5
+ * Changelog: 1.6.5 - save_team respektiert jetzt ein optionales POST-Feld "redirect" (nur eigene
+ *                     "?action=..."-Ziele erlaubt), damit der neue "Teams"-Tab in den Liga-
+ *                     Einstellungen nach dem Speichern dorthin zurückkehrt statt zur
+ *                     Liga-Detailseite (Standardverhalten bleibt unverändert, falls kein
+ *                     redirect-Feld gesendet wird)
  * Changelog: 1.6.4 - add_team_link übersetzt jetzt die a/b/unbekannt-Richtungswahl in die
  *                     tatsächliche Team-ID (newer_team_id). Neue Aktion
  *                     set_team_link_direction zum nachträglichen Ändern bestehender
@@ -132,10 +137,17 @@ if ($action === 'save_team' && $_SERVER['REQUEST_METHOD'] === 'POST') {
     $name     = trim($_POST['team_name']   ?? '');
     $mittel   = trim($_POST['team_mittel'] ?? '');
     $kurz     = trim($_POST['team_kurz']   ?? '');
+    // Optionales Redirect-Ziel (z.B. zurück zum "Teams"-Tab der Liga-
+    // Einstellungen statt zur Liga-Detailseite, siehe admin/view_liga_settings.php).
+    // Nur eigene, relative "?action=..."-Ziele erlaubt (kein Open-Redirect).
+    $redirectTarget = $_POST['redirect'] ?? '';
+    $redirect = (is_string($redirectTarget) && str_starts_with($redirectTarget, '?action='))
+        ? $redirectTarget
+        : '?action=liga_detail&id=' . $lid;
 
     if ($tid <= 0 || $name === '') {
         flash(t('hl_flash_team_id_or_name_missing'), 'error');
-        redirect('?action=liga_detail&id='.$lid);
+        redirect($redirect);
     }
     try {
         $db = getDB();
@@ -169,7 +181,7 @@ if ($action === 'save_team' && $_SERVER['REQUEST_METHOD'] === 'POST') {
             flash(t('hl_flash_team_updated'));
         }
     } catch (Throwable $e) { flash(t('flash_error_prefix', ['msg' => $e->getMessage()]), 'error'); }
-    redirect('?action=liga_detail&id='.$lid);
+    redirect($redirect);
 }
 
 // ── KO-Runden nachträglich anlegen (fehlende liga_spieltage-Einträge) ─────────

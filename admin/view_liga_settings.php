@@ -2,7 +2,15 @@
 /**
  * Project: LMOnext
  * Filename: view_liga_settings.php
- * Fileversion: 1.4.4
+ * Fileversion: 1.5.0
+ * Changelog: 1.5.0 - Neuer Tab "Teams": komplette Team-Verwaltung (Name/Mittel/Kürzel bearbeiten,
+ *                     DB-Suche, direkte ID-Übernahme) von der Liga-Detailseite hierher verschoben
+ *                     (siehe admin/view_liga_detail.php 1.9.0), damit sie zusammen mit den
+ *                     übrigen Liga-Einstellungen an einem Ort liegt. Läuft bewusst OHNE das
+ *                     äußere <form action="?action=save_liga_settings"> - jede Zeile speichert
+ *                     einzeln über ein eigenes <form>, verschachtelte Forms wären ungültiges HTML
+ * Changelog: 1.4.5 - Neuer Tab "Strafen": Strafpunkte/Straftore je Team dieser Liga verwalten
+ *                     (siehe admin/handler_settings.php 1.3.7)
  * Changelog: 1.4.4 - Neue Einstellung "Spielfrei anzeigen" (ShowSpielfrei) im Tab Anzeigen/
  *                     Darstellung, direkt unter "Ergebnisse" - steuert, ob der "Spielfrei:
  *                     TEAMNAME"-Hinweis in Ergebnisse-Ansicht und PDF-Export erscheint (siehe
@@ -65,10 +73,10 @@
 
         // Tab-Definitionen je nach Liga-Typ
         $tabs = $isKO
-            ? ['grundwerte' => t('ls_tab_grundwerte'), 'anzeige' => t('ls_tab_anzeige')]
-            : ['grundwerte' => t('ls_tab_grundwerte'), 'anzeige' => t('ls_tab_anzeige'),
+            ? ['grundwerte' => t('ls_tab_grundwerte'), 'teams' => t('ls_tab_teams'), 'anzeige' => t('ls_tab_anzeige')]
+            : ['grundwerte' => t('ls_tab_grundwerte'), 'teams' => t('ls_tab_teams'), 'anzeige' => t('ls_tab_anzeige'),
                'spielsystem' => t('ls_tab_spielsystem'), 'tabelle' => t('ls_tab_tabelle'),
-               'spieltage' => t('ls_tab_spieltage')];
+               'strafen' => t('ls_tab_strafen'), 'spieltage' => t('ls_tab_spieltage')];
 
         $selSt = 'background:var(--bg);border:1px solid var(--border);color:var(--text);border-radius:var(--radius);padding:5px 10px;font-size:.87rem';
         $inpSt = $selSt . ';width:120px';
@@ -95,9 +103,11 @@
         <div style="margin-bottom:12px">
           <a href="?action=liga_detail&id=<?= $lid ?>" class="back-link">← <?= h($liga['name']) ?></a>
         </div>
+<?php if ($tab !== 'teams') { ?>
         <form method="post" action="?action=save_liga_settings">
           <input type="hidden" name="liga_id" value="<?= $lid ?>">
           <input type="hidden" name="tab"     value="<?= h($tab) ?>">
+<?php } ?>
 
 <?php
 // ═══════════════════════════════════════════════════════════════════════
@@ -165,6 +175,204 @@ if ($tab === 'grundwerte') { ?>
               </td>
             </tr>
           </table>
+
+<?php
+// ═══════════════════════════════════════════════════════════════════════
+// TAB: TEAMS - hierher verschoben von der Liga-Detailseite (admin/
+// view_liga_detail.php), damit die Team-Verwaltung zusammen mit den
+// übrigen Liga-Einstellungen an einem Ort liegt. Eigenständig OHNE das
+// äußere <form action="?action=save_liga_settings"> (siehe oben) - jede
+// Zeile speichert einzeln über ihr eigenes <form action="?action=save_team">,
+// verschachtelte <form>-Tags wären ungültiges HTML.
+// ═══════════════════════════════════════════════════════════════════════
+} elseif ($tab === 'teams') { ?>
+          <h2 style="margin-bottom:12px"><?= h(t('ld_heading_teams', ['n' => count($ligaTeams)])) ?></h2>
+          <table class="tbl" id="teams-tbl">
+            <thead><tr><th><?= h(t('dash_col_name')) ?></th><th><?= h(t('ld_label_mittel_short')) ?></th><th><?= h(t('teams_col_kurz')) ?></th><th style="width:80px"></th></tr></thead>
+            <tbody>
+<?php foreach ($ligaTeams as $t) { ?>
+              <tr id="team-row-<?= (int)$t['id'] ?>">
+                <td style="font-weight:500"><?= h($t['name']) ?></td>
+                <td class="text-muted"><?= h($t['mittel'] ?? '') ?></td>
+                <td><?php if (!empty($t['kurz'])) { ?><span class="chip chip-blue"><?= h($t['kurz']) ?></span><?php } else { echo '–'; } ?></td>
+                <td>
+                  <button type="button" class="btn btn-muted btn-sm"
+                          onclick="openTeamEditor(<?= (int)$t['id'] ?>, <?= h(json_encode($t['name'])) ?>, <?= h(json_encode($t['mittel'] ?? '')) ?>, <?= h(json_encode($t['kurz'] ?? '')) ?>)">✏️</button>
+                </td>
+              </tr>
+              <tr id="team-edit-<?= (int)$t['id'] ?>" style="display:none">
+                <td colspan="4" style="padding:0">
+                  <!-- ── DB-Suche ──────────────────────────────────────── -->
+                  <div style="background:var(--surface2);border-radius:var(--radius);padding:10px 12px;margin:4px 0 2px">
+                    <label style="font-size:.73rem;color:var(--muted);display:block;margin-bottom:4px"><?= h(t('ld_label_db_search')) ?></label>
+                    <div style="display:flex;gap:6px;align-items:center">
+                      <input type="text" id="dbsearch-<?= (int)$t['id'] ?>"
+                             placeholder="<?= h(t('ld_placeholder_name_search')) ?>" autocomplete="off"
+                             oninput="teamDbSearch(<?= (int)$t['id'] ?>, this.value)"
+                             style="flex:1;background:var(--bg);border:1px solid var(--border);color:var(--text);border-radius:var(--radius);padding:5px 10px;font-size:.85rem">
+                    </div>
+                    <div id="dbresults-<?= (int)$t['id'] ?>"
+                         style="margin-top:4px;max-height:160px;overflow-y:auto;border:1px solid var(--border);border-radius:var(--radius);display:none;background:var(--bg)">
+                    </div>
+                    <label style="font-size:.73rem;color:var(--muted);display:block;margin:10px 0 4px"><?= h(t('ld_label_id_lookup')) ?></label>
+                    <div style="display:flex;gap:6px;align-items:center">
+                      <input type="number" min="1" id="dbid-<?= (int)$t['id'] ?>"
+                             placeholder="<?= h(t('ld_placeholder_id_lookup')) ?>" autocomplete="off"
+                             onkeydown="if(event.key==='Enter'){event.preventDefault();teamIdLookup(<?= (int)$t['id'] ?>);}"
+                             style="width:120px;background:var(--bg);border:1px solid var(--border);color:var(--text);border-radius:var(--radius);padding:5px 10px;font-size:.85rem">
+                      <button type="button" class="btn btn-muted btn-sm" onclick="teamIdLookup(<?= (int)$t['id'] ?>)"><?= h(t('ld_btn_id_apply')) ?></button>
+                      <span id="dbid-msg-<?= (int)$t['id'] ?>" style="font-size:.78rem;color:var(--muted)"></span>
+                    </div>
+                  </div>
+                  <!-- ── Felder (manuell oder aus DB) ─────────────────── -->
+                  <form method="post" action="?action=save_team"
+                        style="display:grid;grid-template-columns:2fr 1.5fr 1fr auto auto;gap:8px;align-items:end;padding:8px 12px 10px">
+                    <input type="hidden" name="team_id"  value="<?= (int)$t['id'] ?>">
+                    <input type="hidden" name="liga_id"  value="<?= $lid ?>">
+                    <input type="hidden" name="redirect" value="?action=liga_settings&id=<?= $lid ?>&tab=teams">
+                    <!-- global_id: wenn gesetzt, wird das bestehende Global-Team mit der Liga verknüpft statt eines neuen angelegt -->
+                    <input type="hidden" name="global_id" id="te-gid-<?= (int)$t['id'] ?>" value="">
+                    <div>
+                      <label style="font-size:.73rem;color:var(--muted);display:block;margin-bottom:3px"><?= h(t('teams_field_name_required')) ?></label>
+                      <input type="text" name="team_name" id="te-name-<?= (int)$t['id'] ?>"
+                             style="width:100%;background:var(--bg);border:1px solid var(--border);color:var(--text);border-radius:var(--radius);padding:6px 10px;font-size:.88rem" required>
+                    </div>
+                    <div>
+                      <label style="font-size:.73rem;color:var(--muted);display:block;margin-bottom:3px"><?= h(t('ld_label_mittel_short')) ?></label>
+                      <input type="text" name="team_mittel" id="te-mittel-<?= (int)$t['id'] ?>"
+                             style="width:100%;background:var(--bg);border:1px solid var(--border);color:var(--text);border-radius:var(--radius);padding:6px 10px;font-size:.88rem">
+                    </div>
+                    <div>
+                      <label style="font-size:.73rem;color:var(--muted);display:block;margin-bottom:3px"><?= h(t('teams_col_kurz')) ?></label>
+                      <input type="text" name="team_kurz" id="te-kurz-<?= (int)$t['id'] ?>" maxlength="10"
+                             style="width:100%;background:var(--bg);border:1px solid var(--border);color:var(--text);border-radius:var(--radius);padding:6px 10px;font-size:.88rem">
+                    </div>
+                    <button type="submit" class="btn btn-success btn-sm" style="align-self:end">💾</button>
+                    <button type="button" class="btn btn-muted btn-sm" style="align-self:end"
+                            onclick="closeTeamEditor(<?= (int)$t['id'] ?>)">✕</button>
+                  </form>
+                </td>
+              </tr>
+<?php } ?>
+            </tbody>
+          </table>
+          <script>
+          const i18nLdNoMatch = <?= json_encode(t('ld_js_no_match')) ?>;
+          const i18nLdIdNotFound = <?= json_encode(t('ld_js_id_not_found')) ?>;
+          const i18nLdLoading = <?= json_encode(t('common_loading')) ?>;
+          // ── Team-Editor: öffnen/schließen ─────────────────────────────────────
+          function openTeamEditor(id, name, mittel, kurz) {
+            document.querySelectorAll('[id^="team-edit-"]').forEach(r => r.style.display = 'none');
+            document.getElementById('te-name-'   + id).value = name;
+            document.getElementById('te-mittel-' + id).value = mittel;
+            document.getElementById('te-kurz-'   + id).value = kurz;
+            document.getElementById('te-gid-'    + id).value = '';
+            document.getElementById('dbsearch-'  + id).value = '';
+            hideResults(id);
+            document.getElementById('team-edit-' + id).style.display = '';
+            document.getElementById('dbsearch-'  + id).focus();
+          }
+
+          function closeTeamEditor(id) {
+            document.getElementById('team-edit-' + id).style.display = 'none';
+          }
+
+          function hideResults(id) {
+            const r = document.getElementById('dbresults-' + id);
+            if (r) { r.style.display = 'none'; r.innerHTML = ''; }
+          }
+
+          // ── DB-Suche ──────────────────────────────────────────────────────────
+          let searchTimer = null;
+
+          function teamDbSearch(tid, q) {
+            clearTimeout(searchTimer);
+            const results = document.getElementById('dbresults-' + tid);
+            if (q.trim().length < 2) { hideResults(tid); return; }
+
+            searchTimer = setTimeout(() => {
+              fetch('?action=team_search&q=' + encodeURIComponent(q))
+                .then(r => r.json())
+                .then(data => {
+                  if (!data.length) {
+                    results.innerHTML = '<div style="padding:8px 12px;font-size:.82rem;color:var(--muted)">' + i18nLdNoMatch + '</div>';
+                  } else {
+                    results.innerHTML = '';
+                    data.forEach(t => {
+                      const div = document.createElement('div');
+                      div.style.cssText = 'padding:10px 12px;font-size:.85rem;cursor:pointer;border-bottom:1px solid var(--border);display:flex;justify-content:space-between;align-items:center;-webkit-tap-highlight-color:rgba(59,130,246,.2)';
+                      div.innerHTML = `<span style="font-weight:500">${esc(t.name)}</span>`
+                                    + `<span style="color:var(--muted);font-size:.78rem">${esc(t.mittel)}${t.kurz ? ' · '+esc(t.kurz) : ''}</span>`;
+
+                      div.addEventListener('mouseover', () => div.style.background = 'var(--surface2)');
+                      div.addEventListener('mouseout',  () => div.style.background = '');
+
+                      function doSelect(e) {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        selectDbTeam(tid, t.id, t.name, t.mittel, t.kurz);
+                      }
+                      div.addEventListener('touchstart', doSelect, { passive: false });
+                      div.addEventListener('mousedown',  doSelect);
+
+                      results.appendChild(div);
+                    });
+                  }
+                  results.style.display = 'block';
+                })
+                .catch(() => hideResults(tid));
+            }, 280);
+          }
+
+          function selectDbTeam(tid, globalId, name, mittel, kurz) {
+            document.getElementById('te-gid-'    + tid).value = globalId;
+            document.getElementById('te-name-'   + tid).value = name;
+            document.getElementById('te-mittel-' + tid).value = mittel;
+            document.getElementById('te-kurz-'   + tid).value = kurz;
+            document.getElementById('dbsearch-'  + tid).value = name;
+            hideResults(tid);
+          }
+
+          // Direkte Team-ID-Eingabe: Team per numerischer ID nachschlagen und bei
+          // Erfolg wie einen DB-Suchtreffer übernehmen (selectDbTeam).
+          function teamIdLookup(tid) {
+            const input = document.getElementById('dbid-' + tid);
+            const msg   = document.getElementById('dbid-msg-' + tid);
+            const id    = parseInt(input.value, 10);
+            msg.style.color = 'var(--muted)';
+            if (!id || id < 1) { return; }
+            msg.textContent = i18nLdLoading;
+            fetch('?action=team_by_id&id=' + id)
+              .then(r => r.json())
+              .then(t => {
+                if (!t) {
+                  msg.style.color = 'var(--red)';
+                  msg.textContent = i18nLdIdNotFound;
+                  return;
+                }
+                selectDbTeam(tid, t.id, t.name, t.mittel, t.kurz);
+                input.value = '';
+                msg.style.color = 'var(--green)';
+                msg.textContent = '✓ ' + t.name;
+              })
+              .catch(() => { msg.style.color = 'var(--red)'; msg.textContent = i18nLdIdNotFound; });
+          }
+
+          function esc(s) {
+            return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+          }
+
+          document.addEventListener('touchstart', e => {
+            if (!e.target.closest('[id^="dbresults-"]') && !e.target.closest('[id^="dbsearch-"]')) {
+              document.querySelectorAll('[id^="dbresults-"]').forEach(r => { r.style.display='none'; });
+            }
+          }, { passive: true });
+          document.addEventListener('mousedown', e => {
+            if (!e.target.closest('[id^="dbresults-"]') && !e.target.closest('[id^="dbsearch-"]')) {
+              document.querySelectorAll('[id^="dbresults-"]').forEach(r => { r.style.display='none'; });
+            }
+          });
+          </script>
 
 <?php
 // ═══════════════════════════════════════════════════════════════════════
@@ -457,6 +665,45 @@ if ($tab === 'grundwerte') { ?>
 
 <?php
 // ═══════════════════════════════════════════════════════════════════════
+// TAB: STRAFEN (nur Liga) - Strafpunkte/Straftore je Team, wirken sich in
+// computeStandings() auf Punkte/Tordifferenz aus (siehe StandingsTrait.php)
+// ═══════════════════════════════════════════════════════════════════════
+} elseif ($tab === 'strafen' && !$isKO) {
+    $strafen = $ligaSettingsData['strafen'] ?? [];
+    ?>
+          <p style="font-size:.82rem;color:var(--muted);max-width:560px;margin-bottom:14px"><?= h(t('ls_strafen_hinweis')) ?></p>
+<?php if (empty($ligaTeams)) { ?>
+          <p class="empty-msg"><?= h(t('ls_strafen_keine_teams')) ?></p>
+<?php } else { ?>
+          <table style="border-collapse:collapse;width:100%;max-width:760px">
+            <tr>
+              <th style="text-align:left;padding:6px 10px;font-size:.8rem;color:var(--muted)"><?= h(t('ls_strafen_col_team')) ?></th>
+              <th style="text-align:center;padding:6px 10px;font-size:.8rem;color:var(--muted)"><?= h(t('ls_strafen_col_punkte')) ?></th>
+              <th style="text-align:center;padding:6px 10px;font-size:.8rem;color:var(--muted)"><?= h(t('ls_strafen_col_tore')) ?></th>
+              <th style="text-align:left;padding:6px 10px;font-size:.8rem;color:var(--muted)"><?= h(t('ls_strafen_col_grund')) ?></th>
+            </tr>
+<?php foreach ($ligaTeams as $i => $team) {
+    $teamId = (int)$team['id'];
+    $s = $strafen[$teamId] ?? ['strafpunkte' => 0, 'straftore' => 0, 'grund' => '']; ?>
+            <tr>
+              <td style="padding:5px 10px;font-size:.87rem"><?= h($team['name']) ?>
+                <input type="hidden" name="strafe_team_id[<?= $i ?>]" value="<?= $teamId ?>"></td>
+              <td style="padding:5px 10px;text-align:center">
+                <input type="number" name="strafe_punkte[<?= $i ?>]" value="<?= (int)$s['strafpunkte'] ?>" style="width:70px;text-align:center;<?= $selSt ?>">
+              </td>
+              <td style="padding:5px 10px;text-align:center">
+                <input type="number" name="strafe_tore[<?= $i ?>]" value="<?= (int)$s['straftore'] ?>" style="width:70px;text-align:center;<?= $selSt ?>">
+              </td>
+              <td style="padding:5px 10px">
+                <input type="text" name="strafe_grund[<?= $i ?>]" value="<?= h($s['grund'] ?? '') ?>" maxlength="255" style="width:100%;box-sizing:border-box;<?= $selSt ?>">
+              </td>
+            </tr>
+<?php } ?>
+          </table>
+<?php } ?>
+
+<?php
+// ═══════════════════════════════════════════════════════════════════════
 // TAB: SPIELTAGE (nur Liga)
 // ═══════════════════════════════════════════════════════════════════════
 } elseif ($tab === 'spieltage' && !$isKO) { ?>
@@ -481,9 +728,11 @@ if ($tab === 'grundwerte') { ?>
           </table>
 <?php } ?>
 
+<?php if ($tab !== 'teams') { ?>
           <div style="margin-top:18px;padding-top:14px;border-top:1px solid var(--border)">
             <button type="submit" class="btn btn-success"><?= h(t('ls_btn_save')) ?></button>
             <a href="?action=liga_detail&id=<?= $lid ?>" class="btn btn-muted" style="margin-left:8px"><?= h(t('common_cancel')) ?></a>
           </div>
         </form>
+<?php } ?>
       </div>

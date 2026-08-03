@@ -1,11 +1,13 @@
 <!--
-  Partial: standings_row.tpl.php | Fileversion: 1.0.0
+  Partial: standings_row.tpl.php | Fileversion: 1.1.0
   Eine Zeile in der Liga-Tabelle. Der Tabellenplatz (.st-platz) ist bewusst groß
   und fett gesetzt (Oswald) - das wiederkehrende Signatur-Element des Templates.
+  Changelog: 1.1.0 - Neuer Platzhalter "StrafHinweis" (⚠-Marker mit Tooltip bei Strafpunkten/
+                     Straftoren, siehe default 1.4.0 für die Begründung)
 -->
 <tr<!--RowStyle-->>
   <td class="st-platz"><!--Platz--></td>
-  <td class="st-team<!--TeamClass-->"><!--Logo--><!--Team--></td>
+  <td class="st-team<!--TeamClass-->"><!--Logo--><!--Team--><!--StrafHinweis--></td>
   <td class="st-num"><!--Sp--></td>
   <td class="st-num"><!--S--></td>
   <td class="st-num"><!--U--></td>

@@ -2,7 +2,11 @@
 /**
  * Project: LMOnext
  * Filename: data_loader.php
- * Fileversion: 1.7.3
+ * Fileversion: 1.7.5
+ * Changelog: 1.7.5 - $ligaSettingsData['teams'] liefert jetzt auch kurz/mittel (nicht nur id/name),
+ *                     benötigt für den neuen "Teams"-Tab in admin/view_liga_settings.php 1.5.0
+ * Changelog: 1.7.4 - $ligaSettingsData['strafen'] ergänzt (Strafpunkte/Straftore je Team, siehe
+ *                     admin/handler_settings.php 1.3.7, neuer Tab "Strafen")
  * Changelog: 1.7.3 - nav-Eintrag + pageTitle für "Tippspiel" ergänzt (neues Addon, siehe
  *                     addon/tipp/view_tippspiel.php - aktuell nur ein Platzhalter, die
  *                     eigentliche Verwaltungsoberfläche folgt in kommenden Sitzungen)
@@ -369,10 +373,22 @@ if ($action === 'liga_settings' && isLoggedIn()) {
             $sO = $db->prepare('SELECT option_key,option_value FROM '.tbl('liga_options').' WHERE liga_id=?');
             $sO->execute([$lid]);
             $ligaSettingsData['opts'] = array_column($sO->fetchAll(), 'option_value', 'option_key');
-            $sT = $db->prepare('SELECT g.id, g.name FROM '.tbl('teams_global').' g JOIN '.tbl('liga_teams').' lt ON lt.team_id=g.id WHERE lt.liga_id=? ORDER BY g.name');
+            $sT = $db->prepare('SELECT g.id, g.name, g.kurz, g.mittel FROM '.tbl('teams_global').' g JOIN '.tbl('liga_teams').' lt ON lt.team_id=g.id WHERE lt.liga_id=? ORDER BY g.name');
             $sT->execute([$lid]);
             $ligaSettingsData['teams'] = $sT->fetchAll();
             $ligaSettingsData['lid']  = $lid;
+
+            // Strafpunkte/Straftore je Team (siehe admin/handler_settings.php,
+            // case 'strafen') - Tabelle existiert evtl. noch nicht auf älteren
+            // Installationen, daher eigener try/catch statt den äußeren
+            // abzubrechen.
+            try {
+                $sS = $db->prepare('SELECT team_id, strafpunkte, straftore, grund FROM '.tbl('liga_strafpunkte').' WHERE liga_id=?');
+                $sS->execute([$lid]);
+                $ligaSettingsData['strafen'] = array_column($sS->fetchAll(), null, 'team_id');
+            } catch (Throwable) {
+                $ligaSettingsData['strafen'] = [];
+            }
         } catch (Throwable) {}
     }
 }

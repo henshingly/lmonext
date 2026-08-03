@@ -2,7 +2,11 @@
 /**
  * Project: LMOnext
  * Filename: handler_settings.php
- * Fileversion: 1.3.6
+ * Fileversion: 1.3.7
+ * Changelog: 1.3.7 - Neuer Tab "Strafen" (Liga-Einstellungen): Strafpunkte/Straftore je Team,
+ *                     eigene Tabelle liga_strafpunkte, wirkt sich nur in dieser Liga aus (siehe
+ *                     admin/view_liga_settings.php, computeStandings() in
+ *                     src/Liga/StandingsTrait.php 1.1.0)
  * Changelog: 1.3.6 - Speichert die neue Einstellung ShowSpielfrei (Tab Anzeigen/Darstellung)
  * Changelog: 1.3.5
  * Changelog: 1.3.5 - Bugfix: Tab "spielsystem" speicherte versehentlich goalfaktor/
@@ -142,6 +146,52 @@ if ($action === 'save_liga_settings' && $_SERVER['REQUEST_METHOD'] === 'POST') {
             case 'spieltage':
                 $save('Rounds',  trim($_POST['Rounds']  ?? '0'));
                 $save('Matches', trim($_POST['Matches'] ?? '0'));
+                break;
+
+            case 'strafen':
+                // Eigener Zweig, NICHT über den liga_options-$save()-Helper -
+                // Strafpunkte/Straftore leben pro Liga+Team in einer eigenen
+                // Tabelle (liga_strafpunkte), damit eine Strafe gezielt nur in
+                // genau der Liga wirkt, in der sie eingetragen wurde - nicht
+                // global für das Team über alle Ligen/Saisons hinweg.
+                //
+                // Bewusst eigenständige SQL statt eines Aufrufs von
+                // setLigaStrafpunkte() aus frontend/data_liga.php: der
+                // Adminbereich bindet frontend/data_liga.php nirgends ein
+                // (baut $opts z.B. selbst per Direkt-SQL, siehe
+                // admin/data_loader.php) - dieselbe Eigenständigkeit wird hier
+                // fortgeführt, siehe auch StandingsTrait::ensureStrafpunkteSchema()
+                // für die frontend-seitige Variante derselben Tabelle.
+                $db->exec('CREATE TABLE IF NOT EXISTS ' . tbl('liga_strafpunkte') . ' (
+                    `id`          INT AUTO_INCREMENT PRIMARY KEY,
+                    `liga_id`     INT NOT NULL,
+                    `team_id`     INT NOT NULL,
+                    `strafpunkte` INT NOT NULL DEFAULT 0,
+                    `straftore`   INT NOT NULL DEFAULT 0,
+                    `grund`       VARCHAR(255) NULL DEFAULT NULL,
+                    `updated_at`  TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+                    UNIQUE KEY `liga_team` (`liga_id`, `team_id`)
+                ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci');
+
+                $strafUpsert = $db->prepare(
+                    'INSERT INTO ' . tbl('liga_strafpunkte') . ' (liga_id, team_id, strafpunkte, straftore, grund)
+                     VALUES (?, ?, ?, ?, ?)
+                     ON DUPLICATE KEY UPDATE strafpunkte = VALUES(strafpunkte), straftore = VALUES(straftore), grund = VALUES(grund)'
+                );
+                $strafDelete = $db->prepare('DELETE FROM ' . tbl('liga_strafpunkte') . ' WHERE liga_id = ? AND team_id = ?');
+
+                foreach ($_POST['strafe_team_id'] ?? [] as $i => $teamId) {
+                    $teamId = (int)$teamId;
+                    if ($teamId <= 0) { continue; }
+                    $sp    = (int)($_POST['strafe_punkte'][$i] ?? 0);
+                    $st    = (int)($_POST['strafe_tore'][$i] ?? 0);
+                    $grund = trim((string)($_POST['strafe_grund'][$i] ?? ''));
+                    if ($sp === 0 && $st === 0 && $grund === '') {
+                        $strafDelete->execute([$lid, $teamId]);
+                        continue;
+                    }
+                    $strafUpsert->execute([$lid, $teamId, $sp, $st, $grund !== '' ? $grund : null]);
+                }
                 break;
         }
         flash(t('flash_settings_saved'));

@@ -2,7 +2,12 @@
 /**
  * Project: LMOnext
  * Filename: src/Liga/RenderViewsTrait.php
- * Fileversion: 1.0.0
+ * Fileversion: 1.1.0
+ * Changelog: 1.1.0 - $ligaId an alle vier computeStandings()-Aufrufe übergeben (Tabelle,
+ *                     Kreuztabelle, Fieberkurven, Ligastatistik), damit admin-seitig hinterlegte
+ *                     Strafpunkte/Straftore korrekt einfließen (siehe StandingsTrait.php 1.1.0).
+ *                     Neuer Platzhalter "StrafHinweis" in der Tabellen-Zeile (⚠-Marker mit
+ *                     Tooltip, renderStrafHinweis())
  * Changelog: 1.0.0 - Initiale Version: Teil der Umstrukturierung von frontend/data_liga.php in
  *                     fokussierte Traits (siehe frontend/data_liga.php 3.0.0 für den vollen
  *                     Kontext der Umstellung). HTML-Rendering aller Liga-Ansichten (Ergebnisse, Spielpläne, Kalender, Kreuztabelle, Fieberkurven, Info, Tabs, Spieltag-Auswahl, Spielfrei-Hinweis).
@@ -371,7 +376,7 @@ trait RenderViewsTrait
         $opts      = self::getLigaOptions($ligaId);
         $teams     = self::getLigaTeamsList($ligaId);
         $partien   = self::getAllLigaPartien($allSpieltage);
-        $rows      = self::computeStandings($teams, $partien, $opts);
+        $rows      = self::computeStandings($teams, $partien, $opts, $ligaId);
         $favTeamId = self::resolveTeamNumberToId($ligaId, (int)($opts['favTeam'] ?? 0));
         $totalTeams = count($rows);
         $showLogos  = ($opts['ShowLogos'] ?? '0') === '1';
@@ -385,6 +390,7 @@ trait RenderViewsTrait
                 'Logo'     => self::renderTeamLogoImgWrapped((int)$r['id'], $showLogos),
                 'Team'     => h($r['name']),
                 'TeamClass'=> ($favTeamId !== null && $r['id'] === $favTeamId) ? ' fav-team' : '',
+                'StrafHinweis' => self::renderStrafHinweis($r),
                 'RowStyle' => $markerColor !== '' ? ' style="border-left-color:' . h($markerColor) . '"' : '',
                 'Sp'       => (string)$r['sp'],
                 'S'        => (string)$r['s'],
@@ -479,7 +485,7 @@ trait RenderViewsTrait
         $opts      = self::getLigaOptions($ligaId);
         $teams     = self::getLigaTeamsList($ligaId);
         $partien   = self::getAllLigaPartien($allSpieltage);
-        $standing  = self::computeStandings($teams, $partien, $opts);
+        $standing  = self::computeStandings($teams, $partien, $opts, $ligaId);
         $favTeamId = self::resolveTeamNumberToId($ligaId, (int)($opts['favTeam'] ?? 0));
         $showLogos = ($opts['ShowLogos'] ?? '0') === '1';
     
@@ -611,7 +617,7 @@ trait RenderViewsTrait
             if (!$hasPlayed) {
                 continue;
             }
-            $standing    = self::computeStandings($teams, $cumulative, $opts);
+            $standing    = self::computeStandings($teams, $cumulative, $opts, $ligaId);
             $matchdays[] = $nr;
             foreach ($standing as $i => $row) {
                 $positionsByTeam[$row['id']]['name'] = $row['name'];
@@ -812,7 +818,7 @@ trait RenderViewsTrait
         $opts     = self::getLigaOptions($ligaId);
         $teams    = self::getLigaTeamsList($ligaId);
         $partien  = self::getAllLigaPartien($allSpieltage);
-        $standing = self::computeStandings($teams, $partien, $opts);
+        $standing = self::computeStandings($teams, $partien, $opts, $ligaId);
         $showLogos = ($opts['ShowLogos'] ?? '0') === '1';
     
         $pickerOptions = '<option value="0">– ' . h(tf('liga_stat_pick_team')) . ' –</option>';

@@ -2,7 +2,10 @@
 <html lang="<!--HtmlLang-->">
 <head>
 <!--
-  Template: default | Filename: layout.tpl.php | Fileversion: 1.16.0
+  Template: default | Filename: layout.tpl.php | Fileversion: 1.16.1
+  Changelog: 1.16.1 - CSS für .st-straf-hinweis ergänzt (⚠-Marker mit Tooltip bei Strafpunkten/
+                      Straftoren in der Tabelle, siehe renderStrafHinweis() in
+                      src/Liga/StandingsTrait.php)
   Changelog: 1.16.0 - CSS für die Tippspiel-Integration (.tipp-form, .btn-primary, .flash,
                       table.tipp-table) ergänzt - Tippspiel läuft jetzt als ?view=tippspiel
                       innerhalb des Templates statt als eigenständige Seite (siehe home.php,
@@ -327,6 +330,7 @@ table.standings-table td{padding:8px 10px;border-top:1px solid var(--border)}
 .st-team{font-weight:500;white-space:nowrap}
 .st-num{text-align:center;width:1%;white-space:nowrap}
 .st-pkt{text-align:center;font-weight:700;color:var(--accent);width:1%;white-space:nowrap}
+.st-straf-hinweis{cursor:help;font-size:.8rem;margin-left:3px}
 .st-num.diff-pos{color:var(--green)}
 .st-num.diff-neg{color:#dc2626}
 

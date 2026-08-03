@@ -1,6 +1,8 @@
 <!--
-  Partial: standings_row.tpl.php | Fileversion: 1.3.0
+  Partial: standings_row.tpl.php | Fileversion: 1.4.0
   Eine Zeile in der Liga-Tabelle
+  Changelog: 1.4.0 - Neuer Platzhalter "StrafHinweis" (⚠-Marker mit Tooltip bei Strafpunkten/
+                     Straftoren, siehe renderStrafHinweis() in src/Liga/StandingsTrait.php)
   Changelog: 1.3.0 - Platzhalter "Logo" von "Team" getrennt (eigenes <span> mit fester Breite),
                      damit die Teamnamen untereinander bündig ausgerichtet bleiben, auch wenn
                      die Logos unterschiedlich breit sind (siehe .st-team-logo-wrap CSS)
@@ -13,7 +15,7 @@
 -->
 <tr<!--RowStyle-->>
   <td class="st-platz"><!--Platz--></td>
-  <td class="st-team<!--TeamClass-->"><!--Logo--><!--Team--></td>
+  <td class="st-team<!--TeamClass-->"><!--Logo--><!--Team--><!--StrafHinweis--></td>
   <td class="st-num"><!--Sp--></td>
   <td class="st-num"><!--S--></td>
   <td class="st-num"><!--U--></td>
