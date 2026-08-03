@@ -2,7 +2,27 @@
 /**
  * Project: LMOnext
  * Filename: addon/tipp/view_tippspiel.php
- * Fileversion: 0.5.0
+ * Fileversion: 0.7.0
+ * Changelog: 0.7.0 - "Was zählt bei Punktgleichheit" vollständig umgesetzt: drei
+ *                     Kriterien-Dropdowns mit den acht aus Screenshots UND Original-Quellcode
+ *                     doppelt bestätigten Werten (kein Kriterium/höhere Quote/höhere Anzahl
+ *                     Spiele getippt/Anzahl richtiger Ergebnistipps/Anzahl richtiger Tendenz-
+ *                     u. Tordiff.tipps/Anzahl richtiger Tendenztipps/durch Joker
+ *                     dazugewonnene Punkte/Gewonnene Spieltagswertungen)
+ * Changelog: 0.6.1
+ * Changelog: 0.6.1 - Bugfix: Zwei Dropdown-Wertelisten in "Regeltechnisches" waren nur
+ *                     Annahmen ("Tippabgabeschluss ohne Anstoßtermin", "max. Spieltage im
+ *                     Voraus") - anhand des vom Nutzer bereitgestellten Original-Quellcodes
+ *                     (lmo-admintippoptions.php) auf die tatsächlich korrekten Werte
+ *                     korrigiert: "Standard-Anstoßzeit"/"Erstes Spieltagsdatum 0 Uhr" (statt
+ *                     der erfundenen Option "kein Abgabeschluss"), sowie 0/1/2/3/4/5/unbegrenzt
+ *                     (statt 1/2/3/5/10/unbegrenzt). Annahme-Warnhinweise entfernt, da jetzt
+ *                     bestätigt korrekt
+ * Changelog: 0.6.0
+ * Changelog: 0.6.0 - "Anmeldung" vollständig umgesetzt: Adresse/Realname optional abfragbar,
+ *                     drei Freischaltungsarten (sofort/E-Mail/Admin), Admin-Benachrichtigung +
+ *                     Bestätigungsmail an Tipper - alles exakt nach den Vorgesprächen
+ * Changelog: 0.5.0
  * Changelog: 0.5.0 - Neuer sechster Optionen-Bereich "Tippabgabe": Ligenweise/Datumsweise
  *                     Tippabgabe (beide gemäß Original-Hilfedokumentation möglich, mind. eine
  *                     muss aktiv bleiben - client- UND serverseitig geprüft), plus die
@@ -231,10 +251,9 @@ if ($tippTab === 'auswertung') { ?>
         <td <?= $tdR ?>><?= h(t('tipp_label_abgabeschluss_ohne_termin')) ?></td>
         <td <?= $tdL ?>>
           <select name="abgabeschluss_ohne_termin" style="<?= $selSt ?>;width:auto">
-            <option value="standard_erstes_datum"<?= $ts('abgabeschluss_ohne_termin', 'standard_erstes_datum') === 'standard_erstes_datum' ? ' selected' : '' ?>><?= h(t('tipp_abgabeschluss_standard')) ?></option>
-            <option value="kein_abgabeschluss"<?= $ts('abgabeschluss_ohne_termin') === 'kein_abgabeschluss' ? ' selected' : '' ?>><?= h(t('tipp_abgabeschluss_kein')) ?></option>
+            <option value="standard_anstosszeit"<?= $ts('abgabeschluss_ohne_termin', 'standard_anstosszeit') === 'standard_anstosszeit' ? ' selected' : '' ?>><?= h(t('tipp_abgabeschluss_standard')) ?></option>
+            <option value="erstes_datum_mitternacht"<?= $ts('abgabeschluss_ohne_termin') === 'erstes_datum_mitternacht' ? ' selected' : '' ?>><?= h(t('tipp_abgabeschluss_mitternacht')) ?></option>
           </select>
-          <div style="font-size:.72rem;color:var(--muted);margin-top:3px">⚠️ <?= h(t('tipp_annahme_hinweis')) ?></div>
         </td>
       </tr>
       <tr>
@@ -253,12 +272,12 @@ if ($tippTab === 'auswertung') { ?>
         <td <?= $tdR ?>><?= h(t('tipp_label_max_spieltage_voraus')) ?></td>
         <td <?= $tdL ?>>
           <select name="max_spieltage_voraus" style="<?= $selSt ?>">
-<?php foreach ([1, 2, 3, 5, 10] as $stVal) { ?>
+<?php foreach ([0, 1, 2, 3, 4, 5] as $stVal) { ?>
             <option value="<?= $stVal ?>"<?= $ts('max_spieltage_voraus') === (string)$stVal ? ' selected' : '' ?>><?= $stVal ?></option>
 <?php } ?>
             <option value="unbegrenzt"<?= $ts('max_spieltage_voraus', 'unbegrenzt') === 'unbegrenzt' ? ' selected' : '' ?>><?= h(t('tipp_unbegrenzt')) ?></option>
           </select>
-          <div style="font-size:.72rem;color:var(--muted);margin-top:3px">⚠️ <?= h(t('tipp_annahme_hinweis')) ?></div>
+
         </td>
       </tr>
       <tr><td colspan="2" style="padding:10px 0"><hr style="border:none;border-top:1px solid var(--border)"></td></tr>
@@ -328,9 +347,72 @@ if ($tippTab === 'auswertung') { ?>
     }
   </script>
 <?php } elseif ($tippSubtab === 'anmeldung') { ?>
-  <p style="color:var(--muted);font-size:.9rem"><?= h(t('tipp_placeholder_text_anmeldung')) ?></p>
+  <form method="post" action="?action=save_tipp_anmeldung">
+    <table style="width:100%;border-collapse:collapse">
+      <tr>
+        <td <?= $tdR ?>><?= h(t('tipp_label_adresse_abfragen')) ?></td>
+        <td <?= $tdL ?>><input type="checkbox" name="anmeldung_adresse_abfragen" value="1"<?= $tsc('anmeldung_adresse_abfragen') ? ' checked' : '' ?>></td>
+      </tr>
+      <tr>
+        <td <?= $tdR ?>><?= h(t('tipp_label_realname_abfragen')) ?></td>
+        <td <?= $tdL ?>><input type="checkbox" name="anmeldung_realname_abfragen" value="1"<?= $tsc('anmeldung_realname_abfragen') ? ' checked' : '' ?>></td>
+      </tr>
+      <tr><td colspan="2" style="padding:10px 0"><hr style="border:none;border-top:1px solid var(--border)"></td></tr>
+      <tr>
+        <td <?= $tdR ?>><?= h(t('tipp_label_freischaltung')) ?></td>
+        <td <?= $tdL ?>>
+          <select name="anmeldung_freischaltung" style="<?= $selSt ?>;width:auto">
+            <option value="sofort"<?= $ts('anmeldung_freischaltung', 'sofort') === 'sofort' ? ' selected' : '' ?>><?= h(t('tipp_freischaltung_sofort')) ?></option>
+            <option value="email"<?= $ts('anmeldung_freischaltung') === 'email' ? ' selected' : '' ?>><?= h(t('tipp_freischaltung_email')) ?></option>
+            <option value="admin"<?= $ts('anmeldung_freischaltung') === 'admin' ? ' selected' : '' ?>><?= h(t('tipp_freischaltung_admin')) ?></option>
+          </select>
+        </td>
+      </tr>
+      <tr><td colspan="2" style="padding:10px 0"><hr style="border:none;border-top:1px solid var(--border)"></td></tr>
+      <tr>
+        <td <?= $tdR ?>><?= h(t('tipp_label_admin_benachrichtigen')) ?></td>
+        <td <?= $tdL ?>><input type="checkbox" name="anmeldung_admin_benachrichtigen" value="1"<?= $tsc('anmeldung_admin_benachrichtigen', '1') ? ' checked' : '' ?>></td>
+      </tr>
+      <tr>
+        <td <?= $tdR ?>><?= h(t('tipp_label_bestaetigungsmail')) ?></td>
+        <td <?= $tdL ?>><input type="checkbox" name="anmeldung_bestaetigungsmail" value="1"<?= $tsc('anmeldung_bestaetigungsmail', '1') ? ' checked' : '' ?>></td>
+      </tr>
+      <tr><td></td><td style="padding:14px 10px 0"><button type="submit" class="btn btn-primary"><?= h(t('common_save')) ?></button></td></tr>
+    </table>
+  </form>
 <?php } elseif ($tippSubtab === 'punktgleichheit') { ?>
-  <p style="color:var(--muted);font-size:.9rem"><?= h(t('tipp_placeholder_text_punktgleichheit')) ?></p>
+<?php
+  $tippKriterien = [
+      'kein_kriterium'          => t('tipp_kriterium_kein'),
+      'hoehere_quote'           => t('tipp_kriterium_quote'),
+      'anzahl_spiele_getippt'   => t('tipp_kriterium_anzahl_getippt'),
+      'anzahl_richtige_ergebnisse' => t('tipp_kriterium_richtige_ergebnisse'),
+      'anzahl_richtige_tendenz_tordiff' => t('tipp_kriterium_richtige_tendenz_tordiff'),
+      'anzahl_richtige_tendenz' => t('tipp_kriterium_richtige_tendenz'),
+      'joker_punkte'            => t('tipp_kriterium_joker_punkte'),
+      'spieltagswertungen'      => t('tipp_kriterium_spieltagswertungen'),
+  ];
+  ?>
+  <form method="post" action="?action=save_tipp_punktgleichheit">
+    <table style="width:100%;border-collapse:collapse">
+<?php foreach ([1, 2, 3] as $krNr) {
+    $krKey = 'kriterium_' . $krNr;
+    $krDefault = $krNr === 1 ? 'hoehere_quote' : ($krNr === 2 ? 'anzahl_spiele_getippt' : 'anzahl_richtige_ergebnisse'); ?>
+      <tr>
+        <td <?= $tdR ?>><?= h(t('tipp_label_kriterium')) ?> <?= $krNr ?></td>
+        <td <?= $tdL ?>>
+          <select name="<?= $krKey ?>" style="<?= $selSt ?>;width:auto">
+<?php foreach ($tippKriterien as $krVal => $krLabel) { ?>
+            <option value="<?= $krVal ?>"<?= $ts($krKey, $krDefault) === $krVal ? ' selected' : '' ?>><?= h($krLabel) ?></option>
+<?php } ?>
+          </select>
+        </td>
+      </tr>
+<?php } ?>
+      <tr><td></td><td style="padding:14px 10px 0"><button type="submit" class="btn btn-primary"><?= h(t('common_save')) ?></button></td></tr>
+    </table>
+  </form>
+
 <?php } elseif ($tippSubtab === 'tippbare_ligen') { ?>
   <p style="color:var(--muted);font-size:.9rem"><?= h(t('tipp_placeholder_text_tippbare_ligen')) ?></p>
 

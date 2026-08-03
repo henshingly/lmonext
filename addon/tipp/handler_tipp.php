@@ -2,7 +2,14 @@
 /**
  * Project: LMOnext
  * Filename: addon/tipp/handler_tipp.php
- * Fileversion: 0.3.0
+ * Fileversion: 0.5.0
+ * Changelog: 0.5.0 - Neue Speicher-Aktion save_tipp_punktgleichheit für die drei Kriterien
+ * Changelog: 0.4.1
+ * Changelog: 0.4.1 - Bugfix: Validierungs-Wertelisten für abgabeschluss_ohne_termin und
+ *                     max_spieltage_voraus korrigiert (siehe view_tippspiel.php 0.6.1)
+ * Changelog: 0.4.0
+ * Changelog: 0.4.0 - Neue Speicher-Aktion save_tipp_anmeldung für den Tab "Anmeldung"
+ * Changelog: 0.3.0
  * Changelog: 0.3.0 - Neue Speicher-Aktion save_tipp_abgabe für den Tab "Tippabgabe", inkl.
  *                     serverseitiger Prüfung, dass mindestens eine Abgabe-Variante aktiv bleibt
  * Changelog: 0.2.0
@@ -62,11 +69,11 @@ if ($action === 'save_tipp_regeln' && $_SERVER['REQUEST_METHOD'] === 'POST') {
 
     setTippSettings([
         'abgabe_minuten'            => $intField('abgabe_minuten', 15),
-        'abgabeschluss_ohne_termin' => in_array($_POST['abgabeschluss_ohne_termin'] ?? '', ['standard_erstes_datum', 'kein_abgabeschluss'], true)
-                                        ? $_POST['abgabeschluss_ohne_termin'] : 'standard_erstes_datum',
+        'abgabeschluss_ohne_termin' => in_array($_POST['abgabeschluss_ohne_termin'] ?? '', ['standard_anstosszeit', 'erstes_datum_mitternacht'], true)
+                                        ? $_POST['abgabeschluss_ohne_termin'] : 'standard_anstosszeit',
         'max_team_groesse'          => in_array($_POST['max_team_groesse'] ?? '', ['0', '2', '3', '5', '10', '20', '30', '50', '100', 'unbegrenzt'], true)
                                         ? $_POST['max_team_groesse'] : '0',
-        'max_spieltage_voraus'      => in_array($_POST['max_spieltage_voraus'] ?? '', ['1', '2', '3', '5', '10', 'unbegrenzt'], true)
+        'max_spieltage_voraus'      => in_array($_POST['max_spieltage_voraus'] ?? '', ['0', '1', '2', '3', '4', '5', 'unbegrenzt'], true)
                                         ? $_POST['max_spieltage_voraus'] : 'unbegrenzt',
         'joker_zulassen'            => isset($_POST['joker_zulassen']) ? '1' : '0',
         'joker_multiplikator'       => in_array($_POST['joker_multiplikator'] ?? '', ['1.5', '2', '2.5', '3'], true)
@@ -104,4 +111,40 @@ if ($action === 'save_tipp_abgabe' && $_SERVER['REQUEST_METHOD'] === 'POST') {
 
     flash(t('tipp_flash_settings_saved'));
     redirect('?action=tippspiel&tab=optionen&subtab=tippabgabe');
+}
+
+if ($action === 'save_tipp_anmeldung' && $_SERVER['REQUEST_METHOD'] === 'POST') {
+    requireLogin();
+
+    setTippSettings([
+        'anmeldung_adresse_abfragen'      => isset($_POST['anmeldung_adresse_abfragen']) ? '1' : '0',
+        'anmeldung_realname_abfragen'     => isset($_POST['anmeldung_realname_abfragen']) ? '1' : '0',
+        'anmeldung_freischaltung'         => in_array($_POST['anmeldung_freischaltung'] ?? '', ['sofort', 'email', 'admin'], true)
+                                              ? $_POST['anmeldung_freischaltung'] : 'sofort',
+        'anmeldung_admin_benachrichtigen' => isset($_POST['anmeldung_admin_benachrichtigen']) ? '1' : '0',
+        'anmeldung_bestaetigungsmail'     => isset($_POST['anmeldung_bestaetigungsmail']) ? '1' : '0',
+    ]);
+
+    flash(t('tipp_flash_settings_saved'));
+    redirect('?action=tippspiel&tab=optionen&subtab=anmeldung');
+}
+
+if ($action === 'save_tipp_punktgleichheit' && $_SERVER['REQUEST_METHOD'] === 'POST') {
+    requireLogin();
+
+    $validKriterien = [
+        'kein_kriterium', 'hoehere_quote', 'anzahl_spiele_getippt',
+        'anzahl_richtige_ergebnisse', 'anzahl_richtige_tendenz_tordiff',
+        'anzahl_richtige_tendenz', 'joker_punkte', 'spieltagswertungen',
+    ];
+    $defaults = ['kriterium_1' => 'hoehere_quote', 'kriterium_2' => 'anzahl_spiele_getippt', 'kriterium_3' => 'anzahl_richtige_ergebnisse'];
+
+    $toSave = [];
+    foreach ($defaults as $krKey => $krDefault) {
+        $toSave[$krKey] = in_array($_POST[$krKey] ?? '', $validKriterien, true) ? $_POST[$krKey] : $krDefault;
+    }
+    setTippSettings($toSave);
+
+    flash(t('tipp_flash_settings_saved'));
+    redirect('?action=tippspiel&tab=optionen&subtab=punktgleichheit');
 }

@@ -2,7 +2,14 @@
 /**
  * Project: LMOnext
  * Filename: lang/admin/de.php
- * Fileversion: 1.15.0
+ * Fileversion: 1.15.3
+ * Changelog: 1.15.3 - Übersetzungen für "Was zählt bei Punktgleichheit" ergänzt
+ * Changelog: 1.15.2
+ * Changelog: 1.15.2 - Bugfix: Übersetzung für "Erstes Spieltagsdatum, 0 Uhr" ergänzt (ersetzt
+ *                     die erfundene "kein Abgabeschluss"-Option), Annahme-Hinweistext entfernt
+ * Changelog: 1.15.1
+ * Changelog: 1.15.1 - Übersetzungen für "Anmeldung" ergänzt
+ * Changelog: 1.15.0
  * Changelog: 1.15.0 - Übersetzungen für den neuen Optionen-Bereich "Tippabgabe" ergänzt
  * Changelog: 1.14.9
  * Changelog: 1.14.9 - Übersetzungen für "Regeltechnisches" ergänzt (inkl. Hinweis auf zwei
@@ -160,6 +167,23 @@ return [
     'tipp_label_auto_tippeinsicht' => 'Tippeinsicht bei jeder Tippabgabe automatisch aktualisieren',
     'tipp_alert_mind_eine_variante' => 'Bitte mindestens eine der beiden Tippabgabe-Varianten aktiviert lassen – sonst ist gar keine Tippabgabe mehr möglich.',
     'tipp_flash_mind_eine_variante' => 'Mindestens eine Tippabgabe-Variante (ligenweise oder datumsweise) muss aktiviert bleiben.',
+    'tipp_label_adresse_abfragen'      => 'Adressangabe bei der Anmeldung',
+    'tipp_label_realname_abfragen'     => 'Angabe des Realnamens bei der Anmeldung',
+    'tipp_label_freischaltung'         => 'Freischaltung',
+    'tipp_freischaltung_sofort'        => 'sofortige Freischaltung bei Anmeldung',
+    'tipp_freischaltung_email'         => 'Freischaltung durch E-Mail-Bestätigung',
+    'tipp_freischaltung_admin'         => 'Freischaltung durch den Administrator',
+    'tipp_label_admin_benachrichtigen' => 'Mail an Admin bei Anmeldung',
+    'tipp_label_bestaetigungsmail'     => 'Anmeldungsdaten per E-Mail an den Tipper versenden',
+    'tipp_label_kriterium'          => 'Kriterium',
+    'tipp_kriterium_kein'           => 'kein Kriterium',
+    'tipp_kriterium_quote'          => 'höhere Quote',
+    'tipp_kriterium_anzahl_getippt' => 'höhere Anzahl Spiele getippt',
+    'tipp_kriterium_richtige_ergebnisse' => 'Anzahl richtiger Ergebnistipps',
+    'tipp_kriterium_richtige_tendenz_tordiff' => 'Anzahl richtiger Tendenz- u. Tordiff.tipps',
+    'tipp_kriterium_richtige_tendenz' => 'Anzahl richtiger Tendenztipps',
+    'tipp_kriterium_joker_punkte'   => 'durch Joker dazugewonnene Punkte',
+    'tipp_kriterium_spieltagswertungen' => 'Gewonnene Spieltagswertungen',
     'tipp_placeholder_text_regeltechnisches' => 'Hier entstehen: Tippabgabefrist, Team-Höchstgröße, Joker an/aus + Multiplikator, max. Spieltage im Voraus.',
     'tipp_placeholder_text_anmeldung'        => 'Hier entstehen: Adresse/Realname optional, Freischaltungsart, Mail-Benachrichtigungen.',
     'tipp_placeholder_text_punktgleichheit'  => 'Hier entstehen die drei Rangfolge-Kriterien bei Punktgleichheit.',
@@ -189,8 +213,7 @@ return [
     'tipp_minuten_suffix'               => 'Minuten vor dem Anpfiff',
     'tipp_label_abgabeschluss_ohne_termin' => 'Tippabgabeschluss wenn kein Anstoßtermin eingegeben',
     'tipp_abgabeschluss_standard'       => 'Standard-Anstoßzeit am ersten Spieltagsdatum',
-    'tipp_abgabeschluss_kein'           => 'kein Abgabeschluss (jederzeit tippbar)',
-    'tipp_annahme_hinweis'              => 'Annahme – bitte prüfen und ggf. korrigieren, die genaue Werteliste hierzu wurde noch nicht besprochen.',
+    'tipp_abgabeschluss_mitternacht'    => 'Erstes Spieltagsdatum, 0 Uhr',
     'tipp_label_max_team_groesse'       => 'maximale Anzahl Tipper je Team',
     'tipp_keine_teambildung'            => 'keine Teambildung ermöglichen',
     'tipp_unbegrenzt'                   => 'unbegrenzt',

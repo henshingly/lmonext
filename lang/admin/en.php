@@ -2,7 +2,14 @@
 /**
  * Project: LMOnext
  * Filename: lang/admin/en.php
- * Fileversion: 1.14.0
+ * Fileversion: 1.14.3
+ * Changelog: 1.14.3 - Added translations for "Tie-Breaking"
+ * Changelog: 1.14.2
+ * Changelog: 1.14.2 - Bugfix: added translation for "First matchday date, midnight" (replaces
+ *                     the made-up "no deadline" option), removed the assumption hint text
+ * Changelog: 1.14.1
+ * Changelog: 1.14.1 - Added translations for "Registration"
+ * Changelog: 1.14.0
  * Changelog: 1.14.0 - Added translations for the new "Tip Submission" options section
  * Changelog: 1.13.9
  * Changelog: 1.13.9 - Added translations for "Rules & Technical"
@@ -152,6 +159,23 @@ return [
     'tipp_label_auto_tippeinsicht' => 'Automatically refresh the tip overview on every submission',
     'tipp_alert_mind_eine_variante' => 'Please leave at least one of the two tip submission variants enabled – otherwise no tip submission is possible at all.',
     'tipp_flash_mind_eine_variante' => 'At least one tip submission variant (by league or by date) must stay enabled.',
+    'tipp_label_adresse_abfragen'      => 'Ask for address during registration',
+    'tipp_label_realname_abfragen'     => 'Ask for real name during registration',
+    'tipp_label_freischaltung'         => 'Activation',
+    'tipp_freischaltung_sofort'        => 'immediate activation on registration',
+    'tipp_freischaltung_email'         => 'activation via email confirmation',
+    'tipp_freischaltung_admin'         => 'activation by the administrator',
+    'tipp_label_admin_benachrichtigen' => 'Notify admin on registration',
+    'tipp_label_bestaetigungsmail'     => 'Send registration data to the tipster by email',
+    'tipp_label_kriterium'          => 'Criterion',
+    'tipp_kriterium_kein'           => 'no criterion',
+    'tipp_kriterium_quote'          => 'higher hit rate',
+    'tipp_kriterium_anzahl_getippt' => 'higher number of games tipped',
+    'tipp_kriterium_richtige_ergebnisse' => 'number of correct exact-score tips',
+    'tipp_kriterium_richtige_tendenz_tordiff' => 'number of correct tendency + goal-diff tips',
+    'tipp_kriterium_richtige_tendenz' => 'number of correct tendency tips',
+    'tipp_kriterium_joker_punkte'   => 'points gained through joker',
+    'tipp_kriterium_spieltagswertungen' => 'matchdays won',
     'tipp_placeholder_text_regeltechnisches' => 'Coming here: tip submission deadline, max team size, joker on/off + multiplier, max matchdays in advance.',
     'tipp_placeholder_text_anmeldung'        => 'Coming here: optional address/real name, activation method, email notifications.',
     'tipp_placeholder_text_punktgleichheit'  => 'Coming here: the three tie-breaking criteria and their order.',
@@ -181,8 +205,7 @@ return [
     'tipp_minuten_suffix'               => 'minutes before kickoff',
     'tipp_label_abgabeschluss_ohne_termin' => 'Deadline when no kickoff time was entered',
     'tipp_abgabeschluss_standard'       => 'Default kickoff time on the first matchday date',
-    'tipp_abgabeschluss_kein'           => 'no deadline (tippable at any time)',
-    'tipp_annahme_hinweis'              => 'Assumption – please check and correct if needed, the exact value list for this was not yet discussed.',
+    'tipp_abgabeschluss_mitternacht'    => 'First matchday date, midnight',
     'tipp_label_max_team_groesse'       => 'Maximum number of tipsters per team',
     'tipp_keine_teambildung'            => 'do not allow team formation',
     'tipp_unbegrenzt'                   => 'unlimited',
