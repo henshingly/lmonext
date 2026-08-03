@@ -2,7 +2,15 @@
 /**
  * Project: LMOnext
  * Filename: frontend/pdf_export.php
- * Fileversion: 1.6.9
+ * Fileversion: 1.7.0
+ * Changelog: 1.7.0 - Strafpunkte-Begründungen erscheinen jetzt auch im PDF-Export
+ *                     der Tabelle, im selben Wikipedia-Stil wie in der Besucheransicht -
+ *                     Teamname bekommt "(N)" angehängt, unter der Tabelle erscheint eine
+ *                     Fußnotenliste "(N) Begründungstext" (mit Zeilenumbruch für lange Texte,
+ *                     neue Hilfsfunktion pdfWrapText()). Neuer optionaler Parameter $footnotes
+ *                     in buildStandingsPdf() (rückwärtskompatibel, Standard null = keine
+ *                     Verhaltensänderung für andere PDF-Exporte, die diesen Parameter nicht
+ *                     nutzen)
  * Changelog: 1.6.9 - Bugfix: der "(heute TEAM_HEUTE)"-Zusatz wurde bisher an JEDE einzelne
  *                     Ergebniszeile angehängt, wodurch die Ergebnis-Spalten im Teamvergleich-PDF
  *                     unnötig breit wurden (siehe Nutzer-Feedback mit Beispiel-PDF). Steht jetzt
@@ -319,6 +327,36 @@ function pdfEstimateTextWidth(string $s, float $size, bool $bold) : float
         $units += $table[$ch] ?? $defaultWidth;
     }
     return $units / 1000 * $size;
+}
+
+/**
+ * Bricht einen bereits konvertierten (pdfConvertEncoding()) Text in mehrere
+ * Zeilen um, die jeweils in $maxWidth passen - einfacher Greedy-Umbruch auf
+ * Wortgrenzen (Leerzeichen), analog zu pdfTruncate(), nur über mehrere
+ * Zeilen statt mit "…" abzuschneiden. Wird für die Strafpunkte-Fußnoten
+ * unter der Tabelle gebraucht (siehe buildStandingsPdf() $footnotes) - die
+ * Begründungstexte können beliebig lang sein.
+ *
+ * @return array<int,string>
+ */
+function pdfWrapText(string $text, float $maxWidth, float $size, bool $bold = false) : array
+{
+    $words = preg_split('/\s+/', trim($text)) ?: [];
+    $lines = [];
+    $current = '';
+    foreach ($words as $word) {
+        $candidate = $current === '' ? $word : $current . ' ' . $word;
+        if (pdfEstimateTextWidth($candidate, $size, $bold) <= $maxWidth || $current === '') {
+            $current = $candidate;
+        } else {
+            $lines[] = $current;
+            $current = $word;
+        }
+    }
+    if ($current !== '') {
+        $lines[] = $current;
+    }
+    return $lines !== [] ? $lines : [''];
 }
 
 /**
@@ -1003,7 +1041,7 @@ function buildResultsPdf(string $ligaName, array $sections, string $footerText =
  * @param int|null $accentColIndex Spalte (0-basiert), die fett/in Akzentfarbe
  *        hervorgehoben wird (z.B. die Pkt-Spalte der Tabelle) – null = keine
  */
-function buildStandingsPdf(string $ligaName, string $subtitleLabel, array $columnHeaders, array $columnAligns, array $rows, string $footerText = '', ?int $accentColIndex = null, array $rowBorderColors = [], array $teamLogos = [], array $logoCols = [], array $rowTeamIds = [], ?array $vsTitleTeams = null, ?string $noteLine = null) : string
+function buildStandingsPdf(string $ligaName, string $subtitleLabel, array $columnHeaders, array $columnAligns, array $rows, string $footerText = '', ?int $accentColIndex = null, array $rowBorderColors = [], array $teamLogos = [], array $logoCols = [], array $rowTeamIds = [], ?array $vsTitleTeams = null, ?string $noteLine = null, ?array $footnotes = null) : string
 {
     $pageWidth    = 595.28;
     $pageHeight   = 841.89;
@@ -1316,6 +1354,29 @@ function buildStandingsPdf(string $ligaName, string $subtitleLabel, array $colum
         $rowIndex++;
     }
 
+    // Strafpunkte-Fußnoten unter der Tabelle, im Wikipedia-Stil ("(1) Text"),
+    // siehe assignStrafFootnotes()/renderStrafFootnotes() für die HTML-
+    // Entsprechung. Eigener Block statt $noteLine (das ist einzeilig,
+    // zentriert, VOR der Tabelle) - hier links ausgerichtet, mehrzeilig,
+    // NACH der Tabelle, mit Zeilenumbruch für lange Begründungstexte.
+    if ($footnotes !== null && $footnotes !== []) {
+        $footnoteSize = 8;
+        $footnoteGap  = 12;
+        $y -= $footnoteGap;
+        foreach ($footnotes as $footnoteText) {
+            $preppedNote = $prep($footnoteText);
+            $wrapped = pdfWrapText($preppedNote, $tableWidth, $footnoteSize);
+            foreach ($wrapped as $lineText) {
+                if ($y < $marginBottom + $lineHeight) {
+                    $startNewPage();
+                }
+                $setColor($mutedR, $mutedG, $mutedB);
+                $addText($lineText, $tableStartX, $y, 'F1', $footnoteSize);
+                $y -= 12;
+            }
+        }
+    }
+
     $pagesContent[] = $content;
 
     if ($footerText !== '') {
@@ -1560,11 +1621,16 @@ function exportTabellePdf(string $ligaName, int $ligaId, array $allSpieltage, bo
     $rowBorderColors = [];
     $rowTeamIds = [];
     $totalTeams = count($rows);
+    $footnoteNrs = \LMOnext\Liga\LigaService::assignStrafFootnotes($rows);
     foreach ($rows as $i => $r) {
         $diff = $r['tore_h'] - $r['tore_g'];
+        $teamName = $r['name'];
+        if (isset($footnoteNrs[(int)$r['id']])) {
+            $teamName .= ' (' . $footnoteNrs[(int)$r['id']] . ')';
+        }
         $tableRows[] = [
             (string)($i + 1),
-            $r['name'],
+            $teamName,
             (string)$r['sp'],
             (string)$r['s'],
             (string)$r['u'],
@@ -1577,6 +1643,16 @@ function exportTabellePdf(string $ligaName, int $ligaId, array $allSpieltage, bo
         $rowTeamIds[$i] = [1 => (int)$r['id']]; // Spalte 1 = "Team"
     }
 
+    $footnoteLines = [];
+    foreach ($footnoteNrs as $teamId => $nr) {
+        foreach ($rows as $r) {
+            if ((int)$r['id'] === $teamId) {
+                $footnoteLines[] = '(' . $nr . ') ' . trim((string)($r['strafgrund'] ?? ''));
+                break;
+            }
+        }
+    }
+
     $teamLogos = $showLogos ? pdfLoadTeamLogos(array_column($rows, 'id')) : [];
     $logoCols  = $showLogos ? [1 => 'before'] : []; // Logo vor dem Namen, wie in der HTML-Tabelle
 
@@ -1585,7 +1661,7 @@ function exportTabellePdf(string $ligaName, int $ligaId, array $allSpieltage, bo
         'version' => getAppVersion(),
     ]);
 
-    $pdfBytes = buildStandingsPdf($ligaName, tf('liga_tab_tabelle'), $headers, $aligns, $tableRows, $footerText, count($headers) - 1, $rowBorderColors, $teamLogos, $logoCols, $rowTeamIds);
+    $pdfBytes = buildStandingsPdf($ligaName, tf('liga_tab_tabelle'), $headers, $aligns, $tableRows, $footerText, count($headers) - 1, $rowBorderColors, $teamLogos, $logoCols, $rowTeamIds, null, null, $footnoteLines);
 
     $filenameBase = preg_replace('/[^A-Za-z0-9_-]+/', '_', $ligaName . '_Tabelle');
     $filenameBase = trim((string)$filenameBase, '_');
