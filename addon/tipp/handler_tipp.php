@@ -2,7 +2,9 @@
 /**
  * Project: LMOnext
  * Filename: addon/tipp/handler_tipp.php
- * Fileversion: 0.5.0
+ * Fileversion: 0.6.0
+ * Changelog: 0.6.0 - Neue Speicher-Aktion save_tipp_ligen für "Tippbare Ligen"
+ * Changelog: 0.5.0
  * Changelog: 0.5.0 - Neue Speicher-Aktion save_tipp_punktgleichheit für die drei Kriterien
  * Changelog: 0.4.1
  * Changelog: 0.4.1 - Bugfix: Validierungs-Wertelisten für abgabeschluss_ohne_termin und
@@ -147,4 +149,22 @@ if ($action === 'save_tipp_punktgleichheit' && $_SERVER['REQUEST_METHOD'] === 'P
 
     flash(t('tipp_flash_settings_saved'));
     redirect('?action=tippspiel&tab=optionen&subtab=punktgleichheit');
+}
+
+if ($action === 'save_tipp_ligen' && $_SERVER['REQUEST_METHOD'] === 'POST') {
+    requireLogin();
+
+    $immerAlle = isset($_POST['tippbare_immer_alle']) ? '1' : '0';
+    setTippSetting('tippbare_immer_alle', $immerAlle);
+
+    if ($immerAlle !== '1') {
+        $ligaIds = array_map('intval', $_POST['tippbare_ligen'] ?? []);
+        setTippLigaFreigabe($ligaIds);
+    }
+    // Bei "immer alle" wird tipp_liga_freigabe bewusst NICHT geleert -
+    // falls der Admin später wieder auf gezielte Auswahl umschaltet, bleibt
+    // die zuletzt getroffene Auswahl als Ausgangspunkt erhalten.
+
+    flash(t('tipp_flash_settings_saved'));
+    redirect('?action=tippspiel&tab=optionen&subtab=tippbare_ligen');
 }

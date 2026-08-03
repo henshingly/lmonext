@@ -2,7 +2,9 @@
 /**
  * Project: LMOnext
  * Filename: lang/admin/de.php
- * Fileversion: 1.15.3
+ * Fileversion: 1.15.4
+ * Changelog: 1.15.4 - Übersetzungen für "Tippbare Ligen" ergänzt
+ * Changelog: 1.15.3
  * Changelog: 1.15.3 - Übersetzungen für "Was zählt bei Punktgleichheit" ergänzt
  * Changelog: 1.15.2
  * Changelog: 1.15.2 - Bugfix: Übersetzung für "Erstes Spieltagsdatum, 0 Uhr" ergänzt (ersetzt
@@ -184,6 +186,9 @@ return [
     'tipp_kriterium_richtige_tendenz' => 'Anzahl richtiger Tendenztipps',
     'tipp_kriterium_joker_punkte'   => 'durch Joker dazugewonnene Punkte',
     'tipp_kriterium_spieltagswertungen' => 'Gewonnene Spieltagswertungen',
+    'tipp_label_immer_alle' => 'immer alle sich im Ligenverzeichnis befindlichen',
+    'tipp_ligen_hinweis'    => 'Wenn du nicht "immer alle" gewählt hast, wähle bitte nachfolgend aus. Nur die gewählten Ligen gehen dann auch in die Gesamtauswertung mit ein.',
+    'tipp_ligen_keine'      => 'Aktuell befinden sich keine Ligen im obersten Ordner der Ligenübersicht.',
     'tipp_placeholder_text_regeltechnisches' => 'Hier entstehen: Tippabgabefrist, Team-Höchstgröße, Joker an/aus + Multiplikator, max. Spieltage im Voraus.',
     'tipp_placeholder_text_anmeldung'        => 'Hier entstehen: Adresse/Realname optional, Freischaltungsart, Mail-Benachrichtigungen.',
     'tipp_placeholder_text_punktgleichheit'  => 'Hier entstehen die drei Rangfolge-Kriterien bei Punktgleichheit.',

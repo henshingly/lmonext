@@ -2,7 +2,12 @@
 /**
  * Project: LMOnext
  * Filename: addon/tipp/view_tippspiel.php
- * Fileversion: 0.7.0
+ * Fileversion: 0.8.0
+ * Changelog: 0.8.0 - Letzter der sechs Optionen-Bereiche fertig: "Tippbare Ligen" mit "immer
+ *                     alle"-Checkbox (deaktiviert bei Aktivierung die Einzelauswahl, genau wie
+ *                     im Original) und gezielter Einzelauswahl aus dem obersten Ordner der
+ *                     Ligenübersicht (keine archivierten Ligen)
+ * Changelog: 0.7.0
  * Changelog: 0.7.0 - "Was zählt bei Punktgleichheit" vollständig umgesetzt: drei
  *                     Kriterien-Dropdowns mit den acht aus Screenshots UND Original-Quellcode
  *                     doppelt bestätigten Werten (kein Kriterium/höhere Quote/höhere Anzahl
@@ -413,9 +418,43 @@ if ($tippTab === 'auswertung') { ?>
     </table>
   </form>
 
-<?php } elseif ($tippSubtab === 'tippbare_ligen') { ?>
-  <p style="color:var(--muted);font-size:.9rem"><?= h(t('tipp_placeholder_text_tippbare_ligen')) ?></p>
-
+<?php } elseif ($tippSubtab === 'tippbare_ligen') {
+    $tippImmerAlle = $tsc('tippbare_immer_alle', '1');
+    $tippFreigegebenIds = getTippLigaFreigabeIds();
+    $tippKandidaten = getTippbareLigenKandidaten();
+    ?>
+  <form method="post" action="?action=save_tipp_ligen" id="tipp-ligen-form">
+    <div style="margin-bottom:12px">
+      <label style="font-weight:600;font-size:.87rem">
+        <input type="checkbox" name="tippbare_immer_alle" id="tipp-cb-immer-alle" value="1"<?= $tippImmerAlle ? ' checked' : '' ?> onchange="tippToggleLigenAuswahl()">
+        <?= h(t('tipp_label_immer_alle')) ?>
+      </label>
+    </div>
+    <div style="font-size:.82rem;color:var(--muted);margin-bottom:10px"><?= h(t('tipp_ligen_hinweis')) ?></div>
+<?php if (empty($tippKandidaten)) { ?>
+    <p style="color:var(--muted);font-size:.87rem"><?= h(t('tipp_ligen_keine')) ?></p>
+<?php } else { ?>
+    <div id="tipp-ligen-liste">
+<?php foreach ($tippKandidaten as $tippLiga) {
+    $tippChecked = $tippImmerAlle || in_array((int)$tippLiga['id'], $tippFreigegebenIds, true); ?>
+      <label style="display:block;padding:4px 0;font-size:.87rem">
+        <input type="checkbox" name="tippbare_ligen[]" value="<?= (int)$tippLiga['id'] ?>"<?= $tippChecked ? ' checked' : '' ?><?= $tippImmerAlle ? ' disabled' : '' ?> class="tipp-liga-cb">
+        <?= h($tippLiga['name']) ?>
+      </label>
+<?php } ?>
+    </div>
+<?php } ?>
+    <div style="padding-top:14px"><button type="submit" class="btn btn-primary"><?= h(t('common_save')) ?></button></div>
+  </form>
+  <script>
+    function tippToggleLigenAuswahl() {
+      var immerAlle = document.getElementById('tipp-cb-immer-alle').checked;
+      document.querySelectorAll('.tipp-liga-cb').forEach(function (cb) {
+        cb.disabled = immerAlle;
+        if (immerAlle) { cb.checked = true; }
+      });
+    }
+  </script>
 <?php }
 } ?>
 </div>

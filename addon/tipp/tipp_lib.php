@@ -2,7 +2,11 @@
 /**
  * Project: LMOnext
  * Filename: addon/tipp/tipp_lib.php
- * Fileversion: 0.1.0
+ * Fileversion: 0.2.0
+ * Changelog: 0.2.0 - Neue Funktionen für "Tippbare Ligen": getTippbareLigenKandidaten() (Ligen
+ *                     aus dem obersten Ordner, nicht archiviert - eigene, einfache Abfrage statt
+ *                     frontend/data_home.php einzubinden), getTippLigaFreigabeIds()/
+ *                     setTippLigaFreigabe() für tipp_liga_freigabe
  * Changelog: 0.1.0 - Initiale Version: Datenbankschema für alle sechs in den Vorgesprächen
  *                     festgelegten Tabellen (tipp_user, tipp_team, tipp_liga_freigabe,
  *                     tipp_abo, tipp_tipp, tipp_settings), plus Zugriffsfunktionen für die
@@ -104,6 +108,65 @@ function ensureTippSchema() : void
         ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci');
 
     } catch (Throwable) {}
+}
+
+/**
+ * Liefert alle Ligen aus dem obersten Ordner der Ligenübersicht (nicht
+ * archiviert) - genau die Kandidaten, aus denen der Admin bei "Tippbare
+ * Ligen" auswählen kann, falls "immer alle" nicht aktiv ist. Bewusst eine
+ * eigene, einfache Abfrage statt frontend/data_home.php einzubinden, um die
+ * bestehende Trennung zwischen Admin- und Frontend-Bootstrap nicht
+ * aufzuweichen.
+ */
+function getTippbareLigenKandidaten() : array
+{
+    try {
+        return getDB()->query(
+            'SELECT id, name FROM ' . tbl('liga') . ' WHERE archiv_folder_id IS NULL ORDER BY datum DESC'
+        )->fetchAll();
+    } catch (Throwable) {
+        return [];
+    }
+}
+
+/**
+ * Liefert die Liga-IDs, die aktuell konkret für das Tippspiel freigegeben
+ * sind (nur relevant, wenn "immer alle" NICHT aktiv ist).
+ *
+ * @return array<int,int>
+ */
+function getTippLigaFreigabeIds() : array
+{
+    ensureTippSchema();
+    try {
+        return array_map('intval', getDB()->query(
+            'SELECT liga_id FROM ' . tbl('tipp_liga_freigabe')
+        )->fetchAll(PDO::FETCH_COLUMN));
+    } catch (Throwable) {
+        return [];
+    }
+}
+
+/**
+ * Setzt die Liga-Freigaben komplett neu (löscht alle bisherigen und trägt
+ * die übergebenen IDs neu ein).
+ *
+ * @param array<int,int> $ligaIds
+ */
+function setTippLigaFreigabe(array $ligaIds) : bool
+{
+    ensureTippSchema();
+    try {
+        $db = getDB();
+        $db->exec('DELETE FROM ' . tbl('tipp_liga_freigabe'));
+        $stmt = $db->prepare('INSERT INTO ' . tbl('tipp_liga_freigabe') . ' (liga_id) VALUES (?)');
+        foreach ($ligaIds as $id) {
+            $stmt->execute([(int)$id]);
+        }
+        return true;
+    } catch (Throwable) {
+        return false;
+    }
 }
 
 /**

@@ -2,7 +2,9 @@
 /**
  * Project: LMOnext
  * Filename: lang/admin/en.php
- * Fileversion: 1.14.3
+ * Fileversion: 1.14.4
+ * Changelog: 1.14.4 - Added translations for "Tippable Leagues"
+ * Changelog: 1.14.3
  * Changelog: 1.14.3 - Added translations for "Tie-Breaking"
  * Changelog: 1.14.2
  * Changelog: 1.14.2 - Bugfix: added translation for "First matchday date, midnight" (replaces
@@ -176,6 +178,9 @@ return [
     'tipp_kriterium_richtige_tendenz' => 'number of correct tendency tips',
     'tipp_kriterium_joker_punkte'   => 'points gained through joker',
     'tipp_kriterium_spieltagswertungen' => 'matchdays won',
+    'tipp_label_immer_alle' => 'always all leagues in the league directory',
+    'tipp_ligen_hinweis'    => 'If you have not chosen "always all", please select below. Only the selected leagues will then be included in the overall standings.',
+    'tipp_ligen_keine'      => 'There are currently no leagues in the top-level folder of the league overview.',
     'tipp_placeholder_text_regeltechnisches' => 'Coming here: tip submission deadline, max team size, joker on/off + multiplier, max matchdays in advance.',
     'tipp_placeholder_text_anmeldung'        => 'Coming here: optional address/real name, activation method, email notifications.',
     'tipp_placeholder_text_punktgleichheit'  => 'Coming here: the three tie-breaking criteria and their order.',
