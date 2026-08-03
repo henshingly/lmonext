@@ -2,7 +2,9 @@
 /**
  * Project: LMOnext
  * Filename: lang/admin/en.php
- * Fileversion: 1.13.8
+ * Fileversion: 1.13.9
+ * Changelog: 1.13.9 - Added translations for "Rules & Technical"
+ * Changelog: 1.13.8
  * Changelog: 1.13.8 - Added translations for the prediction game point distribution and the
  *                     four other options sub-sections
  * Changelog: 1.13.7
@@ -163,6 +165,20 @@ return [
     'tipp_label_pkt_tendenz_treffer' => 'Correct tendency tipped',
     'tipp_punkte_suffix'            => 'points',
     'tipp_flash_settings_saved'     => 'Settings saved.',
+    'tipp_label_abgabe_minuten'         => 'Tips due until',
+    'tipp_minuten_suffix'               => 'minutes before kickoff',
+    'tipp_label_abgabeschluss_ohne_termin' => 'Deadline when no kickoff time was entered',
+    'tipp_abgabeschluss_standard'       => 'Default kickoff time on the first matchday date',
+    'tipp_abgabeschluss_kein'           => 'no deadline (tippable at any time)',
+    'tipp_annahme_hinweis'              => 'Assumption – please check and correct if needed, the exact value list for this was not yet discussed.',
+    'tipp_label_max_team_groesse'       => 'Maximum number of tipsters per team',
+    'tipp_keine_teambildung'            => 'do not allow team formation',
+    'tipp_unbegrenzt'                   => 'unlimited',
+    'tipp_label_max_spieltage_voraus'   => 'Max. matchdays to tip in advance',
+    'tipp_label_joker_zulassen'         => 'Allow joker tip? (1 joker per matchday)',
+    'tipp_label_joker_multiplikator'    => 'Multiplier for the joker tip',
+    'tipp_label_warnung_stunden'        => 'Show a warning for open tips when less than',
+    'tipp_stunden_suffix'               => 'hours remain until the deadline',
     'nav_users'       => 'Administrators',
     'nav_wartung'     => 'Maintenance',
     'nav_settings'    => 'Settings',

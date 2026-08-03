@@ -2,7 +2,8 @@
 /**
  * Project: LMOnext
  * Filename: addon/tipp/handler_tipp.php
- * Fileversion: 0.1.0
+ * Fileversion: 0.2.0
+ * Changelog: 0.2.0 - Neue Speicher-Aktion save_tipp_regeln für den Tab "Regeltechnisches"
  * Changelog: 0.1.0 - Initiale Version: bindet tipp_lib.php ein, erste Speicher-Aktion für den
  *                     Tab "Punkteverteilung" (save_tipp_punkte)
  *
@@ -46,4 +47,30 @@ if ($action === 'save_tipp_punkte' && $_SERVER['REQUEST_METHOD'] === 'POST') {
 
     flash(t('tipp_flash_settings_saved'));
     redirect('?action=tippspiel&tab=optionen&subtab=punkteverteilung');
+}
+
+if ($action === 'save_tipp_regeln' && $_SERVER['REQUEST_METHOD'] === 'POST') {
+    requireLogin();
+
+    $intField = static function (string $name, int $default = 0) : string {
+        $val = (int)($_POST[$name] ?? $default);
+        return (string)$val;
+    };
+
+    setTippSettings([
+        'abgabe_minuten'            => $intField('abgabe_minuten', 15),
+        'abgabeschluss_ohne_termin' => in_array($_POST['abgabeschluss_ohne_termin'] ?? '', ['standard_erstes_datum', 'kein_abgabeschluss'], true)
+                                        ? $_POST['abgabeschluss_ohne_termin'] : 'standard_erstes_datum',
+        'max_team_groesse'          => in_array($_POST['max_team_groesse'] ?? '', ['0', '2', '3', '5', '10', '20', '30', '50', '100', 'unbegrenzt'], true)
+                                        ? $_POST['max_team_groesse'] : '0',
+        'max_spieltage_voraus'      => in_array($_POST['max_spieltage_voraus'] ?? '', ['1', '2', '3', '5', '10', 'unbegrenzt'], true)
+                                        ? $_POST['max_spieltage_voraus'] : 'unbegrenzt',
+        'joker_zulassen'            => isset($_POST['joker_zulassen']) ? '1' : '0',
+        'joker_multiplikator'       => in_array($_POST['joker_multiplikator'] ?? '', ['1.5', '2', '2.5', '3'], true)
+                                        ? $_POST['joker_multiplikator'] : '2',
+        'warnung_stunden'           => $intField('warnung_stunden', 4),
+    ]);
+
+    flash(t('tipp_flash_settings_saved'));
+    redirect('?action=tippspiel&tab=optionen&subtab=regeltechnisches');
 }

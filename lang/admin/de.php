@@ -2,7 +2,10 @@
 /**
  * Project: LMOnext
  * Filename: lang/admin/de.php
- * Fileversion: 1.14.8
+ * Fileversion: 1.14.9
+ * Changelog: 1.14.9 - Übersetzungen für "Regeltechnisches" ergänzt (inkl. Hinweis auf zwei
+ *                     angenommene Dropdown-Wertelisten)
+ * Changelog: 1.14.8
  * Changelog: 1.14.8 - Übersetzungen für die Tippspiel-Punkteverteilung und die vier weiteren
  *                     Optionen-Unterbereiche ergänzt
  * Changelog: 1.14.7
@@ -170,6 +173,20 @@ return [
     'tipp_label_pkt_tendenz_treffer' => 'richtige Tendenz getippt',
     'tipp_punkte_suffix'            => 'Punkte',
     'tipp_flash_settings_saved'     => 'Einstellungen gespeichert.',
+    'tipp_label_abgabe_minuten'         => 'Tippabgabe bis',
+    'tipp_minuten_suffix'               => 'Minuten vor dem Anpfiff',
+    'tipp_label_abgabeschluss_ohne_termin' => 'Tippabgabeschluss wenn kein Anstoßtermin eingegeben',
+    'tipp_abgabeschluss_standard'       => 'Standard-Anstoßzeit am ersten Spieltagsdatum',
+    'tipp_abgabeschluss_kein'           => 'kein Abgabeschluss (jederzeit tippbar)',
+    'tipp_annahme_hinweis'              => 'Annahme – bitte prüfen und ggf. korrigieren, die genaue Werteliste hierzu wurde noch nicht besprochen.',
+    'tipp_label_max_team_groesse'       => 'maximale Anzahl Tipper je Team',
+    'tipp_keine_teambildung'            => 'keine Teambildung ermöglichen',
+    'tipp_unbegrenzt'                   => 'unbegrenzt',
+    'tipp_label_max_spieltage_voraus'   => 'max. Anzahl Spieltage im Voraus tippen',
+    'tipp_label_joker_zulassen'         => 'Joker-Tipp zulassen? (Pro Spieltag 1 Joker)',
+    'tipp_label_joker_multiplikator'    => 'Multiplikator für den Joker-Tipp',
+    'tipp_label_warnung_stunden'        => 'Warnung anzeigen, wenn noch offene Tipps und weniger als',
+    'tipp_stunden_suffix'               => 'Stunden bis zum Abgabeschluss übrig sind',
     'nav_users'       => 'Administrator',
     'nav_wartung'     => 'Wartung',
     'nav_settings'    => 'Einstellungen',

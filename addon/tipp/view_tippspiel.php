@@ -2,7 +2,14 @@
 /**
  * Project: LMOnext
  * Filename: addon/tipp/view_tippspiel.php
- * Fileversion: 0.3.0
+ * Fileversion: 0.4.0
+ * Changelog: 0.4.0 - "Regeltechnisches" vollständig umgesetzt: Tippabgabefrist, Team-
+ *                     Höchstgröße, Joker an/aus + Multiplikator, max. Spieltage im Voraus, plus
+ *                     die neue Warnung-Einstellung (Stunden vor Fristende) aus den
+ *                     Vorgesprächen. Zwei Dropdown-Wertelisten (Abgabeschluss ohne Termin, max.
+ *                     Spieltage im Voraus) waren nie im Detail besprochen worden - mit
+ *                     sinnvollen Annahmen befüllt und im UI selbst als Annahme gekennzeichnet
+ * Changelog: 0.3.0
  * Changelog: 0.3.0 - Tab "Optionen" bekommt eine Unter-Navigation für die fünf besprochenen
  *                     Bereiche (Punkteverteilung/Regeltechnisches/Anmeldung/Was zählt bei
  *                     Punktgleichheit/Tippbare Ligen). "Punkteverteilung" ist jetzt vollständig
@@ -206,13 +213,76 @@ if ($tippTab === 'auswertung') { ?>
     tippUpdateModusFields();
   </script>
 <?php } elseif ($tippSubtab === 'regeltechnisches') { ?>
-  <p style="color:var(--muted);font-size:.9rem"><?= h(t('tipp_placeholder_text_regeltechnisches')) ?></p>
+  <form method="post" action="?action=save_tipp_regeln">
+    <table style="width:100%;border-collapse:collapse">
+      <tr>
+        <td <?= $tdR ?>><?= h(t('tipp_label_abgabe_minuten')) ?></td>
+        <td <?= $tdL ?>><input type="number" name="abgabe_minuten" value="<?= (int)$ts('abgabe_minuten', '15') ?>" style="<?= $inpSt ?>"> <?= h(t('tipp_minuten_suffix')) ?></td>
+      </tr>
+      <tr>
+        <td <?= $tdR ?>><?= h(t('tipp_label_abgabeschluss_ohne_termin')) ?></td>
+        <td <?= $tdL ?>>
+          <select name="abgabeschluss_ohne_termin" style="<?= $selSt ?>;width:auto">
+            <option value="standard_erstes_datum"<?= $ts('abgabeschluss_ohne_termin', 'standard_erstes_datum') === 'standard_erstes_datum' ? ' selected' : '' ?>><?= h(t('tipp_abgabeschluss_standard')) ?></option>
+            <option value="kein_abgabeschluss"<?= $ts('abgabeschluss_ohne_termin') === 'kein_abgabeschluss' ? ' selected' : '' ?>><?= h(t('tipp_abgabeschluss_kein')) ?></option>
+          </select>
+          <div style="font-size:.72rem;color:var(--muted);margin-top:3px">⚠️ <?= h(t('tipp_annahme_hinweis')) ?></div>
+        </td>
+      </tr>
+      <tr>
+        <td <?= $tdR ?>><?= h(t('tipp_label_max_team_groesse')) ?></td>
+        <td <?= $tdL ?>>
+          <select name="max_team_groesse" style="<?= $selSt ?>">
+            <option value="0"<?= $ts('max_team_groesse', '0') === '0' ? ' selected' : '' ?>><?= h(t('tipp_keine_teambildung')) ?></option>
+<?php foreach ([2, 3, 5, 10, 20, 30, 50, 100] as $tgSize) { ?>
+            <option value="<?= $tgSize ?>"<?= $ts('max_team_groesse') === (string)$tgSize ? ' selected' : '' ?>><?= $tgSize ?></option>
+<?php } ?>
+            <option value="unbegrenzt"<?= $ts('max_team_groesse') === 'unbegrenzt' ? ' selected' : '' ?>><?= h(t('tipp_unbegrenzt')) ?></option>
+          </select>
+        </td>
+      </tr>
+      <tr>
+        <td <?= $tdR ?>><?= h(t('tipp_label_max_spieltage_voraus')) ?></td>
+        <td <?= $tdL ?>>
+          <select name="max_spieltage_voraus" style="<?= $selSt ?>">
+<?php foreach ([1, 2, 3, 5, 10] as $stVal) { ?>
+            <option value="<?= $stVal ?>"<?= $ts('max_spieltage_voraus') === (string)$stVal ? ' selected' : '' ?>><?= $stVal ?></option>
+<?php } ?>
+            <option value="unbegrenzt"<?= $ts('max_spieltage_voraus', 'unbegrenzt') === 'unbegrenzt' ? ' selected' : '' ?>><?= h(t('tipp_unbegrenzt')) ?></option>
+          </select>
+          <div style="font-size:.72rem;color:var(--muted);margin-top:3px">⚠️ <?= h(t('tipp_annahme_hinweis')) ?></div>
+        </td>
+      </tr>
+      <tr><td colspan="2" style="padding:10px 0"><hr style="border:none;border-top:1px solid var(--border)"></td></tr>
+      <tr>
+        <td <?= $tdR ?>><?= h(t('tipp_label_joker_zulassen')) ?></td>
+        <td <?= $tdL ?>><input type="checkbox" name="joker_zulassen" value="1"<?= $tsc('joker_zulassen', '1') ? ' checked' : '' ?>></td>
+      </tr>
+      <tr>
+        <td <?= $tdR ?>><?= h(t('tipp_label_joker_multiplikator')) ?></td>
+        <td <?= $tdL ?>>
+          <select name="joker_multiplikator" style="<?= $selSt ?>">
+<?php foreach (['1.5', '2', '2.5', '3'] as $jm) { ?>
+            <option value="<?= $jm ?>"<?= $ts('joker_multiplikator', '2') === $jm ? ' selected' : '' ?>><?= $jm ?></option>
+<?php } ?>
+          </select>
+        </td>
+      </tr>
+      <tr><td colspan="2" style="padding:10px 0"><hr style="border:none;border-top:1px solid var(--border)"></td></tr>
+      <tr>
+        <td <?= $tdR ?>><?= h(t('tipp_label_warnung_stunden')) ?></td>
+        <td <?= $tdL ?>><input type="number" name="warnung_stunden" value="<?= (int)$ts('warnung_stunden', '4') ?>" style="<?= $inpSt ?>"> <?= h(t('tipp_stunden_suffix')) ?></td>
+      </tr>
+      <tr><td></td><td style="padding:14px 10px 0"><button type="submit" class="btn btn-primary"><?= h(t('common_save')) ?></button></td></tr>
+    </table>
+  </form>
 <?php } elseif ($tippSubtab === 'anmeldung') { ?>
   <p style="color:var(--muted);font-size:.9rem"><?= h(t('tipp_placeholder_text_anmeldung')) ?></p>
 <?php } elseif ($tippSubtab === 'punktgleichheit') { ?>
   <p style="color:var(--muted);font-size:.9rem"><?= h(t('tipp_placeholder_text_punktgleichheit')) ?></p>
 <?php } elseif ($tippSubtab === 'tippbare_ligen') { ?>
   <p style="color:var(--muted);font-size:.9rem"><?= h(t('tipp_placeholder_text_tippbare_ligen')) ?></p>
+
 <?php }
 } ?>
 </div>
