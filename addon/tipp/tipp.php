@@ -2,7 +2,18 @@
 /**
  * Project: LMOnext
  * Filename: addon/tipp/tipp.php
- * Fileversion: 0.3.0
+ * Fileversion: 0.3.1
+ * Changelog: 0.3.1 - Toten Code entfernt: die Aktionen "logout" und "save" waren fälschlich
+ *                     ZWEIMAL vorhanden - einmal korrekt in Phase 1 (vor jeder HTML-Ausgabe,
+ *                     mit funktionierendem redirectTo()) und ein zweites Mal als unerreichbare
+ *                     Kopie in Phase 2 (HTML-Bereich), ein Überbleibsel aus einer früheren
+ *                     Zwischenversion. Die Phase-1-Version gewinnt in der Praxis immer (redirectTo()
+ *                     beendet das Skript), die Phase-2-Kopie wurde nie ausgeführt - aber verwirrend
+ *                     für die Wartung und ein Risiko, falls jemand versehentlich die Phase-2-Kopie
+ *                     bearbeitet und sich wundert, warum die Änderung nichts bewirkt. Behebt damit
+ *                     indirekt auch den gemeldeten "headers already sent"-Fehler: der lag an einer
+ *                     ZWISCHENZEITLICHEN Version (vor der Phase-1/Phase-2-Trennung), die
+ *                     ausgeliefert worden war, bevor die Trennung eingeführt wurde
  * Changelog: 0.3.0 - Neue Aktion "rangliste": zeigt die globale Rangliste (tippGetRangliste())
  *                     als Tabelle mit geteilten Plätzen bei Punktgleichheit, eigene Zeile fett
  *                     hervorgehoben. Verlinkung von/zu Tippabgabe und Tippeinsicht ergänzt
@@ -31,6 +42,72 @@ require_once __DIR__ . '/frontend_tipp.php';
 $action = $_GET['action'] ?? 'abgabe';
 $flashMsg = null;
 $flashType = 'success';
+
+// ═══════════════════════════════════════════════════════════════════════
+// PHASE 1: Aktions-/Redirect-Verarbeitung - läuft komplett VOR jeder
+// HTML-Ausgabe (analog zu admin.php: "POST-Handler laufen vor HTML-
+// Ausgabe"). redirectTo() ruft header() auf - das schlägt fehl, sobald
+// auch nur ein Byte Ausgabe (z.B. das <!DOCTYPE html> weiter unten) schon
+// raus ist. Jede Aktion, die umleiten kann (login-POST, logout, save,
+// sowie tippRequireLogin() für alle eingeloggt-erforderlichen Ansichten),
+// gehört deshalb hierher, nicht in die spätere HTML-Ausgabe.
+// ═══════════════════════════════════════════════════════════════════════
+
+if ($action === 'login' && $_SERVER['REQUEST_METHOD'] === 'POST') {
+    $loginResult = tippLogin($_POST['nickname'] ?? '', $_POST['password'] ?? '');
+    if ($loginResult['ok']) {
+        redirectTo('?action=abgabe');
+    }
+    $flashMsg = tf($loginResult['error']);
+    $flashType = 'error';
+}
+
+if ($action === 'logout') {
+    tippLogout();
+    redirectTo('?action=login');
+}
+
+if ($action === 'save') {
+    tippRequireLogin();
+    $tipper = tippCurrentUser();
+    $ligaId = (int)($_POST['liga_id'] ?? 0);
+    $spieltagNr = (int)($_POST['spieltag'] ?? 1);
+    $liga = getLigaById($ligaId);
+    if ($liga !== null && $tipper !== null) {
+        $spieltage = getAllSpieltage($ligaId);
+        $spieltag = getSpieltagByNummer($spieltage, $spieltagNr);
+        if ($spieltag !== null) {
+            $partien = getSpieltagPartien((int)$spieltag['id']);
+            foreach ($partien as &$p) { $p['spieltag_start'] = $spieltag['start'] ?? null; }
+            unset($p);
+            $eingaben = [];
+            foreach ($partien as $p) {
+                $pid = (int)$p['id'];
+                $eingaben[$pid] = [
+                    'heim'  => $_POST['heim_' . $pid] ?? null,
+                    'gast'  => $_POST['gast_' . $pid] ?? null,
+                    'joker' => isset($_POST['joker_' . $pid]),
+                ];
+            }
+            tippSaveAbgabe((int)$tipper['id'], $partien, $eingaben);
+        }
+    }
+    redirectTo('?action=abgabe&liga=' . $ligaId . '&spieltag=' . $spieltagNr);
+}
+
+// Alle übrigen Ansichten außer login/register/confirm setzen einen
+// eingeloggten Tipper voraus - der Redirect zu ?action=login (falls nicht
+// eingeloggt) muss ebenfalls hier passieren, VOR der HTML-Ausgabe. Ist der
+// Tipper eingeloggt, wird hier nur $tipper einmalig ermittelt, für die
+// spätere Ausgabe in Phase 2 wiederverwendet.
+if (!in_array($action, ['login', 'register', 'confirm'], true)) {
+    tippRequireLogin();
+    $tipper = tippCurrentUser();
+}
+
+// ═══════════════════════════════════════════════════════════════════════
+// PHASE 2: HTML-Ausgabe - ab hier darf/kann nicht mehr redirected werden
+// ═══════════════════════════════════════════════════════════════════════
 
 ?><!DOCTYPE html>
 <html lang="<?= h(getCurrentLanguage('frontend')) ?>">
@@ -68,14 +145,6 @@ $flashType = 'success';
 // LOGIN
 // ═══════════════════════════════════════════════════════════════════════
 if ($action === 'login') {
-    if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-        $result = tippLogin($_POST['nickname'] ?? '', $_POST['password'] ?? '');
-        if ($result['ok']) {
-            redirectTo('?action=abgabe');
-        }
-        $flashMsg = tf($result['error']);
-        $flashType = 'error';
-    }
     ?>
   <h1><?= h(tf('tf_tipp_login_titel')) ?></h1>
 <?php if ($flashMsg) { ?>
@@ -160,43 +229,6 @@ if ($action === 'login') {
   <div class="flash <?= $ok ? 'success' : 'error' ?>"><?= h(tf($ok ? 'tf_tipp_bestaetigung_erfolg' : 'tf_tipp_bestaetigung_fehler')) ?></div>
   <p><a href="?action=login"><?= h(tf('tf_tipp_zum_login')) ?></a></p>
 <?php
-
-// ═══════════════════════════════════════════════════════════════════════
-// LOGOUT
-// ═══════════════════════════════════════════════════════════════════════
-} elseif ($action === 'logout') {
-    tippLogout();
-    redirectTo('?action=login');
-
-// ═══════════════════════════════════════════════════════════════════════
-// TIPPABGABE (Ligenweise, Standardansicht)
-// ═══════════════════════════════════════════════════════════════════════
-} elseif ($action === 'save') {
-    tippRequireLogin();
-    $tipper = tippCurrentUser();
-    $ligaId = (int)($_POST['liga_id'] ?? 0);
-    $spieltagNr = (int)($_POST['spieltag'] ?? 1);
-    $liga = getLigaById($ligaId);
-    if ($liga !== null && $tipper !== null) {
-        $spieltage = getAllSpieltage($ligaId);
-        $spieltag = getSpieltagByNummer($spieltage, $spieltagNr);
-        if ($spieltag !== null) {
-            $partien = getSpieltagPartien((int)$spieltag['id']);
-            foreach ($partien as &$p) { $p['spieltag_start'] = $spieltag['start'] ?? null; }
-            unset($p);
-            $eingaben = [];
-            foreach ($partien as $p) {
-                $pid = (int)$p['id'];
-                $eingaben[$pid] = [
-                    'heim'  => $_POST['heim_' . $pid] ?? null,
-                    'gast'  => $_POST['gast_' . $pid] ?? null,
-                    'joker' => isset($_POST['joker_' . $pid]),
-                ];
-            }
-            tippSaveAbgabe((int)$tipper['id'], $partien, $eingaben);
-        }
-    }
-    redirectTo('?action=abgabe&liga=' . $ligaId . '&spieltag=' . $spieltagNr);
 
 // ═══════════════════════════════════════════════════════════════════════
 // TIPPEINSICHT
