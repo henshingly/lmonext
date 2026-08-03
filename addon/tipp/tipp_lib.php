@@ -2,7 +2,13 @@
 /**
  * Project: LMOnext
  * Filename: addon/tipp/tipp_lib.php
- * Fileversion: 0.5.1
+ * Fileversion: 0.6.0
+ * Changelog: 0.6.0 - Self-Service-Kontobearbeitung für Tipper: tippUpdateOwnAccount() (Nickname
+ *                     und "freigeschaltet" bleiben admin-exklusiv unveränderbar),
+ *                     tippRequestPasswordReset()/tippResetPassword() ("Passwort vergessen",
+ *                     Reset-Code 1h gültig, Einmal-Nutzung). Neue DB-Spalten reset_code/
+ *                     reset_code_expires per Migration (SHOW COLUMNS/ALTER TABLE, analog zu
+ *                     admin/bootstrap.php) ergänzt
  * Changelog: 0.5.1 - Nav-Link/Startseiten-Karte zeigen jetzt auf home.php?view=tippspiel statt
  *                     auf die entfernte eigenständige addon/tipp/tipp.php - Tippspiel läuft
  *                     jetzt als View innerhalb des Templates, analog zur Spielerstatistik
@@ -90,6 +96,18 @@ function ensureTippSchema() : void
             UNIQUE KEY `nickname` (`nickname`),
             KEY `team_id` (`team_id`)
         ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci');
+
+        // Migration: Spalten für "Passwort vergessen" (Reset-Code mit Ablauf,
+        // getrennt vom freischalt_code der Email-Bestätigung - beide Codes
+        // können gleichzeitig aktiv sein, z.B. wenn ein noch nicht
+        // bestätigter Tipper zusätzlich sein Passwort vergessen hat)
+        $cols = $db->query('SHOW COLUMNS FROM ' . tbl('tipp_user'))->fetchAll(PDO::FETCH_COLUMN);
+        if (!in_array('reset_code', $cols, true)) {
+            $db->exec('ALTER TABLE ' . tbl('tipp_user') . ' ADD COLUMN `reset_code` VARCHAR(64) NULL DEFAULT NULL');
+        }
+        if (!in_array('reset_code_expires', $cols, true)) {
+            $db->exec('ALTER TABLE ' . tbl('tipp_user') . ' ADD COLUMN `reset_code_expires` DATETIME NULL DEFAULT NULL');
+        }
 
         // Frei gegründete Teams (Team-Wertung)
         $db->exec('CREATE TABLE IF NOT EXISTS '.tbl('tipp_team').' (
@@ -404,6 +422,110 @@ function deleteTipper(string $nickname) : bool
         $db->prepare('DELETE FROM ' . tbl('tipp_tipp') . ' WHERE tipper_id = ?')->execute([$id]);
         $db->prepare('DELETE FROM ' . tbl('tipp_abo') . ' WHERE tipper_id = ?')->execute([$id]);
         $db->prepare('DELETE FROM ' . tbl('tipp_user') . ' WHERE id = ?')->execute([$id]);
+        return true;
+    } catch (Throwable) {
+        return false;
+    }
+}
+
+/**
+ * Self-Service-Kontobearbeitung für den Tipper selbst (im Unterschied zu
+ * saveTipper(), das der Admin nutzt): identifiziert den Tipper über seine ID
+ * statt über den Nickname, damit dieser NIEMALS mitgeändert wird - weder
+ * hier noch in der Admin-Ansicht ist der Nickname editierbar (siehe
+ * Anforderung: Nickname ist nach der Registrierung fest). Ändert außerdem
+ * bewusst NICHT den "freigeschaltet"-Status - das bleibt Admin-exklusiv.
+ */
+function tippUpdateOwnAccount(int $tipperId, array $data, ?string $newPassword) : bool
+{
+    ensureTippSchema();
+    try {
+        $db = getDB();
+        if ($newPassword !== null && $newPassword !== '') {
+            $stmt = $db->prepare(
+                'UPDATE ' . tbl('tipp_user') . ' SET
+                    password_hash=?, email=?, vorname=?, nachname=?, strasse=?, plz=?, ort=?,
+                    team_id=?, newsletter=?, reminder=?
+                 WHERE id=?'
+            );
+            return $stmt->execute([
+                password_hash($newPassword, PASSWORD_DEFAULT), $data['email'], $data['vorname'], $data['nachname'],
+                $data['strasse'], $data['plz'], $data['ort'], $data['team_id'],
+                $data['newsletter'], $data['reminder'], $tipperId,
+            ]);
+        }
+        $stmt = $db->prepare(
+            'UPDATE ' . tbl('tipp_user') . ' SET
+                email=?, vorname=?, nachname=?, strasse=?, plz=?, ort=?,
+                team_id=?, newsletter=?, reminder=?
+             WHERE id=?'
+        );
+        return $stmt->execute([
+            $data['email'], $data['vorname'], $data['nachname'], $data['strasse'], $data['plz'], $data['ort'],
+            $data['team_id'], $data['newsletter'], $data['reminder'], $tipperId,
+        ]);
+    } catch (Throwable) {
+        return false;
+    }
+}
+
+/**
+ * "Passwort vergessen": erzeugt einen Reset-Code (1 Stunde gültig) und
+ * verschickt einen Link. Liefert IMMER true nach außen (siehe
+ * tippRequestPasswordResetSafe() unten) - ob die Email tatsächlich
+ * existiert, wird dem Aufrufer bewusst nicht verraten (verhindert, dass
+ * sich die Registrierungs-Emailadresse eines Dritten erraten/prüfen lässt).
+ * Diese Funktion hier liefert intern den tatsächlichen Erfolg für Tests/Logs.
+ */
+function tippRequestPasswordReset(string $email) : bool
+{
+    ensureTippSchema();
+    try {
+        $db = getDB();
+        $stmt = $db->prepare('SELECT id, nickname, vorname, nachname FROM ' . tbl('tipp_user') . ' WHERE email = ?');
+        $stmt->execute([trim($email)]);
+        $tipper = $stmt->fetch();
+        if ($tipper === false) {
+            return false;
+        }
+        $code = bin2hex(random_bytes(24));
+        $expires = date('Y-m-d H:i:s', time() + 3600);
+        $db->prepare('UPDATE ' . tbl('tipp_user') . ' SET reset_code=?, reset_code_expires=? WHERE id=?')
+           ->execute([$code, $expires, $tipper['id']]);
+
+        $link = tippSiteBaseUrl() . '/home.php?view=tippspiel&action=passwort_reset&code=' . $code;
+        $betreff = tf('tf_tipp_mail_reset_betreff');
+        $text = replaceTippPlaceholders(tf('tf_tipp_mail_reset_text'), $tipper) . "\n\n" . $link;
+        sendTippMail($email, $betreff, $text);
+        return true;
+    } catch (Throwable) {
+        return false;
+    }
+}
+
+/**
+ * Setzt anhand eines gültigen (nicht abgelaufenen) Reset-Codes ein neues
+ * Passwort und invalidiert den Code danach sofort (Einmal-Nutzung).
+ */
+function tippResetPassword(string $code, string $newPassword) : bool
+{
+    if ($code === '' || strlen($newPassword) < 6) {
+        return false;
+    }
+    ensureTippSchema();
+    try {
+        $db = getDB();
+        $stmt = $db->prepare(
+            'SELECT id FROM ' . tbl('tipp_user') . '
+              WHERE reset_code = ? AND reset_code_expires IS NOT NULL AND reset_code_expires > NOW()'
+        );
+        $stmt->execute([$code]);
+        $id = $stmt->fetchColumn();
+        if ($id === false) {
+            return false;
+        }
+        $db->prepare('UPDATE ' . tbl('tipp_user') . ' SET password_hash=?, reset_code=NULL, reset_code_expires=NULL WHERE id=?')
+           ->execute([password_hash($newPassword, PASSWORD_DEFAULT), $id]);
         return true;
     } catch (Throwable) {
         return false;

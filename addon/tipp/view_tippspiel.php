@@ -2,7 +2,14 @@
 /**
  * Project: LMOnext
  * Filename: addon/tipp/view_tippspiel.php
- * Fileversion: 1.0.0
+ * Fileversion: 1.0.1
+ * Changelog: 1.0.1 - Bugfix: Die Checkboxen "freigeschaltet"/"Newsletter"/"Tipp-Reminder" im
+ *                     Bearbeiten-Formular zeigten den gespeicherten Zustand nie an (immer
+ *                     unchecked), obwohl der Wert in der DB korrekt 1 war - Ursache: getDB()
+ *                     nutzt PDO::ATTR_EMULATE_PREPARES=false, wodurch TINYINT-Spalten als
+ *                     natives PHP int statt als String zurückkommen. Der bisherige strikte
+ *                     Vergleich mit '1' (String) via === war dadurch immer false. Jetzt (int)-Cast
+ *                     vor dem Vergleich mit int 1
  * Changelog: 1.0.0 - Tab "Newsletter/Reminder" vollständig umgesetzt: drei Versandarten
  *                     (Newsletter an Alle/Persönliche Email/Tipp-Reminder mit Liga+Spieltag-
  *                     Auswahl je tippbarer Liga), Tipper-Bereich von-bis PLUS die neue "an alle
@@ -287,17 +294,17 @@ if ($tippTab === 'auswertung') { ?>
       </tr>
       <tr>
         <td <?= $tdR ?>><?= h(t('tipp_label_freigeschaltet')) ?></td>
-        <td <?= $tdL ?>><input type="checkbox" name="freigeschaltet" value="1"<?= $tuf('freigeschaltet', '0') === '1' ? ' checked' : '' ?>></td>
+        <td <?= $tdL ?>><input type="checkbox" name="freigeschaltet" value="1"<?= (int)$tuf('freigeschaltet', '0') === 1 ? ' checked' : '' ?>></td>
       </tr>
 <?php if (!$tippIsNew) { ?>
       <tr><th colspan="2" style="text-align:left;padding:12px 10px 4px;font-size:.85rem"><?= h(t('tipp_tab_newsletter')) ?></th></tr>
       <tr>
         <td <?= $tdR ?>><?= h(t('tipp_col_newsletter')) ?></td>
-        <td <?= $tdL ?>><input type="checkbox" name="newsletter" value="1"<?= $tuf('newsletter', '1') === '1' ? ' checked' : '' ?>></td>
+        <td <?= $tdL ?>><input type="checkbox" name="newsletter" value="1"<?= (int)$tuf('newsletter', '1') === 1 ? ' checked' : '' ?>></td>
       </tr>
       <tr>
         <td <?= $tdR ?>><?= h(t('tipp_col_reminder')) ?></td>
-        <td <?= $tdL ?>><input type="checkbox" name="reminder" value="1"<?= $tuf('reminder', '1') === '1' ? ' checked' : '' ?>></td>
+        <td <?= $tdL ?>><input type="checkbox" name="reminder" value="1"<?= (int)$tuf('reminder', '1') === 1 ? ' checked' : '' ?>></td>
       </tr>
 <?php } ?>
       <tr><th colspan="2" style="text-align:left;padding:12px 10px 4px;font-size:.85rem"><?= h(t('tipp_col_team')) ?></th></tr>
