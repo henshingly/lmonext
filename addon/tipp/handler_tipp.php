@@ -2,7 +2,15 @@
 /**
  * Project: LMOnext
  * Filename: addon/tipp/handler_tipp.php
- * Fileversion: 0.6.0
+ * Fileversion: 0.7.1
+ * Changelog: 0.7.1 - Bugfix: beim nachträglichen Eintragen der neu erzeugten Team-ID wurde der
+ *                     Array-Operator "+" statt array_merge() genutzt - da "team_id" in $data
+ *                     bereits (mit null) existierte, gewann bei "+" immer die linke Seite,
+ *                     wodurch neu gegründete Teams nie am Tipper gespeichert wurden
+ * Changelog: 0.7.0
+ * Changelog: 0.7.0 - Neue Aktionen save_tipp_user (Anlegen/Bearbeiten inkl. Team-Auflösung) und
+ *                     delete_tipp_user für die Userverwaltung
+ * Changelog: 0.6.0
  * Changelog: 0.6.0 - Neue Speicher-Aktion save_tipp_ligen für "Tippbare Ligen"
  * Changelog: 0.5.0
  * Changelog: 0.5.0 - Neue Speicher-Aktion save_tipp_punktgleichheit für die drei Kriterien
@@ -167,4 +175,84 @@ if ($action === 'save_tipp_ligen' && $_SERVER['REQUEST_METHOD'] === 'POST') {
 
     flash(t('tipp_flash_settings_saved'));
     redirect('?action=tippspiel&tab=optionen&subtab=tippbare_ligen');
+}
+
+if ($action === 'save_tipp_user' && $_SERVER['REQUEST_METHOD'] === 'POST') {
+    requireLogin();
+
+    $originalNickname = trim($_POST['original_nickname'] ?? '') !== '' ? $_POST['original_nickname'] : null;
+    $isNew = $originalNickname === null;
+    $nickname = $isNew ? trim($_POST['nickname'] ?? '') : $originalNickname;
+    $password = $_POST['password'] ?? '';
+
+    if ($isNew && $nickname === '') {
+        flash(t('tipp_flash_nickname_pflicht'), 'error');
+        redirect('?action=tippspiel&tab=userverwaltung&new=1');
+    }
+    if ($isNew && $password === '') {
+        flash(t('tipp_flash_passwort_pflicht'), 'error');
+        redirect('?action=tippspiel&tab=userverwaltung&new=1');
+    }
+    if ($isNew && getTipperByNickname($nickname) !== null) {
+        flash(t('tipp_flash_nickname_vergeben'), 'error');
+        redirect('?action=tippspiel&tab=userverwaltung&new=1');
+    }
+
+    // Team-Zuordnung anhand des gewählten Radio-Buttons auflösen
+    $teamRadio = $_POST['team_radio'] ?? 'keinem';
+    $teamId = null;
+    if ($teamRadio === 'bestehend' && !empty($_POST['team_bestehend'])) {
+        $teamId = (int)$_POST['team_bestehend'];
+    } elseif ($teamRadio === 'neu' && trim($_POST['team_neu'] ?? '') !== '') {
+        // Team kann erst nach dem Speichern des Tippers verknüpft werden (braucht dessen ID),
+        // wird daher weiter unten nach dem eigentlichen Speichern nachgetragen.
+        $teamId = 'NEU:' . trim($_POST['team_neu']);
+    }
+
+    $data = [
+        'nickname'       => $nickname,
+        'email'          => trim($_POST['email'] ?? ''),
+        'vorname'        => trim($_POST['vorname'] ?? '') ?: null,
+        'nachname'       => trim($_POST['nachname'] ?? '') ?: null,
+        'strasse'        => trim($_POST['strasse'] ?? '') ?: null,
+        'plz'            => trim($_POST['plz'] ?? '') ?: null,
+        'ort'            => trim($_POST['ort'] ?? '') ?: null,
+        'team_id'        => is_int($teamId) ? $teamId : null,
+        'freigeschaltet' => isset($_POST['freigeschaltet']) ? '1' : '0',
+        'newsletter'     => isset($_POST['newsletter']) ? '1' : '0',
+        'reminder'       => isset($_POST['reminder']) ? '1' : '0',
+    ];
+
+    $ok = saveTipper($originalNickname, $data, $password);
+
+    if ($ok && is_string($teamId) && str_starts_with($teamId, 'NEU:')) {
+        $tipper = getTipperByNickname($nickname);
+        if ($tipper !== null) {
+            $newTeamId = createTippTeam(substr($teamId, 4), (int)$tipper['id']);
+            if ($newTeamId !== null) {
+                saveTipper($nickname, array_merge($data, ['team_id' => $newTeamId]), null);
+            }
+        }
+    }
+
+    if ($ok) {
+        $tipper = getTipperByNickname($nickname);
+        if ($tipper !== null) {
+            setTipperAbos((int)$tipper['id'], array_map('intval', $_POST['tipper_ligen'] ?? []));
+        }
+        flash(t('tipp_flash_settings_saved'));
+    } else {
+        flash(t('tipp_flash_speichern_fehlgeschlagen'), 'error');
+    }
+    redirect('?action=tippspiel&tab=userverwaltung');
+}
+
+if ($action === 'delete_tipp_user') {
+    requireLogin();
+    $nick = $_GET['nick'] ?? '';
+    if ($nick !== '') {
+        deleteTipper($nick);
+        flash(t('tipp_flash_tipper_geloescht'));
+    }
+    redirect('?action=tippspiel&tab=userverwaltung');
 }

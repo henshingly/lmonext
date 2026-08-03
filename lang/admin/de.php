@@ -2,7 +2,10 @@
 /**
  * Project: LMOnext
  * Filename: lang/admin/de.php
- * Fileversion: 1.15.4
+ * Fileversion: 1.15.5
+ * Changelog: 1.15.5 - Übersetzungen für die Tippspiel-Userverwaltung ergänzt, common_delete/
+ *                     common_edit als wiederverwendbare Begriffe ergänzt
+ * Changelog: 1.15.4
  * Changelog: 1.15.4 - Übersetzungen für "Tippbare Ligen" ergänzt
  * Changelog: 1.15.3
  * Changelog: 1.15.3 - Übersetzungen für "Was zählt bei Punktgleichheit" ergänzt
@@ -189,6 +192,36 @@ return [
     'tipp_label_immer_alle' => 'immer alle sich im Ligenverzeichnis befindlichen',
     'tipp_ligen_hinweis'    => 'Wenn du nicht "immer alle" gewählt hast, wähle bitte nachfolgend aus. Nur die gewählten Ligen gehen dann auch in die Gesamtauswertung mit ein.',
     'tipp_ligen_keine'      => 'Aktuell befinden sich keine Ligen im obersten Ordner der Ligenübersicht.',
+    'tipp_col_nickname'     => 'Nickname',
+    'tipp_col_realname'     => 'Realname',
+    'tipp_col_team'         => 'Team',
+    'tipp_col_letzter_tipp' => 'letzter Tipp',
+    'tipp_col_newsletter'   => 'Newsletter',
+    'tipp_col_reminder'     => 'Tipp-Reminder',
+    'tipp_keine_tipper'     => 'Noch keine Tipper vorhanden.',
+    'tipp_neuer_tipper'     => 'Neuen Tipper anlegen',
+    'tipp_user_nicht_gefunden' => 'Dieser Tipper wurde nicht gefunden.',
+    'tipp_label_nickname'   => 'Nickname',
+    'tipp_label_passwort'   => 'Passwort',
+    'tipp_passwort_hinweis' => 'Leer lassen um keine Änderung des Passworts durchzuführen',
+    'tipp_label_vorname'    => 'Vorname',
+    'tipp_label_nachname'   => 'Nachname',
+    'tipp_label_strasse'    => 'Strasse',
+    'tipp_label_plz'        => 'PLZ',
+    'tipp_label_ort'        => 'Wohnort',
+    'tipp_label_email'      => 'E-Mail-Adresse',
+    'tipp_label_freigeschaltet' => 'freigeschaltet',
+    'tipp_team_keinem'      => 'keinem',
+    'tipp_team_bestehend'   => 'in bestehendes Team eintreten',
+    'tipp_team_neu'         => 'neues Team gründen',
+    'tipp_bitte_waehlen'    => 'Bitte auswählen',
+    'tipp_abonnierte_ligen' => 'abonnierte Ligen',
+    'tipp_confirm_delete'   => 'Wirklich löschen?',
+    'tipp_flash_nickname_pflicht'   => 'Bitte einen Nickname angeben.',
+    'tipp_flash_passwort_pflicht'   => 'Bitte ein Passwort für den neuen Tipper vergeben.',
+    'tipp_flash_nickname_vergeben'  => 'Dieser Nickname ist bereits vergeben.',
+    'tipp_flash_speichern_fehlgeschlagen' => 'Speichern fehlgeschlagen.',
+    'tipp_flash_tipper_geloescht'   => 'Tipper gelöscht.',
     'tipp_placeholder_text_regeltechnisches' => 'Hier entstehen: Tippabgabefrist, Team-Höchstgröße, Joker an/aus + Multiplikator, max. Spieltage im Voraus.',
     'tipp_placeholder_text_anmeldung'        => 'Hier entstehen: Adresse/Realname optional, Freischaltungsart, Mail-Benachrichtigungen.',
     'tipp_placeholder_text_punktgleichheit'  => 'Hier entstehen die drei Rangfolge-Kriterien bei Punktgleichheit.',
@@ -406,6 +439,8 @@ return [
     // ── Gemeinsame/wiederverwendbare Begriffe ───────────────────────────────
     'common_cancel'      => 'Abbrechen',
     'common_save'        => '💾 Speichern',
+    'common_delete'      => 'Löschen',
+    'common_edit'        => 'Editieren',
     'common_loading'     => 'Laden…',
     'common_load_error'  => 'Fehler beim Laden.',
 

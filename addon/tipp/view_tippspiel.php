@@ -2,7 +2,18 @@
 /**
  * Project: LMOnext
  * Filename: addon/tipp/view_tippspiel.php
- * Fileversion: 0.8.0
+ * Fileversion: 0.9.1
+ * Changelog: 0.9.1 - Bugfix: $tdR/$tdL/$selSt/$inpSt waren nur innerhalb des "Optionen"-Tabs
+ *                     definiert und fehlten im "Userverwaltung"-Tab (führte zu PHP-Warnungen +
+ *                     kaputtem HTML) - an eine gemeinsame Stelle vor der Tab-Weiche verschoben
+ * Changelog: 0.9.0
+ * Changelog: 0.9.0 - Tab "Userverwaltung" vollständig umgesetzt: sortierbare Liste (Nickname
+ *                     als mailto-Link, Realname, Team, letzter Tipp, Editieren), sowie das
+ *                     Bearbeiten-/Neuanlegen-Formular mit allen Original-Feldern inkl. der
+ *                     drei Team-Radio-Optionen (keinem/bestehendes Team mit [Mitgliederzahl]/
+ *                     neues Team gründen) und abonnierten Ligen - exakt nach dem vom Nutzer
+ *                     bereitgestellten Original-HTML-Quellcode
+ * Changelog: 0.8.0
  * Changelog: 0.8.0 - Letzter der sechs Optionen-Bereiche fertig: "Tippbare Ligen" mit "immer
  *                     alle"-Checkbox (deaktiviert bei Aktivierung die Einzelauswahl, genau wie
  *                     im Original) und gezielter Einzelauswahl aus dem obersten Ordner der
@@ -70,6 +81,12 @@
 
 $tippTab = $_GET['tab'] ?? 'auswertung';
 
+// Gemeinsame Formular-Stile, werden in mehreren Tabs (Optionen, Userverwaltung) genutzt
+$selSt = 'background:var(--bg);border:1px solid var(--border);color:var(--text);border-radius:var(--radius);padding:5px 10px;font-size:.87rem';
+$inpSt = $selSt . ';width:100px';
+$tdR   = 'style="text-align:right;padding:7px 12px;font-size:.85rem;color:var(--muted);white-space:nowrap"';
+$tdL   = 'style="padding:5px 10px"';
+
 $tippTabs = [
     'auswertung'     => t('tipp_tab_auswertung'),
     'newsletter'     => t('tipp_tab_newsletter'),
@@ -114,14 +131,160 @@ if ($tippTab === 'auswertung') { ?>
 // ═══════════════════════════════════════════════════════════════════════
 // TAB: USERVERWALTUNG
 // ═══════════════════════════════════════════════════════════════════════
-} elseif ($tippTab === 'userverwaltung') { ?>
-  <h2 style="margin-bottom:8px"><?= h(t('tipp_tab_userverwaltung')) ?></h2>
-  <p style="color:var(--muted);font-size:.9rem"><?= h(t('tipp_placeholder_text_userverwaltung')) ?></p>
+} elseif ($tippTab === 'userverwaltung') {
+    $tippEditNick = $_GET['edit'] ?? null;
+    $tippIsNew    = isset($_GET['new']);
 
+    if ($tippEditNick !== null || $tippIsNew) {
+        // ── Bearbeiten / Neuanlegen ─────────────────────────────────────
+        $tippUserRow = $tippIsNew ? null : getTipperByNickname($tippEditNick);
+        if (!$tippIsNew && $tippUserRow === null) {
+            echo '<p style="color:var(--red)">' . h(t('tipp_user_nicht_gefunden')) . '</p>';
+        } else {
+            $tuf = fn(string $k, string $d = '') => $tippUserRow[$k] ?? $d;
+            $teams = getAllTeamsWithCount();
+            $tuTeamId = (int)$tuf('team_id', '0');
+            $tuAboIds = $tippUserRow ? getTipperAboLigaIds((int)$tippUserRow['id']) : [];
+            $tuLigen = getTippbareLigenKandidaten();
+            ?>
+  <form method="post" action="?action=save_tipp_user">
+    <input type="hidden" name="original_nickname" value="<?= h($tippUserRow['nickname'] ?? '') ?>">
+    <table style="width:100%;border-collapse:collapse">
+      <tr>
+        <td <?= $tdR ?>><?= h(t('tipp_label_nickname')) ?></td>
+        <td <?= $tdL ?>>
+<?php if ($tippIsNew) { ?>
+          <input type="text" name="nickname" value="" maxlength="50" required style="<?= $inpSt ?>;width:200px">
+<?php } else { ?>
+          <strong><?= h($tuf('nickname')) ?></strong>
+<?php } ?>
+        </td>
+      </tr>
+      <tr>
+        <td <?= $tdR ?>><?= h(t('tipp_label_passwort')) ?></td>
+        <td <?= $tdL ?>><input type="password" name="password" value="" maxlength="100" style="<?= $inpSt ?>;width:200px" title="<?= h(t('tipp_passwort_hinweis')) ?>"></td>
+      </tr>
+      <tr>
+        <td <?= $tdR ?>><?= h(t('tipp_label_vorname')) ?></td>
+        <td <?= $tdL ?>><input type="text" name="vorname" value="<?= h($tuf('vorname')) ?>" maxlength="50" style="<?= $inpSt ?>;width:200px"></td>
+      </tr>
+      <tr>
+        <td <?= $tdR ?>><?= h(t('tipp_label_nachname')) ?></td>
+        <td <?= $tdL ?>><input type="text" name="nachname" value="<?= h($tuf('nachname')) ?>" maxlength="50" style="<?= $inpSt ?>;width:200px"></td>
+      </tr>
+      <tr>
+        <td <?= $tdR ?>><?= h(t('tipp_label_strasse')) ?></td>
+        <td <?= $tdL ?>><input type="text" name="strasse" value="<?= h($tuf('strasse')) ?>" maxlength="100" style="<?= $inpSt ?>;width:200px"></td>
+      </tr>
+      <tr>
+        <td <?= $tdR ?>><?= h(t('tipp_label_plz')) ?></td>
+        <td <?= $tdL ?>><input type="text" name="plz" value="<?= h($tuf('plz')) ?>" maxlength="10" style="<?= $inpSt ?>;width:100px"></td>
+      </tr>
+      <tr>
+        <td <?= $tdR ?>><?= h(t('tipp_label_ort')) ?></td>
+        <td <?= $tdL ?>><input type="text" name="ort" value="<?= h($tuf('ort')) ?>" maxlength="80" style="<?= $inpSt ?>;width:200px"></td>
+      </tr>
+      <tr>
+        <td <?= $tdR ?>><?= h(t('tipp_label_email')) ?></td>
+        <td <?= $tdL ?>><input type="email" name="email" value="<?= h($tuf('email')) ?>" maxlength="150" required style="<?= $inpSt ?>;width:250px"></td>
+      </tr>
+      <tr>
+        <td <?= $tdR ?>><?= h(t('tipp_label_freigeschaltet')) ?></td>
+        <td <?= $tdL ?>><input type="checkbox" name="freigeschaltet" value="1"<?= $tuf('freigeschaltet', '0') === '1' ? ' checked' : '' ?>></td>
+      </tr>
+<?php if (!$tippIsNew) { ?>
+      <tr><th colspan="2" style="text-align:left;padding:12px 10px 4px;font-size:.85rem"><?= h(t('tipp_tab_newsletter')) ?></th></tr>
+      <tr>
+        <td <?= $tdR ?>><?= h(t('tipp_col_newsletter')) ?></td>
+        <td <?= $tdL ?>><input type="checkbox" name="newsletter" value="1"<?= $tuf('newsletter', '1') === '1' ? ' checked' : '' ?>></td>
+      </tr>
+      <tr>
+        <td <?= $tdR ?>><?= h(t('tipp_col_reminder')) ?></td>
+        <td <?= $tdL ?>><input type="checkbox" name="reminder" value="1"<?= $tuf('reminder', '1') === '1' ? ' checked' : '' ?>></td>
+      </tr>
+<?php } ?>
+      <tr><th colspan="2" style="text-align:left;padding:12px 10px 4px;font-size:.85rem"><?= h(t('tipp_col_team')) ?></th></tr>
+      <tr>
+        <td></td>
+        <td <?= $tdL ?>><label><input type="radio" name="team_radio" value="keinem"<?= $tuTeamId === 0 ? ' checked' : '' ?>> <?= h(t('tipp_team_keinem')) ?></label></td>
+      </tr>
+      <tr>
+        <td <?= $tdR ?>><?= h(t('tipp_team_bestehend')) ?></td>
+        <td <?= $tdL ?>>
+          <select name="team_bestehend" style="<?= $selSt ?>;width:auto" onchange="document.querySelector('input[name=team_radio][value=bestehend]').checked=true">
+            <option value=""><?= h(t('tipp_bitte_waehlen')) ?></option>
+<?php foreach ($teams as $team) { ?>
+            <option value="<?= (int)$team['id'] ?>"<?= $tuTeamId === (int)$team['id'] ? ' selected' : '' ?>><?= h($team['name']) ?> [<?= (int)$team['mitglieder'] ?>]</option>
+<?php } ?>
+          </select>
+          <input type="radio" name="team_radio" value="bestehend" style="display:none"<?= $tuTeamId > 0 ? ' checked' : '' ?>>
+        </td>
+      </tr>
+      <tr>
+        <td <?= $tdR ?>><?= h(t('tipp_team_neu')) ?></td>
+        <td <?= $tdL ?>>
+          <input type="text" name="team_neu" value="" maxlength="50" style="<?= $inpSt ?>;width:200px" onfocus="document.querySelector('input[name=team_radio][value=neu]').checked=true">
+          <input type="radio" name="team_radio" value="neu" style="display:none">
+        </td>
+      </tr>
+<?php if (!empty($tuLigen)) { ?>
+      <tr><th colspan="2" style="text-align:left;padding:12px 10px 4px;font-size:.85rem"><?= h(t('tipp_abonnierte_ligen')) ?></th></tr>
+      <tr>
+        <td></td>
+        <td <?= $tdL ?>>
+<?php foreach ($tuLigen as $tuLiga) { ?>
+          <label style="display:block;padding:2px 0"><input type="checkbox" name="tipper_ligen[]" value="<?= (int)$tuLiga['id'] ?>"<?= in_array((int)$tuLiga['id'], $tuAboIds, true) ? ' checked' : '' ?>> <?= h($tuLiga['name']) ?></label>
+<?php } ?>
+        </td>
+      </tr>
+<?php } ?>
+      <tr>
+        <td></td>
+        <td style="padding:14px 10px 0">
+<?php if (!$tippIsNew) { ?>
+          <a href="?action=delete_tipp_user&nick=<?= urlencode($tuf('nickname')) ?>" class="btn btn-danger" style="margin-right:8px" onclick="return confirm(<?= json_encode(t('tipp_confirm_delete')) ?>)"><?= h(t('common_delete')) ?></a>
+<?php } ?>
+          <button type="submit" class="btn btn-primary"><?= h(t('common_save')) ?></button>
+          <a href="?action=tippspiel&tab=userverwaltung" class="btn" style="margin-left:8px"><?= h(t('common_cancel')) ?></a>
+        </td>
+      </tr>
+    </table>
+  </form>
 <?php
-// ═══════════════════════════════════════════════════════════════════════
-// TAB: OPTIONEN
-// ═══════════════════════════════════════════════════════════════════════
+        }
+    } else {
+        // ── Liste ────────────────────────────────────────────────────────
+        $tippAlleUser = getAllTipper();
+        ?>
+  <table style="width:100%;border-collapse:collapse;font-size:.87rem">
+    <thead>
+      <tr style="border-bottom:1px solid var(--border)">
+        <th style="text-align:left;padding:6px 10px">#</th>
+        <th style="text-align:left;padding:6px 10px"><?= h(t('tipp_col_nickname')) ?></th>
+        <th style="text-align:left;padding:6px 10px"><?= h(t('tipp_col_realname')) ?></th>
+        <th style="text-align:left;padding:6px 10px"><?= h(t('tipp_col_team')) ?></th>
+        <th style="text-align:left;padding:6px 10px"><?= h(t('tipp_col_letzter_tipp')) ?></th>
+        <th></th>
+      </tr>
+    </thead>
+    <tbody>
+<?php if (empty($tippAlleUser)) { ?>
+      <tr><td colspan="6" style="padding:14px 10px;color:var(--muted)"><?= h(t('tipp_keine_tipper')) ?></td></tr>
+<?php } else { foreach ($tippAlleUser as $i => $u) { ?>
+      <tr style="border-bottom:1px solid var(--border)">
+        <td style="padding:6px 10px"><?= $i + 1 ?></td>
+        <td style="padding:6px 10px"><a href="mailto:<?= h($u['email']) ?>"><?= h($u['nickname']) ?></a></td>
+        <td style="padding:6px 10px"><?= h(trim(($u['vorname'] ?? '') . ' ' . ($u['nachname'] ?? ''))) ?></td>
+        <td style="padding:6px 10px"><?= h($u['team_name'] ?? '') ?></td>
+        <td style="padding:6px 10px"><?= h($u['letzter_tipp'] ?? '–') ?></td>
+        <td style="padding:6px 10px"><a href="?action=tippspiel&tab=userverwaltung&edit=<?= urlencode($u['nickname']) ?>"><?= h(t('common_edit')) ?></a></td>
+      </tr>
+<?php } } ?>
+    </tbody>
+  </table>
+  <div style="padding-top:14px"><a href="?action=tippspiel&tab=userverwaltung&new=1" class="btn btn-primary"><?= h(t('tipp_neuer_tipper')) ?></a></div>
+<?php
+    }
 } elseif ($tippTab === 'optionen') {
     $tippSubtab = $_GET['subtab'] ?? 'punkteverteilung';
     $tippSubtabs = [
@@ -135,10 +298,6 @@ if ($tippTab === 'auswertung') { ?>
     $ts  = fn(string $k, string $d = '') => getTippSetting($k, $d);
     $tsc = fn(string $k, string $d = '0') => getTippSetting($k, $d) === '1';
     $tippmodus = $ts('tippmodus', 'ergebnis');
-    $selSt = 'background:var(--bg);border:1px solid var(--border);color:var(--text);border-radius:var(--radius);padding:5px 10px;font-size:.87rem';
-    $inpSt = $selSt . ';width:100px';
-    $tdR   = 'style="text-align:right;padding:7px 12px;font-size:.85rem;color:var(--muted);white-space:nowrap"';
-    $tdL   = 'style="padding:5px 10px"';
     ?>
   <!-- Unter-Navigation der Optionen -->
   <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:16px;border-bottom:1px solid var(--border);padding-bottom:12px">

@@ -2,7 +2,10 @@
 /**
  * Project: LMOnext
  * Filename: lang/admin/en.php
- * Fileversion: 1.14.4
+ * Fileversion: 1.14.5
+ * Changelog: 1.14.5 - Added translations for the prediction game user management, added
+ *                     common_delete/common_edit shared terms
+ * Changelog: 1.14.4
  * Changelog: 1.14.4 - Added translations for "Tippable Leagues"
  * Changelog: 1.14.3
  * Changelog: 1.14.3 - Added translations for "Tie-Breaking"
@@ -181,6 +184,36 @@ return [
     'tipp_label_immer_alle' => 'always all leagues in the league directory',
     'tipp_ligen_hinweis'    => 'If you have not chosen "always all", please select below. Only the selected leagues will then be included in the overall standings.',
     'tipp_ligen_keine'      => 'There are currently no leagues in the top-level folder of the league overview.',
+    'tipp_col_nickname'     => 'Nickname',
+    'tipp_col_realname'     => 'Real name',
+    'tipp_col_team'         => 'Team',
+    'tipp_col_letzter_tipp' => 'Last tip',
+    'tipp_col_newsletter'   => 'Newsletter',
+    'tipp_col_reminder'     => 'Tip reminder',
+    'tipp_keine_tipper'     => 'No tipsters yet.',
+    'tipp_neuer_tipper'     => 'Create new tipster',
+    'tipp_user_nicht_gefunden' => 'This tipster was not found.',
+    'tipp_label_nickname'   => 'Nickname',
+    'tipp_label_passwort'   => 'Password',
+    'tipp_passwort_hinweis' => 'Leave empty to keep the current password unchanged',
+    'tipp_label_vorname'    => 'First name',
+    'tipp_label_nachname'   => 'Last name',
+    'tipp_label_strasse'    => 'Street',
+    'tipp_label_plz'        => 'Zip code',
+    'tipp_label_ort'        => 'City',
+    'tipp_label_email'      => 'Email address',
+    'tipp_label_freigeschaltet' => 'activated',
+    'tipp_team_keinem'      => 'none',
+    'tipp_team_bestehend'   => 'join existing team',
+    'tipp_team_neu'         => 'found new team',
+    'tipp_bitte_waehlen'    => 'Please select',
+    'tipp_abonnierte_ligen' => 'subscribed leagues',
+    'tipp_confirm_delete'   => 'Really delete?',
+    'tipp_flash_nickname_pflicht'   => 'Please enter a nickname.',
+    'tipp_flash_passwort_pflicht'   => 'Please set a password for the new tipster.',
+    'tipp_flash_nickname_vergeben'  => 'This nickname is already taken.',
+    'tipp_flash_speichern_fehlgeschlagen' => 'Saving failed.',
+    'tipp_flash_tipper_geloescht'   => 'Tipster deleted.',
     'tipp_placeholder_text_regeltechnisches' => 'Coming here: tip submission deadline, max team size, joker on/off + multiplier, max matchdays in advance.',
     'tipp_placeholder_text_anmeldung'        => 'Coming here: optional address/real name, activation method, email notifications.',
     'tipp_placeholder_text_punktgleichheit'  => 'Coming here: the three tie-breaking criteria and their order.',
@@ -398,6 +431,8 @@ return [
     // ── Common/reusable terms ────────────────────────────────────────────────
     'common_cancel'      => 'Cancel',
     'common_save'        => '💾 Save',
+    'common_delete'      => 'Delete',
+    'common_edit'        => 'Edit',
     'common_loading'     => 'Loading…',
     'common_load_error'  => 'Error loading data.',
 
