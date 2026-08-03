@@ -2,7 +2,10 @@
 /**
  * Project: LMOnext
  * Filename: view_liga_settings.php
- * Fileversion: 1.5.1
+ * Fileversion: 1.5.2
+ * Changelog: 1.5.2 - Tab "Strafen": Eingabe auf Dropdown (+/−) + positives Betragsfeld
+ *                     umgestellt statt eines Zahlenfelds mit Minuszeichen (auf Mobilgeräten oft
+ *                     nicht per Zifferntastatur eingebbar). Vierte Spalte "Minuspunkte" ergänzt
  * Changelog: 1.5.1 - Tab "Strafen": dritte Spalte "Erzielte Tore +/-" ergänzt, alle drei
  *                     Spalten als "+/-" beschriftet (Bonus/Strafe), Erklärungstext erweitert
  *                     inkl. Lizenzentzug-Beispiel
@@ -673,35 +676,45 @@ if ($tab === 'grundwerte') { ?>
 // ═══════════════════════════════════════════════════════════════════════
 } elseif ($tab === 'strafen' && !$isKO) {
     $strafen = $ligaSettingsData['strafen'] ?? [];
+    // Kleiner Helfer: Vorzeichen-Auswahl (Dropdown) + Betrag (immer positive
+    // Zahl) statt eines einzelnen Zahlenfelds mit Minuszeichen - auf vielen
+    // Mobilgeräten zeigt die Zifferntastatur bei <input type="number"> kein
+    // Minuszeichen an, siehe Rückmeldung.
+    $strafField = static function (string $name, int $rowIndex, int $signedValue) use ($selSt) : string {
+        $mag = abs($signedValue);
+        $isNeg = $signedValue < 0;
+        $html  = '<select name="' . $name . '_dir[' . $rowIndex . ']" style="padding:5px 2px;font-size:.85rem;' . $selSt . '">';
+        $html .= '<option value="1"' . (!$isNeg ? ' selected' : '') . '>+</option>';
+        $html .= '<option value="-1"' . ($isNeg ? ' selected' : '') . '>−</option>';
+        $html .= '</select>';
+        $html .= '<input type="number" name="' . $name . '_wert[' . $rowIndex . ']" min="0" inputmode="numeric" value="' . $mag . '" style="width:55px;text-align:center;' . $selSt . '">';
+        return $html;
+    };
     ?>
           <p style="font-size:.82rem;color:var(--muted);max-width:640px;margin-bottom:14px"><?= h(t('ls_strafen_hinweis')) ?></p>
 <?php if (empty($ligaTeams)) { ?>
           <p class="empty-msg"><?= h(t('ls_strafen_keine_teams')) ?></p>
 <?php } else { ?>
-          <table style="border-collapse:collapse;width:100%;max-width:900px">
+          <table style="border-collapse:collapse;width:100%;max-width:1050px">
             <tr>
-              <th style="text-align:left;padding:6px 10px;font-size:.8rem;color:var(--muted)"><?= h(t('ls_strafen_col_team')) ?></th>
-              <th style="text-align:center;padding:6px 10px;font-size:.8rem;color:var(--muted)"><?= h(t('ls_strafen_col_punkte')) ?></th>
-              <th style="text-align:center;padding:6px 10px;font-size:.8rem;color:var(--muted)"><?= h(t('ls_strafen_col_erzielt')) ?></th>
-              <th style="text-align:center;padding:6px 10px;font-size:.8rem;color:var(--muted)"><?= h(t('ls_strafen_col_gegentore')) ?></th>
-              <th style="text-align:left;padding:6px 10px;font-size:.8rem;color:var(--muted)"><?= h(t('ls_strafen_col_grund')) ?></th>
+              <th style="text-align:left;padding:6px 8px;font-size:.8rem;color:var(--muted)"><?= h(t('ls_strafen_col_team')) ?></th>
+              <th style="text-align:center;padding:6px 8px;font-size:.8rem;color:var(--muted)"><?= h(t('ls_strafen_col_punkte')) ?></th>
+              <th style="text-align:center;padding:6px 8px;font-size:.8rem;color:var(--muted)"><?= h(t('ls_strafen_col_erzielt')) ?></th>
+              <th style="text-align:center;padding:6px 8px;font-size:.8rem;color:var(--muted)"><?= h(t('ls_strafen_col_gegentore')) ?></th>
+              <th style="text-align:center;padding:6px 8px;font-size:.8rem;color:var(--muted)"><?= h(t('ls_strafen_col_minuspunkte')) ?></th>
+              <th style="text-align:left;padding:6px 8px;font-size:.8rem;color:var(--muted)"><?= h(t('ls_strafen_col_grund')) ?></th>
             </tr>
 <?php foreach ($ligaTeams as $i => $team) {
     $teamId = (int)$team['id'];
-    $s = $strafen[$teamId] ?? ['strafpunkte' => 0, 'straftore' => 0, 'tore_korrektur' => 0, 'grund' => '']; ?>
+    $s = $strafen[$teamId] ?? ['strafpunkte' => 0, 'straftore' => 0, 'tore_korrektur' => 0, 'minuspunkte_korrektur' => 0, 'grund' => '']; ?>
             <tr>
-              <td style="padding:5px 10px;font-size:.87rem"><?= h($team['name']) ?>
+              <td style="padding:5px 8px;font-size:.87rem"><?= h($team['name']) ?>
                 <input type="hidden" name="strafe_team_id[<?= $i ?>]" value="<?= $teamId ?>"></td>
-              <td style="padding:5px 10px;text-align:center">
-                <input type="number" name="strafe_punkte[<?= $i ?>]" value="<?= (int)$s['strafpunkte'] ?>" style="width:70px;text-align:center;<?= $selSt ?>">
-              </td>
-              <td style="padding:5px 10px;text-align:center">
-                <input type="number" name="strafe_erzielt[<?= $i ?>]" value="<?= (int)($s['tore_korrektur'] ?? 0) ?>" style="width:70px;text-align:center;<?= $selSt ?>">
-              </td>
-              <td style="padding:5px 10px;text-align:center">
-                <input type="number" name="strafe_tore[<?= $i ?>]" value="<?= (int)$s['straftore'] ?>" style="width:70px;text-align:center;<?= $selSt ?>">
-              </td>
-              <td style="padding:5px 10px">
+              <td style="padding:5px 8px;text-align:center;white-space:nowrap"><?= $strafField('strafe_punkte', $i, (int)$s['strafpunkte']) ?></td>
+              <td style="padding:5px 8px;text-align:center;white-space:nowrap"><?= $strafField('strafe_erzielt', $i, (int)($s['tore_korrektur'] ?? 0)) ?></td>
+              <td style="padding:5px 8px;text-align:center;white-space:nowrap"><?= $strafField('strafe_tore', $i, (int)$s['straftore']) ?></td>
+              <td style="padding:5px 8px;text-align:center;white-space:nowrap"><?= $strafField('strafe_minus', $i, (int)($s['minuspunkte_korrektur'] ?? 0)) ?></td>
+              <td style="padding:5px 8px">
                 <input type="text" name="strafe_grund[<?= $i ?>]" value="<?= h($s['grund'] ?? '') ?>" maxlength="255" style="width:100%;box-sizing:border-box;<?= $selSt ?>">
               </td>
             </tr>

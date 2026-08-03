@@ -2,7 +2,8 @@
 /**
  * Project: LMOnext
  * Filename: lang/frontend/en.php
- * Fileversion: 1.25.0
+ * Fileversion: 1.26.0
+ * Changelog: 1.26.0 - Added tooltip key for the new minus-points correction field
  * Changelog: 1.25.0 - Updated penalty-points tooltip keys for the extended bonus/penalty fields
  *                     (goals scored added)
  * Changelog: 1.24.0 - Added translations for the new penalty points/goals tooltip in the
@@ -208,6 +209,7 @@ return [
     'liga_standings_col_pkt'      => 'Pts',
     'liga_standings_straf_erzielt'   => 'goals',
     'liga_standings_straf_gegentore' => 'goals against',
+    'liga_standings_straf_minuspunkte' => 'minus points',
     'liga_schedule_pick_team'     => 'Please select a team now.',
 
     // ── Head-to-head comparison modal ─────────────────────────────────────────

@@ -2,7 +2,10 @@
 /**
  * Project: LMOnext
  * Filename: handler_settings.php
- * Fileversion: 1.3.8
+ * Fileversion: 1.3.9
+ * Changelog: 1.3.9 - Vorzeichen-Eingabe im Tab "Strafen" auf Dropdown (+/−) + Betragsfeld
+ *                     umgestellt (Minuszeichen auf Mobilgeräten oft nicht per Zifferntastatur
+ *                     erreichbar). Vierter Korrekturwert "Minuspunkte" ergänzt
  * Changelog: 1.3.8 - Tab "Strafen" um dritten Korrekturwert "erzielte Tore" erweitert (neue
  *                     Spalte tore_korrektur, Migration inklusive), damit z.B. bei Lizenzentzug
  *                     Punkte UND beide Tor-Werte unabhängig korrigiert werden können
@@ -168,43 +171,59 @@ if ($action === 'save_liga_settings' && $_SERVER['REQUEST_METHOD'] === 'POST') {
                 // fortgeführt, siehe auch StandingsTrait::ensureStrafpunkteSchema()
                 // für die frontend-seitige Variante derselben Tabelle.
                 $db->exec('CREATE TABLE IF NOT EXISTS ' . tbl('liga_strafpunkte') . ' (
-                    `id`             INT AUTO_INCREMENT PRIMARY KEY,
-                    `liga_id`        INT NOT NULL,
-                    `team_id`        INT NOT NULL,
-                    `strafpunkte`    INT NOT NULL DEFAULT 0,
-                    `straftore`      INT NOT NULL DEFAULT 0,
-                    `tore_korrektur` INT NOT NULL DEFAULT 0,
-                    `grund`          VARCHAR(255) NULL DEFAULT NULL,
-                    `updated_at`     TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+                    `id`                    INT AUTO_INCREMENT PRIMARY KEY,
+                    `liga_id`               INT NOT NULL,
+                    `team_id`               INT NOT NULL,
+                    `strafpunkte`           INT NOT NULL DEFAULT 0,
+                    `straftore`             INT NOT NULL DEFAULT 0,
+                    `tore_korrektur`        INT NOT NULL DEFAULT 0,
+                    `minuspunkte_korrektur` INT NOT NULL DEFAULT 0,
+                    `grund`                 VARCHAR(255) NULL DEFAULT NULL,
+                    `updated_at`            TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
                     UNIQUE KEY `liga_team` (`liga_id`, `team_id`)
                 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci');
                 // Migration für Installationen, die diese Tabelle schon vor der
-                // "erzielte Tore"-Erweiterung angelegt hatten
+                // "erzielte Tore"/"Minuspunkte"-Erweiterung angelegt hatten
                 $strafCols = $db->query('SHOW COLUMNS FROM ' . tbl('liga_strafpunkte'))->fetchAll(PDO::FETCH_COLUMN);
                 if (!in_array('tore_korrektur', $strafCols, true)) {
                     $db->exec('ALTER TABLE ' . tbl('liga_strafpunkte') . ' ADD COLUMN `tore_korrektur` INT NOT NULL DEFAULT 0 AFTER `straftore`');
                 }
+                if (!in_array('minuspunkte_korrektur', $strafCols, true)) {
+                    $db->exec('ALTER TABLE ' . tbl('liga_strafpunkte') . ' ADD COLUMN `minuspunkte_korrektur` INT NOT NULL DEFAULT 0 AFTER `tore_korrektur`');
+                }
 
                 $strafUpsert = $db->prepare(
-                    'INSERT INTO ' . tbl('liga_strafpunkte') . ' (liga_id, team_id, strafpunkte, straftore, tore_korrektur, grund)
-                     VALUES (?, ?, ?, ?, ?, ?)
+                    'INSERT INTO ' . tbl('liga_strafpunkte') . ' (liga_id, team_id, strafpunkte, straftore, tore_korrektur, minuspunkte_korrektur, grund)
+                     VALUES (?, ?, ?, ?, ?, ?, ?)
                      ON DUPLICATE KEY UPDATE strafpunkte = VALUES(strafpunkte), straftore = VALUES(straftore),
-                                             tore_korrektur = VALUES(tore_korrektur), grund = VALUES(grund)'
+                                             tore_korrektur = VALUES(tore_korrektur),
+                                             minuspunkte_korrektur = VALUES(minuspunkte_korrektur), grund = VALUES(grund)'
                 );
                 $strafDelete = $db->prepare('DELETE FROM ' . tbl('liga_strafpunkte') . ' WHERE liga_id = ? AND team_id = ?');
+
+                // Vorzeichen-Dropdown (_dir: '1'/'-1') + Betrag (_wert: immer >=0)
+                // zu einem vorzeichenbehafteten Wert zusammenführen - siehe
+                // admin/view_liga_settings.php ($strafField()) für den Grund
+                // (mobile Zifferntastaturen zeigen oft kein Minuszeichen).
+                $combine = static function (string $name, $i) : int {
+                    $dir = ((int)($_POST[$name . '_dir'][$i] ?? 1)) < 0 ? -1 : 1;
+                    $mag = abs((int)($_POST[$name . '_wert'][$i] ?? 0));
+                    return $dir * $mag;
+                };
 
                 foreach ($_POST['strafe_team_id'] ?? [] as $i => $teamId) {
                     $teamId = (int)$teamId;
                     if ($teamId <= 0) { continue; }
-                    $sp    = (int)($_POST['strafe_punkte'][$i] ?? 0);
-                    $st    = (int)($_POST['strafe_tore'][$i] ?? 0);
-                    $tk    = (int)($_POST['strafe_erzielt'][$i] ?? 0);
+                    $sp    = $combine('strafe_punkte', $i);
+                    $st    = $combine('strafe_tore', $i);
+                    $tk    = $combine('strafe_erzielt', $i);
+                    $mk    = $combine('strafe_minus', $i);
                     $grund = trim((string)($_POST['strafe_grund'][$i] ?? ''));
-                    if ($sp === 0 && $st === 0 && $tk === 0 && $grund === '') {
+                    if ($sp === 0 && $st === 0 && $tk === 0 && $mk === 0 && $grund === '') {
                         $strafDelete->execute([$lid, $teamId]);
                         continue;
                     }
-                    $strafUpsert->execute([$lid, $teamId, $sp, $st, $tk, $grund !== '' ? $grund : null]);
+                    $strafUpsert->execute([$lid, $teamId, $sp, $st, $tk, $mk, $grund !== '' ? $grund : null]);
                 }
                 break;
         }

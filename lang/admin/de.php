@@ -2,7 +2,9 @@
 /**
  * Project: LMOnext
  * Filename: lang/admin/de.php
- * Fileversion: 1.15.9
+ * Fileversion: 1.16.0
+ * Changelog: 1.16.0 - Übersetzungen für die vierte Strafen-Spalte "Minuspunkte" und die
+ *                     überarbeitete Dropdown-Eingabe ergänzt
  * Changelog: 1.15.9 - Übersetzungen für die erweiterten Strafen/Bonus-Felder (Punkte/erzielte
  *                     Tore/Gegentore, alle vorzeichenbehaftet) aktualisiert
  * Changelog: 1.15.8 - Übersetzungen für den neuen "Teams"-Tab bei Liga-Einstellungen sowie den
@@ -807,12 +809,13 @@ return [
     'ls_tab_spielsystem'   => 'Spielsystem',
     'ls_tab_tabelle'       => 'Tabelle',
     'ls_tab_strafen'       => 'Strafen',
-    'ls_strafen_hinweis'   => 'Alle drei Werte sind vorzeichenbehaftet: positiv = Bonus (z.B. nachträglich zugesprochene Punkte/Tore), negativ = Strafe/Abzug. "Punkte" wirkt auf die Tabellenpunkte, "erzielte Tore" auf die eigenen Tore, "Gegentore" auf die Gegentore des Teams. Wirkt sich nur in dieser Liga aus, nicht auf andere Ligen/Saisons desselben Teams. Beispiel Lizenzentzug: um ein Team auf 0:0 Tore und 0 Punkte zu setzen, hier jeweils den negativen aktuellen Wert eintragen (z.B. Punkte -19, erzielte Tore -41, Gegentore -75). 0/0/0 und leerer Grund entfernen einen bestehenden Eintrag wieder.',
+    'ls_strafen_hinweis'   => 'Alle vier Werte werden über ein Dropdown (+ oder −) plus eine positive Zahl eingegeben - kein Minuszeichen nötig. "Punkte" wirkt auf die Tabellenpunkte, "erzielte Tore"/"Gegentore" auf die jeweiligen Tore, "Minuspunkte" auf die separate Minuspunkte-Anzeige (siehe Tab Spielsystem → Minuspunkte). Wirkt sich nur in dieser Liga aus, nicht auf andere Ligen/Saisons desselben Teams. Beispiel Lizenzentzug: um ein Team auf 0:0 Tore, 0 Punkte und 0 Minuspunkte zu setzen, hier jeweils "−" und den aktuellen Wert eintragen. Überall 0 und leerer Grund entfernen einen bestehenden Eintrag wieder.',
     'ls_strafen_keine_teams' => 'Dieser Liga sind noch keine Teams zugeordnet.',
     'ls_strafen_col_team'  => 'Team',
-    'ls_strafen_col_punkte' => 'Punkte +/-',
-    'ls_strafen_col_erzielt' => 'Erzielte Tore +/-',
-    'ls_strafen_col_gegentore' => 'Gegentore +/-',
+    'ls_strafen_col_punkte' => 'Punkte',
+    'ls_strafen_col_erzielt' => 'Erzielte Tore',
+    'ls_strafen_col_gegentore' => 'Gegentore',
+    'ls_strafen_col_minuspunkte' => 'Minuspunkte',
     'ls_strafen_col_grund' => 'Grund (optional)',
     'ls_tab_spieltage'     => 'Spieltags- und Spiel-Anzahl',
 

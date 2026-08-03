@@ -2,7 +2,8 @@
 /**
  * Project: LMOnext
  * Filename: lang/frontend/de.php
- * Fileversion: 1.25.0
+ * Fileversion: 1.26.0
+ * Changelog: 1.26.0 - Tooltip-Key für die neue Minuspunkte-Korrektur ergänzt
  * Changelog: 1.25.0 - Strafpunkte-Tooltip-Keys aktualisiert für die erweiterten
  *                     Bonus/Strafe-Felder (erzielte Tore ergänzt)
  * Changelog: 1.24.0 - Übersetzungen für den neuen Strafpunkte/Straftore-Tooltip in der
@@ -212,6 +213,7 @@ return [
     'liga_standings_col_pkt'      => 'Pkt',
     'liga_standings_straf_erzielt'   => 'Tore',
     'liga_standings_straf_gegentore' => 'Gegentore',
+    'liga_standings_straf_minuspunkte' => 'Minuspunkte',
     'liga_schedule_pick_team'     => 'Bitte wählen Sie jetzt eine Mannschaft aus.',
 
     // ── Direkter Vergleich (Vergleichs-Modal) ─────────────────────────────────

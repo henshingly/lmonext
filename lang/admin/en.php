@@ -2,7 +2,9 @@
 /**
  * Project: LMOnext
  * Filename: lang/admin/en.php
- * Fileversion: 1.14.9
+ * Fileversion: 1.15.0
+ * Changelog: 1.15.0 - Added translations for the fourth "Minus points" penalty column and the
+ *                     reworked dropdown-based input
  * Changelog: 1.14.9 - Updated translations for the extended penalty/bonus fields (points/goals
  *                     scored/goals against, all signed)
  * Changelog: 1.14.8 - Added translations for the new "Teams" tab in league settings and the new
@@ -799,12 +801,13 @@ return [
     'ls_tab_spielsystem'   => 'Game system',
     'ls_tab_tabelle'       => 'Table',
     'ls_tab_strafen'       => 'Penalties',
-    'ls_strafen_hinweis'   => 'All three values are signed: positive = bonus (e.g. points/goals awarded retroactively), negative = penalty/deduction. "Points" affects the table points, "goals scored" the team\'s own goals, "goals against" the goals conceded. Only affects this league, not other leagues/seasons of the same team. License-withdrawal example: to set a team to 0:0 goals and 0 points, enter the negative of its current values here (e.g. points -19, goals scored -41, goals against -75). 0/0/0 and an empty reason remove an existing entry again.',
+    'ls_strafen_hinweis'   => 'All four values are entered via a dropdown (+ or −) plus a positive number - no minus sign needed. "Points" affects the table points, "goals scored"/"goals against" the respective goal counts, "minus points" the separate minus-points display (see the Game System tab → Minus points). Only affects this league, not other leagues/seasons of the same team. License-withdrawal example: to set a team to 0:0 goals, 0 points and 0 minus points, select "−" and enter the current value for each. All zero and an empty reason remove an existing entry again.',
     'ls_strafen_keine_teams' => 'No teams are assigned to this league yet.',
     'ls_strafen_col_team'  => 'Team',
-    'ls_strafen_col_punkte' => 'Points +/-',
-    'ls_strafen_col_erzielt' => 'Goals scored +/-',
-    'ls_strafen_col_gegentore' => 'Goals against +/-',
+    'ls_strafen_col_punkte' => 'Points',
+    'ls_strafen_col_erzielt' => 'Goals scored',
+    'ls_strafen_col_gegentore' => 'Goals against',
+    'ls_strafen_col_minuspunkte' => 'Minus points',
     'ls_strafen_col_grund' => 'Reason (optional)',
     'ls_tab_spieltage'     => 'Matchday & match count',
 

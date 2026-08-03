@@ -2,7 +2,8 @@
 /**
  * Project: LMOnext
  * Filename: data_loader.php
- * Fileversion: 1.7.6
+ * Fileversion: 1.7.7
+ * Changelog: 1.7.7 - minuspunkte_korrektur-Spalte/Migration ergänzt (analog zu tore_korrektur)
  * Changelog: 1.7.6 - tore_korrektur-Spalte/Migration auch beim reinen Anzeigen des "Strafen"-Tabs
  *                     berücksichtigt (nicht erst beim Speichern), damit bereits gespeicherte
  *                     Strafpunkte/Straftore nicht scheinbar verschwinden
@@ -393,7 +394,10 @@ if ($action === 'liga_settings' && isLoggedIn()) {
                 if (!in_array('tore_korrektur', $strafCols, true)) {
                     $db->exec('ALTER TABLE '.tbl('liga_strafpunkte').' ADD COLUMN `tore_korrektur` INT NOT NULL DEFAULT 0 AFTER `straftore`');
                 }
-                $sS = $db->prepare('SELECT team_id, strafpunkte, straftore, tore_korrektur, grund FROM '.tbl('liga_strafpunkte').' WHERE liga_id=?');
+                if (!in_array('minuspunkte_korrektur', $strafCols, true)) {
+                    $db->exec('ALTER TABLE '.tbl('liga_strafpunkte').' ADD COLUMN `minuspunkte_korrektur` INT NOT NULL DEFAULT 0 AFTER `tore_korrektur`');
+                }
+                $sS = $db->prepare('SELECT team_id, strafpunkte, straftore, tore_korrektur, minuspunkte_korrektur, grund FROM '.tbl('liga_strafpunkte').' WHERE liga_id=?');
                 $sS->execute([$lid]);
                 $ligaSettingsData['strafen'] = array_column($sS->fetchAll(), null, 'team_id');
             } catch (Throwable) {
