@@ -2,7 +2,10 @@
 /**
  * Project: LMOnext
  * Filename: addon/tipp/frontend_tipp.php
- * Fileversion: 0.1.0
+ * Fileversion: 0.2.0
+ * Changelog: 0.2.0 - Tippeinsicht: tippGetEinsichtDaten() liefert alle Tipps aller Tipper für
+ *                     eine Spiel-Liste, respektiert dabei je Partie einzeln den eingestellten
+ *                     Veröffentlichungszeitpunkt (sofort/nach Abgabeschluss/nach Ergebnis)
  * Changelog: 0.1.0 - Initiale (vorläufige) Version der Tipper-Ansicht: Session-Verwaltung,
  *                     Anmeldung, Login/Logout, Tippabgabe (nur Ligenweise-Modus, nur
  *                     Ergebnis-Tippmodus vollständig getestet) und eine einfache Live-
@@ -273,6 +276,51 @@ function tippGetAbgabeFuerPartien(int $tipperId, array $partieIds) : array
 }
 
 // ── Live-Punkteberechnung ────────────────────────────────────────────────────
+
+/**
+ * Liefert alle Tipps aller Tipper für eine Liste von Partien (Tippeinsicht),
+ * respektiert dabei die Admin-Einstellung "Veröffentlichungszeitpunkt der
+ * Tipps" (tippeinsicht_zeitpunkt: sofort/abgabeschluss/ergebnis) je Partie
+ * einzeln - ein Spiel kann schon sichtbar sein, während ein anderes im
+ * selben Spieltag es noch nicht ist.
+ *
+ * @return array<int,array<int,array>> [partieId => [tipperId => tippRow]]
+ */
+function tippGetEinsichtDaten(array $partien) : array
+{
+    $zeitpunkt = getTippSetting('tippeinsicht_zeitpunkt', 'abgabeschluss');
+    $sichtbareIds = [];
+    foreach ($partien as $p) {
+        $sichtbar = match ($zeitpunkt) {
+            'sofort' => true,
+            'ergebnis' => $p['h_tore'] !== null && $p['g_tore'] !== null,
+            default => !tippIstAenderbar($p['zeit'] ?? null, $p['spieltag_start'] ?? null),
+        };
+        if ($sichtbar) {
+            $sichtbareIds[] = (int)$p['id'];
+        }
+    }
+    if (empty($sichtbareIds)) {
+        return [];
+    }
+    try {
+        $ph = implode(',', array_fill(0, count($sichtbareIds), '?'));
+        $stmt = getDB()->prepare(
+            'SELECT tt.*, u.nickname FROM ' . tbl('tipp_tipp') . ' tt
+               JOIN ' . tbl('tipp_user') . ' u ON u.id = tt.tipper_id
+              WHERE tt.partie_id IN (' . $ph . ')
+              ORDER BY u.nickname ASC'
+        );
+        $stmt->execute($sichtbareIds);
+        $result = [];
+        foreach ($stmt->fetchAll() as $row) {
+            $result[(int)$row['partie_id']][(int)$row['tipper_id']] = $row;
+        }
+        return $result;
+    } catch (Throwable) {
+        return [];
+    }
+}
 
 /**
  * Die zentrale, einzige Punkteberechnung für einen einzelnen Tipp im
