@@ -2,7 +2,10 @@
 /**
  * Project: LMOnext
  * Filename: src/Liga/RenderViewsTrait.php
- * Fileversion: 1.1.0
+ * Fileversion: 1.2.0
+ * Changelog: 1.2.0 - Die Admin-Einstellung "Minuspunkte" (Tab Spielsystem) wird jetzt tatsächlich
+ *                     ausgewertet: Pkt-Spalte zeigt bei aktivierter Option "Pkt:Minuspunkte" statt
+ *                     nur "Pkt" (siehe StandingsTrait.php 1.2.0 für die Berechnung)
  * Changelog: 1.1.0 - $ligaId an alle vier computeStandings()-Aufrufe übergeben (Tabelle,
  *                     Kreuztabelle, Fieberkurven, Ligastatistik), damit admin-seitig hinterlegte
  *                     Strafpunkte/Straftore korrekt einfließen (siehe StandingsTrait.php 1.1.0).
@@ -381,6 +384,8 @@ trait RenderViewsTrait
         $totalTeams = count($rows);
         $showLogos  = ($opts['ShowLogos'] ?? '0') === '1';
     
+        $showMinuspunkte = ($opts['MinusPoints'] ?? '0') === '1';
+
         $rowsHtml = '';
         foreach ($rows as $i => $r) {
             $diff = $r['tore_h'] - $r['tore_g'];
@@ -399,7 +404,7 @@ trait RenderViewsTrait
                 'Tore'     => $r['tore_h'] . ':' . $r['tore_g'],
                 'Diff'     => ($diff > 0 ? '+' : '') . $diff,
                 'DiffClass'=> $diff > 0 ? ' diff-pos' : ($diff < 0 ? ' diff-neg' : ''),
-                'Pkt'      => (string)$r['pkt'],
+                'Pkt'      => $showMinuspunkte ? ($r['pkt'] . ':' . $r['minuspunkte']) : (string)$r['pkt'],
             ]);
         }
     

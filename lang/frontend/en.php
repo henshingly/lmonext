@@ -2,7 +2,9 @@
 /**
  * Project: LMOnext
  * Filename: lang/frontend/en.php
- * Fileversion: 1.24.0
+ * Fileversion: 1.25.0
+ * Changelog: 1.25.0 - Updated penalty-points tooltip keys for the extended bonus/penalty fields
+ *                     (goals scored added)
  * Changelog: 1.24.0 - Added translations for the new penalty points/goals tooltip in the
  *                     league table (see renderStrafHinweis() in src/Liga/StandingsTrait.php 1.1.0)
  * Changelog: 1.23.0 - Added translations for the Tippspiel template integration (page title,
@@ -204,8 +206,8 @@ return [
     'liga_standings_col_tore'     => 'Goals',
     'liga_standings_col_diff'     => 'GD',
     'liga_standings_col_pkt'      => 'Pts',
-    'liga_standings_straf_punkte' => 'penalty points',
-    'liga_standings_straf_tore'   => 'penalty goals',
+    'liga_standings_straf_erzielt'   => 'goals',
+    'liga_standings_straf_gegentore' => 'goals against',
     'liga_schedule_pick_team'     => 'Please select a team now.',
 
     // ── Head-to-head comparison modal ─────────────────────────────────────────

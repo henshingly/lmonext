@@ -2,7 +2,17 @@
 /**
  * Project: LMOnext
  * Filename: src/Liga/StandingsTrait.php
- * Fileversion: 1.1.0
+ * Fileversion: 1.2.0
+ * Changelog: 1.2.0 - Kundenwunsch (2 Punkte): (1) Minuspunkte-Anzeige (Admin-Einstellung
+ *                     "MinusPoints" existierte schon lange, wurde aber nirgends gelesen) - neue
+ *                     Berechnung der klassischen "Gewinnpunkte:Verlustpunkte"-Darstellung je
+ *                     Team, respektiert das jeweils konfigurierte Punktesystem statt fest 2/1/0
+ *                     anzunehmen; (2) Strafen/Bonus-Feature erweitert: dritter Korrekturwert
+ *                     "tore_korrektur" (erzielte Tore) ergänzt, damit Punkte UND beide Tor-Werte
+ *                     unabhängig voneinander mit +/- korrigiert werden können (z.B. Lizenzentzug:
+ *                     Team komplett auf 0:0/0 setzen). Alle drei Werte jetzt klar als
+ *                     vorzeichenbehaftet (Bonus/Strafe) dokumentiert und im Tooltip entsprechend
+ *                     mit korrektem Vorzeichen angezeigt
  * Changelog: 1.1.0 - Neues Feature "Strafpunkte/Straftore": computeStandings() bekommt einen
  *                     optionalen $ligaId-Parameter (Rückwärtskompatibel, Standard null = kein
  *                     Verhaltenswechsel für bestehende Aufrufer ohne Liga-Bezug) und zieht damit
@@ -83,8 +93,8 @@ trait StandingsTrait
             $rows[(int)$t['id']] = [
                 'id' => (int)$t['id'], 'name' => $t['name'], 'kurz' => $t['kurz'] ?? '',
                 'sp' => 0, 's' => 0, 'u' => 0, 'n' => 0,
-                'tore_h' => 0, 'tore_g' => 0, 'pkt' => 0,
-                'strafpunkte' => 0, 'straftore' => 0, 'strafgrund' => '',
+                'tore_h' => 0, 'tore_g' => 0, 'pkt' => 0, 'minuspunkte' => 0,
+                'strafpunkte' => 0, 'straftore' => 0, 'torekorrektur' => 0, 'strafgrund' => '',
             ];
         }
     
@@ -98,10 +108,10 @@ trait StandingsTrait
                 continue;
             }
             if (!isset($rows[$hId])) {
-                $rows[$hId] = ['id' => $hId, 'name' => $p['heim_name'] ?? '', 'kurz' => '', 'sp' => 0, 's' => 0, 'u' => 0, 'n' => 0, 'tore_h' => 0, 'tore_g' => 0, 'pkt' => 0, 'strafpunkte' => 0, 'straftore' => 0, 'strafgrund' => ''];
+                $rows[$hId] = ['id' => $hId, 'name' => $p['heim_name'] ?? '', 'kurz' => '', 'sp' => 0, 's' => 0, 'u' => 0, 'n' => 0, 'tore_h' => 0, 'tore_g' => 0, 'pkt' => 0, 'minuspunkte' => 0, 'strafpunkte' => 0, 'straftore' => 0, 'torekorrektur' => 0, 'strafgrund' => ''];
             }
             if (!isset($rows[$gId])) {
-                $rows[$gId] = ['id' => $gId, 'name' => $p['gast_name'] ?? '', 'kurz' => '', 'sp' => 0, 's' => 0, 'u' => 0, 'n' => 0, 'tore_h' => 0, 'tore_g' => 0, 'pkt' => 0, 'strafpunkte' => 0, 'straftore' => 0, 'strafgrund' => ''];
+                $rows[$gId] = ['id' => $gId, 'name' => $p['gast_name'] ?? '', 'kurz' => '', 'sp' => 0, 's' => 0, 'u' => 0, 'n' => 0, 'tore_h' => 0, 'tore_g' => 0, 'pkt' => 0, 'minuspunkte' => 0, 'strafpunkte' => 0, 'straftore' => 0, 'torekorrektur' => 0, 'strafgrund' => ''];
             }
     
             $ht = (int)$p['h_tore'];
@@ -126,38 +136,50 @@ trait StandingsTrait
             if ($ht > $gt) {
                 $rows[$hId]['s']++;
                 $rows[$hId]['pkt'] += $curW;
+                $rows[$hId]['minuspunkte'] += $curL;
                 $rows[$gId]['n']++;
                 $rows[$gId]['pkt'] += $curL;
+                $rows[$gId]['minuspunkte'] += $curW;
             } elseif ($ht < $gt) {
                 $rows[$gId]['s']++;
                 $rows[$gId]['pkt'] += $curW;
+                $rows[$gId]['minuspunkte'] += $curL;
                 $rows[$hId]['n']++;
                 $rows[$hId]['pkt'] += $curL;
+                $rows[$hId]['minuspunkte'] += $curW;
             } else {
                 $rows[$hId]['u']++;
                 $rows[$hId]['pkt'] += $curD;
+                $rows[$hId]['minuspunkte'] += $curD;
                 $rows[$gId]['u']++;
                 $rows[$gId]['pkt'] += $curD;
+                $rows[$gId]['minuspunkte'] += $curD;
             }
         }
     
-        // Straftore/Strafpunkte anwenden (Admin → Liga-Einstellungen → Strafen,
-        // siehe getLigaStrafpunkte()) - NACH der regulären Punkteberechnung,
-        // damit sie unabhängig vom gewählten Punktesystem (2er/3er, n.V./i.E.)
-        // als fester Abzug on top wirken. $ligaId ist optional (null), damit
-        // computeStandings() für Kontexte ohne Liga-Bezug (z.B. reine
-        // Was-wäre-wenn-Berechnungen) unverändert ohne DB-Zugriff nutzbar bleibt.
+        // Straftore/Strafpunkte bzw. Bonuspunkte/Bonustore anwenden (Admin →
+        // Liga-Einstellungen → Strafen, siehe getLigaStrafpunkte()) - NACH der
+        // regulären Punkteberechnung, damit sie unabhängig vom gewählten
+        // Punktesystem (2er/3er, n.V./i.E.) als fester Zu-/Abschlag on top
+        // wirken. Alle drei Werte sind VORZEICHENBEHAFTET: positiv = Bonus,
+        // negativ = Strafe - z.B. um einem Team wegen Lizenzentzugs alle
+        // Saisonwerte auf 0:0/0 zu korrigieren, unabhängig vom aktuellen
+        // Spielstand. $ligaId ist optional (null), damit computeStandings()
+        // für Kontexte ohne Liga-Bezug (z.B. reine Was-wäre-wenn-Berechnungen)
+        // unverändert ohne DB-Zugriff nutzbar bleibt.
         if ($ligaId !== null) {
             $strafen = self::getLigaStrafpunkte($ligaId);
             foreach ($strafen as $teamId => $s) {
                 if (!isset($rows[$teamId])) {
                     continue; // Team ist nicht (mehr) Teil dieser Liga
                 }
-                $rows[$teamId]['strafpunkte'] = $s['strafpunkte'];
-                $rows[$teamId]['straftore']   = $s['straftore'];
-                $rows[$teamId]['strafgrund']  = $s['grund'];
-                $rows[$teamId]['pkt']        -= $s['strafpunkte'];
-                $rows[$teamId]['tore_g']     += $s['straftore'];
+                $rows[$teamId]['strafpunkte']    = $s['strafpunkte'];
+                $rows[$teamId]['straftore']      = $s['straftore'];
+                $rows[$teamId]['torekorrektur']  = $s['tore_korrektur'];
+                $rows[$teamId]['strafgrund']     = $s['grund'];
+                $rows[$teamId]['pkt']           -= $s['strafpunkte'];
+                $rows[$teamId]['tore_g']        += $s['straftore'];
+                $rows[$teamId]['tore_h']        += $s['tore_korrektur'];
             }
         }
 
@@ -187,7 +209,8 @@ trait StandingsTrait
     {
         static $done = false; if ($done) return; $done = true;
         try {
-            getDB()->exec('CREATE TABLE IF NOT EXISTS ' . tbl('liga_strafpunkte') . ' (
+            $db = getDB();
+            $db->exec('CREATE TABLE IF NOT EXISTS ' . tbl('liga_strafpunkte') . ' (
                 `id`          INT AUTO_INCREMENT PRIMARY KEY,
                 `liga_id`     INT NOT NULL,
                 `team_id`     INT NOT NULL,
@@ -197,6 +220,15 @@ trait StandingsTrait
                 `updated_at`  TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
                 UNIQUE KEY `liga_team` (`liga_id`, `team_id`)
             ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci');
+
+            // Migration: Korrektur der "erzielten Tore" (tore_h) - ursprünglich
+            // gab es nur "straftore" (wirkt auf die Gegentore/tore_g). Ergänzt
+            // um die Bielefeld-Lizenzentzug-Situation abzudecken (Punkte UND
+            // beide Tor-Werte auf 0 korrigieren zu können), siehe Changelog.
+            $cols = $db->query('SHOW COLUMNS FROM ' . tbl('liga_strafpunkte'))->fetchAll(PDO::FETCH_COLUMN);
+            if (!in_array('tore_korrektur', $cols, true)) {
+                $db->exec('ALTER TABLE ' . tbl('liga_strafpunkte') . ' ADD COLUMN `tore_korrektur` INT NOT NULL DEFAULT 0 AFTER `straftore`');
+            }
         } catch (\Throwable) {
             // Wird bei jedem Aufruf erneut versucht (static $done bleibt auf
             // dieser Instanz zwar true, aber ein neuer Request versucht es
@@ -206,26 +238,30 @@ trait StandingsTrait
     }
 
     /**
-     * Liefert alle für eine Liga hinterlegten Strafpunkte/Straftore, indiziert
-     * nach Team-ID. Teams ohne Eintrag fehlen im Ergebnis (kein Datensatz
-     * angelegt für 0/0 - siehe setLigaStrafpunkte()).
+     * Liefert alle für eine Liga hinterlegten Korrekturen (Strafpunkte/
+     * Bonuspunkte, Straftore/Bonustore bei den Gegentoren, sowie eine
+     * Korrektur der erzielten Tore), indiziert nach Team-ID. Alle drei Werte
+     * sind vorzeichenbehaftet - positiv = Bonus, negativ = Strafe/Abzug. Teams
+     * ohne Eintrag fehlen im Ergebnis (kein Datensatz angelegt für 0/0/0 -
+     * siehe setLigaStrafpunkte()).
      *
-     * @return array<int,array{strafpunkte:int,straftore:int,grund:string}>
+     * @return array<int,array{strafpunkte:int,straftore:int,tore_korrektur:int,grund:string}>
      */
     public static function getLigaStrafpunkte(int $ligaId) : array
     {
         self::ensureStrafpunkteSchema();
         try {
             $stmt = getDB()->prepare(
-                'SELECT team_id, strafpunkte, straftore, grund FROM ' . tbl('liga_strafpunkte') . ' WHERE liga_id = ?'
+                'SELECT team_id, strafpunkte, straftore, tore_korrektur, grund FROM ' . tbl('liga_strafpunkte') . ' WHERE liga_id = ?'
             );
             $stmt->execute([$ligaId]);
             $result = [];
             foreach ($stmt->fetchAll() as $r) {
                 $result[(int)$r['team_id']] = [
-                    'strafpunkte' => (int)$r['strafpunkte'],
-                    'straftore'   => (int)$r['straftore'],
-                    'grund'       => (string)($r['grund'] ?? ''),
+                    'strafpunkte'    => (int)$r['strafpunkte'],
+                    'straftore'      => (int)$r['straftore'],
+                    'tore_korrektur' => (int)($r['tore_korrektur'] ?? 0),
+                    'grund'          => (string)($r['grund'] ?? ''),
                 ];
             }
             return $result;
@@ -235,14 +271,14 @@ trait StandingsTrait
     }
 
     /**
-     * Speichert die Strafpunkte/Straftore-Einträge für eine Liga (ein
-     * Formular-Submit mit einer Zeile je Team, siehe Admin → Liga-
-     * Einstellungen → Strafen). Teams mit 0 Strafpunkten, 0 Straftoren und
-     * leerem Grund werden aus der Tabelle entfernt statt als Leerzeile
-     * gespeichert - hält die Tabelle sauber und "kein Eintrag" bedeutet
-     * eindeutig "keine Strafe".
+     * Speichert die Korrektur-Einträge (Punkte/erzielte Tore/Gegentore, alle
+     * vorzeichenbehaftet) für eine Liga (ein Formular-Submit mit einer Zeile
+     * je Team, siehe Admin → Liga-Einstellungen → Strafen). Teams mit 0 in
+     * allen drei Werten und leerem Grund werden aus der Tabelle entfernt
+     * statt als Leerzeile gespeichert - hält die Tabelle sauber und "kein
+     * Eintrag" bedeutet eindeutig "keine Korrektur".
      *
-     * @param array<int,array{strafpunkte?:int|string,straftore?:int|string,grund?:string}> $eintraege team_id => Werte
+     * @param array<int,array{strafpunkte?:int|string,straftore?:int|string,tore_korrektur?:int|string,grund?:string}> $eintraege team_id => Werte
      */
     public static function setLigaStrafpunkte(int $ligaId, array $eintraege) : bool
     {
@@ -250,9 +286,10 @@ trait StandingsTrait
         try {
             $db = getDB();
             $upsert = $db->prepare(
-                'INSERT INTO ' . tbl('liga_strafpunkte') . ' (liga_id, team_id, strafpunkte, straftore, grund)
-                 VALUES (?, ?, ?, ?, ?)
-                 ON DUPLICATE KEY UPDATE strafpunkte = VALUES(strafpunkte), straftore = VALUES(straftore), grund = VALUES(grund)'
+                'INSERT INTO ' . tbl('liga_strafpunkte') . ' (liga_id, team_id, strafpunkte, straftore, tore_korrektur, grund)
+                 VALUES (?, ?, ?, ?, ?, ?)
+                 ON DUPLICATE KEY UPDATE strafpunkte = VALUES(strafpunkte), straftore = VALUES(straftore),
+                                         tore_korrektur = VALUES(tore_korrektur), grund = VALUES(grund)'
             );
             $delete = $db->prepare('DELETE FROM ' . tbl('liga_strafpunkte') . ' WHERE liga_id = ? AND team_id = ?');
 
@@ -260,13 +297,14 @@ trait StandingsTrait
                 $teamId = (int)$teamId;
                 $sp     = (int)($e['strafpunkte'] ?? 0);
                 $st     = (int)($e['straftore'] ?? 0);
+                $tk     = (int)($e['tore_korrektur'] ?? 0);
                 $grund  = trim((string)($e['grund'] ?? ''));
 
-                if ($sp === 0 && $st === 0 && $grund === '') {
+                if ($sp === 0 && $st === 0 && $tk === 0 && $grund === '') {
                     $delete->execute([$ligaId, $teamId]);
                     continue;
                 }
-                $upsert->execute([$ligaId, $teamId, $sp, $st, $grund !== '' ? $grund : null]);
+                $upsert->execute([$ligaId, $teamId, $sp, $st, $tk, $grund !== '' ? $grund : null]);
             }
             return true;
         } catch (\Throwable) {
@@ -283,15 +321,22 @@ trait StandingsTrait
     {
         $sp = (int)($row['strafpunkte'] ?? 0);
         $st = (int)($row['straftore'] ?? 0);
-        if ($sp === 0 && $st === 0) {
+        $tk = (int)($row['torekorrektur'] ?? 0);
+        if ($sp === 0 && $st === 0 && $tk === 0) {
             return '';
         }
         $teile = [];
         if ($sp !== 0) {
-            $teile[] = '-' . $sp . ' ' . tf('liga_standings_straf_punkte');
+            // wirkt via pkt -= strafpunkte, d.h. der tatsächliche Effekt auf die
+            // Punktzahl hat das UMGEKEHRTE Vorzeichen des gespeicherten Werts
+            $effekt = -$sp;
+            $teile[] = ($effekt > 0 ? '+' : '') . $effekt . ' ' . tf('liga_standings_col_pkt');
+        }
+        if ($tk !== 0) {
+            $teile[] = ($tk > 0 ? '+' : '') . $tk . ' ' . tf('liga_standings_straf_erzielt');
         }
         if ($st !== 0) {
-            $teile[] = '+' . $st . ' ' . tf('liga_standings_straf_tore');
+            $teile[] = ($st > 0 ? '+' : '') . $st . ' ' . tf('liga_standings_straf_gegentore');
         }
         $tooltip = implode(', ', $teile);
         $grund = trim((string)($row['strafgrund'] ?? ''));

@@ -2,7 +2,10 @@
 /**
  * Project: LMOnext
  * Filename: data_loader.php
- * Fileversion: 1.7.5
+ * Fileversion: 1.7.6
+ * Changelog: 1.7.6 - tore_korrektur-Spalte/Migration auch beim reinen Anzeigen des "Strafen"-Tabs
+ *                     berücksichtigt (nicht erst beim Speichern), damit bereits gespeicherte
+ *                     Strafpunkte/Straftore nicht scheinbar verschwinden
  * Changelog: 1.7.5 - $ligaSettingsData['teams'] liefert jetzt auch kurz/mittel (nicht nur id/name),
  *                     benötigt für den neuen "Teams"-Tab in admin/view_liga_settings.php 1.5.0
  * Changelog: 1.7.4 - $ligaSettingsData['strafen'] ergänzt (Strafpunkte/Straftore je Team, siehe
@@ -381,9 +384,16 @@ if ($action === 'liga_settings' && isLoggedIn()) {
             // Strafpunkte/Straftore je Team (siehe admin/handler_settings.php,
             // case 'strafen') - Tabelle existiert evtl. noch nicht auf älteren
             // Installationen, daher eigener try/catch statt den äußeren
-            // abzubrechen.
+            // abzubrechen. Migration für "tore_korrektur" (erzielte Tore) läuft
+            // hier ZUSÄTZLICH zum Save-Handler, damit bereits gespeicherte
+            // Strafpunkte/Straftore beim bloßen Ansehen des Tabs nicht
+            // scheinbar verschwinden, bevor einmal gespeichert wurde.
             try {
-                $sS = $db->prepare('SELECT team_id, strafpunkte, straftore, grund FROM '.tbl('liga_strafpunkte').' WHERE liga_id=?');
+                $strafCols = $db->query('SHOW COLUMNS FROM '.tbl('liga_strafpunkte'))->fetchAll(PDO::FETCH_COLUMN);
+                if (!in_array('tore_korrektur', $strafCols, true)) {
+                    $db->exec('ALTER TABLE '.tbl('liga_strafpunkte').' ADD COLUMN `tore_korrektur` INT NOT NULL DEFAULT 0 AFTER `straftore`');
+                }
+                $sS = $db->prepare('SELECT team_id, strafpunkte, straftore, tore_korrektur, grund FROM '.tbl('liga_strafpunkte').' WHERE liga_id=?');
                 $sS->execute([$lid]);
                 $ligaSettingsData['strafen'] = array_column($sS->fetchAll(), null, 'team_id');
             } catch (Throwable) {

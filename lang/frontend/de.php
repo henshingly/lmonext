@@ -2,7 +2,9 @@
 /**
  * Project: LMOnext
  * Filename: lang/frontend/de.php
- * Fileversion: 1.24.0
+ * Fileversion: 1.25.0
+ * Changelog: 1.25.0 - Strafpunkte-Tooltip-Keys aktualisiert für die erweiterten
+ *                     Bonus/Strafe-Felder (erzielte Tore ergänzt)
  * Changelog: 1.24.0 - Übersetzungen für den neuen Strafpunkte/Straftore-Tooltip in der
  *                     Liga-Tabelle ergänzt (siehe renderStrafHinweis() in
  *                     src/Liga/StandingsTrait.php 1.1.0)
@@ -208,8 +210,8 @@ return [
     'liga_standings_col_tore'     => 'Tore',
     'liga_standings_col_diff'     => 'Diff',
     'liga_standings_col_pkt'      => 'Pkt',
-    'liga_standings_straf_punkte' => 'Strafpunkte',
-    'liga_standings_straf_tore'   => 'Straftore',
+    'liga_standings_straf_erzielt'   => 'Tore',
+    'liga_standings_straf_gegentore' => 'Gegentore',
     'liga_schedule_pick_team'     => 'Bitte wählen Sie jetzt eine Mannschaft aus.',
 
     // ── Direkter Vergleich (Vergleichs-Modal) ─────────────────────────────────

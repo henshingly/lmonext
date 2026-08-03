@@ -2,7 +2,10 @@
 /**
  * Project: LMOnext
  * Filename: handler_settings.php
- * Fileversion: 1.3.7
+ * Fileversion: 1.3.8
+ * Changelog: 1.3.8 - Tab "Strafen" um dritten Korrekturwert "erzielte Tore" erweitert (neue
+ *                     Spalte tore_korrektur, Migration inklusive), damit z.B. bei Lizenzentzug
+ *                     Punkte UND beide Tor-Werte unabhängig korrigiert werden können
  * Changelog: 1.3.7 - Neuer Tab "Strafen" (Liga-Einstellungen): Strafpunkte/Straftore je Team,
  *                     eigene Tabelle liga_strafpunkte, wirkt sich nur in dieser Liga aus (siehe
  *                     admin/view_liga_settings.php, computeStandings() in
@@ -150,10 +153,12 @@ if ($action === 'save_liga_settings' && $_SERVER['REQUEST_METHOD'] === 'POST') {
 
             case 'strafen':
                 // Eigener Zweig, NICHT über den liga_options-$save()-Helper -
-                // Strafpunkte/Straftore leben pro Liga+Team in einer eigenen
-                // Tabelle (liga_strafpunkte), damit eine Strafe gezielt nur in
-                // genau der Liga wirkt, in der sie eingetragen wurde - nicht
-                // global für das Team über alle Ligen/Saisons hinweg.
+                // Strafpunkte/Straftore/Tore-Korrektur leben pro Liga+Team in
+                // einer eigenen Tabelle (liga_strafpunkte), damit eine
+                // Korrektur gezielt nur in genau der Liga wirkt, in der sie
+                // eingetragen wurde - nicht global für das Team über alle
+                // Ligen/Saisons hinweg. Alle drei Werte sind vorzeichenbehaftet
+                // (positiv = Bonus, negativ = Strafe/Abzug).
                 //
                 // Bewusst eigenständige SQL statt eines Aufrufs von
                 // setLigaStrafpunkte() aus frontend/data_liga.php: der
@@ -163,20 +168,28 @@ if ($action === 'save_liga_settings' && $_SERVER['REQUEST_METHOD'] === 'POST') {
                 // fortgeführt, siehe auch StandingsTrait::ensureStrafpunkteSchema()
                 // für die frontend-seitige Variante derselben Tabelle.
                 $db->exec('CREATE TABLE IF NOT EXISTS ' . tbl('liga_strafpunkte') . ' (
-                    `id`          INT AUTO_INCREMENT PRIMARY KEY,
-                    `liga_id`     INT NOT NULL,
-                    `team_id`     INT NOT NULL,
-                    `strafpunkte` INT NOT NULL DEFAULT 0,
-                    `straftore`   INT NOT NULL DEFAULT 0,
-                    `grund`       VARCHAR(255) NULL DEFAULT NULL,
-                    `updated_at`  TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+                    `id`             INT AUTO_INCREMENT PRIMARY KEY,
+                    `liga_id`        INT NOT NULL,
+                    `team_id`        INT NOT NULL,
+                    `strafpunkte`    INT NOT NULL DEFAULT 0,
+                    `straftore`      INT NOT NULL DEFAULT 0,
+                    `tore_korrektur` INT NOT NULL DEFAULT 0,
+                    `grund`          VARCHAR(255) NULL DEFAULT NULL,
+                    `updated_at`     TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
                     UNIQUE KEY `liga_team` (`liga_id`, `team_id`)
                 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci');
+                // Migration für Installationen, die diese Tabelle schon vor der
+                // "erzielte Tore"-Erweiterung angelegt hatten
+                $strafCols = $db->query('SHOW COLUMNS FROM ' . tbl('liga_strafpunkte'))->fetchAll(PDO::FETCH_COLUMN);
+                if (!in_array('tore_korrektur', $strafCols, true)) {
+                    $db->exec('ALTER TABLE ' . tbl('liga_strafpunkte') . ' ADD COLUMN `tore_korrektur` INT NOT NULL DEFAULT 0 AFTER `straftore`');
+                }
 
                 $strafUpsert = $db->prepare(
-                    'INSERT INTO ' . tbl('liga_strafpunkte') . ' (liga_id, team_id, strafpunkte, straftore, grund)
-                     VALUES (?, ?, ?, ?, ?)
-                     ON DUPLICATE KEY UPDATE strafpunkte = VALUES(strafpunkte), straftore = VALUES(straftore), grund = VALUES(grund)'
+                    'INSERT INTO ' . tbl('liga_strafpunkte') . ' (liga_id, team_id, strafpunkte, straftore, tore_korrektur, grund)
+                     VALUES (?, ?, ?, ?, ?, ?)
+                     ON DUPLICATE KEY UPDATE strafpunkte = VALUES(strafpunkte), straftore = VALUES(straftore),
+                                             tore_korrektur = VALUES(tore_korrektur), grund = VALUES(grund)'
                 );
                 $strafDelete = $db->prepare('DELETE FROM ' . tbl('liga_strafpunkte') . ' WHERE liga_id = ? AND team_id = ?');
 
@@ -185,12 +198,13 @@ if ($action === 'save_liga_settings' && $_SERVER['REQUEST_METHOD'] === 'POST') {
                     if ($teamId <= 0) { continue; }
                     $sp    = (int)($_POST['strafe_punkte'][$i] ?? 0);
                     $st    = (int)($_POST['strafe_tore'][$i] ?? 0);
+                    $tk    = (int)($_POST['strafe_erzielt'][$i] ?? 0);
                     $grund = trim((string)($_POST['strafe_grund'][$i] ?? ''));
-                    if ($sp === 0 && $st === 0 && $grund === '') {
+                    if ($sp === 0 && $st === 0 && $tk === 0 && $grund === '') {
                         $strafDelete->execute([$lid, $teamId]);
                         continue;
                     }
-                    $strafUpsert->execute([$lid, $teamId, $sp, $st, $grund !== '' ? $grund : null]);
+                    $strafUpsert->execute([$lid, $teamId, $sp, $st, $tk, $grund !== '' ? $grund : null]);
                 }
                 break;
         }
