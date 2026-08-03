@@ -1,6 +1,7 @@
 <!--
-  Partial: standings_view.tpl.php | Fileversion: 1.0.0
+  Partial: standings_view.tpl.php | Fileversion: 1.1.0
   Rahmen um die Liga-Tabelle
+  Changelog: 1.1.0 - Neuer Platzhalter "Fussnoten" (siehe default 1.2.0)
 -->
 <div class="card">
   <div class="table-scroll">
@@ -23,4 +24,5 @@
       </tbody>
     </table>
   </div>
+  <!--Fussnoten-->
 </div>

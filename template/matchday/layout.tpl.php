@@ -2,7 +2,8 @@
 <html lang="<!--HtmlLang-->">
 <head>
 <!--
-  Template: matchday | Filename: layout.tpl.php | Fileversion: 1.1.1
+  Template: matchday | Filename: layout.tpl.php | Fileversion: 1.1.2
+  Changelog: 1.1.2 - CSS für die Strafpunkte-Fußnotenliste ergänzt (siehe default 1.16.2)
   Changelog: 1.1.1 - CSS für .st-straf-hinweis ergänzt (siehe default 1.16.1)
   Changelog: 1.1.0 - CSS für die Tippspiel-Integration ergänzt, mit eigenen Variablennamen
                      (--ink/--line/--accent-ink/--pitch/--danger) an das Scoreboard-Design
@@ -300,6 +301,12 @@ table.standings-table td{padding:9px 10px;border-top:1px solid var(--line)}
 .st-pkt{text-align:center;font-weight:700;color:var(--ink);width:1%;white-space:nowrap;
   font-family:var(--font-display);font-size:1.05rem;font-variant-numeric:tabular-nums}
 .st-straf-hinweis{cursor:help;font-size:.8rem;margin-left:3px}
+.st-straf-hinweis a{color:inherit;text-decoration:none}
+.st-straf-hinweis a:hover{text-decoration:underline}
+.st-footnotes{padding:10px 16px 4px;border-top:1px solid var(--line)}
+.st-footnote-item{font-size:.8rem;color:var(--muted);margin:4px 0}
+.st-footnote-item a{color:var(--muted);text-decoration:none;margin-right:2px}
+.st-footnote-item a:hover{text-decoration:underline}
 .st-num.diff-pos{color:var(--pitch);font-weight:700}
 .st-num.diff-neg{color:var(--danger);font-weight:700}
 

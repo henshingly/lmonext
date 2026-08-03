@@ -2,7 +2,14 @@
 /**
  * Project: LMOnext
  * Filename: src/Liga/StandingsTrait.php
- * Fileversion: 1.3.0
+ * Fileversion: 1.4.0
+ * Changelog: 1.4.0 - Kundenwunsch: Strafpunkte-Begründungen erscheinen jetzt automatisch als
+ *                     Fußnoten unter der Tabelle, im Wikipedia-Stil ("(1) Begründungstext") -
+ *                     neue Funktionen assignStrafFootnotes() (vergibt fortlaufende Nummern in
+ *                     Tabellenreihenfolge, nur an Teams mit Grund UND tatsächlichem Effekt) und
+ *                     renderStrafFootnotes() (baut die Liste). renderStrafHinweis() zeigt bei
+ *                     vorhandenem Grund jetzt eine anklickbare Fußnoten-Nummer "(N)" statt nur
+ *                     eines Warnsymbols, Tooltip mit den genauen Deltas bleibt zusätzlich erhalten
  * Changelog: 1.3.0 - Kundenwunsch (Mobile-Rückmeldung): (1) Vierten Korrekturwert
  *                     "minuspunkte_korrektur" ergänzt, damit die separate Minuspunkte-Anzeige
  *                     ebenfalls (z.B. auf 0) korrigierbar ist - vorher blieb sie bei einer
@@ -332,7 +339,17 @@ trait StandingsTrait
      * vorliegt. Erwartet eine Zeile aus computeStandings() (mit den Feldern
      * strafpunkte/straftore/strafgrund).
      */
-    public static function renderStrafHinweis(array $row) : string
+    /**
+     * Kleine hochgestellte Fußnoten-Referenz "(N)" für die Tabellenzeile
+     * eines Teams mit Strafpunkten/Straftoren, analog zur Wikipedia-Tabellen-
+     * Fußnote (siehe z.B. "Arminia Bielefeld (1)"). $footnoteNr ist die
+     * fortlaufende Nummer dieses Teams unter allen Teams MIT Grund in dieser
+     * Tabelle (1-basiert, siehe assignStrafFootnotes()) - leerer String, wenn
+     * kein Grund hinterlegt ist ODER keine Strafe/kein Bonus vorliegt.
+     * Behält den detaillierten Tooltip (genaue Punkte-/Tore-Deltas) zusätzlich
+     * zur sichtbaren Fußnoten-Nummer bei.
+     */
+    public static function renderStrafHinweis(array $row, int $footnoteNr = 0) : string
     {
         $sp = (int)($row['strafpunkte'] ?? 0);
         $st = (int)($row['straftore'] ?? 0);
@@ -359,7 +376,69 @@ trait StandingsTrait
         if ($grund !== '') {
             $tooltip .= ' (' . $grund . ')';
         }
+        // Grund vorhanden -> sichtbare Fußnoten-Nummer wie bei Wikipedia,
+        // sonst (nur Zahlenkorrektur ohne Begründung) weiterhin nur das
+        // Warnsymbol mit Tooltip, da keine Fußnote zum Verlinken existiert.
+        if ($grund !== '' && $footnoteNr > 0) {
+            return ' <sup class="st-straf-hinweis" title="' . h($tooltip) . '" id="strafnote-ref-' . $footnoteNr . '">'
+                 . '<a href="#strafnote-' . $footnoteNr . '">(' . $footnoteNr . ')</a></sup>';
+        }
         return ' <span class="st-straf-hinweis" title="' . h($tooltip) . '">⚠</span>';
+    }
+
+    /**
+     * Weist allen Tabellenzeilen MIT hinterlegtem Grund fortlaufende
+     * Fußnoten-Nummern zu (1-basiert, in Tabellenreihenfolge - so wie bei
+     * Wikipedia). Reine Zahlenkorrekturen ohne Grund bekommen keine Nummer
+     * (siehe renderStrafHinweis()).
+     *
+     * @param array<int,array> $rows Ergebnis von computeStandings(), bereits sortiert
+     * @return array<int,int> team_id => Fußnoten-Nummer (nur Teams mit Grund)
+     */
+    public static function assignStrafFootnotes(array $rows) : array
+    {
+        $nrn = [];
+        $next = 1;
+        foreach ($rows as $r) {
+            $grund = trim((string)($r['strafgrund'] ?? ''));
+            if ($grund === '') {
+                continue;
+            }
+            $sp = (int)($r['strafpunkte'] ?? 0);
+            $st = (int)($r['straftore'] ?? 0);
+            $tk = (int)($r['torekorrektur'] ?? 0);
+            $mk = (int)($r['minuspunktekorrektur'] ?? 0);
+            if ($sp === 0 && $st === 0 && $tk === 0 && $mk === 0) {
+                continue; // kein tatsächlicher Effekt, keine Fußnote nötig
+            }
+            $nrn[(int)$r['id']] = $next++;
+        }
+        return $nrn;
+    }
+
+    /**
+     * Baut die Fußnoten-Liste unter der Tabelle, im Wikipedia-Stil
+     * "(1) Begründungstext". Leerer String, wenn keine Fußnoten vorliegen.
+     *
+     * @param array<int,array> $rows Ergebnis von computeStandings()
+     * @param array<int,int>   $footnoteNrs von assignStrafFootnotes()
+     */
+    public static function renderStrafFootnotes(array $rows, array $footnoteNrs) : string
+    {
+        if (empty($footnoteNrs)) {
+            return '';
+        }
+        $byId = [];
+        foreach ($rows as $r) {
+            $byId[(int)$r['id']] = $r;
+        }
+        $items = '';
+        foreach ($footnoteNrs as $teamId => $nr) {
+            $grund = trim((string)($byId[$teamId]['strafgrund'] ?? ''));
+            $items .= '<p id="strafnote-' . $nr . '" class="st-footnote-item">'
+                    . '<a href="#strafnote-ref-' . $nr . '">(' . $nr . ')</a> ' . h($grund) . '</p>';
+        }
+        return '<div class="st-footnotes">' . $items . '</div>';
     }
     /**
      * Ermittelt die Randfarbe (Tabellenmarkierung, siehe Admin → Liga-

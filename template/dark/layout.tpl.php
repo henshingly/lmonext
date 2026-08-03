@@ -2,7 +2,8 @@
 <html lang="<!--HtmlLang-->">
 <head>
 <!--
-  Template: dark | Filename: layout.tpl.php | Fileversion: 1.4.1
+  Template: dark | Filename: layout.tpl.php | Fileversion: 1.4.2
+  Changelog: 1.4.2 - CSS für die Strafpunkte-Fußnotenliste ergänzt (siehe default 1.16.2)
   Changelog: 1.4.1 - CSS für .st-straf-hinweis ergänzt (siehe default 1.16.1)
   Changelog: 1.4.0 - CSS für die Tippspiel-Integration ergänzt (siehe default 1.16.0)
   Changelog: 1.3.0 - Neuer Platzhalter "TippspielLink" im Footer, neben der Sprachauswahl
@@ -255,6 +256,12 @@ table.standings-table td{padding:8px 10px;border-top:1px solid var(--border)}
 .st-num{text-align:center;width:1%;white-space:nowrap}
 .st-pkt{text-align:center;font-weight:700;color:var(--accent);width:1%;white-space:nowrap}
 .st-straf-hinweis{cursor:help;font-size:.8rem;margin-left:3px}
+.st-straf-hinweis a{color:inherit;text-decoration:none}
+.st-straf-hinweis a:hover{text-decoration:underline}
+.st-footnotes{padding:10px 16px 4px;border-top:1px solid var(--border)}
+.st-footnote-item{font-size:.8rem;color:var(--muted);margin:4px 0}
+.st-footnote-item a{color:var(--muted);text-decoration:none;margin-right:2px}
+.st-footnote-item a:hover{text-decoration:underline}
 .st-num.diff-pos{color:var(--green)}
 .st-num.diff-neg{color:#f87171}
 

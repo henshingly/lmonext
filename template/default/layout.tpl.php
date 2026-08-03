@@ -2,7 +2,9 @@
 <html lang="<!--HtmlLang-->">
 <head>
 <!--
-  Template: default | Filename: layout.tpl.php | Fileversion: 1.16.1
+  Template: default | Filename: layout.tpl.php | Fileversion: 1.16.2
+  Changelog: 1.16.2 - CSS für die neue Strafpunkte-Fußnotenliste (.st-footnotes/.st-footnote-item,
+                      Wikipedia-Stil) ergänzt, .st-straf-hinweis um Link-Styling erweitert
   Changelog: 1.16.1 - CSS für .st-straf-hinweis ergänzt (⚠-Marker mit Tooltip bei Strafpunkten/
                       Straftoren in der Tabelle, siehe renderStrafHinweis() in
                       src/Liga/StandingsTrait.php)
@@ -331,6 +333,12 @@ table.standings-table td{padding:8px 10px;border-top:1px solid var(--border)}
 .st-num{text-align:center;width:1%;white-space:nowrap}
 .st-pkt{text-align:center;font-weight:700;color:var(--accent);width:1%;white-space:nowrap}
 .st-straf-hinweis{cursor:help;font-size:.8rem;margin-left:3px}
+.st-straf-hinweis a{color:inherit;text-decoration:none}
+.st-straf-hinweis a:hover{text-decoration:underline}
+.st-footnotes{padding:10px 16px 4px;border-top:1px solid var(--border)}
+.st-footnote-item{font-size:.8rem;color:var(--muted);margin:4px 0}
+.st-footnote-item a{color:var(--muted);text-decoration:none;margin-right:2px}
+.st-footnote-item a:hover{text-decoration:underline}
 .st-num.diff-pos{color:var(--green)}
 .st-num.diff-neg{color:#dc2626}
 

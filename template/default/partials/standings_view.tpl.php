@@ -1,6 +1,9 @@
 <!--
-  Partial: standings_view.tpl.php | Fileversion: 1.1.0
+  Partial: standings_view.tpl.php | Fileversion: 1.2.0
   Rahmen um die Liga-Tabelle
+  Changelog: 1.2.0 - Neuer Platzhalter "Fussnoten" für die Strafpunkte-Begründungen im
+                     Wikipedia-Stil ("(1) Begründungstext" unter der Tabelle, siehe
+                     renderStrafFootnotes() in src/Liga/StandingsTrait.php)
   Changelog: 1.1.0 - Wertungshinweis-Zeile entfernt
   Changelog: 1.0.0 - Initiale Version
 -->
@@ -25,4 +28,5 @@
       </tbody>
     </table>
   </div>
+  <!--Fussnoten-->
 </div>

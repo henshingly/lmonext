@@ -2,7 +2,9 @@
 /**
  * Project: LMOnext
  * Filename: src/Liga/RenderViewsTrait.php
- * Fileversion: 1.2.0
+ * Fileversion: 1.3.0
+ * Changelog: 1.3.0 - Neuer Platzhalter "Fussnoten" für die Strafpunkte-Begründungen im
+ *                     Wikipedia-Stil (siehe StandingsTrait.php 1.4.0)
  * Changelog: 1.2.0 - Die Admin-Einstellung "Minuspunkte" (Tab Spielsystem) wird jetzt tatsächlich
  *                     ausgewertet: Pkt-Spalte zeigt bei aktivierter Option "Pkt:Minuspunkte" statt
  *                     nur "Pkt" (siehe StandingsTrait.php 1.2.0 für die Berechnung)
@@ -385,6 +387,7 @@ trait RenderViewsTrait
         $showLogos  = ($opts['ShowLogos'] ?? '0') === '1';
     
         $showMinuspunkte = ($opts['MinusPoints'] ?? '0') === '1';
+        $footnoteNrs = self::assignStrafFootnotes($rows);
 
         $rowsHtml = '';
         foreach ($rows as $i => $r) {
@@ -395,7 +398,7 @@ trait RenderViewsTrait
                 'Logo'     => self::renderTeamLogoImgWrapped((int)$r['id'], $showLogos),
                 'Team'     => h($r['name']),
                 'TeamClass'=> ($favTeamId !== null && $r['id'] === $favTeamId) ? ' fav-team' : '',
-                'StrafHinweis' => self::renderStrafHinweis($r),
+                'StrafHinweis' => self::renderStrafHinweis($r, $footnoteNrs[(int)$r['id']] ?? 0),
                 'RowStyle' => $markerColor !== '' ? ' style="border-left-color:' . h($markerColor) . '"' : '',
                 'Sp'       => (string)$r['sp'],
                 'S'        => (string)$r['s'],
@@ -419,6 +422,7 @@ trait RenderViewsTrait
             'ColDiff'     => h(tf('liga_standings_col_diff')),
             'ColPkt'      => h(tf('liga_standings_col_pkt')),
             'Rows'        => $rowsHtml,
+            'Fussnoten'   => self::renderStrafFootnotes($rows, $footnoteNrs),
         ]);
     }
     /**
