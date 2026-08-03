@@ -3,11 +3,11 @@
  * Project: LMOnext
  * Filename: src/Liga/StandingsTrait.php
  * Fileversion: 1.4.1
- * Changelog: 1.4.1 - Kundenwunsch: Die Fußnote erscheint jetzt schon, sobald "Grund" befüllt
+ * Changelog: 1.4.1 - Die Fußnote erscheint jetzt schon, sobald "Grund" befüllt
  *                     ist - unabhängig davon, ob überhaupt eine der vier Zahlenkorrekturen
  *                     (Punkte/erzielte Tore/Gegentore/Minuspunkte) von 0 abweicht. Vorher wurde
  *                     ein reiner Grund ohne Zahlenänderung fälschlich unterdrückt
- * Changelog: 1.4.0 - Kundenwunsch: Strafpunkte-Begründungen erscheinen jetzt automatisch als
+ * Changelog: 1.4.0 - Strafpunkte-Begründungen erscheinen jetzt automatisch als
  *                     Fußnoten unter der Tabelle, im Wikipedia-Stil ("(1) Begründungstext") -
  *                     neue Funktionen assignStrafFootnotes() (vergibt fortlaufende Nummern in
  *                     Tabellenreihenfolge, nur an Teams mit Grund UND tatsächlichem Effekt) und
