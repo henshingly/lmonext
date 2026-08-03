@@ -2,7 +2,14 @@
 /**
  * Project: LMOnext
  * Filename: addon/tipp/tipp_lib.php
- * Fileversion: 0.6.0
+ * Fileversion: 0.6.1
+ * Changelog: 0.6.1 - Kundenwunsch: tippRequestPasswordReset() sucht jetzt wahlweise über
+ *                     Nickname ODER Email (statt nur Email) und liefert bei Nichtfund eine
+ *                     konkrete Rückmeldung (welches der beiden Felder nichts fand) statt der
+ *                     bisherigen neutralen "falls diese Email existiert..."-Meldung - bewusste
+ *                     Abkehr vom Standard-Security-Pattern auf expliziten Wunsch für diese
+ *                     Testinstallation. Signatur geändert: (string $nickname, string $email),
+ *                     Rückgabe jetzt array{ok,reason} statt bool
  * Changelog: 0.6.0 - Self-Service-Kontobearbeitung für Tipper: tippUpdateOwnAccount() (Nickname
  *                     und "freigeschaltet" bleiben admin-exklusiv unveränderbar),
  *                     tippRequestPasswordReset()/tippResetPassword() ("Passwort vergessen",
@@ -477,17 +484,43 @@ function tippUpdateOwnAccount(int $tipperId, array $data, ?string $newPassword) 
  * sich die Registrierungs-Emailadresse eines Dritten erraten/prüfen lässt).
  * Diese Funktion hier liefert intern den tatsächlichen Erfolg für Tests/Logs.
  */
-function tippRequestPasswordReset(string $email) : bool
+/**
+ * "Passwort vergessen": erzeugt einen Reset-Code (1 Stunde gültig) und
+ * verschickt einen Link an die HINTERLEGTE Email-Adresse des Tippers -
+ * unabhängig davon, ob die Suche über Nickname oder Email erfolgte.
+ * Sucht wahlweise über $nickname ODER $email (genau eines der beiden sollte
+ * befüllt sein; ist der Nickname befüllt, hat er Vorrang). Liefert bewusst
+ * ein konkretes "nicht gefunden" zurück statt der sonst in solchen Flows
+ * üblichen neutralen Meldung - ausdrücklicher Kundenwunsch für diese
+ * Testinstallation.
+ *
+ * @return array{ok:bool,reason:?string} reason ist bei ok=false eine der
+ *         Sprachschlüssel-Endungen 'not_found_nickname'/'not_found_email'/
+ *         'both_empty', sonst null
+ */
+function tippRequestPasswordReset(string $nickname, string $email) : array
 {
+    $nickname = trim($nickname);
+    $email    = trim($email);
+    if ($nickname === '' && $email === '') {
+        return ['ok' => false, 'reason' => 'both_empty'];
+    }
     ensureTippSchema();
+    $notFoundReason = $nickname !== '' ? 'not_found_nickname' : 'not_found_email';
     try {
         $db = getDB();
-        $stmt = $db->prepare('SELECT id, nickname, vorname, nachname FROM ' . tbl('tipp_user') . ' WHERE email = ?');
-        $stmt->execute([trim($email)]);
+        if ($nickname !== '') {
+            $stmt = $db->prepare('SELECT id, nickname, email, vorname, nachname FROM ' . tbl('tipp_user') . ' WHERE nickname = ?');
+            $stmt->execute([$nickname]);
+        } else {
+            $stmt = $db->prepare('SELECT id, nickname, email, vorname, nachname FROM ' . tbl('tipp_user') . ' WHERE email = ?');
+            $stmt->execute([$email]);
+        }
         $tipper = $stmt->fetch();
         if ($tipper === false) {
-            return false;
+            return ['ok' => false, 'reason' => $notFoundReason];
         }
+
         $code = bin2hex(random_bytes(24));
         $expires = date('Y-m-d H:i:s', time() + 3600);
         $db->prepare('UPDATE ' . tbl('tipp_user') . ' SET reset_code=?, reset_code_expires=? WHERE id=?')
@@ -496,10 +529,10 @@ function tippRequestPasswordReset(string $email) : bool
         $link = tippSiteBaseUrl() . '/home.php?view=tippspiel&action=passwort_reset&code=' . $code;
         $betreff = tf('tf_tipp_mail_reset_betreff');
         $text = replaceTippPlaceholders(tf('tf_tipp_mail_reset_text'), $tipper) . "\n\n" . $link;
-        sendTippMail($email, $betreff, $text);
-        return true;
+        sendTippMail($tipper['email'], $betreff, $text);
+        return ['ok' => true, 'reason' => null];
     } catch (Throwable) {
-        return false;
+        return ['ok' => false, 'reason' => $notFoundReason];
     }
 }
 
