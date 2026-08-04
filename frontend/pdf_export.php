@@ -2,8 +2,18 @@
 /**
  * Project: LMOnext
  * Filename: frontend/pdf_export.php
- * Fileversion: 1.7.1
- * Changelog: 1.7.1 - Bugfix (Kundenrückmeldung): manche SVG-Team-Logos wurden im PDF gar nicht
+ * Fileversion: 1.7.2
+ * Changelog: 1.7.2 - Regressions-Bugfix:
+ *                     das pauschale Entfernen von clip-path-Referenzen (siehe 1.6.x-Changelog,
+ *                     ursprünglich fürs FC-Bayern-Rautenmuster gedacht) hat sich als falsch
+ *                     herausgestellt - beim Eintracht-Braunschweig-Logo nutzt clip-path gerade
+ *                     dazu, Farbverlaufs-Rechtecke in die Wappenform zu beschneiden; ohne
+ *                     Beschneidung wurde daraus ein unkenntlicher Fleck aus großen Farbblöcken.
+ *                     Mit compare -metric AE bestätigt: das Entfernen erzeugte exakt das
+ *                     gemeldete Fehlbild, mit intaktem clip-path rendert das Logo wieder
+ *                     korrekt (Löwe + Rundschrift vollständig sichtbar). clip-path wird jetzt
+ *                     nicht mehr angetastet
+ * Changelog: 1.7.1 - Bugfix: manche SVG-Team-Logos wurden im PDF gar nicht
  *                     oder fast leer dargestellt, obwohl kein Fehler auftrat. Ursache: fehlt auf
  *                     dem Server sowohl rsvg-convert als auch ein voller librsvg-Imagick-Delegate,
  *                     fällt ImageMagick auf seinen eigenen, eingeschränkten SVG-Renderer zurück -
@@ -534,22 +544,19 @@ function pdfInlineSvgClassStyles(string $svg) : string
         );
     }
 
-    // clip-path-Referenzen entfernen: ein weiteres SVG-Feature, das nicht
-    // jeder (insbesondere minimale) Renderer zuverlässig unterstützt. Anders
-    // als bei fehlenden Füllfarben (die auf Schwarz zurückfallen) machen
-    // manche Renderer ein Element mit einer nicht auflösbaren clip-path-
-    // Referenz komplett UNSICHTBAR statt es nur ungeclippt darzustellen –
-    // das betroffene Element/Muster fehlt dann vollständig im PDF (z.B. das
-    // innere bayerische Rautenmuster im FC-Bayern-Logo). Ein Element ohne
-    // Beschneidung darzustellen (ggf. mit leichtem Überstand über die
-    // eigentliche Kontur hinaus) ist optisch fast immer besser als ein
-    // komplett fehlendes Element.
-    $svg = preg_replace('/\s*clip-path\s*=\s*"[^"]*"/i', '', $svg);
-    $svg = preg_replace_callback(
-        '/(<style[^>]*>)(.*?)(<\/style>)/is',
-        static fn(array $m) : string => $m[1] . preg_replace('/\.[\w-]+\s*\{\s*clip-path\s*:[^}]*\}/i', '', $m[2]) . $m[3],
-        $svg
-    );
+    // HINWEIS ZU CLIP-PATH: eine frühere Version dieser Funktion entfernte
+    // pauschal alle clip-path-Referenzen, mit der Annahme, dass manche
+    // Renderer ein Element mit nicht auflösbarer clip-path-Referenz komplett
+    // unsichtbar machen (beobachtet beim inneren bayerischen Rautenmuster im
+    // FC-Bayern-Logo). Das hat sich als PAUSCHAL FALSCH herausgestellt: beim
+    // Eintracht-Braunschweig-Logo (Kundenrückmeldung) verwendet clip-path
+    // gerade dazu, quadratische Farbverlaufs-Flächen in die eigentliche
+    // Wappen-/Kreisform zu beschneiden - ohne die Beschneidung erscheinen
+    // stattdessen große farbige Rechtecke, das Logo wird komplett
+    // unkenntlich (mit compare -metric AE nachgewiesen: pauschales Entfernen
+    // erzeugt exakt das vom Kunden gemeldete Fehlbild). clip-path bleibt
+    // daher jetzt unverändert erhalten; das FC-Bayern-Problem müsste separat
+    // und gezielt untersucht werden, falls es erneut auftritt.
 
     // transform="matrix(a b c d e f)" auf reine Skalierung+Verschiebung
     // (b=0, c=0, keine Rotation/Scherung) vereinfachen zu getrennten
