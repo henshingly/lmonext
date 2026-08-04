@@ -2,18 +2,7 @@
 /**
  * Project: LMOnext
  * Filename: src/Liga/TeamFormattingTrait.php
- * Fileversion: 1.0.1
- * Changelog: 1.0.1 - Kritischer Bugfix: findTeamLogoPathFrontend() suchte Team-Logos unter
- *                     src/assets/img/teams/ statt im echten assets/img/teams/-Ordner im
- *                     Projekt-Root. Ursache: dirname(__DIR__) geht nur eine Verzeichnisebene
- *                     hoch - korrekt für admin/bootstrap.php (liegt 1 Ebene unter Root), aber
- *                     diese Datei liegt unter src/Liga/, also 2 Ebenen unter Root. Jede
- *                     Besucheransicht zeigte dadurch für JEDES Team immer nur den
- *                     "kein Logo"-Platzhalter, obwohl im Admin hochgeladene Logos korrekt
- *                     vorhanden waren. Jetzt dirname(__DIR__, 2)
- * Changelog: 1.0.0 - Initiale Version: Teil der Umstrukturierung von frontend/data_liga.php in
- *                     fokussierte Traits (siehe frontend/data_liga.php 3.0.0 für den vollen
- *                     Kontext der Umstellung). Team-Anzeige/Logos in Partie-Zeilen (partieTeamName, findTeamLogoPathFrontend, renderTeamLogoImg(Wrapped), partieTeamNameWithLogo(Reversed)).
+ * Fileversion: 1.0.2
  *
  * PHP version 8.2
  *
@@ -31,7 +20,7 @@ namespace LMOnext\Liga;
  */
 trait TeamFormattingTrait
 {
-    public const TEAM_LOGO_EXT_LIST = ['svg', 'jpg', 'jpeg', 'png', 'gif'];
+    public const TEAM_LOGO_EXT_LIST = ['jpg', 'jpeg', 'png', 'gif', 'svg'];
     /**
      * Ob eine Partie eine reine Platzhalter-Leerbegegnung ist – weder Heim noch
      * Gast haben ein echtes Team ODER auch nur einen Anzeige-Namen (heim_label/

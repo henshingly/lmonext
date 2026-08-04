@@ -3,11 +3,6 @@
  * Project: LMOnext
  * Filename: html_start.php
  * Fileversion: 1.4.1
- * Changelog: 1.4.1 - Favicon-Dateien nach assets/favicon/ verschoben, Links angepasst
- * Changelog: 1.4.0 - Favicon-Verlinkung ergänzt (apple-touch-icon, android/ms-icons, manifest.json)
- * Changelog: 1.3.1 - Projektname auf "LMOnext" umgestellt (vorher "Online-Liga-Verwaltung Board" / "OLVBoard")
- * Changelog: 1.3.0 - <html lang> dynamisch aus getCurrentLanguage(); CSS für Sprachauswahl-Dropdown
- * Changelog: 1.2.1 - CSS für details/summary Archiv-Klappfunktion
  *
  * PHP version 8.2
  *

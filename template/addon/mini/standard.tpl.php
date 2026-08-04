@@ -1,19 +1,5 @@
 <!--
   Template: addon/mini | Filename: standard.tpl.php | Fileversion: 1.2.0
-  Changelog: 1.2.0 - Neue Logo-Spalte zwischen Tabellenplatz und Teamname (Platzhalter "Logo",
-                     siehe lmo-minitab.php 1.2.0), eigenständiges CSS (kein Zugriff auf die
-                     globale .team-logo-inline-Klasse des Hauptstylesheets, da diese Tabelle auf
-                     fremden Webseiten läuft)
-  Changelog: 1.1.0 - Bugfix: Tabelle hatte keine Breitenbegrenzung – auf Zielseiten mit eigenen
-                     CSS-Regeln für <table> (z.B. eine übliche "table{width:100%}"-Reset-Regel)
-                     zog sich das Widget dadurch über die volle Seitenbreite statt kompakt zu
-                     bleiben. Jetzt in einen eigenen Wrapper mit max-width + display:inline-block
-                     verpackt, der von den CSS-Regeln der Zielseite unabhängig ist
-  Changelog: 1.0.0 - Initiale Version, angelehnt an das gleichnamige Template des alten LMO
-                     (siehe template/mini/standard.tpl.php dort), aber mit eigenständigem,
-                     modernem CSS passend zum LMOnext-Look. Läuft komplett unabhängig vom
-                     restlichen LMOnext-Stylesheet, da diese Tabelle auf fremden Webseiten
-                     eingebunden wird (kein Zugriff auf die dortigen CSS-Variablen).
   Reines Markup + Platzhalter (siehe addon/mini/lmo-minitab.php), kein PHP.
 -->
 <style>

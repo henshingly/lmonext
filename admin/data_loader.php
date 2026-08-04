@@ -3,67 +3,6 @@
  * Project: LMOnext
  * Filename: data_loader.php
  * Fileversion: 1.7.7
- * Changelog: 1.7.7 - minuspunkte_korrektur-Spalte/Migration ergänzt (analog zu tore_korrektur)
- * Changelog: 1.7.6 - tore_korrektur-Spalte/Migration auch beim reinen Anzeigen des "Strafen"-Tabs
- *                     berücksichtigt (nicht erst beim Speichern), damit bereits gespeicherte
- *                     Strafpunkte/Straftore nicht scheinbar verschwinden
- * Changelog: 1.7.5 - $ligaSettingsData['teams'] liefert jetzt auch kurz/mittel (nicht nur id/name),
- *                     benötigt für den neuen "Teams"-Tab in admin/view_liga_settings.php 1.5.0
- * Changelog: 1.7.4 - $ligaSettingsData['strafen'] ergänzt (Strafpunkte/Straftore je Team, siehe
- *                     admin/handler_settings.php 1.3.7, neuer Tab "Strafen")
- * Changelog: 1.7.3 - nav-Eintrag + pageTitle für "Tippspiel" ergänzt (neues Addon, siehe
- *                     addon/tipp/view_tippspiel.php - aktuell nur ein Platzhalter, die
- *                     eigentliche Verwaltungsoberfläche folgt in kommenden Sitzungen)
- * Changelog: 1.7.2
- * Changelog: 1.7.2 - Teams-Liste liefert jetzt zusätzlich link_count je Team (Anzahl
- *                     Team-Verknüpfungen, siehe team_links), damit in "Teams (global)" auf
- *                     einen Blick erkennbar ist, welche Teams schon verknüpft sind
- * Changelog: 1.7.1
- * Changelog: 1.7.1 - spielerstatData enthält jetzt zusätzlich die Namen aller Teams der Liga
- *                     ("teams"), damit Team-/Mannschaft-/Verein-Spalten im Spielerstatistik-
- *                     Addon als Dropdown statt Freitext angeboten werden können, siehe
- *                     view_spielerstatistik.php
- * Changelog: 1.7.0
- * Changelog: 1.7.0 - Neuer Datenlader für die Spielerstatistik-Verwaltung ("spielerstatistik"
- *                     Action, siehe admin/spielerstat_lib.php + view_spielerstatistik.php)
- * Changelog: 1.6.6 - Bugfix: Duplikat-Erkennung bei "Teams (global)" nutzte ungeschützt
- *                     mb_strtolower() – auf Hosting ohne mbstring-Extension (die laut
- *                     Projektkonvention NICHT garantiert ist, siehe handler_import_export.php/
- *                     pdf_export.php) führte das zu einer Exception, wodurch die komplette
- *                     Teams-Seite leer blieb. Fällt jetzt auf strtolower() + Umlaut-Ersetzung
- *                     zurück, wenn mbstring fehlt
- * Changelog: 1.6.5
- * Changelog: 1.6.5 - Teams-Query liefert jetzt auch teams_global.url mit (Logo&Link-Feature),
- *                     ruft dafür vorher ensureTeamUrlSchema() auf
- * Changelog: 1.6.4
- * Changelog: 1.6.4 - Bugfix KO-Team-Dropdown: die letzte Runde eines Turniers mit "Spiel um
- *                     Platz 3" (KlFin) enthält zwei Paarungen (Finale + kleines Finale), die
- *                     unterschiedliche Vorrunden-Teams brauchen – das Finale die Sieger, das
- *                     Spiel um Platz 3 aber die VERLIERER der Halbfinals. Bisher wurden nur
- *                     Sieger ermittelt, wodurch sich das Spiel um Platz 3 gar nicht eintragen
- *                     ließ. Jetzt werden in der letzten Runde Sieger UND Verlierer der Vorrunde
- *                     gemeinsam zur Auswahl angeboten
- * Changelog: 1.6.3 - Users-Query liefert jetzt auch die E-Mail-Adresse mit (für das neue
- *                     E-Mail-Feld in der Benutzerverwaltung), ruft dafür vorher
- *                     ensurePasswordResetSchema() auf (stellt sicher, dass admin_users.email
- *                     auch auf bestehenden, noch nicht migrierten Installationen existiert)
- * Changelog: 1.6.2 - Bugfix: die pauschale requireLogin()-Pflicht griff auch für "reset_password"
- *                     (die Landingpage aus der "Passwort vergessen"-E-Mail), wodurch ausgeloggte
- *                     Besucher dort sofort zum Login zurückgeschickt wurden statt das
- *                     Neues-Passwort-Formular zu sehen – genau der Fall, für den die Seite
- *                     gedacht ist. "reset_password" ist jetzt wie "login" von der Pflicht
- *                     ausgenommen
- * Changelog: 1.6.1 - pageTitle für "import_review" (Team-Namensabgleich) ergänzt
- * Changelog: 1.6.0 - nav-Eintrag + pageTitle für "Wartung" (Datenbank-Backup/Wiederherstellung) ergänzt
- * Changelog: 1.5.2 - Projektname auf "LMOnext" umgestellt (vorher "Online-Liga-Verwaltung Board" / "OLVBoard")
- * Changelog: 1.5.1 - Bugfix: 'teams'-Action fehlte im pageTitle-match (zeigte fälschlich "Admin" statt "Teams (global)")
- * Changelog: 1.5.0 - nav-Labels + pageTitle über t() übersetzt; 'settings'-Titel ergänzt (fiel bisher auf 'Admin' zurück)
- * Changelog: 1.4.3 - date_default_timezone_set() nach Login aus DB-Einstellung
- * Changelog: 1.4.1 - ticker/tickertext in spieltagData geladen
- * Changelog: 1.3.6 - prevWinners: allPlayed prüft auch -1 (LMO-Legacy für nicht gespielt)
- * Changelog: 1.3.5 - prevWinners: Hin+Rückspiel paarungsweise auswerten (Gesamttore); Dummy-Teams ausschließen
- * Changelog: 1.3.2 - KlFin + totalRounds in spieltagData geladen für Finale/Platz3-Erkennung
- * Changelog: 1.2.0 - teamsData-Lader; nav-Eintrag Teams; pageTitle Teams
  *
  * PHP version 8.2
  *

@@ -3,9 +3,6 @@
  * Project: LMOnext
  * Filename: src/Home/HomeRenderer.php
  * Fileversion: 1.0.0
- * Changelog: 1.0.0 - Initiale Version: Teil der Umstrukturierung von frontend/data_home.php
- *                     (siehe frontend/data_home.php 3.0.0 für den vollen Kontext der
- *                     Umstellung). HTML-Rendering für die Startseite (Liga-Links, Archiv-Ordnerbaum als HTML).
  *
  * PHP version 8.2
  *

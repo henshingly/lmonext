@@ -3,18 +3,6 @@
  * Project: LMOnext
  * Filename: addon/player/frontend_spielerstat.php
  * Fileversion: 1.1.0
- * Changelog: 1.1.0 - Datei nach addon/player/ verschoben (einheitliche Addon-Ordnerstruktur,
- *                     neben addon/mini/). Neu: Spaltenüberschriften-Grafiken (siehe
- *                     findSpielerstatColumnImage(), Ordner assets/addon/player/) und
- *                     Spielerfotos (siehe findPlayerPhotoPath(), Ordner assets/img/player/)
- *                     werden jetzt angezeigt, sofern hinterlegt
- * Changelog: 1.0.1 - Bugfix: Kopfzellen von Text-Spalten (z.B. "Name") bekamen fälschlich die
- *                     rechtsbündige st-num-Klasse wie Zahlenspalten
- * Changelog: 1.0.0 - Initiale Version: Besucher-Ansicht für das neue Spielerstatistik-Addon
- *                     (siehe admin/spielerstat_lib.php für Schema/CRUD). Rewrite von
- *                     addon/spieler/lmo-statshow.php (altes LMO-Addon) auf DB-Basis. Sortierbare
- *                     Spalten, Pagination, optionaler Vereinsfilter (siehe Konfiguration
- *                     "Vereinsweise anzeigen" in der Admin-Verwaltung).
  *
  * PHP version 8.2
  *

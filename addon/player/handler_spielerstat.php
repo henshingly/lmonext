@@ -3,20 +3,6 @@
  * Project: LMOnext
  * Filename: addon/player/handler_spielerstat.php
  * Fileversion: 1.2.0
- * Changelog: 1.2.0 - spst_import blockiert jetzt serverseitig, sobald für die Liga bereits
- *                     mindestens eine Spalte existiert (nicht nur die Oberfläche versteckt das
- *                     Formular, siehe view_spielerstatistik.php 1.2.0) – schützt auch bei
- *                     direktem Aufruf der Aktion
- * Changelog: 1.1.0
- * Changelog: 1.1.0 - Datei nach addon/player/ verschoben. Neuer Handler "spst_upload_photo"
- *                     (Spielerfoto hochladen/entfernen, siehe savePlayerPhotoUpload() in
- *                     spielerstat_lib.php)
- * Changelog: 1.0.0 - Initiale Version: POST-Handler für das neue Spielerstatistik-Addon
- *                     (CRUD für Spalten/Spieler/Werte/Konfiguration, siehe
- *                     admin/spielerstat_lib.php) sowie der Import-Flow für alte .stat/.cfg-
- *                     Dateipaare (siehe admin/spielerstat_import.php), inkl. Team-Abgleich-
- *                     Review-Schritt analog zum bestehenden .l98-Liga-Import
- *                     (view_import_review.php / import_confirm).
  *
  * PHP version 8.2
  *

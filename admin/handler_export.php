@@ -3,10 +3,6 @@
  * Project: LMOnext
  * Filename: handler_export.php
  * Fileversion: 1.2.4
- * Changelog: 1.2.4 - Projektname auf "LMOnext" umgestellt (vorher "Online-Liga-Verwaltung Board" / "OLVBoard")
- * Changelog: 1.2.3 - Flash-Meldung über t() übersetzt
- * Changelog: 1.2.2 - Echter Tickertext aus liga_options statt Platzhalter NC=0 exportiert
- * Changelog: 1.2.0 - Duplikat Actual entfernt; KlFin/playdown/playoffmode ergaenzt; ORDER BY p.spiel_nr -> spiel_nr
  *
  * PHP version 8.2
  *

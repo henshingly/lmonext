@@ -3,18 +3,6 @@
  * Project: LMOnext
  * Filename: view_login.php
  * Fileversion: 1.4.0
- * Changelog: 1.4.0 - "Passwort vergessen?"-Link samt Modal ergänzt (E-Mail eingeben, POST an
- *                     ?action=request_password_reset). Backend/Reset-Landingpage/E-Mail-Versand
- *                     existierten bereits (handler_user.php, view_reset_password.php,
- *                     bootstrap.php), aber ohne diesen Einstiegspunkt auf der Login-Seite war
- *                     die Funktion für Besucher gar nicht erreichbar
- * Changelog: 1.3.3 - Link "Zum Besucherbereich" unterhalb des Formulars ergänzt (wie im alten
- *                     LMO, das dort "Wechsel in den User-Bereich" hatte)
- * Changelog: 1.3.2 - Weiße Karte hinter dem Logo (dunkles Navy hatte auf dem sehr dunklen
- *                     Login-Hintergrund zu wenig Kontrast)
- * Changelog: 1.3.1 - Projektname auf "LMOnext" umgestellt (vorher "Online-Liga-Verwaltung Board" / "OLVBoard")
- * Changelog: 1.3.0 - Logo-Grafik (assets/logo.svg) statt Fußball-Emoji + Text
- * Changelog: 1.2.0 - Texte über t() übersetzt
  *
  * PHP version 8.2
  *

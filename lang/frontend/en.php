@@ -2,89 +2,7 @@
 /**
  * Project: LMOnext
  * Filename: lang/frontend/en.php
- * Fileversion: 1.26.0
- * Changelog: 1.26.0 - Added tooltip key for the new minus-points correction field
- * Changelog: 1.25.0 - Updated penalty-points tooltip keys for the extended bonus/penalty fields
- *                     (goals scored added)
- * Changelog: 1.24.0 - Added translations for the new penalty points/goals tooltip in the
- *                     league table (see renderStrafHinweis() in src/Liga/StandingsTrait.php 1.1.0)
- * Changelog: 1.23.0 - Added translations for the Tippspiel template integration (page title,
- *                     tab labels) - see addon/tipp/view_tippspiel_frontend.php 1.0.0. Several
- *                     old per-view titles (tf_tipp_*_titel, tf_tipp_zur_abgabe) are now unused
- *                     since the new tab bar replaces them - intentionally left in place
- *                     (harmless if still referenced anywhere)
- * Changelog: 1.22.0 - Added translations for the new Tippspiel link in the header/footer and
- *                     the homepage promo card (see addon/tipp/tipp_lib.php 0.5.0)
- * Changelog: 1.21.0 - Added translations for the new Tippspiel leaderboard (see
- *                     addon/tipp/tipp.php 0.3.0, tippGetRangliste() in frontend_tipp.php 0.3.0)
- * Changelog: 1.20.2 - Added missing key "tf_tipp_col_nickname" for the column header in the
- *                     tip overview (see addon/tipp/tipp.php)
- * Changelog: 1.20.1 - Added translations for the tip overview (Tippeinsicht)
- * Changelog: 1.20.0 - Added translations for the new (preliminary) prediction game tipster view
- *                     (login/registration/tip submission, see addon/tipp/tipp.php)
- * Changelog: 1.19.3
- * Changelog: 1.19.3 - Added key "home_overview_disabled" for the homepage message shown when
- *                     the league overview is disabled (see home.php 2.1.0)
- * Changelog: 1.19.2
- * Changelog: 1.19.2 - Added key "h2h_pdf_renamed_note" for the summarized rename note in the
- *                     head-to-head PDF export (see pdf_export.php 1.6.9)
- * Changelog: 1.19.1
- * Changelog: 1.19.1 - Added key "h2h_today_prefix" for the "(today TEAM_TODAY)" annotation on
- *                     linked teams in the head-to-head comparison (see
- *                     resolveLinkedTeamIds()/getHeadToHeadMatches() in data_liga.php 2.18.0)
- * Changelog: 1.19.0
- * Changelog: 1.19.0 - Added translation for the new "Spielfrei" (bye) note
- * Changelog: 1.18.0
- * Changelog: 1.18.0 - Added translations for the new "Player stats" visitor tab
- * Changelog: 1.17.0 - Added translations for the new "Mininext" addon (ported from old LMO, see
- *                     addon/mini/lmo-mininext.php)
- * Changelog: 1.16.9
- * Changelog: 1.16.9 - Added "As of: {datum}" translation for the new Minitabellen addon
- *                     (addon/mini/lmo-minitab.php)
- * Changelog: 1.16.8 - Added 'liga_col_spieltag_long' ('Matchday') for the responsive long/short
- *                     form in the head-to-head comparison modal (web/mobile); short key ('MD')
- *                     unchanged
- * Changelog: 1.16.7 - Added "Template:" (without name) translation, for the footer when the
- *                     selector dropdown appears there instead of the plain name
- * Changelog: 1.16.6 - Added "Theme" translation for the new template-switcher dropdown in the header
- * Changelog: 1.16.5 - Added "No." translation for the matchday-number column in the schedule PDF export
- * Changelog: 1.16.4 - Added PDF footer translation ("© {year} www.liga-manager-online.org.
- *                     All rights reserved. Version {version}")
- * Changelog: 1.16.3 - Added "Results Matchday {n}" PDF title translation
- * Changelog: 1.16.2 - Added translation for the "Export as PDF" button on the results page
- * Changelog: 1.16.1 - Added "Wins {team}" translation for the win chips in the comparison modal
- * Changelog: 1.16.0 - Translations for the head-to-head comparison modal (compare icon,
- *                     modal title, "Draw", "no previous matches") added
- * Changelog: 1.15.0 - Extensive translations for league statistics added (team stat box,
- *                     overall statistics block, streak categories, chances/remaining schedule)
- * Changelog: 1.14.0 - Translations for position-chart tab + placeholder text added
- * Changelog: 1.13.0 - Translation for cross table tab added
- * Changelog: 1.12.2 - Translation for team schedule placeholder added
- * Changelog: 1.12.1 - Removed scoring-line translation (no longer displayed)
- * Changelog: 1.12.0 - Translations for standings view (column headers, scoring line) added
- * Changelog: 1.11.3 - Footer line "Template: {name}" added
- * Changelog: 1.11.2 - Removed the test-site-specific note ("currently MySQL 8.0") again –
- *                     the Info page also runs for other users on their own servers with
- *                     possibly a different database; text stays generic ("MySQL/MariaDB")
- * Changelog: 1.11.1 - Info text now mentions MySQL/MariaDB (instead of just MariaDB) and
- *                     notes that this test site currently runs on MySQL 8.0
- * Changelog: 1.11.0 - Links to homepage + forum added on the Info page
- * Changelog: 1.10.0 - Translations for result suffix "AET"/"pens." added
- * Changelog: 1.9.1 - Projektname auf "LMOnext" umgestellt (vorher "Online-Liga-Verwaltung Board" / "OLVBoard")
- * Changelog: 1.9.0 - Info view rebuilt: now shows "About LMOnext" (version, copyright,
- *                     short description, license) instead of league metadata – matching the
- *                     old LMO's Info page, which is likewise a plain software-info page
- * Changelog: 1.8.0 - Translations for tab navigation (Calendar/Results/Bracket/Info),
- *                     info view and calendar view (month names, weekdays) added
- * Changelog: 1.7.0 - Translation for footer line "Calculation & page build time" added
- * Changelog: 1.6.0 - Removed named KO stages (Round of 32/64/128), replaced with generic
- *                     "Round {n}" (named stages now only apply from 16 teams downward)
- * Changelog: 1.5.0 - Small heading "Stats – {label}:" above the stats line added
- * Changelog: 1.4.0 - Translations for KO round names by team count + third-place match added
- * Changelog: 1.3.0 - Translations for table view (matchday dropdown, date range, stats) added
- * Changelog: 1.2.0 - Translations for matchday navigation (Previous/Next) added
- * Changelog: 1.1.0 - Translations for league detail page (latest results) added
- * Changelog: 1.0.0 - Initial version: visitor home page
+ * Fileversion: 1.27.0
  *
  * PHP version 8.2
  *
@@ -199,6 +117,8 @@ return [
     'liga_stat_streak_unbeaten'   => '{n} games unbeaten',
     'liga_stat_streak_winless'    => '{n} games without a win',
     'liga_standings_col_platz'    => '#',
+    'liga_standings_vorheriger_spieltag' => 'previous matchday',
+    'liga_standings_naechster_spieltag'  => 'next matchday',
     'liga_standings_col_team'     => 'Team',
     'liga_standings_col_sp'       => 'MP',
     'liga_standings_col_s'        => 'W',

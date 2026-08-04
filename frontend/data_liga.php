@@ -2,30 +2,7 @@
 /**
  * Project: LMOnext
  * Filename: frontend/data_liga.php
- * Fileversion: 3.0.2
- * Changelog: 3.0.2 - computeStandings()-Wrapper reicht jetzt den neuen optionalen $ligaId-
- *                     Parameter durch, neue Wrapper getLigaStrafpunkte()/setLigaStrafpunkte()
- *                     ergänzt (siehe src/Liga/StandingsTrait.php 1.1.0, neues Strafpunkte-Feature)
- * Changelog: 3.0.1 - renderBackLinkBlock() von liga.php hierher verschoben, damit auch
- *                     home.php (Tippspiel-View) denselben "← Zur Übersicht"-Link nutzen kann
- * Changelog: 3.0.0 - Große Umstrukturierung: die komplette bisherige Implementierung (~2900
- *                     Zeilen) wurde in fokussierte, einzeln verständliche Traits unter src/Liga/
- *                     aufgeteilt (LigaRepositoryTrait, TeamRepositoryTrait, HeadToHeadTrait,
- *                     StandingsTrait, RenderViewsTrait usw.), zusammengeführt in der Fassade
- *                     LMOnext\Liga\LigaService. Diese Datei ist jetzt eine reine
- *                     Kompatibilitätsschicht: alle 61 bisherigen globalen Funktionsnamen bleiben
- *                     unverändert erhalten und delegieren 1:1 an die neue Struktur - kein
- *                     Aufrufer (liga.php, PDF-Export, Addons) musste angepasst werden. Bewusst
- *                     OHNE Composer/vendor-Abhängigkeit: die Trait-Dateien werden direkt per
- *                     require_once geladen (kein PSR-4-Autoloading nötig), damit die bisherige
- *                     "Dateien hochladen und fertig"-Installation auf Shared Hosting unverändert
- *                     funktioniert. Ursprüngliche Idee/Struktur-Vorlage stammt von einer
- *                     Version von Torsten Hofmann (danke!), hier ohne die dortige .env/Composer-
- *                     Anbindung übernommen. Alte Version vollständig als data_liga_pretraits.php
- *                     erhalten
- * Changelog: 2.21.0 - Performance: gezielte Speicher-Caches (pro Request) für getLigaOptions(),
- *                     getLigaTeamsList() und resolveTeamNumberToId() ergänzt (siehe
- *                     data_liga_pretraits.php für die vollständige Historie älterer Einträge)
+ * Fileversion: 3.0.4
  *
  * PHP version 8.2
  *
@@ -242,14 +219,14 @@ function renderStatsBlock(string $heading, array $partien) : string
     return \LMOnext\Liga\LigaService::renderStatsBlock($heading, $partien);
 }
 
-function renderSpieltagPicker(array $allSpieltage, int $ligaId, ?int $currentNr, bool $isKO, int $maxNr) : string
+function renderSpieltagPicker(array $allSpieltage, int $ligaId, ?int $currentNr, bool $isKO, int $maxNr, string $targetView = 'ergebnisse') : string
 {
-    return \LMOnext\Liga\LigaService::renderSpieltagPicker($allSpieltage, $ligaId, $currentNr, $isKO, $maxNr);
+    return \LMOnext\Liga\LigaService::renderSpieltagPicker($allSpieltage, $ligaId, $currentNr, $isKO, $maxNr, $targetView);
 }
 
-function renderTabsBar(array $flags, int $ligaId, string $currentView) : string
+function renderTabsBar(array $flags, int $ligaId, string $currentView, ?int $activeNr = null) : string
 {
-    return \LMOnext\Liga\LigaService::renderTabsBar($flags, $ligaId, $currentView);
+    return \LMOnext\Liga\LigaService::renderTabsBar($flags, $ligaId, $currentView, $activeNr);
 }
 
 function renderInfoView() : string
@@ -317,9 +294,9 @@ function computeStandingsMarkerColor(int $index, int $totalTeams, array $opts) :
     return \LMOnext\Liga\LigaService::computeStandingsMarkerColor($index, $totalTeams, $opts);
 }
 
-function renderStandingsView(int $ligaId, array $allSpieltage) : string
+function renderStandingsView(int $ligaId, array $allSpieltage, ?int $uptoSpieltag = null) : string
 {
-    return \LMOnext\Liga\LigaService::renderStandingsView($ligaId, $allSpieltage);
+    return \LMOnext\Liga\LigaService::renderStandingsView($ligaId, $allSpieltage, $uptoSpieltag);
 }
 
 function renderTeamScheduleView(int $ligaId, array $allSpieltage, ?int $selectedTeamId) : string

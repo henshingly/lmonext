@@ -3,11 +3,6 @@
  * Project: LMOnext
  * Filename: src/Liga/Eternal/EternalTableService.php
  * Fileversion: 1.0.1
- * Changelog: 1.0.1 - $ligaId an LigaService::computeStandings() übergeben, damit admin-seitig
- *                     hinterlegte Strafpunkte/Straftore (siehe StandingsTrait.php 1.1.0) auch in
- *                     der Ewigen Tabelle korrekt in die historischen Punkte einfließen, statt
- *                     dort ignoriert zu werden
- * Changelog: 1.0.0 - Initiale Version (Torsten Hofmann)
  *
  * Ewige Tabelle + Mehrjahres-Vergleich (Teamvergleich über mehrere Jahre).
  *

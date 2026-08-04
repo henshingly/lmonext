@@ -3,12 +3,6 @@
  * Project: LMOnext
  * Filename: html_layout.php
  * Fileversion: 1.5.0
- * Changelog: 1.5.0 - Link zur Benutzeransicht (home.php) in der Topbar ergänzt, zwischen
- *                     Benutzername und Logout-Button, öffnet in neuem Tab (target=_blank)
- * Changelog: 1.4.0 - Versionsnummer (aus composer.json) im Sidebar-Footer ergänzt
- * Changelog: 1.3.1 - Projektname auf "LMOnext" umgestellt (vorher "Online-Liga-Verwaltung Board" / "OLVBoard")
- * Changelog: 1.3.0 - Sprachauswahl-Dropdown in Topbar (zwischen Titel und Datum); Logout-Label übersetzt
- * Changelog: 1.2.0 - Logout-Button + Benutzername in Topbar; Sidebar-Footer vereinfacht
  *
  * PHP version 8.2
  *

@@ -1,8 +1,5 @@
 <!--
   Template: addon/ewige | Filename: standard.tpl.php | Fileversion: 1.0.1
-  Changelog: 1.0.1 - Die drei Punkte-Spalten waren alle nur mit "Pkt" beschriftet, nicht
-                     unterscheidbar - jetzt "Pkt (hist.)"/"Pkt (2er)"/"Pkt (3er)" mit
-                     erklärendem title-Tooltip
   Ewige Tabelle (aufsummierte Stände über mehrere Ligen), gleiche Optik wie
   template/addon/mini/standard.tpl.php (LMOnext-Look: #153A8C, Rahmen #e3e7ee).
 -->

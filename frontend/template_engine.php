@@ -3,45 +3,6 @@
  * Project: LMOnext
  * Filename: template_engine.php
  * Fileversion: 2.6.0
- * Changelog: 2.6.0 - Neuer automatischer Platzhalter "TippspielLink" (analog zu
- *                     "Sprachauswahl"): renderTemplate() ruft tippRenderSiteLink() auf, das
- *                     selbst prüft ob das Tippspiel aktiv ist (tippIstAktiv()) und ggf. leer
- *                     bleibt - Controller/Templates müssen nichts Zusätzliches tun
- * Changelog: 2.5.1 - Neue globale Einstellung "Sprachauswahl anzeigen?" ausgewertet: die
- *                     Sprachauswahl im Footer/Header wird unterdrückt, wenn deaktiviert – gilt
- *                     zentral für alle Templates und alle Seiten (renderTemplate() wird sowohl
- *                     von home.php als auch liga.php genutzt)
- * Changelog: 2.5.0
- * Changelog: 2.5.0 - Template-Auswahl-Dropdown vom Header in den Footer verschoben: steht jetzt
- *                     direkt in der "Template: ..."-Zeile anstelle des Klartext-Namens (nur wenn
- *                     der Wechsel erlaubt ist und mehr als ein Template existiert – sonst wie
- *                     gehabt reiner Klartext). Der separate Header-Platzhalter "Vorlagenauswahl"
- *                     entfällt dadurch wieder
- * Changelog: 2.4.0 - Neue Funktion renderTemplateSwitcher(): sichtbares Dropdown, mit dem
- *                     Besucher (falls in den Einstellungen erlaubt) zwischen den vorhandenen
- *                     Templates wechseln können. Die Einstellung "Besucher erlauben, Template
- *                     zu wechseln" schaltete bisher nur den ?template=xxx-URL-Parameter frei,
- *                     ohne dass es dafür je eine sichtbare Bedienmöglichkeit für Besucher gab.
- *                     Neuer automatisch befüllter Platzhalter "Vorlagenauswahl" (analog zu
- *                     "Sprachauswahl"), erscheint nur bei mehr als einem verfügbaren Template
- * Changelog: 2.3.0 - renderTemplate() ergänzt zusätzlich Platzhalter "TemplateZeile" (zeigt den
- *                     Namen des aktiven Templates im Footer, z.B. "Template: Default")
- * Changelog: 2.2.0 - renderTemplate() ergänzt Platzhalter "Version" automatisch (aus composer.json,
- *                     für den Footer "LMOnext {Version}")
- * Changelog: 2.1.2 - Interne Bezeichner (TEMPLATE_SESSION_KEY, globale Variable) von "olv_" auf
- *                     "lmonext_" umgestellt
- * Changelog: 2.1.1 - Projektname auf "LMOnext" umgestellt (vorher "Online-Liga-Verwaltung Board" / "OLVBoard")
- * Changelog: 2.1.0 - renderTemplate() ergänzt Platzhalter "Berechnungszeit" automatisch
- *                     (Dauer Berechnungen u. Seitenaufbau, wie im alten LMO-Footer)
- * Changelog: 2.0.0 - Umbau auf reine Platzhalter-Templates (wie das alte LMO mit
- *                     HTML_Template_IT/<!--Platzhalter-->): Templates sind jetzt reine
- *                     .tpl.php-Dateien ohne jegliches PHP – nur Markup + <!--Platzhalter-->.
- *                     Alle Logik (Schleifen, Bedingungen, Datenaufbereitung) lebt in
- *                     frontend/*.php ("Grundgerüst"), das fertige HTML-Fragmente an die
- *                     Templates übergibt. Neu: renderPartial() für wiederkehrende Bausteine
- *                     (Tabellenzeile, Ordnereintrag, Dropdown-Option, …), jeweils eine eigene
- *                     .tpl.php-Datei unter template/<name>/partials/.
- * Changelog: 1.0.0 - Initiale Version (PHP-Include-basiert, überholt)
  *
  * PHP version 8.2
  *

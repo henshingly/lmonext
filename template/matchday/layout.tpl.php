@@ -2,37 +2,7 @@
 <html lang="<!--HtmlLang-->">
 <head>
 <!--
-  Template: matchday | Filename: layout.tpl.php | Fileversion: 1.1.2
-  Changelog: 1.1.2 - CSS für die Strafpunkte-Fußnotenliste ergänzt (siehe default 1.16.2)
-  Changelog: 1.1.1 - CSS für .st-straf-hinweis ergänzt (siehe default 1.16.1)
-  Changelog: 1.1.0 - CSS für die Tippspiel-Integration ergänzt, mit eigenen Variablennamen
-                     (--ink/--line/--accent-ink/--pitch/--danger) an das Scoreboard-Design
-                     angepasst (siehe default 1.16.0)
-  Changelog: 1.0.5 - Neuer Platzhalter "TippspielLink" im Footer, neben der Sprachauswahl
-                     (siehe frontend/template_engine.php 2.6.0)
-  Changelog: 1.0.4 - CSS für ".h2h-match-today" ergänzt (siehe default 1.15.6)
-  Changelog: 1.0.3 - CSS für den neuen "Spielfrei"-Hinweis (spielfrei_note.tpl.php) ergänzt
-  Changelog: 1.0.2 - Auf Wunsch: kein Header mehr. Sprachauswahl in den Footer verschoben
-                     (oberhalb der Versions-/Template-Zeile). main{} bekommt etwas mehr
-                     Abstand nach oben, da keine Header-Leiste mehr vorhanden ist
-  Changelog: 1.0.1 - @font-face ohne "format('truetype-variations')"-Hinweis (manche
-                     Rendering-Engines, u.a. das für Tests verwendete wkhtmltoimage/QtWebKit,
-                     luden die Schrift mit diesem Format-Hinweis gar nicht erst und fielen
-                     stillschweigend auf die Systemschrift zurück). Ohne expliziten
-                     Format-Hinweis versuchen alle gängigen Renderer die Datei zu laden,
-                     unabhängig davon ob sie Variable-Font-Interpolation unterstützen
-  Changelog: 1.0.0 - Initiale Version: komplett eigenständiges Template (kein CSS-Reskin von
-                     "default" wie colored/dark/light, sondern eigenes layout.tpl.php +
-                     home.tpl.php + liga.tpl.php + vollständiger eigener partials/-Satz mit
-                     durchgehend neuer Markup-Struktur). Gestaltungskonzept "Matchday":
-                     Anzeigetafel-inspiriert - kräftiges Oswald (selbst gehostet, OFL) für
-                     Zahlen/Überschriften, scharfe statt runde Ecken, ein einziger kräftiger
-                     Akzent (Electric Lime #C6F000) statt vieler Farben, Tabellenplätze als
-                     große fette "Anzeigetafel"-Ziffern als wiederkehrendes Signatur-Element.
-                     Bestimmte Klassennamen/IDs sind projektweit fest verdrahtet (siehe
-                     data_liga.php: .kreuz-table/.kz-*, #h2h-*, .team-logo-inline,
-                     .btn-pdf-export, .lang-switch/.template-switch) und werden unverändert
-                     übernommen, aber komplett neu gestaltet statt nur umgefärbt.
+  Template: matchday | Filename: layout.tpl.php | Fileversion: 1.1.3
 -->
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -304,6 +274,10 @@ table.standings-table td{padding:9px 10px;border-top:1px solid var(--line)}
 .st-straf-hinweis a{color:inherit;text-decoration:none}
 .st-straf-hinweis a:hover{text-decoration:underline}
 .st-footnotes{padding:10px 16px 4px;border-top:1px solid var(--line)}
+.st-spieltag-nav{display:flex;justify-content:space-between;align-items:center;padding:10px 16px;font-size:.85rem;gap:10px}
+.st-spieltag-nav a{color:var(--ink);text-decoration:none;font-weight:700;text-transform:uppercase;font-size:.78rem;letter-spacing:.02em}
+.st-spieltag-nav a:hover{text-decoration:underline}
+.st-spieltag-nav-next{margin-left:auto}
 .st-footnote-item{font-size:.8rem;color:var(--muted);margin:4px 0}
 .st-footnote-item a{color:var(--muted);text-decoration:none;margin-right:2px}
 .st-footnote-item a:hover{text-decoration:underline}

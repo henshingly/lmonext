@@ -3,45 +3,6 @@
  * Project: LMOnext
  * Filename: handler_liga.php
  * Fileversion: 1.6.5
- * Changelog: 1.6.5 - save_team respektiert jetzt ein optionales POST-Feld "redirect" (nur eigene
- *                     "?action=..."-Ziele erlaubt), damit der neue "Teams"-Tab in den Liga-
- *                     Einstellungen nach dem Speichern dorthin zurückkehrt statt zur
- *                     Liga-Detailseite (Standardverhalten bleibt unverändert, falls kein
- *                     redirect-Feld gesendet wird)
- * Changelog: 1.6.4 - add_team_link übersetzt jetzt die a/b/unbekannt-Richtungswahl in die
- *                     tatsächliche Team-ID (newer_team_id). Neue Aktion
- *                     set_team_link_direction zum nachträglichen Ändern bestehender
- *                     Verknüpfungen, siehe bootstrap.php 1.9.0
- * Changelog: 1.6.3
- * Changelog: 1.6.3 - Neue Aktionen team_links_for (JSON, Team-Verknüpfungen laden),
- *                     add_team_link, delete_team_link – siehe bootstrap.php 1.8.0
- * Changelog: 1.6.2
- * Changelog: 1.6.2 - save_ergebnisse aktualisiert jetzt liga.datum (bisher nur beim Anlegen der
- *                     Liga gesetzt, nie danach) – gibt den Mini-Addons (Minitabelle/Mininext,
- *                     <!--ligaDatum-->) ein echtes "letztes Speicherdatum" statt des
- *                     bisherigen, immer aktuellen Tagesdatums
- * Changelog: 1.6.1
- * Changelog: 1.6.1 - save_global_team speichert jetzt zusätzlich Vereins-URL (team_url, "https://"
- *                     wird automatisch ergänzt falls fehlend) und verarbeitet einen optionalen
- *                     Logo-Upload (team_logo) bzw. dessen Entfernung (remove_logo), siehe
- *                     saveTeamLogoUpload()/deleteTeamLogo() in bootstrap.php
- * Changelog: 1.6.0
- * Changelog: 1.6.0 - Bugfix delete_liga: löscht jetzt kaskadierend auch liga_options/
- *                     liga_teams/liga_team_values/liga_spieltage/liga_partien mit (das Schema
- *                     hat bewusst keine FOREIGN-KEY-Constraints, vorher blieben diese Zeilen
- *                     verwaist zurück). Unterstützt jetzt außerdem denselben "redirect"-POST-
- *                     Parameter wie move_liga_archiv, damit der Löschen-Button auch aus der
- *                     Archiv-Ansicht heraus wieder dorthin zurückführt statt zum Dashboard
- * Changelog: 1.5.0 - Neuer AJAX-Handler team_by_id: Team direkt per numerischer ID nachschlagen
- *                     (für die neue direkte Team-ID-Eingabe im Liga-Detail-Team-Editor)
- * Changelog: 1.4.1 - Projektname auf "LMOnext" umgestellt (vorher "Online-Liga-Verwaltung Board" / "OLVBoard")
- * Changelog: 1.4.0 - Alle Flash-Meldungen über t() übersetzt
- * Changelog: 1.3.4 - status (n.V./i.E.) und bericht_url in save_ergebnisse gespeichert
- * Changelog: 1.3.3 - team_search_all AJAX für Merge-Modal
- * Changelog: 1.3.2 - AJAX Handler team_ligen: Ligen eines Teams abfragen
- * Changelog: 1.3.1 - Handler bulk_archiv: mehrere Ligen auf einmal archivieren
- * Changelog: 1.3.0 - Handler save_archiv_folder, delete_archiv_folder, move_liga_archiv
- * Changelog: 1.2.0 - Handler save_global_team, delete_global_team, merge_teams
  *
  * PHP version 8.2
  *

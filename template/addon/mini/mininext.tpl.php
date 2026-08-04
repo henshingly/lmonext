@@ -1,26 +1,5 @@
 <!--
   Template: addon/mini | Filename: mininext.tpl.php | Fileversion: 1.2.0
-  Changelog: 1.2.0 - Auf Wunsch zurückgebaut: Logo steht wieder über dem Teamnamen (gestapelt)
-                     statt daneben – bei langen Namen wie "Bayer 04 Leverkusen" führte die
-                     horizontale Anordnung zu abgeschnittenem Text ("Bayer 04 Leve..."). Gleiche
-                     Rückänderung im "Vorheriges Spiel"-Block
-  Changelog: 1.1.0 - Team-Anzeige auf Wunsch umgebaut: Logo steht jetzt neben dem Namen statt
-                     darüber ("TEAMNAME LOGO -:- LOGO TEAMNAME", Logos "schauen" zum Ergebnis in
-                     der Mitte), analog zur Ergebnisse-Ansicht der normalen Besucherseite.
-                     CSS-Selektor für die Logo-Größe generisch auf "img im Team-Bereich" gesetzt
-                     statt auf die globale .team-logo-inline-Klasse (existiert auf dieser
-                     eigenständigen Seite nicht). Gleiche Anpassung im "Vorheriges Spiel"-Block
-  Changelog: 1.0.1
-  Changelog: 1.0.1 - box-sizing:border-box + display:inline-block ergänzt (gleiche defensive
-                     Absicherung wie beim Minitabelle-Template-Fix, siehe standard.tpl.php 1.1.0)
-                     gegen abweichende CSS-Regeln auf der Zielseite
-  Changelog: 1.0.0 - Initiale Version, angelehnt an das gleichnamige Template des alten LMO
-                     (siehe template/mini/mininext.tpl.php dort, vom Nutzer als Referenz
-                     bereitgestellt), aber mit eigenständigem, modernem CSS passend zum
-                     LMOnext-Look. Läuft komplett unabhängig vom restlichen LMOnext-Stylesheet,
-                     da dieses Widget auf fremden Webseiten eingebunden wird (kein Zugriff auf
-                     die dortigen CSS-Variablen). Platzhalternamen bewusst identisch zur
-                     Referenzvorlage gehalten, siehe addon/mini/lmo-mininext.php.
   Reines Markup + Platzhalter, kein PHP.
 -->
 <style>

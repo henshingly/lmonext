@@ -3,9 +3,6 @@
  * Project: LMOnext
  * Filename: src/Liga/SpieltagRepositoryTrait.php
  * Fileversion: 1.0.0
- * Changelog: 1.0.0 - Initiale Version: Teil der Umstrukturierung von frontend/data_liga.php in
- *                     fokussierte Traits (siehe frontend/data_liga.php 3.0.0 für den vollen
- *                     Kontext der Umstellung). Spieltag-Abfragen (getAllSpieltage, getMaxSpieltagNummer, getLatestSpieltagWithResults, getSpieltagByNummer, getSpieltagPartien).
  *
  * PHP version 8.2
  *

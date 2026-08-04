@@ -3,11 +3,6 @@
  * Project: LMOnext
  * Filename: handler_ko.php
  * Fileversion: 1.3.2
- * Changelog: 1.3.2 - Projektname auf "LMOnext" umgestellt (vorher "Online-Liga-Verwaltung Board" / "OLVBoard")
- * Changelog: 1.3.1 - Flash-Meldungen (save_ko_runde, fix_ko_rounds) über t() übersetzt
- * Changelog: 1.3.0 - renderKoTeamPicker(): Texte über t() übersetzt
- * Changelog: 1.2.2 - notiz (Spielort) im save_ko_runde gespeichert
- * Changelog: 1.2.0 - koHeimatTeamA() mit playoffMode-Parameter; playoffMode aus liga_options
  *
  * PHP version 8.2
  *

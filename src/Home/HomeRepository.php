@@ -3,9 +3,6 @@
  * Project: LMOnext
  * Filename: src/Home/HomeRepository.php
  * Fileversion: 1.0.0
- * Changelog: 1.0.0 - Initiale Version: Teil der Umstrukturierung von frontend/data_home.php
- *                     (siehe frontend/data_home.php 3.0.0 für den vollen Kontext der
- *                     Umstellung). Datenzugriff für die Startseite (aktive Ligen, Archiv-Ordnerbaum, archivierte Ligen je Ordner).
  *
  * PHP version 8.2
  *

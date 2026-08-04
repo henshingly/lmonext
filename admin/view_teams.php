@@ -3,30 +3,6 @@
  * Project: LMOnext
  * Filename: view_teams.php
  * Fileversion: 1.7.0
- * Changelog: 1.7.0 - Bugfix: Team-Verknüpfungen-Modal bietet jetzt eine explizite Richtungswahl
- *                     ("Wer ist der heutige/aktuelle Name?") beim Anlegen einer Verknüpfung,
- *                     plus ein Dropdown zum nachträglichen Ändern bei bestehenden
- *                     Verknüpfungen – behebt, dass die "(heute...)"-Kennzeichnung im
- *                     Teamvergleich vom Aufrufkontext abhing statt fest zu sein
- * Changelog: 1.6.1
- * Changelog: 1.6.1 - Der 🔗-Button zeigt jetzt eine kleine Zahlen-Markierung, wenn das Team
- *                     bereits Verknüpfungen hat (siehe data_loader.php 1.7.2) – auf einen Blick
- *                     erkennbar, ohne jedes Team einzeln öffnen zu müssen
- * Changelog: 1.6.0
- * Changelog: 1.6.0 - Neues Modal "Team-Verknüpfungen" (🔗-Button je Team), nicht-destruktive
- *                     Alternative zum Merge: verknüpft zwei eigenständige Teams mit Typ
- *                     (Umbenennung/Fusion/Abspaltung/Sonstige) + Freitext-Notiz. Nutzt dieselbe
- *                     Fuzzy-Suche (mergeAllTeams/fuzzyMatch) wie das Merge-Modal
- * Changelog: 1.5.0
- * Changelog: 1.5.0 - Neue Spalte "Logo" in der Tabelle (zeigt hochgeladenes Logo oder
- *                     Platzhalter assets/img/nopic-team.svg, einheitliche Höhe 28px). Im
- *                     Bearbeiten-Formular neues Feld für die Vereins-URL (🔗-Link erscheint
- *                     neben dem Namen, wenn gesetzt) sowie Logo-Upload (SVG/JPG/PNG/GIF,
- *                     min. 50px hoch) inkl. "Logo entfernen"-Checkbox, wenn eins hinterlegt ist.
- *                     Formular braucht dafür enctype="multipart/form-data"
- * Changelog: 1.4.1 - Projektname auf "LMOnext" umgestellt (vorher "Online-Liga-Verwaltung Board" / "OLVBoard")
- * Changelog: 1.4.0 - Alle Texte (PHP + JS) über t() übersetzt
- * Changelog: 1.3.0 - toggleDupsOnly/filterTeams in globalem Scope (waren in DOMContentLoaded eingeschlossen)
  *
  * PHP version 8.2
  *

@@ -3,20 +3,6 @@
  * Project: LMOnext
  * Filename: config_loader.php
  * Fileversion: 1.0.0
- * Changelog: 1.0.0 - Initiale Version: gemeinsame Konfigurations-Ladedatei für
- *                     frontend/bootstrap.php und admin/bootstrap.php. Unterstützt zwei
- *                     gleichwertige Betriebsarten, die install.php je nach Server-Fähigkeiten
- *                     wählt (siehe dort):
- *                       1. Composer/.env-Variante (falls beim Installieren composer.phar
- *                          erfolgreich lief): lädt vendor/autoload.php + .env über
- *                          LMOnext\Core\Env
- *                       2. Klassische config.php-Variante (Standard-Fallback, funktioniert
- *                          auf jedem Shared-Hosting ohne Shell-Zugriff)
- *                     In BEIDEN Fällen werden am Ende dieselben Konstanten definiert
- *                     (DB_HOST/DB_PORT/DB_NAME/DB_USER/DB_PASS/DB_CHARSET/DB_PREFIX) - der
- *                     gesamte übrige Code (getDB(), tbl(), alle Traits unter src/Liga+Home,
- *                     Addons) muss dadurch NICHT wissen, welche Variante gerade aktiv ist und
- *                     bleibt komplett unverändert.
  *
  * PHP version 8.2
  *

@@ -3,26 +3,7 @@
  * Project: LMOnext
  * Filename: addon/mini/lmo-ewigetab.php
  * Fileversion: 1.0.1
- * Changelog: 1.0.1 - Review-Korrekturen (Dietmar Kersting): (1) fehlender
- *                     require_once für src/Liga/Eternal/EternalTableService.php ergänzt (Klasse
- *                     war nicht auffindbar, jeder Aufruf endete in einem Fatal Error); (2)
- *                     Standard-Sortierung von 'pkt3' auf 'pkt' (historische Original-Punkte)
- *                     geändert - entspricht dem traditionellen "Ewige Tabelle"-Ansatz; (3) die im
- *                     Docblock dokumentierte PHP-Variable $wertung für den include()-Modus wurde
- *                     vom Code nie gelesen (nur $_GET) - jetzt konsistent mit den anderen drei
- *                     Parametern ($_REQUEST, dann vorher gesetzte Variable, dann Standard); (4)
- *                     $wertung-Dokumentationsbeispiel im Docblock korrigiert (fehlende
- *                     Anführungszeichen) und als Steuerparameter ergänzt (fehlte komplett)
- * Changelog: 1.0.0 - Initiale Version: Ewige Tabelle (aufsummierte Stände über
- *                     mehrere Ligen) + Mehrjahres-Vergleich (Rang/Punkte je
- *                     Saison) als Addon.
- *                     Nutzt dieselbe Mechanik (Direktaufruf vs. include(),
- *                     ProjektRoot-URL-Präfix, Template-System mit
- *                     "<!-- BEGIN ... -->"-Blöcken). Die eigentliche Optik
- *                     steckt in template/addon/ewige/{standard,matrix}.tpl.php
- *                     Berechnung über LMOnext\Liga\Eternal\EternalTableService,
- *                     der wiederum LigaService::computeStandings() je Liga
- *                     aufruft – gleiche Punktwerte wie im normalen Ligabetrieb.
+ *
  * PHP version 8.2
  *
  * @author    Torsten Hofmann <webmaster@liga-manager-online.org>

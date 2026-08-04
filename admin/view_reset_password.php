@@ -3,10 +3,6 @@
  * Project: LMOnext
  * Filename: view_reset_password.php
  * Fileversion: 1.0.0
- * Changelog: 1.0.0 - Initiale Version: Landingpage für den "Passwort vergessen"-Link aus der
- *                     E-Mail. Prüft den Token (vorhanden + noch nicht abgelaufen) und zeigt bei
- *                     Gültigkeit ein Formular für das neue Passwort (2x Eingabe), sonst eine
- *                     Fehlermeldung mit Link zurück zum Login.
  *
  * PHP version 8.2
  *

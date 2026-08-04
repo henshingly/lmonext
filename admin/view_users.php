@@ -3,12 +3,6 @@
  * Project: LMOnext
  * Filename: view_users.php
  * Fileversion: 1.3.0
- * Changelog: 1.3.0 - E-Mail-Adresse (für "Passwort vergessen") jetzt auch nachträglich editierbar:
- *                     neues Feld im "Benutzer anlegen"-Formular, neue Spalte in der Tabelle,
- *                     neues Feld im Inline-Bearbeiten-Formular
- * Changelog: 1.2.1 - Projektname auf "LMOnext" umgestellt (vorher "Online-Liga-Verwaltung Board" / "OLVBoard")
- * Changelog: 1.2.0 - Alle Texte (PHP + JS-Bestätigung) über t() übersetzt
- * Changelog: 1.1.1 - Spalte "Letzter Login" in Benutzerliste
  *
  * PHP version 8.2
  *

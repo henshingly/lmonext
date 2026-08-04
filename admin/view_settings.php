@@ -3,24 +3,6 @@
  * Project: LMOnext
  * Filename: view_settings.php
  * Fileversion: 1.3.4
- * Changelog: 1.3.4 - Neue Einstellung "Übersicht-Link anzeigen?" in der Karte Besucherbereich,
- *                     entspricht "Ligaauswahl" im alten LMO
- * Changelog: 1.3.3
- * Changelog: 1.3.3 - Neue globale Einstellung "Sprachauswahl anzeigen?" in der Karte
- *                     Besucherbereich – blendet die Sprachauswahl für Besucher auf allen Seiten
- *                     aus, wenn deaktiviert
- * Changelog: 1.3.2
- * Changelog: 1.3.2 - Neue globale Einstellung "PDF-Export für Besucher anzeigen?" in der Karte
- *                     Besucherbereich – blendet den PDF-Button in Ergebnisse/Tabelle/
- *                     Spielplänen/Teamvergleich für alle Liga-Typen und alle Seiten aus,
- *                     wenn deaktiviert
- * Changelog: 1.3.1 - Projektname auf "LMOnext" umgestellt (vorher "Online-Liga-Verwaltung Board" / "OLVBoard")
- * Changelog: 1.3.0 - Neue Karte "Besucherbereich": aktives Template wählen, Template-Wechsel für Besucher erlauben
- * Changelog: 1.2.0 - Alle Texte über t() übersetzt (war bisher übersehen, nur Sprachauswahl war übersetzt)
- * Changelog: 1.1.4 - Standardsprache-Dropdown (speicherbar) ergänzt, wie im alten LMO
- * Changelog: 1.1.3 - Label auf "Zeitzone"; Hilfstext aktualisiert
- * Changelog: 1.1.2 - Vollständige Zeitzonenliste wie im alten LMO
- * Changelog: 1.1.1 - Zeitzone-Einstellung für Import-Konvertierung
  *
  * PHP version 8.2
  *

@@ -3,10 +3,6 @@
  * Project: LMOnext
  * Filename: addon/player/view_spst_import_review.php
  * Fileversion: 1.0.1
- * Changelog: 1.0.1 - Datei nach addon/player/ verschoben (einheitliche Addon-Ordnerstruktur)
- * Changelog: 1.0.0 - Initiale Version: Team-Abgleichsseite für den Spielerstatistik-Import,
- *                     strukturell analog zu view_import_review.php (.l98-Ligaimport), aber pro
- *                     Zeilenindex der importierten .stat-Datei statt pro Team-Nr.
  *
  * PHP version 8.2
  *

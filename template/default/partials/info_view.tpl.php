@@ -1,8 +1,6 @@
 <!--
   Partial: info_view.tpl.php | Fileversion: 1.2.0
   "Über LMOnext"-Ansicht
-  Changelog: 1.2.0 - Links zu Homepage + Forum ergänzt
-  Changelog: 1.1.0 - Projektname auf "LMOnext" umgestellt (vorher "OLVBoard")
 -->
 <div class="card">
   <h2><!--Title--></h2>

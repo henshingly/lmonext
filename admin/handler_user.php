@@ -3,30 +3,6 @@
  * Project: LMOnext
  * Filename: handler_user.php
  * Fileversion: 1.5.4
- * Changelog: 1.5.4 - save_admin_settings speichert jetzt zusätzlich show_back_link
- * Changelog: 1.5.3
- * Changelog: 1.5.3 - save_admin_settings speichert jetzt zusätzlich show_language_switcher
- * Changelog: 1.5.2
- * Changelog: 1.5.2 - save_admin_settings speichert jetzt zusätzlich show_pdf_buttons (neue
- *                     Einstellung "PDF-Export für Besucher anzeigen?" im Besucherbereich)
- * Changelog: 1.5.1 - E-Mail-Adresse jetzt auch nachträglich in der Benutzerverwaltung editierbar
- *                     (create_user + edit_user), nicht mehr nur beim Erst-Setup in install.php
- *                     möglich. Validiert per filter_var(FILTER_VALIDATE_EMAIL), leeres Feld
- *                     löscht die hinterlegte Adresse wieder (NULL)
- * Changelog: 1.5.0 - "Passwort vergessen"-Handler ergänzt: request_password_reset (E-Mail mit
- *                     4h gültigem Link verschicken, invalidiert vorherige offene Anfragen
- *                     desselben Users) und do_reset_password (Token prüfen, neues Passwort
- *                     setzen, Token danach verbraucht)
- * Changelog: 1.4.1 - Projektname auf "LMOnext" umgestellt (vorher "Online-Liga-Verwaltung Board" / "OLVBoard")
- * Changelog: 1.4.0 - save_admin_settings: aktualisiert nur tatsächlich gesendete Felder (Bugfix, da jetzt
- *                     mehrere Formulare dieselbe Action nutzen); speichert active_template + allow_template_switch
- * Changelog: 1.3.2 - langSessionKey('admin') statt entfernter LANG_SESSION_KEY-Konstante (i18n.php domain-fähig)
- * Changelog: 1.3.1 - save_admin_settings speichert jetzt auch die Standardsprache ("language")
- * Changelog: 1.3.0 - Flash-Meldungen über t() übersetzt
- * Changelog: 1.2.3 - save_admin_settings Handler (Zeitzone)
- * Changelog: 1.2.2 - ensureLastLoginColumn() vor UPDATE aufrufen (neue DB fix)
- * Changelog: 1.2.1 - last_login Zeitstempel beim Login speichern
- * Changelog: 1.2.0 - password_hash Spaltenname -> password
  *
  * PHP version 8.2
  *

@@ -3,33 +3,6 @@
  * Project: LMOnext
  * Filename: addon/tipp/handler_tipp.php
  * Fileversion: 0.8.0
- * Changelog: 0.8.0 - Neue Aktion send_tipp_mail: verschickt echte Mails für alle drei
- *                     Versandarten, inkl. Tipper-Bereich/"an alle" und echter [spiele]-
- *                     Ermittlung beim Reminder (überspringt Tipper ohne offene Tipps)
- * Changelog: 0.7.1
- * Changelog: 0.7.1 - Bugfix: beim nachträglichen Eintragen der neu erzeugten Team-ID wurde der
- *                     Array-Operator "+" statt array_merge() genutzt - da "team_id" in $data
- *                     bereits (mit null) existierte, gewann bei "+" immer die linke Seite,
- *                     wodurch neu gegründete Teams nie am Tipper gespeichert wurden
- * Changelog: 0.7.0
- * Changelog: 0.7.0 - Neue Aktionen save_tipp_user (Anlegen/Bearbeiten inkl. Team-Auflösung) und
- *                     delete_tipp_user für die Userverwaltung
- * Changelog: 0.6.0
- * Changelog: 0.6.0 - Neue Speicher-Aktion save_tipp_ligen für "Tippbare Ligen"
- * Changelog: 0.5.0
- * Changelog: 0.5.0 - Neue Speicher-Aktion save_tipp_punktgleichheit für die drei Kriterien
- * Changelog: 0.4.1
- * Changelog: 0.4.1 - Bugfix: Validierungs-Wertelisten für abgabeschluss_ohne_termin und
- *                     max_spieltage_voraus korrigiert (siehe view_tippspiel.php 0.6.1)
- * Changelog: 0.4.0
- * Changelog: 0.4.0 - Neue Speicher-Aktion save_tipp_anmeldung für den Tab "Anmeldung"
- * Changelog: 0.3.0
- * Changelog: 0.3.0 - Neue Speicher-Aktion save_tipp_abgabe für den Tab "Tippabgabe", inkl.
- *                     serverseitiger Prüfung, dass mindestens eine Abgabe-Variante aktiv bleibt
- * Changelog: 0.2.0
- * Changelog: 0.2.0 - Neue Speicher-Aktion save_tipp_regeln für den Tab "Regeltechnisches"
- * Changelog: 0.1.0 - Initiale Version: bindet tipp_lib.php ein, erste Speicher-Aktion für den
- *                     Tab "Punkteverteilung" (save_tipp_punkte)
  *
  * PHP version 8.2
  *

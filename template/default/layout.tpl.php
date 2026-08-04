@@ -2,108 +2,7 @@
 <html lang="<!--HtmlLang-->">
 <head>
 <!--
-  Template: default | Filename: layout.tpl.php | Fileversion: 1.16.2
-  Changelog: 1.16.2 - CSS für die neue Strafpunkte-Fußnotenliste (.st-footnotes/.st-footnote-item,
-                      Wikipedia-Stil) ergänzt, .st-straf-hinweis um Link-Styling erweitert
-  Changelog: 1.16.1 - CSS für .st-straf-hinweis ergänzt (⚠-Marker mit Tooltip bei Strafpunkten/
-                      Straftoren in der Tabelle, siehe renderStrafHinweis() in
-                      src/Liga/StandingsTrait.php)
-  Changelog: 1.16.0 - CSS für die Tippspiel-Integration (.tipp-form, .btn-primary, .flash,
-                      table.tipp-table) ergänzt - Tippspiel läuft jetzt als ?view=tippspiel
-                      innerhalb des Templates statt als eigenständige Seite (siehe home.php,
-                      addon/tipp/view_tippspiel_frontend.php)
-  Changelog: 1.15.7 - Neuer Platzhalter "TippspielLink" im Header, neben der Sprachauswahl
-                      (siehe frontend/template_engine.php 2.6.0) - bleibt leer, wenn das
-                      Tippspiel nicht aktiv ist
-  Changelog: 1.15.6 - CSS für ".h2h-match-today" ergänzt: der "(heute TEAM_HEUTE)"-Zusatz im
-                     Teamvergleich-Modal erscheint jetzt als eigene Unterzeile statt inline
-                     hinter dem Namen (siehe data_liga.php 2.20.0)
-  Changelog: 1.15.5 - CSS für den neuen "Spielfrei"-Hinweis (spielfrei_note.tpl.php) ergänzt
-  Changelog: 1.15.4 - .team-logo-inline: margin-left ergänzt (Logo steht jetzt teils NACH dem
-                      Teamnamen, z.B. Heim-Spalte regulärer Ligen, Team-A im Teamvergleich-Titel)
-  Changelog: 1.15.3
-  Changelog: 1.15.3 - Neue Regel .st-team-logo-wrap (feste Mindestbreite, zentriert) für die
-                      Liga-Tabelle: Logo und Teamname sind jetzt getrennte Platzhalter (siehe
-                      standings_row.tpl.php 1.3.0), damit die Teamnamen untereinander bündig
-                      ausgerichtet bleiben, auch wenn die Logos unterschiedlich breit sind. Bei
-                      ungewöhnlich breiten Logos (breiter als die Mindestbreite) verschiebt sich
-                      der Name in dieser einen Zeile etwas weiter nach rechts – vollständige
-                      Bündigkeit UND komplett unbegrenzte automatische Breite schließen sich bei
-                      extremen Seitenverhältnissen gegenseitig aus
-  Changelog: 1.15.2
-  Changelog: 1.15.2 - .team-logo-inline: max-width-Grenze wieder entfernt – die hatte bei sehr
-                      breiten Logos die tatsächliche Höhe unter 18px gedrückt (object-fit:contain
-                      hat den Rest als Letterboxing "weggerechnet"), was der Anforderung "alle
-                      Logos gleiche Höhe" widersprach. Jetzt wirklich nur feste Höhe + freie,
-                      automatische Breite ohne Obergrenze
-  Changelog: 1.15.1
-  Changelog: 1.15.1 - .team-logo-inline: feste Breite (18x18) durch feste Höhe (18px) + automatische
-                      Breite ersetzt, damit nicht-quadratische Logos nicht mehr verzerrt/beschnitten
-                      wirken, sondern alle in einer Zeile dieselbe Höhe haben (max-width als
-                      Sicherheitsgrenze gegen sehr breite Logos)
-  Changelog: 1.15.0
-  Changelog: 1.15.0 - CSS für .team-logo-inline ergänzt (neues "Logo anzeigen"-Feature, siehe
-                      data_liga.php 2.15.0) – kleines, einheitlich großes Logo vor Teamnamen
-  Changelog: 1.14.9
-  Changelog: 1.14.9 - Basis-CSS für farbige Tabellenmarkierungen ergänzt (transparenter
-                      4px-Rand links, Farbe kommt per Inline-Style aus RowStyle, siehe
-                      standings_row.tpl.php 1.2.0 + computeStandingsMarkerColor() in data_liga.php)
-  Changelog: 1.14.8 - CSS für responsive Lang-/Kurzform im Teamvergleich-Modal ergänzt
-                      (.h2h-rd-long/.h2h-rd-short) – zeigt ab 480px Breite die Langform
-                      ("Spieltag"), darunter die Kurzform ("ST"); siehe data_liga.php für die
-                      serverseitige KO-Runden-Erkennung
-  Changelog: 1.14.7 - Template-Auswahl-Dropdown vom Header in den Footer verschoben (steht jetzt
-                      in der "Template: ..."-Zeile), dafür eigene dezente Footer-Optik (transparenter
-                      Hintergrund, unterstrichener Text statt Kasten-Optik)
-  Changelog: 1.14.6 - Sichtbares Template-Auswahl-Dropdown im Header ergänzt (neben der
-                      Sprachauswahl), erscheint nur wenn "Besucher erlauben, Template zu
-                      wechseln" aktiv ist und mehr als ein Template existiert (siehe
-                      renderTemplateSwitcher() in template_engine.php)
-  Changelog: 1.14.5 - PDF-Export-Button neu gestaltet: hell/blau im Normalzustand, kräftiges
-                      Blau (var(--accent)) beim Hover, dünner blauer Rahmen statt Volltonfarbe
-  Changelog: 1.14.4 - CSS für den "Als PDF exportieren"-Button auf der Ergebnisseite ergänzt
-                      (.pdf-export-row, .btn-pdf-export)
-  Changelog: 1.14.3 - CSS für Vergleichs-Icon-Zeile im Turnierbaum ergänzt (.bracket-compare)
-  Changelog: 1.14.2 - CSS für verlinkte Begegnungs-Überschrift im Vergleichs-Modal ergänzt
-                      (.h2h-match-meta jetzt als <a>, Hover-Farbe)
-  Changelog: 1.14.1 - CSS für zweizeilige Sieg-Chips im Vergleichs-Modal ergänzt
-                      (.h2h-chip-label, .h2h-chip-num)
-  Changelog: 1.14.0 - CSS für Direkter-Vergleich-Icon + Vergleichs-Modal ergänzt (.h2h-*),
-                      neue leere Kopfspalte .col-vergleich in der Ergebnistabelle
-  Changelog: 1.13.3 - Hover-CSS für anklickbare Kreuztabellen-Kopfzellen/Zeilenlabel ergänzt
-                      (.kz-col:hover, .kz-rowlabel:hover)
-  Changelog: 1.13.2 - CSS für favTeam-Hervorhebung in der Kreuztabelle ergänzt (.kz-fav,
-                      .kz-fav-row, .kz-fav-col)
-  Changelog: 1.13.1 - CSS für Lieblingsmannschaft-Hervorhebung in der Liga-Tabelle ergänzt
-                      (.st-team.fav-team), analog zu .schedule-own in Ergebnissen/Spielplan
-  Changelog: 1.13.0 - Fieberkurve nutzt jetzt Chart.js statt eigenem SVG; alte Legende-CSS
-                      (.fk-legend/.fk-swatch) durch .fk-chart-wrap ersetzt
-  Changelog: 1.12.0 - CSS für Ligastatistik ergänzt (.ligastat-*)
-  Changelog: 1.11.0 - CSS für Fieberkurven-Legende + Chart ergänzt (.fk-legend, .fk-swatch, .fk-chart)
-  Changelog: 1.10.0 - CSS für Kreuztabelle ergänzt (.kreuz-table, .kz-*)
-  Changelog: 1.9.1 - Spielplan-Sidebar verbreitert + linksbündig (jetzt mittellange Namen statt Kürzel)
-  Changelog: 1.9.0 - CSS für Team-Spielplan-Ansicht ergänzt (.schedule-wrap, .schedule-sidebar,
-                      .team-sidebar-item, .schedule-content)
-  Changelog: 1.8.1 - Ungenutzte .standings-scoring CSS-Regel entfernt
-  Changelog: 1.8.0 - CSS für Tabellen-Ansicht (.standings-table) ergänzt
-  Changelog: 1.7.2 - CSS für Info-Seiten-Links (Homepage/Forum) ergänzt
-  Changelog: 1.7.1 - Logo im Header vergrößert (34px auf 53px Höhe)
-  Changelog: 1.7.0 - CSS für Anstoßtermin im Turnierbaum (.bracket-kickoff) ergänzt
-  Changelog: 1.6.0 - Footer zeigt jetzt "LMOnext {Version}" (Version aus composer.json)
-  Changelog: 1.5.1 - Favicon-Dateien nach assets/favicon/ verschoben, Links angepasst
-  Changelog: 1.5.0 - Favicon-Verlinkung ergänzt (apple-touch-icon, android/ms-icons, manifest.json)
-  Changelog: 1.4.1 - Projektname auf "LMOnext" umgestellt (vorher "OLVBoard")
-  Changelog: 1.4.0 - Info-Ansicht umgebaut: CSS für "Über LMOnext" (Absätze,
-                      Copyright/Lizenz-Zeilen) statt der alten Info-Tabelle
-  Changelog: 1.3.1 - Bugfix: feste Boxhöhe (height:64px) hat Teamnamen abgeschnitten;
-                      jetzt min-height statt height, Text kann wieder umbrechen/wachsen
-  Changelog: 1.3.0 - Turnierbaum-Ausrichtung repariert: Paarungs-Boxen haben jetzt eine feste
-                      Höhe und die Abstände laufen rein über justify-content:space-around
-                      (kein zusätzliches "gap" mehr) – dadurch zentriert sich jede Paarung einer
-                      Runde exakt zwischen ihren zwei zuführenden Paarungen der Vorrunde
-  Changelog: 1.2.0 - CSS für Reiter-Navigation, Info-Tabelle, Monatskalender und
-                      Turnierbaum (Spielpläne) ergänzt
-  Changelog: 1.1.0 - Footer zeigt jetzt "Berechnungszeit" (Dauer Berechnungen u. Seitenaufbau)
+  Template: default | Filename: layout.tpl.php | Fileversion: 1.16.3
   HTML-Grundgerüst der ganzen Seite. Enthält AUSSCHLIESSLICH Markup und
   Platzhalter der Form <comment>Name</comment> (als HTML-Kommentar), kein PHP. Alle Werte
   werden von den Root-Controllern (home.php, liga.php) über
@@ -336,6 +235,10 @@ table.standings-table td{padding:8px 10px;border-top:1px solid var(--border)}
 .st-straf-hinweis a{color:inherit;text-decoration:none}
 .st-straf-hinweis a:hover{text-decoration:underline}
 .st-footnotes{padding:10px 16px 4px;border-top:1px solid var(--border)}
+.st-spieltag-nav{display:flex;justify-content:space-between;align-items:center;padding:10px 16px;font-size:.85rem;gap:10px}
+.st-spieltag-nav a{color:var(--accent);text-decoration:none;font-weight:500}
+.st-spieltag-nav a:hover{text-decoration:underline}
+.st-spieltag-nav-next{margin-left:auto}
 .st-footnote-item{font-size:.8rem;color:var(--muted);margin:4px 0}
 .st-footnote-item a{color:var(--muted);text-decoration:none;margin-right:2px}
 .st-footnote-item a:hover{text-decoration:underline}

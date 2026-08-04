@@ -3,40 +3,6 @@
  * Project: LMOnext
  * Filename: addon/tipp/frontend_tipp.php
  * Fileversion: 0.4.1
- * Changelog: 0.4.1 - Bestätigungs-Mail-Link und tippSiteBaseUrl()-Fallback von der entfernten
- *                     tipp.php auf home.php?view=tippspiel umgestellt (siehe view_tippspiel_
- *                     frontend.php 1.0.0)
- * Changelog: 0.4.0 - redirectTo() zeigt jetzt auf home.php?view=tippspiel statt auf die
- *                     entfernte eigenständige tipp.php - Tippspiel läuft jetzt als View
- *                     innerhalb des Templates, analog zur Spielerstatistik (siehe
- *                     addon/tipp/view_tippspiel_frontend.php, home.php). Alle bestehenden
- *                     redirectTo()-Aufrufstellen unverändert, nur die Basis-URL hat sich
- *                     geändert
- * Changelog: 0.3.0 - Neue Funktion tippGetRangliste(): globale Rangliste über alle jemals
- *                     getippten (und ausgewerteten) Spiele, live berechnet aus den Rohdaten.
- *                     Wendet die drei in "Was zählt bei Punktgleichheit" konfigurierten
- *                     Tie-Break-Kriterien an (alle acht bestätigten Original-Optionen
- *                     implementiert, inkl. Trefferquote und geteilter Spieltagswertungen).
- *                     Deckt nur den Ergebnis-Tippmodus ab - Tendenz-Modus-Tipps werden bewusst
- *                     übersprungen statt fälschlich mit 0 Punkten gezählt (siehe Funktions-
- *                     Docblock), da die Tendenz-Punkteberechnung noch aussteht
- * Changelog: 0.2.0 - Tippeinsicht: tippGetEinsichtDaten() liefert alle Tipps aller Tipper für
- *                     eine Spiel-Liste, respektiert dabei je Partie einzeln den eingestellten
- *                     Veröffentlichungszeitpunkt (sofort/nach Abgabeschluss/nach Ergebnis)
- * Changelog: 0.1.0 - Initiale (vorläufige) Version der Tipper-Ansicht: Session-Verwaltung,
- *                     Anmeldung, Login/Logout, Tippabgabe (nur Ligenweise-Modus, nur
- *                     Ergebnis-Tippmodus vollständig getestet) und eine einfache Live-
- *                     Punkteberechnung fürs Anzeigen der erzielten Punkte je Spiel. Bewusst
- *                     KOMPLETT neu geschrieben statt vom alten Flatfile-Addon übernommen (siehe
- *                     Projekt-Historie: genau die verstreute, typunsichere Berechnung dort war
- *                     die Hauptfehlerquelle) - eine einzige zentrale Funktion
- *                     (calculateTippPunkte()) für die gesamte Punktelogik, durchgehend
- *                     strict_types und ===-Vergleiche.
- *                     Noch NICHT enthalten (folgt in weiteren Schritten): Datumsweise
- *                     Tippabgabe, Tendenz-Tippmodus, Tippeinsicht, Tipp-Tabelle/Rangliste,
- *                     Team-Beitritt/-Gründung durch den Tipper selbst, Passwort-Vergessen,
- *                     E-Mail-Bestätigungscode-Freischaltung (nur "sofort" und "admin" fertig
- *                     getestet).
  *
  * PHP version 8.2
  *

@@ -3,66 +3,6 @@
  * Project: LMOnext
  * Filename: addon/tipp/tipp_lib.php
  * Fileversion: 0.6.1
- * Changelog: 0.6.1 - tippRequestPasswordReset() sucht jetzt wahlweise über
- *                     Nickname ODER Email (statt nur Email) und liefert bei Nichtfund eine
- *                     konkrete Rückmeldung (welches der beiden Felder nichts fand) statt der
- *                     bisherigen neutralen "falls diese Email existiert..."-Meldung - bewusste
- *                     Abkehr vom Standard-Security-Pattern auf expliziten Wunsch für diese
- *                     Testinstallation. Signatur geändert: (string $nickname, string $email),
- *                     Rückgabe jetzt array{ok,reason} statt bool
- * Changelog: 0.6.0 - Self-Service-Kontobearbeitung für Tipper: tippUpdateOwnAccount() (Nickname
- *                     und "freigeschaltet" bleiben admin-exklusiv unveränderbar),
- *                     tippRequestPasswordReset()/tippResetPassword() ("Passwort vergessen",
- *                     Reset-Code 1h gültig, Einmal-Nutzung). Neue DB-Spalten reset_code/
- *                     reset_code_expires per Migration (SHOW COLUMNS/ALTER TABLE, analog zu
- *                     admin/bootstrap.php) ergänzt
- * Changelog: 0.5.1 - Nav-Link/Startseiten-Karte zeigen jetzt auf home.php?view=tippspiel statt
- *                     auf die entfernte eigenständige addon/tipp/tipp.php - Tippspiel läuft
- *                     jetzt als View innerhalb des Templates, analog zur Spielerstatistik
- *                     (siehe view_tippspiel_frontend.php). Nebenbei: falsche CSS-Klasse "btn"
- *                     in der Startseiten-Karte korrigiert (nur "btn-primary" existiert)
- * Changelog: 0.5.0 - Neue Funktionen tippIstAktiv() (mind. eine Liga fürs Tippspiel
- *                     freigegeben?), tippRenderSiteLink() (Header-/Footer-Link, je nach
- *                     Template - siehe layout.tpl.php) und tippRenderHomeCard() (Werbe-Karte
- *                     auf der Startseite, siehe home.tpl.php). Behebt eine echte Lücke: das
- *                     Tippspiel war bislang nirgends von der Besucherseite aus verlinkt, nur
- *                     per direkter URL erreichbar
- * Changelog: 0.4.1 - Bugfix: getAllTippSettings() cachte die Einstellungen statisch pro Request,
- *                     ohne dass setTippSetting()/setTippSettings() diesen Cache invalidierten -
- *                     ein erneuter getTippSetting()-Aufruf im selben Request (z.B. bei einer
- *                     Live-Neuberechnung ohne zwischenzeitlichen Redirect) lieferte dadurch
- *                     stille alte Werte. Cache liegt jetzt per Referenz in
- *                     tippSettingsCacheRef() und wird von beiden Setter-Funktionen über die
- *                     neue resetTippSettingsCache() gezielt geleert. Admin-Options-Tabs waren
- *                     nicht betroffen (Post/Redirect/Get-Muster in handler_tipp.php lädt den
- *                     Cache ohnehin bei jedem Request neu), gefunden beim Testen von
- *                     calculateTippPunkte() in frontend_tipp.php
- * Changelog: 0.4.0 - Mail-Versand für "Newsletter/Reminder": sendTippMail() (exakt nach dem
- *                     Muster von sendPasswordResetEmail() in admin/bootstrap.php, bewusst ohne
- *                     externe Mail-Bibliothek), replaceTippPlaceholders() ([nick]/[name]/
- *                     [spiele], bewusst kein [pass]), getTippReminderSpiele()/
- *                     formatSpieleListe() für die echte Ermittlung noch nicht getippter Spiele
- *                     je Tipper im gewählten Zeitfenster
- * Changelog: 0.3.0
- * Changelog: 0.3.0 - Vollständiges Tipper/Team-CRUD für die Userverwaltung: getAllTipper()
- *                     (mit live abgeleitetem "letzter Tipp" per MAX(updated_at)),
- *                     getTipperByNickname(), getAllTeamsWithCount() (live per COUNT(*)),
- *                     createTippTeam(), saveTipper() (Anlegen/Bearbeiten, Passwort nur bei
- *                     Angabe überschrieben), deleteTipper(), getTipperAboLigaIds()/
- *                     setTipperAbos()
- * Changelog: 0.2.0
- * Changelog: 0.2.0 - Neue Funktionen für "Tippbare Ligen": getTippbareLigenKandidaten() (Ligen
- *                     aus dem obersten Ordner, nicht archiviert - eigene, einfache Abfrage statt
- *                     frontend/data_home.php einzubinden), getTippLigaFreigabeIds()/
- *                     setTippLigaFreigabe() für tipp_liga_freigabe
- * Changelog: 0.1.0 - Initiale Version: Datenbankschema für alle sechs in den Vorgesprächen
- *                     festgelegten Tabellen (tipp_user, tipp_team, tipp_liga_freigabe,
- *                     tipp_abo, tipp_tipp, tipp_settings), plus Zugriffsfunktionen für die
- *                     Einstellungen (getTippSetting()/setTippSetting()/getAllTippSettings()).
- *                     tipp_tipp bekommt sowohl Ergebnis- (tipp_heim/tipp_gast) als auch
- *                     Tendenz-Felder (tipp_tendenz) nebeneinander, je nach aktivem Tippmodus
- *                     wird nur eines der beiden befüllt - siehe Projekt-Historie für die
- *                     Begründung (eigenes Feld statt codierter Platzhalterwerte)
  *
  * PHP version 8.2
  *

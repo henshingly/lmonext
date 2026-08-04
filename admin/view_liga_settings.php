@@ -3,64 +3,6 @@
  * Project: LMOnext
  * Filename: view_liga_settings.php
  * Fileversion: 1.5.3
- * Changelog: 1.5.3 - Spaltenreihenfolge im Tab "Strafen" geändert: Punkte, Minuspunkte,
- *                     Erzielte Tore, Gegentore (Kundenwunsch) - reine Anzeigeänderung, die
- *                     Felder werden weiterhin über ihren Namen ausgewertet, nicht die Position
- * Changelog: 1.5.2 - Tab "Strafen": Eingabe auf Dropdown (+/−) + positives Betragsfeld
- *                     umgestellt statt eines Zahlenfelds mit Minuszeichen (auf Mobilgeräten oft
- *                     nicht per Zifferntastatur eingebbar). Vierte Spalte "Minuspunkte" ergänzt
- * Changelog: 1.5.1 - Tab "Strafen": dritte Spalte "Erzielte Tore +/-" ergänzt, alle drei
- *                     Spalten als "+/-" beschriftet (Bonus/Strafe), Erklärungstext erweitert
- *                     inkl. Lizenzentzug-Beispiel
- * Changelog: 1.5.0 - Neuer Tab "Teams": komplette Team-Verwaltung (Name/Mittel/Kürzel bearbeiten,
- *                     DB-Suche, direkte ID-Übernahme) von der Liga-Detailseite hierher verschoben
- *                     (siehe admin/view_liga_detail.php 1.9.0), damit sie zusammen mit den
- *                     übrigen Liga-Einstellungen an einem Ort liegt. Läuft bewusst OHNE das
- *                     äußere <form action="?action=save_liga_settings"> - jede Zeile speichert
- *                     einzeln über ein eigenes <form>, verschachtelte Forms wären ungültiges HTML
- * Changelog: 1.4.5 - Neuer Tab "Strafen": Strafpunkte/Straftore je Team dieser Liga verwalten
- *                     (siehe admin/handler_settings.php 1.3.7)
- * Changelog: 1.4.4 - Neue Einstellung "Spielfrei anzeigen" (ShowSpielfrei) im Tab Anzeigen/
- *                     Darstellung, direkt unter "Ergebnisse" - steuert, ob der "Spielfrei:
- *                     TEAMNAME"-Hinweis in Ergebnisse-Ansicht und PDF-Export erscheint (siehe
- *                     liga.php 3.10.3). Default "an" (kein stiller Verhaltenswechsel für
- *                     bestehende Ligen, da die Anzeige bereits ohne diese Einstellung
- *                     ausgeliefert wurde)
- * Changelog: 1.4.3
- * Changelog: 1.4.3 - Bugfix: Punktesystem-Tabelle (Tab Spielsystem) hatte für "nach
- *                     Verlängerung"/"nach Elfmeterschießen" nur ein einzelnes Eingabefeld
- *                     (Sieg) statt der vollen S/U/N-Spalten wie im alten LMO – die beiden
- *                     Felder missbrauchten zudem versehentlich goalfaktor/pointsfaktor,
- *                     dieselben Schlüssel wie der Grundwerte-Tab (Dezimalstellen-Anzeige),
- *                     wodurch sich beide Tabs beim Speichern gegenseitig überschrieben haben.
- *                     Jetzt volles 3×3-Eingabegitter mit eigenen Schlüsseln
- *                     PointsForWin/Draw/LostET bzw. PS, siehe computeStandings() 2.15.5
- * Changelog: 1.4.2
- * Changelog: 1.4.2 - Kalender/Spielpläne, Kreuztabelle/Fieberkurven und Spielerstatistik/
- *                     Ligastatistik wieder in einzelne Tabellenzeilen aufgeteilt (statt jeweils
- *                     zwei Checkboxen in einer gemeinsamen Zeile), konsistent zum Rest der
- *                     Tabelle (ein Eintrag pro Zeile)
- * Changelog: 1.4.1 - Neue Einstellung "Logo anzeigen" (ShowLogos) im Tab Anzeigen/Darstellung,
- *                     gilt für KO- und reguläre Ligen gleichermaßen. Steuert, ob Team-Logos
- *                     (siehe Teams (global) → Logo-Upload) in der Besucheransicht dieser Liga
- *                     erscheinen (Tabelle, Ergebnisse, Kreuztabelle, Teamvergleich,
- *                     Ligastatistik, Spielpläne)
- * Changelog: 1.4.0
- * Changelog: 1.4.0 - Farbwähler (Color-Picker) neben jeder Tabellenmarkierung ergänzt
- *                     (Champions League/-Qualifikation/Euroleague/Relegation/Absteiger/
- *                     Meister) – Farben waren bisher hartkodiert und wirkten sich zudem gar
- *                     nicht auf die Besucheransicht aus. Neue Options-Schlüssel {Key}Color,
- *                     Vorschau-Chip in der Admin-Ansicht zeigt jetzt die gewählte Farbe live
- * Changelog: 1.3.3 - Projektname auf "LMOnext" umgestellt (vorher "Online-Liga-Verwaltung Board" / "OLVBoard")
- * Changelog: 1.3.2 - Bugfix: "Tabelle"-Checkbox fehlte in dieser Ansicht komplett, obwohl
- *                     handler_settings.php den Schlüssel schon speicherte – wurde dadurch bei
- *                     jedem Speichern stillschweigend auf "0" zurückgesetzt; Checkbox ergänzt
- * Changelog: 1.3.1 - Bugfix: "Kalender"-Checkbox nutzte versehentlich denselben Schlüssel
- *                     wie "Spieltagsdatum" (DatC) und wurde nie gespeichert; jetzt eigener
- *                     Schlüssel "Kalender"
- * Changelog: 1.3.0 - Alle Texte über t() übersetzt
- * Changelog: 1.2.1 - Ticker-Sektion: Ein/Aus-Checkbox + Tickertext-Feld
- * Changelog: 1.2.0 - KO/Liga-Verzweigung; Playoff-Modus-Einstellungen fuer KO
  *
  * PHP version 8.2
  *

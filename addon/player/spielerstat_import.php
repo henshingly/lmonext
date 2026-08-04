@@ -3,19 +3,6 @@
  * Project: LMOnext
  * Filename: addon/player/spielerstat_import.php
  * Fileversion: 1.1.0
- * Changelog: 1.1.0 - Datei nach addon/player/ verschoben. Importierte Spieler bekommen jetzt
- *                     eine persistente globale Identität (findOrCreateGlobalPlayer(), verknüpft
- *                     über den Namen der ersten Spalte) statt nur als Text in dieser einen Liga
- *                     zu existieren
- * Changelog: 1.0.0 - Initiale Version: Import alter Spielerstatistik-Dateien (.stat + .cfg aus
- *                     dem Original-LMO-Addon addon/spieler/). Erkennt automatisch das
- *                     verwendete Trennzeichen (§ aus der ältesten LMO-Version, | aus einer
- *                     mittleren Version, # aus der aktuellsten Version – analog zu
- *                     lmo_import.php, das dieselbe Unterscheidung bereits für Ligadateien
- *                     trifft). Die Vereinsspalte wird beim Import per Fuzzy-Matching
- *                     (findFuzzyTeamMatches() aus handler_import_export.php) gegen
- *                     teams_global abgeglichen, mit demselben Review-Schritt wie beim
- *                     .l98-Liga-Import bei mehrdeutigen/ungefähren Treffern.
  *
  * PHP version 8.2
  *

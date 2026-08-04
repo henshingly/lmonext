@@ -1,7 +1,6 @@
 <!--
   Partial: bracket_view.tpl.php | Fileversion: 1.0.0
   Rahmen um den ganzen Turnierbaum
-  Changelog: 1.0.0 - Initiale Version
 -->
 <div class="card">
   <div class="bracket-scroll">

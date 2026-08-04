@@ -3,21 +3,6 @@
  * Project: LMOnext
  * Filename: view_wartung.php
  * Fileversion: 1.2.0
- * Changelog: 1.2.0 - Hinweis auf der Backup-Karte, ob Team-Logos mitgesichert werden (bzw.
- *                     Warnung, wenn ZipArchive fehlt). Backup-Liste in der Wiederherstellen-
- *                     Karte zeigt jetzt pro Eintrag ein kleines Symbol, wenn dieses Backup auch
- *                     Team-Logos enthält, siehe handler_backup.php 1.2.0
- * Changelog: 1.1.0
- * Changelog: 1.1.0 - Bugfix: native <select multiple>/<select size> hatten browserübergreifend
- *                     sehr schlechten Kontrast bei markierten Zeilen im Dark-Theme (kaum lesbar).
- *                     Tabellen-Auswahl und Backup-Auswahl durch selbst gestylte
- *                     Checkbox-/Radio-Listen ersetzt (volle Farbkontrolle, gleiches
- *                     Verhalten/POST-Format wie zuvor, kein Backend-Änderung nötig)
- * Changelog: 1.0.0 - Initiale Version: "Wartung"-Seite mit zwei Karteikartenreitern (Backup /
- *                     Wiederherstellung), Layout an die phpBB-Referenz-Screenshots angelehnt.
- *                     Backup-Tab zusätzlich mit einstellbarer maximaler Backup-Anzahl (ältestes
- *                     Backup wird beim Überschreiten automatisch gelöscht, siehe
- *                     handler_backup.php backupEnforceMaxCount())
  *
  * PHP version 8.2
  *

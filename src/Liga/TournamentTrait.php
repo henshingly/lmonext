@@ -3,9 +3,6 @@
  * Project: LMOnext
  * Filename: src/Liga/TournamentTrait.php
  * Fileversion: 1.0.0
- * Changelog: 1.0.0 - Initiale Version: Teil der Umstrukturierung von frontend/data_liga.php in
- *                     fokussierte Traits (siehe frontend/data_liga.php 3.0.0 für den vollen
- *                     Kontext der Umstellung). KO-Turnier-Hilfsfunktionen (koRoundName, roundDisplayName, groupPartienByPairing, reorderBracketPairings, renderBracketView).
  *
  * PHP version 8.2
  *

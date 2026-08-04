@@ -2,20 +2,7 @@
 /**
  * Project: LMOnext
  * Filename: src/Liga/RenderViewsTrait.php
- * Fileversion: 1.3.0
- * Changelog: 1.3.0 - Neuer Platzhalter "Fussnoten" für die Strafpunkte-Begründungen im
- *                     Wikipedia-Stil (siehe StandingsTrait.php 1.4.0)
- * Changelog: 1.2.0 - Die Admin-Einstellung "Minuspunkte" (Tab Spielsystem) wird jetzt tatsächlich
- *                     ausgewertet: Pkt-Spalte zeigt bei aktivierter Option "Pkt:Minuspunkte" statt
- *                     nur "Pkt" (siehe StandingsTrait.php 1.2.0 für die Berechnung)
- * Changelog: 1.1.0 - $ligaId an alle vier computeStandings()-Aufrufe übergeben (Tabelle,
- *                     Kreuztabelle, Fieberkurven, Ligastatistik), damit admin-seitig hinterlegte
- *                     Strafpunkte/Straftore korrekt einfließen (siehe StandingsTrait.php 1.1.0).
- *                     Neuer Platzhalter "StrafHinweis" in der Tabellen-Zeile (⚠-Marker mit
- *                     Tooltip, renderStrafHinweis())
- * Changelog: 1.0.0 - Initiale Version: Teil der Umstrukturierung von frontend/data_liga.php in
- *                     fokussierte Traits (siehe frontend/data_liga.php 3.0.0 für den vollen
- *                     Kontext der Umstellung). HTML-Rendering aller Liga-Ansichten (Ergebnisse, Spielpläne, Kalender, Kreuztabelle, Fieberkurven, Info, Tabs, Spieltag-Auswahl, Spielfrei-Hinweis).
+ * Fileversion: 1.5.0
  *
  * PHP version 8.2
  *
@@ -106,7 +93,15 @@ trait RenderViewsTrait
      * "spieltag_option" (je Eintrag) und "spieltag_picker" (Rahmen). Liefert
      * einen leeren String, wenn nur eine Runde/ein Spieltag existiert.
      */
-    public static function renderSpieltagPicker(array $allSpieltage, int $ligaId, ?int $currentNr, bool $isKO, int $maxNr) : string
+    /**
+     * Baut das komplette Spieltag/Runden-Auswahl-Dropdown über die Partials
+     * "spieltag_option" (je Eintrag) und "spieltag_picker" (Rahmen). Liefert
+     * einen leeren String, wenn nur eine Runde/ein Spieltag existiert.
+     * $targetView bestimmt, auf welchen Reiter die Auswahl navigiert (Standard
+     * 'ergebnisse', bisheriges Verhalten) - z.B. 'tabelle' für den
+     * "Tabelle nach Spieltag N"-Picker (Kundenwunsch, siehe renderStandingsView()).
+     */
+    public static function renderSpieltagPicker(array $allSpieltage, int $ligaId, ?int $currentNr, bool $isKO, int $maxNr, string $targetView = 'ergebnisse') : string
     {
         if (count($allSpieltage) <= 1) {
             return '';
@@ -122,6 +117,7 @@ trait RenderViewsTrait
         return renderPartial('spieltag_picker', [
             'PickerLabel' => h($isKO ? tf('liga_label_pick_round') : tf('liga_label_pick_matchday')),
             'LigaId'      => $ligaId,
+            'View'        => $targetView,
             'Optionen'    => $optionsHtml,
         ]);
     }
@@ -134,7 +130,15 @@ trait RenderViewsTrait
      * @param int    $ligaId
      * @param string $currentView Schlüssel des aktuell aktiven Reiters
      */
-    public static function renderTabsBar(array $flags, int $ligaId, string $currentView) : string
+    /**
+     * Baut die Tab-Leiste (Ergebnisse/Tabelle/Spielpläne/...). $activeNr
+     * (falls gesetzt) wird als "&nr=N" an die Links zu "ergebnisse" und
+     * "tabelle" angehängt - nur an diese beiden, da nur sie ?nr= lesen und
+     * es dort dieselbe Bedeutung hat (welcher Spieltag). So bleibt beim
+     * Wechsel zwischen den beiden Reitern derselbe Spieltag erhalten statt
+     * immer auf den letzten zurückzuspringen (Kundenwunsch).
+     */
+    public static function renderTabsBar(array $flags, int $ligaId, string $currentView, ?int $activeNr = null) : string
     {
         $labels = [
             'kalender'      => tf('liga_tab_kalender'),
@@ -147,6 +151,7 @@ trait RenderViewsTrait
             'spielerstatistik' => tf('liga_tab_spielerstatistik'),
             'info'          => tf('liga_tab_info'),
         ];
+        $nrAwareTabs = ['ergebnisse', 'tabelle'];
         $tabsHtml = '';
         foreach ($labels as $key => $label) {
             if (empty($flags[$key])) {
@@ -157,6 +162,7 @@ trait RenderViewsTrait
                 'LigaId'      => $ligaId,
                 'ViewKey'     => $key,
                 'Label'       => h($label),
+                'NrParam'     => ($activeNr !== null && in_array($key, $nrAwareTabs, true)) ? ('&amp;nr=' . $activeNr) : '',
             ]);
         }
         return renderPartial('tabs_bar', ['Tabs' => $tabsHtml]);
@@ -376,11 +382,33 @@ trait RenderViewsTrait
     
         return renderPartial('bracket_view', ['Rounds' => $roundsHtml]) . self::renderH2hModalAssets();
     }
-    public static function renderStandingsView(int $ligaId, array $allSpieltage) : string
+    /**
+     * Baut die Liga-Tabelle. $uptoSpieltag (falls gesetzt) zeigt den
+     * Tabellenstand NACH genau diesem Spieltag (nur Partien mit
+     * _spieltag_nummer <= $uptoSpieltag zählen) - analog zur "Tabelle nach
+     * Spieltag X"-Ansicht bei kicker.de, inkl. "vorheriger/nächster
+     * Spieltag"-Navigation ober- und unterhalb der Tabelle. null (Standard)
+     * zeigt den aktuellen/finalen Stand (alle Partien), unverändertes
+     * bisheriges Verhalten.
+     */
+    public static function renderStandingsView(int $ligaId, array $allSpieltage, ?int $uptoSpieltag = null) : string
     {
         $opts      = self::getLigaOptions($ligaId);
         $teams     = self::getLigaTeamsList($ligaId);
         $partien   = self::getAllLigaPartien($allSpieltage);
+        $maxNr     = self::getMaxSpieltagNummer($allSpieltage);
+
+        $nr = $uptoSpieltag;
+        if ($nr === null || $nr < 1) {
+            $nr = $maxNr;
+        }
+        if ($nr > $maxNr) {
+            $nr = $maxNr;
+        }
+        if ($maxNr > 0) {
+            $partien = array_values(array_filter($partien, static fn(array $p) => (int)($p['_spieltag_nummer'] ?? 0) <= $nr));
+        }
+
         $rows      = self::computeStandings($teams, $partien, $opts, $ligaId);
         $favTeamId = self::resolveTeamNumberToId($ligaId, (int)($opts['favTeam'] ?? 0));
         $totalTeams = count($rows);
@@ -410,7 +438,9 @@ trait RenderViewsTrait
                 'Pkt'      => $showMinuspunkte ? ($r['pkt'] . ':' . $r['minuspunkte']) : (string)$r['pkt'],
             ]);
         }
-    
+
+        $spieltagNav = self::renderStandingsSpieltagNav($ligaId, $nr, $maxNr);
+
         return renderPartial('standings_view', [
             'ColPlatz'    => h(tf('liga_standings_col_platz')),
             'ColTeam'     => h(tf('liga_standings_col_team')),
@@ -423,7 +453,31 @@ trait RenderViewsTrait
             'ColPkt'      => h(tf('liga_standings_col_pkt')),
             'Rows'        => $rowsHtml,
             'Fussnoten'   => self::renderStrafFootnotes($rows, $footnoteNrs),
+            'SpieltagNavOben'  => $spieltagNav,
+            'SpieltagNavUnten' => $spieltagNav,
         ]);
+    }
+
+    /**
+     * "← vorheriger Spieltag" / "nächster Spieltag →"-Navigation für die
+     * Tabellen-nach-Spieltag-Ansicht, analog zu kicker.de. Am ersten
+     * Spieltag fehlt der "vorheriger"-Link, am letzten der "nächster"-Link.
+     */
+    private static function renderStandingsSpieltagNav(int $ligaId, int $nr, int $maxNr) : string
+    {
+        if ($maxNr <= 1) {
+            return '';
+        }
+        $prev = $nr > 1
+            ? '<a class="st-spieltag-nav-prev" href="?id=' . $ligaId . '&view=tabelle&nr=' . ($nr - 1) . '">&larr; ' . h(tf('liga_standings_vorheriger_spieltag')) . '</a>'
+            : '';
+        $next = $nr < $maxNr
+            ? '<a class="st-spieltag-nav-next" href="?id=' . $ligaId . '&view=tabelle&nr=' . ($nr + 1) . '">' . h(tf('liga_standings_naechster_spieltag')) . ' &rarr;</a>'
+            : '';
+        if ($prev === '' && $next === '') {
+            return '';
+        }
+        return '<div class="st-spieltag-nav">' . $prev . $next . '</div>';
     }
     /**
      * Baut die Team-Spielplan-Ansicht für reguläre Ligen: Sidebar mit allen

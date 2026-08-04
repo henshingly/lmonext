@@ -3,9 +3,6 @@
  * Project: LMOnext
  * Filename: src/Home/HomeService.php
  * Fileversion: 1.0.0
- * Changelog: 1.0.0 - Initiale Version: Teil der Umstrukturierung von frontend/data_home.php
- *                     (siehe frontend/data_home.php 3.0.0 für den vollen Kontext der
- *                     Umstellung). Fassade: kombiniert HomeRepository + HomeRenderer zu einer stabilen API für home.php.
  *
  * PHP version 8.2
  *

@@ -2,75 +2,7 @@
 /**
  * Project: LMOnext
  * Filename: bootstrap.php
- * Fileversion: 1.10.1
- * Changelog: 1.10.1 - ensureAdminSettings() seedet jetzt zusätzlich show_back_link=1 (Liga-
- *                     Übersicht sichtbar), analog zu timezone - für Bestandsinstallationen, die
- *                     die neue install.php-Seedung (1.8.0) nie durchlaufen haben
- * Changelog: 1.10.0
- * Changelog: 1.10.0 - Session-Cookie jetzt mit HttpOnly, SameSite=Lax und (bei HTTPS) Secure,
- *                     analog zu frontend/bootstrap.php 1.6.0. Globaler Exception-Handler:
- *                     unerwartete Fehler landen zusätzlich im Server-Log (Kurzfassung bleibt im
- *                     Adminbereich sichtbar, da für Fehlersuche durch den Betreiber hilfreich)
- * Changelog: 1.9.0
- * Changelog: 1.9.0 - Bugfix: die "(heute TEAM_HEUTE)"-Kennzeichnung im Teamvergleich hing
- *                     bisher vom zufällig angeklickten Team ab (z.B. je nachdem von welcher
- *                     Liga/welchem Spiel aus man den Vergleich öffnete, zeigte mal der eine,
- *                     mal der andere Name als "heute"). Neue Spalte team_links.newer_team_id
- *                     legt jetzt fest, welches Team der tatsächlich aktuelle Name ist –
- *                     unabhängig vom Aufrufkontext. addTeamLink() nimmt das jetzt optional
- *                     entgegen, neue Funktion setTeamLinkDirection() zum nachträglichen Ändern.
- *                     Bestehende Verknüpfungen ohne Richtungsangabe (newer_team_id NULL)
- *                     fallen weiterhin auf das alte, kontextabhängige Verhalten zurück, bis die
- *                     Richtung nachträglich gesetzt wird
- * Changelog: 1.8.0
- * Changelog: 1.8.0 - Neue Funktionen für Team-Verknüpfungen ergänzt: ensureTeamLinksSchema()/
- *                     getTeamLinksForTeam()/addTeamLink()/deleteTeamLink() (Tabelle
- *                     team_links). Nicht-destruktive Alternative zu mergeTeams() für
- *                     Umbenennung/Fusion/Abspaltung – beide Team-Datensätze bleiben
- *                     eigenständig, nur eine Verknüpfung wird gespeichert. Wird von
- *                     resolveLinkedTeamIds() in data_liga.php für den Teamvergleich genutzt
- * Changelog: 1.7.4
- * Changelog: 1.7.4 - Umbenennung auf Nutzerwunsch: interne Bezeichnungen jetzt durchgehend auf
- *                     Englisch ("League Key" statt der vorherigen deutschen Bezeichnung, die
- *                     hier nicht mehr vorkommen soll). Der sichtbare UI-Text hieß schon vorher
- *                     "Schlüsselplan" und ist unverändert. Funktionsname, Konstante und interner
- *                     Modus-Wert entsprechend angepasst (siehe league-key_data.php)
- * Changelog: 1.7.3
- * Changelog: 1.7.3 - Logo-Ordner von assets/img/Teams auf assets/img/teams umbenannt
- *                     (kleingeschrieben)
- * Changelog: 1.7.2
- * Changelog: 1.7.2 - Neues Feature "Teams (global)": Logo & Vereinslink. ensureTeamUrlSchema()
- *                     ergänzt teams_global.url. Neue Funktionen findTeamLogoPath()/
- *                     deleteTeamLogo()/saveTeamLogoUpload(): Team-Logos liegen als
- *                     assets/img/teams/{team-id}.{ext} (SVG/JPG/PNG/GIF, Mindesthöhe 50px,
- *                     Inhalts-/MIME-Prüfung statt reiner Endungs-Prüfung), keine eigene
- *                     DB-Spalte nötig, da einfach übers Dateisystem gefunden
- * Changelog: 1.7.1
- * Changelog: 1.7.1 - buildScheduleForMode('none'): legt jetzt trotzdem die korrekte Anzahl
- *                     Spieltage/Begegnungen an (wie ein normaler Rundenplan für die Teamzahl),
- *                     nur mit Leerteam-Platzhaltern (-1, siehe createLigaInDB()) statt echter
- *                     Paarungen – vorher wurden bei "kein Spielplan" gar keine Spieltage/
- *                     Partien-Zeilen angelegt
- * Changelog: 1.7.0 - Neue Funktionen getLeagueKeyPattern()/buildScheduleForMode(): Spielplan
- *                     für reguläre Ligen kann jetzt wahlweise nach dem DFB-League-Key-Muster
- *                     (siehe admin/league-key_data.php, für 6/8/10/12/14/16/18 Teams), per
- *                     Zufall (bisheriges generateRoundRobin()) oder gar nicht erstellt werden
- * Changelog: 1.6.0
- * Changelog: 1.6.0 - "Passwort vergessen"-Grundlagen ergänzt: ensurePasswordResetSchema()
- *                     (email-Spalte + admin_password_resets-Tabelle, Migration für bestehende
- *                     Installationen), getSiteBaseUrl(), sendPasswordResetEmail() (reine
- *                     PHP-mail()-Funktion, keine externe Mail-Bibliothek)
- * Changelog: 1.5.0 - getAppVersion() ergänzt (liest Version aus composer.json)
- * Changelog: 1.4.4 - Projektname auf "LMOnext" umgestellt (vorher "Online-Liga-Verwaltung Board" / "OLVBoard")
- * Changelog: 1.4.3 - lang/i18n.php domain-fähig (admin/frontend getrennt): getCurrentLanguage()-Aufruf angepasst ('admin' explizit übergeben)
- * Changelog: 1.4.2 - koModusLabel() ergänzt (übersetzte KO-Modus-Bezeichnungen; KO_MODUS-Werte bleiben interne Keys)
- * Changelog: 1.4.1 - Standardsprache aus admin_settings ("language") wird an getCurrentLanguage() übergeben
- * Changelog: 1.4.0 - Mehrsprachigkeit: lang/i18n.php eingebunden, initLanguage() aufgerufen
- * Changelog: 1.3.4 - tsToDatetime: konfigurierbare Zeitzone statt UTC; getAdminTimezone(); ensureAdminSettings()
- * Changelog: 1.3.2 - ensureSpielstatusColumns(): status (n.V./i.E.) + bericht_url Spalten
- * Changelog: 1.3.1 - ensureLastLoginColumn() Migration für admin_users.last_login
- * Changelog: 1.3.0 - ensureArchivColumns() hinzugefügt
- * Changelog: 1.2.0 - config.php Pfad: __DIR__ -> dirname(__DIR__)
+ * Fileversion: 1.10.2
  *
  * PHP version 8.2
  *
@@ -614,7 +546,7 @@ function ensureTeamUrlSchema() : void
     } catch (Throwable) {}
 }
 
-const TEAM_LOGO_ALLOWED_EXT  = ['svg', 'jpg', 'jpeg', 'png', 'gif'];
+const TEAM_LOGO_ALLOWED_EXT  = ['jpg', 'jpeg', 'png', 'gif', 'svg'];
 const TEAM_LOGO_MIN_HEIGHT_PX = 50;
 
 /** Absoluter Dateisystempfad zum Team-Logo-Verzeichnis (wird bei Bedarf angelegt). */

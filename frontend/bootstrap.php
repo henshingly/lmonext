@@ -3,39 +3,6 @@
  * Project: LMOnext
  * Filename: bootstrap.php
  * Fileversion: 1.6.1
- * Changelog: 1.6.1 - addon/tipp/tipp_lib.php zentral eingebunden (analog zu
- *                     addon/player/frontend_spielerstat.php), damit tippIstAktiv()/
- *                     tippRenderSiteLink()/tippRenderHomeCard() auf jeder Besucherseite
- *                     verfügbar sind - Tippspiel-Link in Header/Footer und Startseiten-Karte
- * Changelog: 1.6.0 - Performance-/Robustheitsverbesserungen: getAdminSetting() liest alle
- *                     Einstellungen jetzt in EINER Abfrage pro Request statt einer eigenen
- *                     Abfrage pro Schlüssel. pdf_export.php wird nicht mehr pauschal für jeden
- *                     Seitenaufruf eingebunden (belastete auch home.php/die Mini-Addons, die es
- *                     nie brauchen), sondern nur noch direkt in liga.php, dem einzigen
- *                     tatsächlichen Verwender. Session-Cookie jetzt mit HttpOnly, SameSite=Lax
- *                     und (bei HTTPS) Secure. Globaler Exception-Handler: unerwartete Fehler
- *                     landen im Server-Log, Besucher sehen nur eine schlichte, technikfreie
- *                     Meldung statt Stacktrace/Dateipfaden
- * Changelog: 1.5.0
- * Changelog: 1.5.0 - data_spielerstat.php eingebunden (Besucher-Ansicht für das neue
- *                     Spielerstatistik-Addon, siehe admin/spielerstat_lib.php)
- * Changelog: 1.4.1 - Bugfix: Die in den Admin-Einstellungen konfigurierte "Standardsprache"
- *                     wurde im gesamten Besucherbereich nie berücksichtigt (getCurrentLanguage()
- *                     wurde ganz am Anfang der Datei OHNE den Standardsprache-Parameter
- *                     aufgerufen, bevor getAdminSetting() überhaupt verfügbar war – betraf
- *                     dadurch nicht nur die neuen Addons, sondern auch home.php/liga.php
- *                     direkt). Sprachauflösung jetzt an das Ende der Funktionsdefinitionen
- *                     verschoben, mit getAdminSetting('language', DEFAULT_LANGUAGE) als
- *                     Standardsprache-Parameter (identisches Muster wie admin/bootstrap.php)
- * Changelog: 1.4.0 - pdf_export.php eingebunden (Ergebnisse-als-PDF-Export für reguläre Ligen)
- * Changelog: 1.3.0 - getAppVersion() ergänzt (liest Version aus composer.json)
- * Changelog: 1.2.1 - Projektname auf "LMOnext" umgestellt (vorher "Online-Liga-Verwaltung Board" / "OLVBoard")
- * Changelog: 1.2.0 - Kein funktionaler Unterschied hier, aber Teil des Umbaus auf reine
- *                     Platzhalter-Templates (siehe frontend/template_engine.php v2.0.0)
- * Changelog: 1.1.0 - data_liga.php eingebunden (Liga-Detailseite: letzte Ergebnisse)
- * Changelog: 1.0.0 - Initiale Version: eigenständiger Bootstrap für den Besucherbereich,
- *                     komplett getrennt vom Adminbereich (eigene Session, eigene Sprache,
- *                     eigenes Template).
  *
  * PHP version 8.2
  *

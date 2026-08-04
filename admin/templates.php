@@ -3,8 +3,6 @@
  * Project: LMOnext
  * Filename: templates.php
  * Fileversion: 1.2.1
- * Changelog: 1.2.1 - Projektname auf "LMOnext" umgestellt (vorher "Online-Liga-Verwaltung Board" / "OLVBoard")
- * Changelog: 1.2.0 - label/beschreibung/detail sind jetzt Übersetzungs-Keys (über t() aufzulösen), nicht mehr Rohtext
  *
  * PHP version 8.2
  *

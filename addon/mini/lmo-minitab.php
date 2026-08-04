@@ -3,40 +3,6 @@
  * Project: LMOnext
  * Filename: addon/mini/lmo-minitab.php
  * Fileversion: 1.2.2
- * Changelog: 1.2.2 - $ligaId an computeStandings() übergeben, damit admin-seitig hinterlegte
- *                     Strafpunkte/Straftore auch in diesem Mini-Widget korrekt berücksichtigt
- *                     werden (siehe src/Liga/StandingsTrait.php 1.1.0)
- * Changelog: 1.2.1 - Bugfix: Team-Logo-Bild und der "Zur Tabelle"-Link in der Kopfzeile
- *                     zeigten ins Leere, da renderTeamLogoImg()/die "liga.php?id=..."-Verlinkung
- *                     Pfade relativ zum Projekt-Root zurückgeben – korrekt für liga.php/home.php
- *                     (die selbst im Projekt-Root liegen), aber falsch für dieses Addon (liegt
- *                     unter addon/mini/, zwei Ebenen tiefer). Neue Funktion
- *                     miniProjectRootUrlPrefix() berechnet das korrekte URL-Präfix dynamisch
- *                     über Document-Root-Abgleich (funktioniert bei Direktaufruf UND bei
- *                     include() aus einer beliebig platzierten Wrapper-Datei, nicht nur bei
- *                     einer festen Verzeichnistiefe), Fallback auf einfache Heuristik falls
- *                     nicht ermittelbar
- * Changelog: 1.2.0
- * Changelog: 1.2.0 - Neuer Platzhalter "Logo" (Team-Logo, siehe Admin → Teams (global)),
- *                     zwischen Tabellenplatz und Teamname positioniert (siehe standard.tpl.php
- *                     1.2.0). Immer angezeigt (unabhängig von der liga-eigenen
- *                     "Logo anzeigen"-Einstellung, da dieses Widget als eigenständiges,
- *                     extern eingebundenes Element davon unabhängig sein soll)
- * Changelog: 1.1.0
- * Changelog: 1.1.0 - Bugfix: <!--ligaDatum--> zeigte immer das heutige Tagesdatum statt des
- *                     tatsächlichen letzten Speicherdatums der Liga (im alten LMO das
- *                     Änderungsdatum der .l98-Datei). Liest jetzt liga.datum aus der DB, das
- *                     save_ergebnisse (siehe handler_liga.php 1.6.2) bei jeder
- *                     Ergebnis-Speicherung aktualisiert
- * Changelog: 1.0.0
- * Changelog: 1.0.0 - Initiale Version: Portierung des alten LMO-Addons "Minitabellen" (siehe
- *                     doc/help/addons/minitabellen.html + template/mini/standard.tpl.php im
- *                     alten LMO). Zeigt einen Ausschnitt der Tabelle einer Liga (z.B. "3 Plätze
- *                     über und 2 unter der Lieblingsmannschaft") zum Einbinden auf externen
- *                     Webseiten, entweder per include() oder direkt als URL/IFrame. Nutzt
- *                     bewusst dieselben Berechnungsfunktionen wie die normale Tabellenansicht
- *                     (computeStandings()/computeStandingsMarkerColor() aus data_liga.php),
- *                     damit Platzierungen und Randmarkierungen immer exakt übereinstimmen.
  *
  * PHP version 8.2
  *

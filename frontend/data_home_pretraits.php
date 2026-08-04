@@ -3,14 +3,6 @@
  * Project: LMOnext
  * Filename: data_home.php
  * Fileversion: 2.0.1
- * Changelog: 2.0.1 - Projektname auf "LMOnext" umgestellt (vorher "Online-Liga-Verwaltung Board" / "OLVBoard")
- * Changelog: 2.0.0 - Kein HTML mehr direkt in dieser Datei: renderLigaLink() und
- *                     renderArchivFolderTree() nutzen jetzt renderPartial() mit
- *                     template/<aktiv>/partials/liga_list_item.tpl.php bzw.
- *                     archiv_folder.tpl.php. Diese Datei ist reines "Grundgerüst"
- *                     (Abfragen + Schleifen), das Markup steckt komplett im Template.
- * Changelog: 1.0.0 - Initiale Version: aktive Ligen, Archiv-Baum, wiederverwendbares
- *                     Rendering des Archiv-Baums (von jedem Template nutzbar)
  *
  * PHP version 8.2
  *

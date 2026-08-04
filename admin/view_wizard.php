@@ -3,40 +3,6 @@
  * Project: LMOnext
  * Filename: view_wizard.php
  * Fileversion: 1.3.5
- * Changelog: 1.3.5 - Umbenennung auf Nutzerwunsch: interne Bezeichnungen jetzt durchgehend auf
- *                     Englisch ("League Key" statt der vorherigen deutschen Bezeichnung) –
- *                     Variablenname, Funktionsname, interner Modus-Wert und Lang-Schlüssel
- *                     entsprechend angepasst (siehe bootstrap.php/league-key_data.php). Der
- *                     sichtbare UI-Text hieß schon vorher "Schlüsselplan" (siehe Changelog 1.3.2)
- *                     und ist unverändert
- * Changelog: 1.3.4 - Vorschautabelle zeigt bei "kein Spielplan" jetzt korrekt "___" für die
- *                     Leerteam-Platzhalter (-1) statt eines PHP-Fehlers/leerer Zelle, siehe
- *                     bootstrap.php 1.7.1
- * Changelog: 1.3.3 - Auf Wunsch zurückgenommen: Schlüsselplan-Option wieder wie ursprünglich
- *                     immer sichtbar (nur ausgegraut mit "nicht verfügbar"-Hinweis) statt
- *                     komplett zu verschwinden, wenn kein Muster zur Teamzahl passt
- * Changelog: 1.3.2 - Umbenennung "League Key" (intern) zu "Schlüsselplan" (UI-Text, siehe
- *                     lang-Dateien). Die
- *                     Option erscheint jetzt komplett nicht mehr (statt nur ausgegraut mit
- *                     "nicht verfügbar"-Hinweis), wenn für die gewählte Teamzahl kein Muster
- *                     hinterlegt ist
- * Changelog: 1.3.1 - Bugfix (der eigentliche Grund für "immer nur 16 Teams"): Zahlenfeld
- *                     (Liga, freie Anzahl) und Dropdown (KO, Vorauswahl 16) hießen beide
- *                     "team_count" gleichzeitig im DOM. Das umbenennende JS lief nur bei einer
- *                     Änderung des Liga-Typs, nicht beim ersten Laden – blieb der Admin beim
- *                     voreingestellten Liga-Typ (der Normalfall), sendete der Browser BEIDE
- *                     Werte mit demselben Namen, PHP übernahm nur den letzten (das versteckte
- *                     KO-Dropdown mit 16). Felder heißen jetzt dauerhaft unterschiedlich
- *                     ("team_count_liga"/"team_count_ko"), keine Namensumschaltung per JS mehr nötig
- * Changelog: 1.3.0 - Schritt 3 (reguläre Liga): neue Auswahl "Spielplan-Erstellung"
- *                     (League Key/Zufall/kein Spielplan) oberhalb der Vorschautabelle, per
- *                     eigenem Formular ohne die Teamnamen erneut einzugeben (siehe
- *                     handler_wizard.php "step=3&regen=1"). League-Key-Option ist
- *                     ausgegraut, wenn für die gewählte Teamzahl kein Muster hinterlegt ist
- * Changelog: 1.2.1 - Projektname auf "LMOnext" umgestellt (vorher "Online-Liga-Verwaltung Board" / "OLVBoard")
- * Changelog: 1.2.0 - Alle Texte (PHP + JS) über t() übersetzt; Vorlagen-Texte (label/beschreibung/detail) über t($tpl[...]) aufgelöst
- * Changelog: 1.1.3 - KO-Modus-Auswahl nutzt koModusLabel() (übersetzt) statt rohem KO_MODUS-Label
- * Changelog: 1.1.2 - KO Schritt 3: Paarungen werden automatisch angelegt; nur Spielmodus wählen
  *
  * PHP version 8.2
  *

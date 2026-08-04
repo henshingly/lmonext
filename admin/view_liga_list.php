@@ -3,11 +3,6 @@
  * Project: LMOnext
  * Filename: view_liga_list.php
  * Fileversion: 1.3.1
- * Changelog: 1.3.1 - Projektname auf "LMOnext" umgestellt (vorher "Online-Liga-Verwaltung Board" / "OLVBoard")
- * Changelog: 1.3.0 - Alle Texte (PHP + JS) über t() übersetzt
- * Changelog: 1.2.3 - Offene Ergebnisse pro Liga; Filter nach fehlenden Ergebnissen
- * Changelog: 1.2.1 - Ligen-Stat-Karte zeigt Gesamtanzahl inkl. Archiv; Link zur Gesamtübersicht
- * Changelog: 1.2.0 - Teams-Stat-Karte als Link zu ?action=teams
  *
  * PHP version 8.2
  *

@@ -2,47 +2,7 @@
 <html lang="<!--HtmlLang-->">
 <head>
 <!--
-  Template: light | Filename: layout.tpl.php | Fileversion: 1.4.2
-  Changelog: 1.4.2 - CSS für die Strafpunkte-Fußnotenliste ergänzt (siehe default 1.16.2)
-  Changelog: 1.4.1 - CSS für .st-straf-hinweis ergänzt (siehe default 1.16.1)
-  Changelog: 1.4.0 - CSS für die Tippspiel-Integration ergänzt (siehe default 1.16.0)
-  Changelog: 1.3.0 - Neuer Platzhalter "TippspielLink" im Footer, neben der Sprachauswahl
-                     (siehe frontend/template_engine.php 2.6.0)
-  Changelog: 1.2.9 - CSS für ".h2h-match-today" ergänzt (siehe default 1.15.6)
-  Changelog: 1.2.8 - CSS für den neuen "Spielfrei"-Hinweis (spielfrei_note.tpl.php, fällt für
-                     dieses Template auf das gleichnamige Partial von "default" zurück) ergänzt
-  Changelog: 1.2.7 - .team-logo-inline margin-left ergänzt, siehe template/default/layout.tpl.php 1.15.4
-  Changelog: 1.2.6
-  Changelog: 1.2.6 - .st-team-logo-wrap ergänzt, siehe template/default/layout.tpl.php 1.15.3
-  Changelog: 1.2.5
-  Changelog: 1.2.5 - .team-logo-inline: max-width-Grenze entfernt, siehe
-                     template/default/layout.tpl.php 1.15.2
-  Changelog: 1.2.4
-  Changelog: 1.2.4 - .team-logo-inline: feste Höhe + automatische Breite statt fixem Quadrat,
-                     siehe template/default/layout.tpl.php 1.15.1
-  Changelog: 1.2.3
-  Changelog: 1.2.3 - CSS für .team-logo-inline ergänzt, siehe template/default/layout.tpl.php 1.15.0
-  Changelog: 1.2.2
-  Changelog: 1.2.2 - Basis-CSS für farbige Tabellenmarkierungen ergänzt, siehe
-                     template/default/layout.tpl.php 1.14.9
-  Changelog: 1.2.1 - CSS für responsive Lang-/Kurzform im Teamvergleich-Modal ergänzt, siehe
-                     template/default/layout.tpl.php 1.14.8
-  Changelog: 1.2.0 - Header komplett entfernt (kein Logo/Schriftzug mehr). Sprachauswahl in den
-                     Footer verschoben, direkt über der "LMOnext {Version}"-Zeile, gleiche
-                     dezente Optik wie das Template-Auswahl-Dropdown dort
-  Changelog: 1.1.0 - Bild-Logo im Header entfernt, ersetzt durch einen Text-Schriftzug
-                     ("LMOnext" in Akzentfarbe/Textfarbe, in der Comfortaa-Schrift), analog
-                     zum Colored-Template
-  Changelog: 1.0.0 - Initiale Version: viertes Frontend-Template ("Light"), komplett
-                     eigenstaendiges CSS. Sehr helles Design (weisser/cremefarbener Hintergrund,
-                     warmes Koralle als Akzent) mit einer außergewoehnlichen, LOKAL gehosteten
-                     Schriftart (Comfortaa, SIL Open Font License 1.1, Dateien in
-                     assets/fonts/comfortaa/ - keine externe Font-CDN-Abhaengigkeit). Kopf-
-                     zeilen der Tabellen/Sektionen nutzen einen hellen Farbton statt der sonst
-                     ueblichen dunklen Kopfzeile, mit der Akzentfarbe als Schrift, damit es hell
-                     bleibt. home.tpl.php/liga.tpl.php/alle Partials werden nicht dupliziert -
-                     sie enthalten kein CSS/Logo und fallen automatisch auf template/default/
-                     zurueck (siehe loadTemplateFile() in template_engine.php)
+  Template: light | Filename: layout.tpl.php | Fileversion: 1.4.3
 -->
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -264,6 +224,10 @@ table.standings-table td{padding:8px 10px;border-top:1px solid var(--border)}
 .st-straf-hinweis a{color:inherit;text-decoration:none}
 .st-straf-hinweis a:hover{text-decoration:underline}
 .st-footnotes{padding:10px 16px 4px;border-top:1px solid var(--border)}
+.st-spieltag-nav{display:flex;justify-content:space-between;align-items:center;padding:10px 16px;font-size:.85rem;gap:10px}
+.st-spieltag-nav a{color:var(--accent);text-decoration:none;font-weight:500}
+.st-spieltag-nav a:hover{text-decoration:underline}
+.st-spieltag-nav-next{margin-left:auto}
 .st-footnote-item{font-size:.8rem;color:var(--muted);margin:4px 0}
 .st-footnote-item a{color:var(--muted);text-decoration:none;margin-right:2px}
 .st-footnote-item a:hover{text-decoration:underline}

@@ -3,46 +3,6 @@
  * Project: LMOnext
  * Filename: src/Liga/StandingsTrait.php
  * Fileversion: 1.4.1
- * Changelog: 1.4.1 - Die Fußnote erscheint jetzt schon, sobald "Grund" befüllt
- *                     ist - unabhängig davon, ob überhaupt eine der vier Zahlenkorrekturen
- *                     (Punkte/erzielte Tore/Gegentore/Minuspunkte) von 0 abweicht. Vorher wurde
- *                     ein reiner Grund ohne Zahlenänderung fälschlich unterdrückt
- * Changelog: 1.4.0 - Strafpunkte-Begründungen erscheinen jetzt automatisch als
- *                     Fußnoten unter der Tabelle, im Wikipedia-Stil ("(1) Begründungstext") -
- *                     neue Funktionen assignStrafFootnotes() (vergibt fortlaufende Nummern in
- *                     Tabellenreihenfolge, nur an Teams mit Grund UND tatsächlichem Effekt) und
- *                     renderStrafFootnotes() (baut die Liste). renderStrafHinweis() zeigt bei
- *                     vorhandenem Grund jetzt eine anklickbare Fußnoten-Nummer "(N)" statt nur
- *                     eines Warnsymbols, Tooltip mit den genauen Deltas bleibt zusätzlich erhalten
- * Changelog: 1.3.0 - Kundenwunsch (Mobile-Rückmeldung): (1) Vierten Korrekturwert
- *                     "minuspunkte_korrektur" ergänzt, damit die separate Minuspunkte-Anzeige
- *                     ebenfalls (z.B. auf 0) korrigierbar ist - vorher blieb sie bei einer
- *                     Punkte-Korrektur unverändert bestehen; (2) die eigentliche Vorzeichen-
- *                     Eingabe (Minuszeichen auf Mobilgeräten oft nicht erreichbar) wurde in
- *                     admin/view_liga_settings.php auf ein Dropdown (+/−) plus Betragsfeld
- *                     umgestellt - hier nur die Datenschicht dafür erweitert
- * Changelog: 1.2.0 - Kundenwunsch (2 Punkte): (1) Minuspunkte-Anzeige (Admin-Einstellung
- *                     "MinusPoints" existierte schon lange, wurde aber nirgends gelesen) - neue
- *                     Berechnung der klassischen "Gewinnpunkte:Verlustpunkte"-Darstellung je
- *                     Team, respektiert das jeweils konfigurierte Punktesystem statt fest 2/1/0
- *                     anzunehmen; (2) Strafen/Bonus-Feature erweitert: dritter Korrekturwert
- *                     "tore_korrektur" (erzielte Tore) ergänzt, damit Punkte UND beide Tor-Werte
- *                     unabhängig voneinander mit +/- korrigiert werden können (z.B. Lizenzentzug:
- *                     Team komplett auf 0:0/0 setzen). Alle drei Werte jetzt klar als
- *                     vorzeichenbehaftet (Bonus/Strafe) dokumentiert und im Tooltip entsprechend
- *                     mit korrektem Vorzeichen angezeigt
- * Changelog: 1.1.0 - Neues Feature "Strafpunkte/Straftore": computeStandings() bekommt einen
- *                     optionalen $ligaId-Parameter (Rückwärtskompatibel, Standard null = kein
- *                     Verhaltenswechsel für bestehende Aufrufer ohne Liga-Bezug) und zieht damit
- *                     admin-seitig hinterlegte Strafpunkte von den regulär berechneten Punkten
- *                     ab bzw. addiert Straftore zu den Gegentoren, VOR der finalen Sortierung -
- *                     wirkt sich also korrekt auf Tabellenplatz und Tordifferenz aus. Neue
- *                     Funktionen getLigaStrafpunkte()/setLigaStrafpunkte() plus neue Tabelle
- *                     liga_strafpunkte (per ensureStrafpunkteSchema() bei Bedarf angelegt, auch
- *                     auf Bestandsinstallationen ohne erneuten install.php-Lauf)
- * Changelog: 1.0.0 - Initiale Version: Teil der Umstrukturierung von frontend/data_liga.php in
- *                     fokussierte Traits (siehe frontend/data_liga.php 3.0.0 für den vollen
- *                     Kontext der Umstellung). Tabellenberechnung (computeStandings, computeStandingsMarkerColor, renderStandingsView).
  *
  * PHP version 8.2
  *

@@ -3,12 +3,6 @@
  * Project: LMOnext
  * Filename: frontend/data_home.php
  * Fileversion: 3.0.0
- * Changelog: 3.0.0 - Umstrukturierung analog zu data_liga.php 3.0.0: Implementierung liegt jetzt
- *                     unter src/Home/ (HomeRepository, HomeRenderer, zusammengeführt in
- *                     HomeService). Diese Datei ist eine reine Kompatibilitätsschicht - alle
- *                     bisherigen Funktionsnamen bleiben unverändert erhalten. Kein
- *                     Composer/vendor nötig: HomeService wird direkt per require_once geladen.
- *                     Alte Version vollständig als data_home_pretraits.php erhalten
  *
  * PHP version 8.2
  *

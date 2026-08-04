@@ -3,26 +3,6 @@
  * Project: LMOnext
  * Filename: admin.php
  * Fileversion: 1.5.3
- * Changelog: 1.5.3 - Bindet addon/tipp/handler_tipp.php ein (neues Tippspiel-Addon, erste
- *                     Speicher-Aktion für die Punkteverteilung)
- * Changelog: 1.5.2
- * Changelog: 1.5.2 - Route für die neue Aktion "tippspiel" ergänzt (neues Tippspiel-Addon,
- *                     siehe addon/tipp/view_tippspiel.php)
- * Changelog: 1.5.1
- * Changelog: 1.5.1 - Spielerstatistik-Addon nach addon/player/ verschoben (neben addon/mini/,
- *                     einheitliche Addon-Ordnerstruktur); neue Konstante ADDON_INC
- * Changelog: 1.5.0 - Routen für das neue Spielerstatistik-Addon ergänzt: "spielerstatistik"
- *                     (Verwaltung je Liga) und "spst_import_review" (Team-Abgleich beim Import
- *                     alter .stat/.cfg-Dateien), siehe handler_spielerstat.php
- * Changelog: 1.4.3 - require_once-Pfad an die Datei-Umbenennung angepasst (Nutzerwunsch:
- *                     interne Bezeichnungen jetzt durchgehend auf Englisch, siehe
- *                     league-key_data.php 1.2.0)
- * Changelog: 1.4.2 - Route für "reset_password" (Passwort-Reset-Landingpage aus der E-Mail) ergänzt
- * Changelog: 1.4.1 - Route für "import_review" (Team-Namensabgleich beim .l98-Import) ergänzt
- * Changelog: 1.4.0 - Route + Handler für "Wartung" (Datenbank-Backup/Wiederherstellung) ergänzt
- * Changelog: 1.3.1 - Projektname auf "LMOnext" umgestellt (vorher "Online-Liga-Verwaltung Board" / "OLVBoard")
- * Changelog: 1.3.0 - Route für archiv-Action
- * Changelog: 1.2.0 - Route für teams-Action hinzugefügt
  *
  * PHP version 8.2
  *

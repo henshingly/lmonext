@@ -3,35 +3,6 @@
  * Project: LMOnext
  * Filename: handler_settings.php
  * Fileversion: 1.3.9
- * Changelog: 1.3.9 - Vorzeichen-Eingabe im Tab "Strafen" auf Dropdown (+/−) + Betragsfeld
- *                     umgestellt (Minuszeichen auf Mobilgeräten oft nicht per Zifferntastatur
- *                     erreichbar). Vierter Korrekturwert "Minuspunkte" ergänzt
- * Changelog: 1.3.8 - Tab "Strafen" um dritten Korrekturwert "erzielte Tore" erweitert (neue
- *                     Spalte tore_korrektur, Migration inklusive), damit z.B. bei Lizenzentzug
- *                     Punkte UND beide Tor-Werte unabhängig korrigiert werden können
- * Changelog: 1.3.7 - Neuer Tab "Strafen" (Liga-Einstellungen): Strafpunkte/Straftore je Team,
- *                     eigene Tabelle liga_strafpunkte, wirkt sich nur in dieser Liga aus (siehe
- *                     admin/view_liga_settings.php, computeStandings() in
- *                     src/Liga/StandingsTrait.php 1.1.0)
- * Changelog: 1.3.6 - Speichert die neue Einstellung ShowSpielfrei (Tab Anzeigen/Darstellung)
- * Changelog: 1.3.5
- * Changelog: 1.3.5 - Bugfix: Tab "spielsystem" speicherte versehentlich goalfaktor/
- *                     pointsfaktor (kollidierte mit dem Grundwerte-Tab, siehe
- *                     view_liga_settings.php 1.4.3) statt der neuen ET/PS-Punktefelder;
- *                     jetzt PointsForWin/Draw/LostET und PointsForWin/Draw/LostPS
- * Changelog: 1.3.4
- * Changelog: 1.3.4 - Neue Einstellung "ShowLogos" (Tab Anzeigen/Darstellung) wird jetzt
- *                     mitgespeichert
- * Changelog: 1.3.3
- * Changelog: 1.3.3 - Bugfix: "Meister wird ausgespielt"-Checkbox wurde nie gespeichert
- *                     (Formularfeld heißt "Champ_enabled", Handler las aber "Champ" – dieses
- *                     POST-Feld existierte nie). Neu: Randfarben der Tabellenmarkierungen
- *                     ({Key}Color) werden jetzt mitgespeichert (nur gültige #rrggbb-Hexwerte)
- * Changelog: 1.3.2 - Projektname auf "LMOnext" umgestellt (vorher "Online-Liga-Verwaltung Board" / "OLVBoard")
- * Changelog: 1.3.1 - Bugfix: "Kalender"-Option wird jetzt unter eigenem Schlüssel gespeichert
- *                     (statt der Namenskollision mit DatC/Spieltagsdatum)
- * Changelog: 1.3.0 - Flash-Meldungen über t() übersetzt
- * Changelog: 1.2.2 - tab=ticker für schnelles Speichern von ticker+tickertext aus Spieltagansicht
  *
  * PHP version 8.2
  *

@@ -3,53 +3,6 @@
  * Project: LMOnext
  * Filename: addon/tipp/view_tippspiel_frontend.php
  * Fileversion: 1.4.1
- * Changelog: 1.4.1 - Bugfix: Die Tippeinsicht hatte (anders als die Tippabgabe) gar keinen
- *                     Liga-Umschalter - bei mehr als einer abonnierten Liga wurde immer nur die
- *                     erste angezeigt, die zweite war unerreichbar. Denselben Umschalter-Block
- *                     wie in der Tippabgabe ergänzt
- * Changelog: 1.4.0 - "Passwort vergessen" bietet jetzt zwei Eingabefelder
- *                     (Nickname ODER Email) statt nur Email, sucht entsprechend und meldet bei
- *                     Nichtfund konkret zurück, welches Feld nichts fand - siehe
- *                     tippRequestPasswordReset() in tipp_lib.php 0.6.1
- * Changelog: 1.3.0 - Verhalten korrigiert (Rückmeldung: Fallback war andersrum gewünscht):
- *                     tippFilterLigenByAbo() liefert jetzt bei leerem Abo eine LEERE Liste
- *                     statt aller Ligen. Dafür fragt die Registrierung (renderTippRegisterView())
- *                     die zu abonnierenden Ligen direkt mit ab (Checkboxen unter den
- *                     Passwortfeldern), damit ein frisch registrierter Tipper nicht ohne Abo
- *                     dasteht. Tippabgabe/-einsicht zeigen bei leerem Abo (aber vorhandenen
- *                     Ligen) jetzt einen Hinweis mit Link zur Kontoseite statt der irreführenden
- *                     "keine Liga freigegeben"-Meldung
- * Changelog: 1.2.0 - Liga-Abo wirkt jetzt tatsächlich: neue Funktion tippFilterLigenByAbo()
- *                     schränkt Tippabgabe/Tippeinsicht auf die abonnierten Ligen ein - bisher
- *                     war das Abo nur eine wirkungslose Merkliste. Ohne jegliches Abo bleibt die
- *                     volle Liste sichtbar (kein versehentliches Aussperren neu registrierter
- *                     Tipper). Speichern eines Tipps (?action=save) bleibt bewusst
- *                     uneingeschränkt - das Abo ist eine Anzeige-Filterung, keine Zugriffssperre
- * Changelog: 1.1.1 - Bugfix: Die Kontoseite (?action=konto) hatte keinerlei Navigation zurück
- *                     zur Tippabgabe/Einsicht/Rangliste - jetzt bekommt sie dieselbe Tab-Leiste
- *                     wie die anderen Ansichten (keiner der drei Tabs aktiv markiert, da Konto
- *                     kein eigener Tab ist)
- * Changelog: 1.1.0 - Neue Self-Service-Kontoseite (?action=konto): Email/Passwort/Name/Adresse
- *                     ändern, Team beitreten/gründen/verlassen, Newsletter/Reminder, Liga-Abos -
- *                     Nickname bewusst NICHT editierbar. Neue "Passwort vergessen"-Flow
- *                     (?action=passwort_vergessen/?action=passwort_reset), Link auf der
- *                     Login-Seite ergänzt. Rangliste um vier Spalten erweitert (RE/RTD/RT/JP,
- *                     analog zum alten LMO-Tippspiel-Addon) - die Werte wurden von
- *                     tippGetRangliste() bereits berechnet, waren aber nicht angezeigt
- * Changelog: 1.0.0 - Initiale Version: löst die bisherige eigenständige addon/tipp/tipp.php ab
- *                     (eigenes <html>/<head>/CSS) und bindet das Tippspiel stattdessen als View
- *                     ins bestehende Template-System ein - analog zur Spielerstatistik
- *                     (renderSpielerstatistikView() in addon/player/frontend_spielerstat.php),
- *                     erreichbar über home.php?view=tippspiel&action=... Läuft dadurch
- *                     automatisch im vom Besucher/Betreiber gewählten Template (default,
- *                     colored, dark, light, matchday) statt in einem eigenen, unveränderlichen
- *                     Design. tippspielHandleRequest() übernimmt die Rolle von "Phase 1" aus der
- *                     alten tipp.php (POST-/Redirect-Verarbeitung vor jeder HTML-Ausgabe, siehe
- *                     dortiger Changelog 0.3.0/0.3.1) - muss von home.php VOR renderTemplate()
- *                     aufgerufen werden. Die gesamte Geschäftslogik (tippLogin(), tippRegister(),
- *                     tippSaveAbgabe(), tippGetEinsichtDaten(), tippGetRangliste(),
- *                     calculateTippPunkte() usw.) bleibt unverändert in frontend_tipp.php -
- *                     diese Datei ist reine Präsentation.
  *
  * PHP version 8.2
  *

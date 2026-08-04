@@ -3,15 +3,6 @@
  * Project: LMOnext
  * Filename: i18n.php
  * Fileversion: 1.1.2
- * Changelog: 1.1.2 - LANG_SESSION_PREFIX von "olv_lang_" auf "lmonext_lang_" umgestellt
- * Changelog: 1.1.1 - Projektname auf "LMOnext" umgestellt (vorher "Online-Liga-Verwaltung Board" / "OLVBoard")
- * Changelog: 1.1.0 - Domain-fähig gemacht (admin/frontend getrennt): eigene Sprachdateien,
- *                     eigener Session-Key und eigener Cache je Bereich. t() bleibt unverändert
- *                     und ist fest an die Domain "admin" gebunden -> keine Änderung an
- *                     bestehenden Aufrufstellen nötig. Neue Funktion tf() für den künftigen
- *                     Besucherbereich ("frontend"), sobald dieser existiert.
- * Changelog: 1.0.1 - initLanguage()/getCurrentLanguage() akzeptieren optionalen, in der DB gespeicherten Standardwert (Standardsprache)
- * Changelog: 1.0.0 - Initiale Version: Sprachumschaltung, Übersetzungs-Engine
  *
  * PHP version 8.2
  *

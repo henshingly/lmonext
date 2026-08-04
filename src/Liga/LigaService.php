@@ -3,9 +3,6 @@
  * Project: LMOnext
  * Filename: src/Liga/LigaService.php
  * Fileversion: 1.0.0
- * Changelog: 1.0.0 - Initiale Version: Teil der Umstrukturierung von frontend/data_liga.php in
- *                     fokussierte Traits (siehe frontend/data_liga.php 3.0.0 für den vollen
- *                     Kontext der Umstellung). Fassade: fasst alle Liga-Traits zu einer stabilen statischen API zusammen.
  *
  * PHP version 8.2
  *

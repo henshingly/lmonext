@@ -3,17 +3,6 @@
  * Project: LMOnext
  * Filename: view_archiv.php
  * Fileversion: 1.5.1
- * Changelog: 1.5.1 - Liga-ID (#123) wird jetzt auch in den Archiv-Zeilen angezeigt (sowohl
- *                     innerhalb von Ordnern als auch bei Ligen ohne Ordner), analog zur
- *                     ID-Spalte in der Ligen-Übersicht
- * Changelog: 1.5.0
- * Changelog: 1.5.0 - Löschen-Button pro Liga ergänzt (in Ordnern gruppiert + ohne Ordner),
- *                     nutzt den bestehenden "delete_liga"-Handler mit redirect=?action=archiv
- *                     (siehe handler_liga.php 1.6.0 für das zugehörige kaskadierende Löschen)
- * Changelog: 1.4.1 - Projektname auf "LMOnext" umgestellt (vorher "Online-Liga-Verwaltung Board" / "OLVBoard")
- * Changelog: 1.4.0 - Alle Texte (PHP + JS) über t() übersetzt
- * Changelog: 1.3.3 - Filter nach fehlenden Ergebnissen; ⚠️-Badge pro Liga
- * Changelog: 1.3.0 - Funktionsnamen mit archiv-Prefix; Reihenfolge fix (Funktionen vor HTML)
  *
  * PHP version 8.2
  *

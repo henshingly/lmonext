@@ -3,25 +3,6 @@
  * Project: LMOnext
  * Filename: handler_wizard.php
  * Fileversion: 1.3.2
- * Changelog: 1.3.2 - Umbenennung auf Nutzerwunsch: interne Bezeichnungen jetzt durchgehend auf
- *                     Englisch ("League Key" statt der vorherigen deutschen Bezeichnung) –
- *                     Funktionsname, Konstante und interner Modus-Wert entsprechend angepasst
- *                     (siehe bootstrap.php/league-key_data.php)
- * Changelog: 1.3.1 - Bugfix: liest Teamzahl jetzt aus dem zum Liga-Typ passenden, dauerhaft
- *                     eigenen Feld ("team_count_liga"/"team_count_ko" statt eines gemeinsamen
- *                     "team_count"), siehe view_wizard.php 1.3.1 für die Ursache. Liga-Maximum
- *                     außerdem von 128 auf 256 angehoben (passend zum max-Attribut im Formular)
- * Changelog: 1.3.0 - Reguläre Liga: Spielplan wird jetzt standardmäßig per DFB-League-Key-
- *                     Muster erstellt (falls für die Teamzahl vorhanden), statt immer per
- *                     Zufall. Neue Aktion "?action=create_liga&step=3&regen=1" zum Wechseln der
- *                     Spielplan-Art (League Key/Zufall/kein Spielplan) auf der Vorschauseite,
- *                     ohne die Teamnamen erneut eingeben zu müssen. Der bestehende
- *                     Teamnamen-Handler (auch step=3+POST) musste dafür "regen" explizit
- *                     ausschließen, sonst fing er die regen-Anfrage ab und interpretierte die
- *                     fehlenden team_name_X-Felder fälschlich als leeren Teamnamen
- * Changelog: 1.2.1 - Projektname auf "LMOnext" umgestellt (vorher "Online-Liga-Verwaltung Board" / "OLVBoard")
- * Changelog: 1.2.0 - Flash-Meldungen über t() übersetzt
- * Changelog: 1.1.2 - Team-Limit von 64 auf 128 erhöht
  *
  * PHP version 8.2
  *

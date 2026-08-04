@@ -3,64 +3,6 @@
  * Project: LMOnext
  * Filename: handler_import_export.php
  * Fileversion: 1.6.0
- * Changelog: 1.6.0 - Team-Abgleich beim Import zeigt jetzt ALLE ähnlichen vorhandenen Teams
- *                     zur Auswahl an (z.B. Haupt- und Reserve-Team "FC Bayern Muenchen"/"FC
- *                     Bayern Muenchen II"), statt automatisch nur den einen besten Treffer
- *                     vorzuschlagen. Neue Funktion findFuzzyTeamMatches() (Mehrzahl) liefert
- *                     alle Kandidaten sortiert nach Ähnlichkeit; die Review-Seite zeigt sie als
- *                     Dropdown statt einer einzelnen Ja/Nein-Checkbox. import_confirm liest
- *                     jetzt die gewählte Team-ID statt eines Häkchens
- * Changelog: 1.5.5 - Bugfix Team-Abgleich beim Import: die reine Trigramm-Ähnlichkeit
- *                     produzierte zu viele Fehltreffer zwischen thematisch völlig
- *                     unverwandten, aber ähnlich langen Namen (z.B. "Norwegen" ↔ "TSG
- *                     Balingen", "Schweden" ↔ "BSV Schwarz-Weiß Rehden" – beide lagen über dem
- *                     alten Schwellenwert von 0.25 bei Namen >7 Zeichen). teamNamesAreFuzzyMatch()
- *                     verlangt jetzt zusätzlich eine hohe normalisierte Levenshtein-Distanz
- *                     (≥0.72) – beide Kennzahlen müssen unabhängig voneinander übereinstimmen,
- *                     nicht nur eine. Echte Tippfehler-/Formatierungs-Varianten (z.B. "FC St
- *                     Pauli" ↔ "FC St. Pauli", "Hansa Rostock" ↔ "Hansa Rostock II") erkennt die
- *                     Funktion weiterhin zuverlässig
- * Changelog: 1.5.4 - l98DecodeText() jetzt auch auf den Spielbericht-Link (BE-Feld) angewendet,
- *                     in beiden Zweigen (KO und regulär) – relevant für "&amp;" in
- *                     Query-Parametern von URLs, war bisher übersehen worden
- * Changelog: 1.5.3 - Zwei Bugfixes beim .l98-Import: (1) Runden im regulären Liga-Format
- *                     (Type=0) behandelten GA/GB=-1 (LMO-Legacy für "kein Ergebnis") nicht wie
- *                     im KO-Zweig als null, sondern übernahmen die -1 wörtlich bis in die DB/
- *                     Admin-Oberfläche. (2) Ältere .l98-Exporte liefern Freitext (Teamnamen/
- *                     -kürzel/-mittelnamen, Liganamen, Spielnotizen, Ticker) teils schon
- *                     HTML-entity-kodiert, dabei oft sogar ohne das abschließende Semikolon
- *                     (z.B. "M&oumlnchengladbach" statt korrekt "M&ouml;nchengladbach"); neue
- *                     l98DecodeText()-Hilfsfunktion ergänzt bei Bedarf erst das fehlende
- *                     Semikolon für die gängigen Buchstaben und dekodiert dann korrekt
- * Changelog: 1.5.2 - Bugfix (gefunden beim Testen der neuen Team-Abgleich-Funktion): teams_global.name
- *                     hat keinen UNIQUE-Key, wodurch "INSERT ... ON DUPLICATE KEY UPDATE" bei
- *                     exakter Namensgleichheit NIE griff und stattdessen stumpf ein doppeltes
- *                     Team anlegte (in importL98IntoDB() UND createLigaInDB(), betraf also auch
- *                     die "Liga erstellen"-Wizard-Seite, nicht nur den .l98-Import). Beide Stellen
- *                     prüfen jetzt explizit per SELECT vor dem Anlegen statt sich auf einen nicht
- *                     existierenden DB-Constraint zu verlassen
- * Changelog: 1.5.1 - Bugfix: Fuzzy-Matching nutzte mb_strtolower()/mb_strlen()/mb_substr(),
- *                     die mbstring-Extension ist nicht auf jedem Shared-Hosting garantiert
- *                     vorhanden (führte zu einem Fatalen Fehler). Komplett ohne mbstring
- *                     umgebaut: Umlaute/Akzente werden explizit (Groß+klein) per strtr()
- *                     ersetzt, danach reicht strtolower() für den ASCII-Rest; UTF-8-Zeichen
- *                     werden über preg_split('//u', ...) zerlegt statt mb_substr()
- * Changelog: 1.5.0 - Vorhandene Teams werden beim .l98-Import nicht mehr überschrieben: bei
- *                     exaktem Namenstreffer gelten Name/Kurz/Mittel aus der DB als maßgeblich
- *                     (vorher wurden nicht-leere Werte aus der .l98-Datei übernommen). Neu: bei
- *                     ungefährer (nicht exakter) Namensgleichheit wird vor dem eigentlichen
- *                     Import ein Abgleichsschritt eingeschoben (siehe view_import_review.php,
- *                     Action "import_review"/"import_confirm") – der Admin entscheidet dort pro
- *                     Team, ob der Name aus der DB übernommen werden soll. Fuzzy-Matching
- *                     (teamNormalizeName()/teamTrigramSimilarity()/findFuzzyTeamMatch()) ist ein
- *                     PHP-Port derselben Logik, die im Teams-Suchfeld schon länger läuft
- * Changelog: 1.4.1 - Projektname auf "LMOnext" umgestellt (vorher "Online-Liga-Verwaltung Board" / "OLVBoard")
- * Changelog: 1.4.0 - Import-Handler + importL98IntoDB()-Meldungen über t() übersetzt
- * Changelog: 1.3.1 - createLigaInDB(): Erfolgs-/Fehlermeldung über t() übersetzt
- * Changelog: 1.3.0 - Kommentar Status-Mapping korrigiert (1=i.E., 2=n.V., war vertauscht dokumentiert)
- * Changelog: 1.2.9 - [News]-Sektion (Tickertext) geparst und in liga_options gespeichert
- * Changelog: 1.2.3 - KO-Import: Dummy-Team ___ fuer TA/TB=0 Paarungen: alle .l98 aus ZIP-Archiv importieren (umgeht max_file_uploads)
- * Changelog: 1.2.0 - kurz/mittel nur ueberschreiben wenn nicht leer (ON DUPLICATE KEY)
  *
  * PHP version 8.2
  *

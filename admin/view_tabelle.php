@@ -3,8 +3,6 @@
  * Project: LMOnext
  * Filename: view_tabelle.php
  * Fileversion: 1.2.1
- * Changelog: 1.2.1 - Projektname auf "LMOnext" umgestellt (vorher "Online-Liga-Verwaltung Board" / "OLVBoard")
- * Changelog: 1.2.0 - Alle Texte über t() übersetzt
  *
  * PHP version 8.2
  *

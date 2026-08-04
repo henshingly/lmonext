@@ -3,29 +3,6 @@
  * Project: LMOnext
  * Filename: addon/player/view_spielerstatistik.php
  * Fileversion: 1.3.0
- * Changelog: 1.3.0 - Spalten mit dem Namen "Team"/"Mannschaft"/"Verein" (unabhängig von
- *                     Groß-/Kleinschreibung) bekommen beim Werte-Eintragen jetzt ein Dropdown
- *                     mit den aktuellen Teams der Liga statt eines Freitextfeldes (siehe
- *                     data_loader.php 1.7.1 für die Team-Liste). Erleichtert die Zuordnung und
- *                     vermeidet Tippfehler; der gespeicherte Wert bleibt einfacher Text, kein
- *                     Fremdschlüssel. Ein bestehender Wert, der zu keinem aktuellen Team passt
- *                     (z.B. nach Umbenennung), wird als zusätzliche, vorausgewählte Option
- *                     angezeigt statt beim Speichern unbemerkt verloren zu gehen
- * Changelog: 1.2.0
- * Changelog: 1.2.0 - Import-Karte für alte .stat/.cfg-Dateien wird jetzt komplett ausgeblendet,
- *                     sobald mindestens eine Spalte manuell angelegt wurde (statt nur eine
- *                     Warnung anzuzeigen, wenn schon Spieler existieren) – der Import ist nur
- *                     für eine noch komplett unkonfigurierte Spielerstatistik gedacht, siehe
- *                     auch die serverseitige Absicherung in handler_spielerstat.php 1.2.0
- * Changelog: 1.1.0
- * Changelog: 1.1.0 - Datei nach addon/player/ verschoben. Foto-Upload/-Entfernen je
- *                     Spielerzeile ergänzt (globale Spieler-ID, siehe savePlayerPhotoUpload()),
- *                     Hinweis auf Spaltenüberschriften-Grafiken (assets/addon/player/) ergänzt
- * Changelog: 1.0.0 - Initiale Version: Admin-Oberfläche für das neue Spielerstatistik-Addon.
- *                     Rewrite von addon/spieler/lmo-statadmin.php (altes LMO-Addon) auf das
- *                     LMOnext-Datenmodell (siehe admin/spielerstat_lib.php) – DB-gestützt statt
- *                     Flatfile, eigener Formel-Parser statt eval(). Kein separates
- *                     Hilfsadmin-Rechtemodell (LMOnext kennt aktuell nur eine Adminrolle).
  *
  * PHP version 8.2
  *

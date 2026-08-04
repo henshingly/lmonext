@@ -3,15 +3,6 @@
  * Project: LMOnext
  * Filename: view_import_review.php
  * Fileversion: 1.1.0
- * Changelog: 1.1.0 - Zeigt jetzt ALLE ähnlichen vorhandenen Teams als Dropdown-Auswahl an
- *                     (statt nur den einen besten Treffer per Ja/Nein-Checkbox), z.B. wenn
- *                     Haupt- und Reserve-Team beide ähnlich zum importierten Namen sind.
- *                     Zusätzliche Option "Kein passendes Team – neues Team anlegen"
- * Changelog: 1.0.0 - Initiale Version: Abgleichsseite zwischen Upload und tatsächlichem Import.
- *                     Wird nur angezeigt, wenn detectFuzzyTeamMatchesForImport() ungefähre
- *                     (nicht exakte) Namenstreffer mit bereits vorhandenen Teams gefunden hat –
- *                     der Admin entscheidet hier pro Team, ob der Name aus der DB übernommen
- *                     werden soll, bevor der eigentliche Import (?action=import_confirm) läuft.
  *
  * PHP version 8.2
  *

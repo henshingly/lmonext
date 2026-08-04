@@ -3,28 +3,6 @@
  * Project: LMOnext
  * Filename: addon/player/spielerstat_lib.php
  * Fileversion: 1.1.0
- * Changelog: 1.1.0 - Datei nach addon/player/ verschoben (einheitliche Addon-Ordnerstruktur,
- *                     neben addon/mini/). Neu: persistente Spieler-Entität spieler_global
- *                     (eigene ID, saison-/vereinsübergreifend, siehe ensureSpielerGlobalSchema()/
- *                     findOrCreateGlobalPlayer()) statt Namen nur als Zellwert; Spielerfoto-
- *                     Upload analog zu Team-Logos (findPlayerPhotoPath()/savePlayerPhotoUpload()/
- *                     deletePlayerPhoto(), Ordner assets/img/player/); Spaltenüberschriften-
- *                     Grafiken (findSpielerstatColumnImage(), Ordner assets/addon/player/) als
- *                     Pendant zum alten LMO-Verhalten (Bild statt Textüberschrift, wenn eine
- *                     gleichnamige Grafik vorliegt)
- * Changelog: 1.0.0 - Initiale Version: DB-Schema (ensureSpielerstatSchema()), sicherer
- *                     Formel-Parser (kein eval() – siehe evaluateSpielerstatFormula()) mit
- *                     +,-,*,/,(),MIN,MAX,ROUND, sowie CRUD-Helfer für Spalten/Spieler/Werte
- *                     und die Liga-Konfiguration. Rewrite des alten "Spielerstatistik"-Addons
- *                     (addon/spieler/lmo-stat*.php im Original-LMO), das Flatfiles (.stat/.cfg)
- *                     mit einer eigenen eval()-basierten Formel-Auswertung nutzte. Diese
- *                     Neufassung schreibt stattdessen direkt in die Datenbank (siehe
- *                     spielerstat_spalten/spielerstat_spieler/spielerstat_werte/
- *                     spielerstat_config) und ersetzt eval() durch einen eigenen,
- *                     Sandbox-sicheren Tokenizer/Parser/Evaluator. Anders als im Original wird
- *                     die Rolle einer Spalte ("Verein"/"Spielerlink") nicht mehr per
- *                     (übersetzungsabhängigem) Namensvergleich erkannt, sondern über ein
- *                     explizites `rolle`-Feld je Spalte – robuster und sprachunabhängig.
  *
  * PHP version 8.2
  *

@@ -3,10 +3,6 @@
  * Project: LMOnext
  * Filename: view_import.php
  * Fileversion: 1.2.1
- * Changelog: 1.2.1 - Projektname auf "LMOnext" umgestellt (vorher "Online-Liga-Verwaltung Board" / "OLVBoard")
- * Changelog: 1.2.0 - Alle Texte (PHP + JS) über t() übersetzt
- * Changelog: 1.1.2 - ZIP-Upload Option für Massenimport (umgeht max_file_uploads=20)
- * Changelog: 1.1.1 - Mehrfach-Import (multiple); Detailergebnisse pro Datei
  *
  * PHP version 8.2
  *

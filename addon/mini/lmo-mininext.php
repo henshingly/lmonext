@@ -3,30 +3,6 @@
  * Project: LMOnext
  * Filename: addon/mini/lmo-mininext.php
  * Fileversion: 1.0.2
- * Changelog: 1.0.2 - Bugfix: Team-Logos zeigten ins Leere, da renderTeamLogoImg() Pfade
- *                     relativ zum Projekt-Root zurückgibt – korrekt für liga.php/home.php (die
- *                     selbst im Projekt-Root liegen), aber falsch für dieses Addon (liegt unter
- *                     addon/mini/, zwei Ebenen tiefer, siehe direkter URL-Aufruf in der
- *                     Fehlermeldung des Nutzers). Neue Funktion miniProjectRootUrlPrefix()
- *                     berechnet das korrekte URL-Präfix dynamisch über Document-Root-Abgleich
- *                     (funktioniert bei Direktaufruf UND bei include() aus einer beliebig
- *                     platzierten Wrapper-Datei), an allen 8 Logo-Stellen verwendet
- * Changelog: 1.0.1
- * Changelog: 1.0.1 - Bugfix: <!--ligaDatum--> zeigte immer das heutige Tagesdatum statt des
- *                     tatsächlichen letzten Speicherdatums der Liga. Liest jetzt liga.datum aus
- *                     der DB, siehe lmo-minitab.php 1.1.0 für Details
- * Changelog: 1.0.0
- * Changelog: 1.0.0 - Initiale Version: Portierung des alten LMO-Addons "Mininext" (siehe
- *                     doc/help/addons/mininext.html + template/mini/mininext.tpl.php im alten
- *                     LMO). Zeigt die nächste (oder, falls die Saison vorbei ist, letzte)
- *                     Begegnung einer Mannschaft, das direkt vorangegangene Spiel, sowie eine
- *                     Bilanz aller bisherigen Begegnungen der beiden Teams zum Einbinden auf
- *                     externen Webseiten – entweder per include() oder direkt als URL/IFrame.
- *                     Der alte "Archivordner"-Mechanismus (Durchsuchen alter .l98-Dateien nach
- *                     früheren Begegnungen) entfällt komplett: LMOnext speichert alles in einer
- *                     Datenbank, daher übernimmt getHeadToHeadMatches() aus data_liga.php (schon
- *                     für den Teamvergleich in der normalen Besucheransicht verwendet) diese
- *                     Aufgabe automatisch über ALLE Ligen hinweg, ganz ohne Ordnerkonfiguration.
  *
  * PHP version 8.2
  *

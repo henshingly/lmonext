@@ -3,41 +3,6 @@
  * Project: LMOnext
  * Filename: handler_backup.php
  * Fileversion: 1.3.0
- * Changelog: 1.3.0 - Spielerfotos (assets/img/player/, siehe addon/player/spielerstat_lib.php)
- *                     werden jetzt im selben Logo-ZIP mitgesichert (eigenes Unterverzeichnis
- *                     "player/" neben "teams/"), inkl. Wiederherstellung. Kein zusätzliches
- *                     ZIP nötig, kein Verhaltensunterschied für ältere Backups ohne Fotos
- * Changelog: 1.2.0 - Team-Logo-Ordner (assets/img/teams/) wird jetzt mitgesichert: neue
- *                     Funktionen backupCreateLogosZip()/backupRestoreLogosZip()/
- *                     backupLogosZipFilenameFor(). Bei jedem Backup wird (falls ZipArchive
- *                     verfügbar ist und mindestens ein Logo hochgeladen wurde) ein begleitendes
- *                     "backup_{Zeitstempel}_logos.zip" im selben /store-Ordner angelegt, mit
- *                     demselben Zeitstempel wie der SQL-Dump. Wird beim Wiederherstellen
- *                     automatisch mit zurückgespielt (vorhandene Logos werden vorher entfernt,
- *                     analog zur "Komplett ersetzen"-Logik der DB-Wiederherstellung), und beim
- *                     Löschen/automatischen Aufräumen (Max-Anzahl) zusammen mit dem
- *                     zugehörigen SQL-Backup entfernt. ZipArchive ist optional (wie bzip2) –
- *                     fehlt die Erweiterung, wird die Logo-Sicherung übersprungen, die
- *                     Datenbank-Sicherung funktioniert unverändert weiter
- * Changelog: 1.1.1
- * Changelog: 1.1.1 - .htaccess-Text (Kommentare) für /store auf Englisch umgestellt, sowohl die
- *                     Datei selbst als auch die Auto-Wiederherstellungs-Logik in backupDir()
- * Changelog: 1.1.0 - Backups sind jetzt zwischen Installationen mit unterschiedlichem
- *                     Tabellenprefix portabel: der beim Backup verwendete Prefix wird als
- *                     Metadaten-Kommentar im Dump gespeichert ("-- Prefix: xyz_"); beim
- *                     Wiederherstellen wird er bei Bedarf automatisch auf den aktuell in
- *                     config.php konfigurierten Prefix umgeschrieben (reiner Textersatz auf
- *                     den Backtick-Tabellenbezeichnern, bevor irgendetwas ausgeführt wird).
- *                     Ältere Backups ohne diese Metadatenzeile laufen unverändert wie bisher
- * Changelog: 1.0.0 - Initiale Version: Datenbank-Backup/Wiederherstellung für die neue
- *                     Wartung-Seite (admin/view_wartung.php). Komplett ohne externe
- *                     Bibliothek/Composer-Paket – SQL-Dump wird selbst geschrieben (analog zum
- *                     abhängigkeitsfreien PDF-Export in frontend/pdf_export.php), Kompression
- *                     über die PHP-Kernfunktionen gzencode()/bzcompress() (bzip2 nur wenn die
- *                     Extension verfügbar ist, sonst wird die Option ausgeblendet).
- *                     Backups landen in /store (Projekt-Root, per .htaccess abgesichert) und
- *                     werden nach Anzahl begrenzt (älteste werden automatisch gelöscht,
- *                     Einstellung "Maximale Anzahl an Backups").
  *
  * PHP version 8.2
  *

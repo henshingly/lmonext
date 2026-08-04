@@ -3,9 +3,6 @@
  * Project: LMOnext
  * Filename: src/Liga/HeadToHeadTrait.php
  * Fileversion: 1.0.0
- * Changelog: 1.0.0 - Initiale Version: Teil der Umstrukturierung von frontend/data_liga.php in
- *                     fokussierte Traits (siehe frontend/data_liga.php 3.0.0 für den vollen
- *                     Kontext der Umstellung). Team-Verknüpfungen (Umbenennung/Fusion/Abspaltung) und Teamvergleich (resolveLinkedTeamIds, resolveCanonicalTeamId, getHeadToHeadMatches, H2H-Modal/PDF-Hilfsfunktionen).
  *
  * PHP version 8.2
  *

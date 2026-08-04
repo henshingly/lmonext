@@ -3,33 +3,6 @@
  * Project: LMOnext
  * Filename: home.php
  * Fileversion: 2.3.1
- * Changelog: 2.3.1 - "ZurueckLinkBlock" (Link zur Liga-Übersicht) an die Tippspiel-Route
- *                     ergänzt - fehlte bisher komplett auf allen Tippspiel-Unterseiten (siehe
- *                     renderBackLinkBlock() jetzt in frontend/data_liga.php 3.0.1)
- * Changelog: 2.3.0 - Neue Route "?view=tippspiel": bindet das Tippspiel jetzt als View ins
- *                     Template-System ein (analog zur Spielerstatistik in liga.php), statt als
- *                     eigenständige Seite mit eigenem HTML/CSS. Läuft komplett getrennt von der
- *                     normalen Startseite, ruft tippspielHandleRequest() (kann per redirectTo()
- *                     umleiten) VOR renderTemplate() auf - siehe
- *                     addon/tipp/view_tippspiel_frontend.php. Ersetzt die bisherige
- *                     eigenständige addon/tipp/tipp.php
- * Changelog: 2.2.0 - Neuer Platzhalter "TippspielCard": wirbt auf der Startseite fürs
- *                     Tippspiel (tippRenderHomeCard(), siehe addon/tipp/tipp_lib.php 0.5.0),
- *                     bleibt leer wenn keine Liga freigegeben ist
- * Changelog: 2.1.0 - Die globale Einstellung "Liga-Übersicht anzeigen?" (Admin →
- *                     Einstellungen → Besucherbereich, bisher nur für den "← Zur Übersicht"-
- *                     Link auf der Liga-Detailseite) blendet jetzt auch die komplette
- *                     Liga-Auswahl hier auf der Startseite aus (aktive Ligen + Archiv) - gedacht
- *                     für Betreiber, die nur eine einzelne, feste Liga per iframe/include auf
- *                     einer fremden Webseite einbinden möchten, ohne dass Besucher zu einer
- *                     Gesamtübersicht gelangen können
- * Changelog: 2.0.1
- * Changelog: 2.0.1 - Projektname auf "LMOnext" umgestellt (vorher "Online-Liga-Verwaltung Board" / "OLVBoard")
- * Changelog: 2.0.0 - Umbau auf reine Platzhalter-Templates: baut jetzt fertige
- *                     HTML-Fragmente (aktive Ligen, Archiv-Bereich) und übergibt sie
- *                     als Platzhalterwerte an renderTemplate(). Die .tpl.php-Dateien
- *                     enthalten dadurch kein PHP mehr, nur noch Markup + Platzhalter.
- * Changelog: 1.0.0 - Initiale Version: Besucher-Startseite (aktive Ligen + Archiv-Baum)
  *
  * PHP version 8.2
  *

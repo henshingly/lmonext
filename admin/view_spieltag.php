@@ -3,18 +3,6 @@
  * Project: LMOnext
  * Filename: view_spieltag.php
  * Fileversion: 1.3.3
- * Changelog: 1.3.3 - Hinweistext über dem Team-Dropdown unterscheidet jetzt, ob nur Sieger
- *                     ("Nur Sieger aus Runde X") oder Sieger+Verlierer angeboten werden (in der
- *                     letzten Runde bei Finale + Spiel um Platz 3, siehe data_loader.php 1.6.4)
- * Changelog: 1.3.2 - Projektname auf "LMOnext" umgestellt (vorher "Online-Liga-Verwaltung Board" / "OLVBoard")
- * Changelog: 1.3.1 - "Tabelle"-Button ebenfalls über t() übersetzt (war übersehen worden)
- * Changelog: 1.3.0 - Alle Texte (PHP + JS) über t() übersetzt; koModusLabel() statt rohem KO_MODUS-Label
- * Changelog: 1.2.9 - Notizfeld (Spielort) im KO-Ergebnisformular wieder angezeigt
- * Changelog: 1.2.6 - Status-Dropdown (n.V./i.E.) und Spielbericht-Link bei KO-Ergebnissen
- * Changelog: 1.2.5 - $isKO/$isLastRound vor h2 definiert (Undefined variable fix)
- * Changelog: 1.2.4 - Tabelle-Button fix: liga_type vor $isKO-Definition prüfen
- * Changelog: 1.2.3 - KO Runde 2+: Dropdown zeigt nur Vorrundensieger (mit Fallback alle Teams)
- * Changelog: 1.2.1 - KlFin: letzte Runde zeigt Finale/Spiel um Platz 3 Beschriftung
  *
  * PHP version 8.2
  *

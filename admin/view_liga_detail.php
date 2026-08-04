@@ -3,22 +3,6 @@
  * Project: LMOnext
  * Filename: view_liga_detail.php
  * Fileversion: 1.9.0
- * Changelog: 1.9.0 - Team-Verwaltung (Karte + kompletter Editor) nach admin/view_liga_settings.php
- *                     verschoben (neuer Tab "Teams", siehe dortiger Changelog 1.5.0) - liegt jetzt
- *                     zusammen mit den übrigen Liga-Einstellungen. Neuer Schnellzugriffs-Button
- *                     "Teams" oben auf dieser Seite ergänzt, verlinkt direkt auf den neuen Tab
- * Changelog: 1.8.0 - Neuer Button "Spielerstatistik" verlinkt auf die neue Verwaltungsseite des
- *                     gleichnamigen Addons (siehe admin/view_spielerstatistik.php)
- * Changelog: 1.7.0 - Team-Editor: neue direkte Team-ID-Eingabe (Alternative zur Namenssuche) –
- *                     Team-ID eintippen + "Übernehmen", schlägt per neuem team_by_id-AJAX-
- *                     Endpunkt nach und übernimmt den Treffer wie ein Suchergebnis
- *                     (selectDbTeam()); Fehlermeldung, falls die ID nicht existiert
- * Changelog: 1.6.1 - Projektname auf "LMOnext" umgestellt (vorher "Online-Liga-Verwaltung Board" / "OLVBoard")
- * Changelog: 1.6.0 - Alle Texte (PHP + JS) über t() übersetzt
- * Changelog: 1.5.0 - Archiv-Dropdown: hierarchische Ordner mit Einrückung
- * Changelog: 1.4.0 - Archiv-Dropdown: dunkles Styling, Hover via CSS-Klasse, Exception-Handling
- * Changelog: 1.3.0 - Archivieren-Dropdown in Aktions-Buttons; toggleArchivMenu JS
- * Changelog: 1.2.0 - toggleStDatum in script-Block verschoben; DB-Suche Team-Editor
  *
  * PHP version 8.2
  *
