@@ -2,7 +2,18 @@
 /**
  * Project: LMOnext
  * Filename: frontend/pdf_export.php
- * Fileversion: 1.7.0
+ * Fileversion: 1.7.1
+ * Changelog: 1.7.1 - Bugfix (Kundenrückmeldung): manche SVG-Team-Logos wurden im PDF gar nicht
+ *                     oder fast leer dargestellt, obwohl kein Fehler auftrat. Ursache: fehlt auf
+ *                     dem Server sowohl rsvg-convert als auch ein voller librsvg-Imagick-Delegate,
+ *                     fällt ImageMagick auf seinen eigenen, eingeschränkten SVG-Renderer zurück -
+ *                     der hat bekannte Schwächen bei der allgemeinen matrix(a,b,c,d,e,f)-
+ *                     Transform-Form. pdfInlineSvgClassStyles() vereinfacht reine
+ *                     Skalierung+Verschiebung (b=0, c=0, keine Rotation/Scherung) jetzt zu
+ *                     getrennten translate()/scale()-Aufrufen, die von einfacheren Renderern
+ *                     zuverlässiger unterstützt werden. Mit den beiden vom Kunden gemeldeten
+ *                     Logos verifiziert: pixelgenau identisches Ergebnis (compare -metric AE = 0)
+ *                     gegenüber der unveränderten Fassung, wo sie ohnehin schon funktionierte
  * Changelog: 1.7.0 - Strafpunkte-Begründungen erscheinen jetzt auch im PDF-Export
  *                     der Tabelle, im selben Wikipedia-Stil wie in der Besucheransicht -
  *                     Teamname bekommt "(N)" angehängt, unter der Tabelle erscheint eine
@@ -537,6 +548,30 @@ function pdfInlineSvgClassStyles(string $svg) : string
     $svg = preg_replace_callback(
         '/(<style[^>]*>)(.*?)(<\/style>)/is',
         static fn(array $m) : string => $m[1] . preg_replace('/\.[\w-]+\s*\{\s*clip-path\s*:[^}]*\}/i', '', $m[2]) . $m[3],
+        $svg
+    );
+
+    // transform="matrix(a b c d e f)" auf reine Skalierung+Verschiebung
+    // (b=0, c=0, keine Rotation/Scherung) vereinfachen zu getrennten
+    // translate()/scale()-Funktionen. Hintergrund: fehlt sowohl das externe
+    // rsvg-convert als auch ein vollwertiger librsvg-Imagick-Delegate (z.B.
+    // auf manchem Shared-Hosting), fällt ImageMagick auf seinen eigenen,
+    // deutlich eingeschränkteren SVG-Renderer zurück - der hat bekannte
+    // Schwächen gerade bei der allgemeinen matrix()-Form (beobachtet: ein
+    // Logo, dessen kompletter Inhalt in einer einzigen
+    // <g transform="matrix(...)">-Gruppe steckt, wurde dabei fast
+    // vollständig leer/transparent gerastert, obwohl kein Fehler geworfen
+    // wurde). translate()/scale() werden von einfacheren Renderern
+    // zuverlässiger unterstützt als die allgemeine 6-Werte-Matrix.
+    $svg = preg_replace_callback(
+        '/transform\s*=\s*"\s*matrix\(\s*([\-\d.]+)[\s,]+([\-\d.]+)[\s,]+([\-\d.]+)[\s,]+([\-\d.]+)[\s,]+([\-\d.]+)[\s,]+([\-\d.]+)\s*\)\s*"/i',
+        static function (array $m) : string {
+            [, $a, $b, $c, $d, $e, $f] = $m;
+            if ((float)$b !== 0.0 || (float)$c !== 0.0) {
+                return $m[0]; // echte Rotation/Scherung -> unverändert lassen, kein einfacher Ersatz möglich
+            }
+            return 'transform="translate(' . $e . ' ' . $f . ') scale(' . $a . ' ' . $d . ')"';
+        },
         $svg
     );
 
