@@ -455,7 +455,7 @@ trait StandingsTrait
      * Tabelle (1-basiert, siehe assignStrafFootnotes()) - leerer String, wenn
      * kein Grund hinterlegt ist. Erscheint UNABHÄNGIG davon, ob überhaupt eine
      * der vier Zahlenkorrekturen von 0 abweicht - ein Grund allein reicht für
-     * die Fußnote . Behält den detaillierten Tooltip (genaue
+     * die Fußnote. Behält den detaillierten Tooltip (genaue
      * Punkte-/Tore-Deltas, falls vorhanden) zusätzlich zur sichtbaren
      * Fußnoten-Nummer bei.
      */
@@ -501,7 +501,7 @@ trait StandingsTrait
      * Fußnoten-Nummern zu (1-basiert, in Tabellenreihenfolge - so wie bei
      * Wikipedia). Ein Grund allein reicht - unabhängig davon, ob eine der vier
      * Zahlenkorrekturen (Punkte/erzielte Tore/Gegentore/Minuspunkte)
-     * tatsächlich von 0 abweicht .
+     * tatsächlich von 0 abweicht.
      *
      * @param array<int,array> $rows Ergebnis von computeStandings(), bereits sortiert
      * @return array<int,int> team_id => Fußnoten-Nummer (nur Teams mit Grund)

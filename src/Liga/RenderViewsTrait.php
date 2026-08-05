@@ -136,7 +136,7 @@ trait RenderViewsTrait
      * "tabelle" angehängt - nur an diese beiden, da nur sie ?nr= lesen und
      * es dort dieselbe Bedeutung hat (welcher Spieltag). So bleibt beim
      * Wechsel zwischen den beiden Reitern derselbe Spieltag erhalten statt
-     * immer auf den letzten zurückzuspringen .
+     * immer auf den letzten zurückzuspringen.
      */
     public static function renderTabsBar(array $flags, int $ligaId, string $currentView, ?int $activeNr = null) : string
     {
