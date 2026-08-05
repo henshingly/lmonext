@@ -2,7 +2,7 @@
 /**
  * Project: LMOnext
  * Filename: src/Liga/StandingsTrait.php
- * Fileversion: 1.4.1
+ * Fileversion: 1.5.0
  *
  * PHP version 8.2
  *
@@ -49,7 +49,13 @@ trait StandingsTrait
      * Punkte → Tordifferenz → Tore (wie im Adminbereich). Startet mit allen
      * gemeldeten Teams (auch ohne gespielte Partie, dann mit lauter Nullen).
      */
-    public static function computeStandings(array $teamsList, array $partien, array $ligaOptions, ?int $ligaId = null) : array
+    /**
+     * Berechnet die Tabelle. $mode steuert, welche Seite pro Partie gezählt
+     * wird - 'overall' (Standard, beide Seiten), 'home' (nur wenn das Team
+     * Heimmannschaft war) oder 'away' (nur Auswärtsspiele) - für die
+     * Heim-/Auswärts-Tabelle (Beitrag: Torsten Hofmann).
+     */
+    public static function computeStandings(array $teamsList, array $partien, array $ligaOptions, ?int $ligaId = null, string $mode = 'overall') : array
     {
         $ptW = (int)($ligaOptions['PointsForWin']  ?? 3);
         $ptD = (int)($ligaOptions['PointsForDraw'] ?? 1);
@@ -94,13 +100,22 @@ trait StandingsTrait
     
             $ht = (int)$p['h_tore'];
             $gt = (int)$p['g_tore'];
-    
-            $rows[$hId]['sp']++;
-            $rows[$gId]['sp']++;
-            $rows[$hId]['tore_h'] += $ht;
-            $rows[$hId]['tore_g'] += $gt;
-            $rows[$gId]['tore_h'] += $gt;
-            $rows[$gId]['tore_g'] += $ht;
+
+            // Heim-/Auswärts-Filter: 'home' zählt nur die Heimmannschaft dieser
+            // Partie, 'away' nur die Gastmannschaft, 'overall' (Standard) beide.
+            $trackHome = $mode !== 'away';
+            $trackAway = $mode !== 'home';
+
+            if ($trackHome) {
+                $rows[$hId]['sp']++;
+                $rows[$hId]['tore_h'] += $ht;
+                $rows[$hId]['tore_g'] += $gt;
+            }
+            if ($trackAway) {
+                $rows[$gId]['sp']++;
+                $rows[$gId]['tore_h'] += $gt;
+                $rows[$gId]['tore_g'] += $ht;
+            }
     
             // status: 0 = regulär, 1 = i.E. (Elfmeterschießen), 2 = n.V. (nach
             // Verlängerung) – siehe statusSuffix(). Je nachdem gilt eine andere
@@ -112,26 +127,38 @@ trait StandingsTrait
             };
     
             if ($ht > $gt) {
-                $rows[$hId]['s']++;
-                $rows[$hId]['pkt'] += $curW;
-                $rows[$hId]['minuspunkte'] += $curL;
-                $rows[$gId]['n']++;
-                $rows[$gId]['pkt'] += $curL;
-                $rows[$gId]['minuspunkte'] += $curW;
+                if ($trackHome) {
+                    $rows[$hId]['s']++;
+                    $rows[$hId]['pkt'] += $curW;
+                    $rows[$hId]['minuspunkte'] += $curL;
+                }
+                if ($trackAway) {
+                    $rows[$gId]['n']++;
+                    $rows[$gId]['pkt'] += $curL;
+                    $rows[$gId]['minuspunkte'] += $curW;
+                }
             } elseif ($ht < $gt) {
-                $rows[$gId]['s']++;
-                $rows[$gId]['pkt'] += $curW;
-                $rows[$gId]['minuspunkte'] += $curL;
-                $rows[$hId]['n']++;
-                $rows[$hId]['pkt'] += $curL;
-                $rows[$hId]['minuspunkte'] += $curW;
+                if ($trackAway) {
+                    $rows[$gId]['s']++;
+                    $rows[$gId]['pkt'] += $curW;
+                    $rows[$gId]['minuspunkte'] += $curL;
+                }
+                if ($trackHome) {
+                    $rows[$hId]['n']++;
+                    $rows[$hId]['pkt'] += $curL;
+                    $rows[$hId]['minuspunkte'] += $curW;
+                }
             } else {
-                $rows[$hId]['u']++;
-                $rows[$hId]['pkt'] += $curD;
-                $rows[$hId]['minuspunkte'] += $curD;
-                $rows[$gId]['u']++;
-                $rows[$gId]['pkt'] += $curD;
-                $rows[$gId]['minuspunkte'] += $curD;
+                if ($trackHome) {
+                    $rows[$hId]['u']++;
+                    $rows[$hId]['pkt'] += $curD;
+                    $rows[$hId]['minuspunkte'] += $curD;
+                }
+                if ($trackAway) {
+                    $rows[$gId]['u']++;
+                    $rows[$gId]['pkt'] += $curD;
+                    $rows[$gId]['minuspunkte'] += $curD;
+                }
             }
         }
     
@@ -177,6 +204,123 @@ trait StandingsTrait
         });
     
         return $standings;
+    }
+
+    /**
+     * Form der letzten 5 Spiele je Team (Beitrag: Torsten Hofmann). Liefert
+     * [teamId => ['w'=>int,'d'=>int,'l'=>int,'dots'=>HTML]]. $partien sollte
+     * bereits auf den gewünschten Zeitpunkt gefiltert sein (z.B. nur bis zu
+     * einem bestimmten Spieltag, siehe renderStandingsView()) - "die letzten
+     * 5" bezieht sich dann korrekt auf die letzten 5 innerhalb dieser Auswahl.
+     */
+    public static function computeLast5Form(array $partien, string $mode = 'overall') : array
+    {
+        $matchesByTeam = [];
+        foreach ($partien as $p) {
+            $nr = (int)($p['_spieltag_nummer'] ?? 0);
+            if (!isset($p['heim_id'], $p['gast_id']) || $p['h_tore'] === null || $p['g_tore'] === null) {
+                continue;
+            }
+            $ht = (int)$p['h_tore'];
+            $gt = (int)$p['g_tore'];
+            $hId = (int)$p['heim_id'];
+            $gId = (int)$p['gast_id'];
+
+            $trackHome = $mode !== 'away';
+            $trackAway = $mode !== 'home';
+
+            if ($ht > $gt) {
+                if ($trackHome) $matchesByTeam[$hId][] = ['nr' => $nr, 'result' => 'w'];
+                if ($trackAway) $matchesByTeam[$gId][] = ['nr' => $nr, 'result' => 'l'];
+            } elseif ($ht < $gt) {
+                if ($trackAway) $matchesByTeam[$gId][] = ['nr' => $nr, 'result' => 'w'];
+                if ($trackHome) $matchesByTeam[$hId][] = ['nr' => $nr, 'result' => 'l'];
+            } else {
+                if ($trackHome) $matchesByTeam[$hId][] = ['nr' => $nr, 'result' => 'd'];
+                if ($trackAway) $matchesByTeam[$gId][] = ['nr' => $nr, 'result' => 'd'];
+            }
+        }
+
+        $formByTeam = [];
+        foreach ($matchesByTeam as $teamId => $matches) {
+            usort($matches, static fn($a, $b) => $a['nr'] <=> $b['nr']);
+            $last5 = array_slice($matches, -5);
+
+            $w = $d = $l = 0;
+            $dots = '';
+            foreach ($last5 as $m) {
+                if ($m['result'] === 'w') { $w++; $dots .= '<span class="form-dot form-win"></span>'; }
+                elseif ($m['result'] === 'd') { $d++; $dots .= '<span class="form-dot form-draw"></span>'; }
+                else { $l++; $dots .= '<span class="form-dot form-loss"></span>'; }
+            }
+            $formByTeam[$teamId] = ['w' => $w, 'd' => $d, 'l' => $l, 'dots' => $dots];
+        }
+        return $formByTeam;
+    }
+
+    /**
+     * Positionsveränderung zum vorherigen Spieltag je Team (Beitrag: Torsten
+     * Hofmann). $partien sollte bereits auf den gewünschten Zeitpunkt
+     * gefiltert sein (siehe computeLast5Form()) - "vorheriger Spieltag"
+     * bezieht sich dann korrekt auf den vorletzten innerhalb dieser Auswahl,
+     * nicht immer auf den allerletzten der ganzen Saison.
+     */
+    public static function computePositionTrend(array $teams, array $partien, array $opts, ?int $ligaId = null, string $mode = 'overall') : array
+    {
+        $byNr = [];
+        foreach ($partien as $p) {
+            $nr = (int)($p['_spieltag_nummer'] ?? 0);
+            if ($p['h_tore'] === null || $p['g_tore'] === null) continue;
+            $byNr[$nr][] = $p;
+        }
+        $sortedNrs = array_keys($byNr);
+        sort($sortedNrs);
+
+        if (count($sortedNrs) < 1) {
+            $trendByTeam = [];
+            foreach ($teams as $t) {
+                $trendByTeam[(int)$t['id']] = ['direction' => 'same', 'delta' => 0];
+            }
+            return $trendByTeam;
+        }
+
+        $latestNr = end($sortedNrs);
+
+        $played = [];
+        $previousPartien = [];
+        foreach ($sortedNrs as $nr) {
+            foreach ($byNr[$nr] as $p) {
+                $played[] = $p;
+                if ($nr < $latestNr) {
+                    $previousPartien[] = $p;
+                }
+            }
+        }
+
+        $currentStandings = self::computeStandings($teams, $played, $opts, $ligaId, $mode);
+
+        $trendByTeam = [];
+        if (count($sortedNrs) < 2) {
+            foreach ($currentStandings as $r) {
+                $trendByTeam[(int)$r['id']] = ['direction' => 'same', 'delta' => 0];
+            }
+            return $trendByTeam;
+        }
+
+        $previousStandings = self::computeStandings($teams, $previousPartien, $opts, $ligaId, $mode);
+
+        $prevPositions = [];
+        foreach ($previousStandings as $i => $r) {
+            $prevPositions[(int)$r['id']] = $i + 1;
+        }
+        foreach ($currentStandings as $i => $r) {
+            $currentPos = $i + 1;
+            $prevPos = $prevPositions[(int)$r['id']] ?? $currentPos;
+            $delta = $prevPos - $currentPos;
+            $direction = $delta > 0 ? 'up' : ($delta < 0 ? 'down' : 'same');
+            $trendByTeam[(int)$r['id']] = ['direction' => $direction, 'delta' => $delta];
+        }
+        return $trendByTeam;
     }
 
     /**
@@ -311,7 +455,7 @@ trait StandingsTrait
      * Tabelle (1-basiert, siehe assignStrafFootnotes()) - leerer String, wenn
      * kein Grund hinterlegt ist. Erscheint UNABHÄNGIG davon, ob überhaupt eine
      * der vier Zahlenkorrekturen von 0 abweicht - ein Grund allein reicht für
-     * die Fußnote (Kundenwunsch). Behält den detaillierten Tooltip (genaue
+     * die Fußnote . Behält den detaillierten Tooltip (genaue
      * Punkte-/Tore-Deltas, falls vorhanden) zusätzlich zur sichtbaren
      * Fußnoten-Nummer bei.
      */
@@ -357,7 +501,7 @@ trait StandingsTrait
      * Fußnoten-Nummern zu (1-basiert, in Tabellenreihenfolge - so wie bei
      * Wikipedia). Ein Grund allein reicht - unabhängig davon, ob eine der vier
      * Zahlenkorrekturen (Punkte/erzielte Tore/Gegentore/Minuspunkte)
-     * tatsächlich von 0 abweicht (Kundenwunsch).
+     * tatsächlich von 0 abweicht .
      *
      * @param array<int,array> $rows Ergebnis von computeStandings(), bereits sortiert
      * @return array<int,int> team_id => Fußnoten-Nummer (nur Teams mit Grund)

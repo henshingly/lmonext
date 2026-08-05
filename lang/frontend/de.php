@@ -2,7 +2,7 @@
 /**
  * Project: LMOnext
  * Filename: lang/frontend/de.php
- * Fileversion: 1.27.0
+ * Fileversion: 1.28.0
  *
  * PHP version 8.2
  *
@@ -119,6 +119,13 @@ return [
     'liga_stat_streak_unbeaten'   => '{n} Spiele ungeschlagen',
     'liga_stat_streak_winless'    => '{n} Spiele ohne Sieg',
     'liga_standings_col_platz'    => '#',
+    'liga_standings_col_form'    => 'Form',
+    'liga_standings_col_trend'   => 'Tend.',
+    'liga_standings_nav_gesamt'  => 'Gesamt',
+    'liga_standings_nav_heim'    => 'Heim',
+    'liga_standings_nav_gast'    => 'Gast',
+    'liga_standings_nav_hin'     => 'Hin',
+    'liga_standings_nav_rueck'   => 'Rück',
     'liga_standings_vorheriger_spieltag' => 'vorheriger Spieltag',
     'liga_standings_naechster_spieltag'  => 'nächster Spieltag',
     'liga_standings_col_team'     => 'Team',

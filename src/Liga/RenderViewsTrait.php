@@ -2,7 +2,7 @@
 /**
  * Project: LMOnext
  * Filename: src/Liga/RenderViewsTrait.php
- * Fileversion: 1.5.0
+ * Fileversion: 1.6.0
  *
  * PHP version 8.2
  *
@@ -99,7 +99,7 @@ trait RenderViewsTrait
      * einen leeren String, wenn nur eine Runde/ein Spieltag existiert.
      * $targetView bestimmt, auf welchen Reiter die Auswahl navigiert (Standard
      * 'ergebnisse', bisheriges Verhalten) - z.B. 'tabelle' für den
-     * "Tabelle nach Spieltag N"-Picker (Kundenwunsch, siehe renderStandingsView()).
+     * "Tabelle nach Spieltag N"-Picker (siehe renderStandingsView()).
      */
     public static function renderSpieltagPicker(array $allSpieltage, int $ligaId, ?int $currentNr, bool $isKO, int $maxNr, string $targetView = 'ergebnisse') : string
     {
@@ -136,7 +136,7 @@ trait RenderViewsTrait
      * "tabelle" angehängt - nur an diese beiden, da nur sie ?nr= lesen und
      * es dort dieselbe Bedeutung hat (welcher Spieltag). So bleibt beim
      * Wechsel zwischen den beiden Reitern derselbe Spieltag erhalten statt
-     * immer auf den letzten zurückzuspringen (Kundenwunsch).
+     * immer auf den letzten zurückzuspringen .
      */
     public static function renderTabsBar(array $flags, int $ligaId, string $currentView, ?int $activeNr = null) : string
     {
@@ -383,15 +383,21 @@ trait RenderViewsTrait
         return renderPartial('bracket_view', ['Rounds' => $roundsHtml]) . self::renderH2hModalAssets();
     }
     /**
-     * Baut die Liga-Tabelle. $uptoSpieltag (falls gesetzt) zeigt den
-     * Tabellenstand NACH genau diesem Spieltag (nur Partien mit
-     * _spieltag_nummer <= $uptoSpieltag zählen) - analog zur "Tabelle nach
-     * Spieltag X"-Ansicht bei kicker.de, inkl. "vorheriger/nächster
-     * Spieltag"-Navigation ober- und unterhalb der Tabelle. null (Standard)
-     * zeigt den aktuellen/finalen Stand (alle Partien), unverändertes
-     * bisheriges Verhalten.
+     * Baut die Liga-Tabelle.
+     * - $uptoSpieltag (falls gesetzt) zeigt den Tabellenstand NACH genau
+     *   diesem Spieltag (nur Partien mit _spieltag_nummer <= $uptoSpieltag
+     *   zählen) - analog zur "Tabelle nach Spieltag X"-Ansicht bei kicker.de,
+     *   inkl. "vorheriger/nächster Spieltag"-Navigation ober- und unterhalb
+     *   der Tabelle. null (Standard) zeigt den aktuellen/finalen Stand.
+     * - $tableMode wählt zwischen Gesamt-/Heim-/Auswärts-/Hin-/Rückrunden-
+     *   Tabelle (Beitrag: Torsten Hofmann). Wirkt NACH dem Spieltag-Filter,
+     *   d.h. "Rückrunde bis Spieltag 20" filtert erst auf <=20, dann auf die
+     *   zweite Saisonhälfte innerhalb dieser Auswahl.
+     * Zusätzliche Spalten "Form" (letzte 5 Spiele) und "Trend"
+     * (Platzierungsänderung zum vorherigen Spieltag innerhalb der jeweils
+     * aktiven Auswahl), ebenfalls Beitrag von Torsten Hofmann.
      */
-    public static function renderStandingsView(int $ligaId, array $allSpieltage, ?int $uptoSpieltag = null) : string
+    public static function renderStandingsView(int $ligaId, array $allSpieltage, ?int $uptoSpieltag = null, string $tableMode = 'gesamt') : string
     {
         $opts      = self::getLigaOptions($ligaId);
         $teams     = self::getLigaTeamsList($ligaId);
@@ -409,7 +415,26 @@ trait RenderViewsTrait
             $partien = array_values(array_filter($partien, static fn(array $p) => (int)($p['_spieltag_nummer'] ?? 0) <= $nr));
         }
 
-        $rows      = self::computeStandings($teams, $partien, $opts, $ligaId);
+        // Tabellen-Modus: gesamt/heim/gast/hin/rueck (Beitrag: Torsten Hofmann).
+        // Wirkt NACH dem Spieltag-Filter oben, siehe Docblock.
+        $validModes = ['gesamt', 'heim', 'gast', 'hin', 'rueck'];
+        $tableMode  = in_array($tableMode, $validModes, true) ? $tableMode : 'gesamt';
+
+        $partienForMode = $partien;
+        if ($tableMode === 'hin' || $tableMode === 'rueck') {
+            $half = intdiv($maxNr, 2);
+            $partienForMode = array_filter($partienForMode, static function (array $p) use ($tableMode, $half) : bool {
+                $pn = (int)($p['_spieltag_nummer'] ?? 0);
+                return $tableMode === 'hin' ? $pn <= $half : $pn > $half;
+            });
+        }
+        $csMode = match ($tableMode) {
+            'heim'  => 'home',
+            'gast'  => 'away',
+            default => 'overall',
+        };
+
+        $rows      = self::computeStandings($teams, $partienForMode, $opts, $ligaId, $csMode);
         $favTeamId = self::resolveTeamNumberToId($ligaId, (int)($opts['favTeam'] ?? 0));
         $totalTeams = count($rows);
         $showLogos  = ($opts['ShowLogos'] ?? '0') === '1';
@@ -417,16 +442,28 @@ trait RenderViewsTrait
         $showMinuspunkte = ($opts['MinusPoints'] ?? '0') === '1';
         $footnoteNrs = self::assignStrafFootnotes($rows);
 
+        $formByTeam  = self::computeLast5Form($partienForMode, $csMode);
+        $trendByTeam = self::computePositionTrend($teams, $partienForMode, $opts, $ligaId, $csMode);
+
         $rowsHtml = '';
         foreach ($rows as $i => $r) {
             $diff = $r['tore_h'] - $r['tore_g'];
             $markerColor = self::computeStandingsMarkerColor($i, $totalTeams, $opts);
+            $tid = (int)$r['id'];
+
+            $trend = $trendByTeam[$tid] ?? ['direction' => 'same', 'delta' => 0];
+            $trendHtml = match ($trend['direction']) {
+                'up'    => '<span class="trend-arrow trend-up" title="+' . $trend['delta'] . '">&#9650;</span>',
+                'down'  => '<span class="trend-arrow trend-down" title="' . $trend['delta'] . '">&#9660;</span>',
+                default => '<span class="trend-arrow trend-same">&ndash;</span>',
+            };
+
             $rowsHtml .= renderPartial('standings_row', [
                 'Platz'    => (string)($i + 1),
-                'Logo'     => self::renderTeamLogoImgWrapped((int)$r['id'], $showLogos),
+                'Logo'     => self::renderTeamLogoImgWrapped($tid, $showLogos),
                 'Team'     => h($r['name']),
                 'TeamClass'=> ($favTeamId !== null && $r['id'] === $favTeamId) ? ' fav-team' : '',
-                'StrafHinweis' => self::renderStrafHinweis($r, $footnoteNrs[(int)$r['id']] ?? 0),
+                'StrafHinweis' => self::renderStrafHinweis($r, $footnoteNrs[$tid] ?? 0),
                 'RowStyle' => $markerColor !== '' ? ' style="border-left-color:' . h($markerColor) . '"' : '',
                 'Sp'       => (string)$r['sp'],
                 'S'        => (string)$r['s'],
@@ -436,12 +473,15 @@ trait RenderViewsTrait
                 'Diff'     => ($diff > 0 ? '+' : '') . $diff,
                 'DiffClass'=> $diff > 0 ? ' diff-pos' : ($diff < 0 ? ' diff-neg' : ''),
                 'Pkt'      => $showMinuspunkte ? ($r['pkt'] . ':' . $r['minuspunkte']) : (string)$r['pkt'],
+                'Form'     => $formByTeam[$tid]['dots'] ?? '',
+                'Trend'    => $trendHtml,
             ]);
         }
 
-        $spieltagNav = self::renderStandingsSpieltagNav($ligaId, $nr, $maxNr);
+        $spieltagNav = self::renderStandingsSpieltagNav($ligaId, $nr, $maxNr, $tableMode);
+        $modeNav     = self::renderStandingsModeNav($ligaId, $tableMode, $nr, $maxNr);
 
-        return renderPartial('standings_view', [
+        return $modeNav . renderPartial('standings_view', [
             'ColPlatz'    => h(tf('liga_standings_col_platz')),
             'ColTeam'     => h(tf('liga_standings_col_team')),
             'ColSp'       => h(tf('liga_standings_col_sp')),
@@ -451,6 +491,8 @@ trait RenderViewsTrait
             'ColTore'     => h(tf('liga_standings_col_tore')),
             'ColDiff'     => h(tf('liga_standings_col_diff')),
             'ColPkt'      => h(tf('liga_standings_col_pkt')),
+            'ColForm'     => h(tf('liga_standings_col_form')),
+            'ColTrend'    => h(tf('liga_standings_col_trend')),
             'Rows'        => $rowsHtml,
             'Fussnoten'   => self::renderStrafFootnotes($rows, $footnoteNrs),
             'SpieltagNavOben'  => $spieltagNav,
@@ -459,20 +501,46 @@ trait RenderViewsTrait
     }
 
     /**
+     * Rendert die Gesamt/Heim/Auswärts/Hin-/Rückrunde-Umschalter als Link-
+     * Leiste (Beitrag: Torsten Hofmann, hier um die Spieltag-Auswahl $nr
+     * ergänzt, damit sie beim Moduswechsel erhalten bleibt).
+     */
+    private static function renderStandingsModeNav(int $ligaId, string $activeMode, int $nr, int $maxNr) : string
+    {
+        $modes = [
+            'gesamt' => 'liga_standings_nav_gesamt',
+            'heim'   => 'liga_standings_nav_heim',
+            'gast'   => 'liga_standings_nav_gast',
+            'hin'    => 'liga_standings_nav_hin',
+            'rueck'  => 'liga_standings_nav_rueck',
+        ];
+        $nrParam = ($nr > 0 && $nr < $maxNr) ? ('&nr=' . $nr) : '';
+        $html = '<div class="standings-nav">';
+        foreach ($modes as $mode => $langKey) {
+            $url = '?id=' . $ligaId . '&view=tabelle&table=' . $mode . $nrParam;
+            $cls = $mode === $activeMode ? ' standings-nav-active' : '';
+            $html .= '<a class="standings-nav-item' . $cls . '" href="' . h($url) . '">' . h(tf($langKey)) . '</a>';
+        }
+        $html .= '</div>';
+        return $html;
+    }
+
+    /**
      * "← vorheriger Spieltag" / "nächster Spieltag →"-Navigation für die
      * Tabellen-nach-Spieltag-Ansicht, analog zu kicker.de. Am ersten
      * Spieltag fehlt der "vorheriger"-Link, am letzten der "nächster"-Link.
      */
-    private static function renderStandingsSpieltagNav(int $ligaId, int $nr, int $maxNr) : string
+    private static function renderStandingsSpieltagNav(int $ligaId, int $nr, int $maxNr, string $tableMode = 'gesamt') : string
     {
         if ($maxNr <= 1) {
             return '';
         }
+        $modeParam = $tableMode !== 'gesamt' ? ('&table=' . $tableMode) : '';
         $prev = $nr > 1
-            ? '<a class="st-spieltag-nav-prev" href="?id=' . $ligaId . '&view=tabelle&nr=' . ($nr - 1) . '">&larr; ' . h(tf('liga_standings_vorheriger_spieltag')) . '</a>'
+            ? '<a class="st-spieltag-nav-prev" href="?id=' . $ligaId . '&view=tabelle&nr=' . ($nr - 1) . $modeParam . '">&larr; ' . h(tf('liga_standings_vorheriger_spieltag')) . '</a>'
             : '';
         $next = $nr < $maxNr
-            ? '<a class="st-spieltag-nav-next" href="?id=' . $ligaId . '&view=tabelle&nr=' . ($nr + 1) . '">' . h(tf('liga_standings_naechster_spieltag')) . ' &rarr;</a>'
+            ? '<a class="st-spieltag-nav-next" href="?id=' . $ligaId . '&view=tabelle&nr=' . ($nr + 1) . $modeParam . '">' . h(tf('liga_standings_naechster_spieltag')) . ' &rarr;</a>'
             : '';
         if ($prev === '' && $next === '') {
             return '';

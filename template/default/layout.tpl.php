@@ -2,7 +2,7 @@
 <html lang="<!--HtmlLang-->">
 <head>
 <!--
-  Template: default | Filename: layout.tpl.php | Fileversion: 1.16.3
+  Template: default | Filename: layout.tpl.php | Fileversion: 1.16.4
   HTML-Grundgerüst der ganzen Seite. Enthält AUSSCHLIESSLICH Markup und
   Platzhalter der Form <comment>Name</comment> (als HTML-Kommentar), kein PHP. Alle Werte
   werden von den Root-Controllern (home.php, liga.php) über
@@ -239,6 +239,20 @@ table.standings-table td{padding:8px 10px;border-top:1px solid var(--border)}
 .st-spieltag-nav a{color:var(--accent);text-decoration:none;font-weight:500}
 .st-spieltag-nav a:hover{text-decoration:underline}
 .st-spieltag-nav-next{margin-left:auto}
+/* Form-Dots (letzte 5 Spiele) */
+.st-form{white-space:nowrap;text-align:center;min-width:70px}
+.form-dot{display:inline-block;width:10px;height:10px;border-radius:50%;margin:0 1px;vertical-align:middle}
+.form-win{background:#22c55e}.form-draw{background:#9ca3af}.form-loss{background:#1f2937}
+/* Trend-Pfeil */
+.st-trend{text-align:center;width:40px}
+.trend-arrow{font-size:.7rem;display:inline-block}
+.trend-up{color:#22c55e}.trend-down{color:#ef4444}.trend-same{color:#9ca3af}
+/* Tabellen-Navigation (Gesamt/Heim/Gast/Hin/Rueck) */
+.standings-nav{display:flex;gap:0;flex-wrap:wrap;margin-bottom:14px;border-bottom:1px solid var(--border)}
+.standings-nav-item{padding:8px 14px;font-size:.85rem;text-decoration:none;color:var(--muted);border-bottom:2px solid transparent;margin-bottom:-1px;white-space:nowrap}
+.standings-nav-item:hover{color:var(--text)}
+.standings-nav-item.standings-nav-active{color:var(--accent);font-weight:600;border-bottom-color:var(--accent)}
+
 .st-footnote-item{font-size:.8rem;color:var(--muted);margin:4px 0}
 .st-footnote-item a{color:var(--muted);text-decoration:none;margin-right:2px}
 .st-footnote-item a:hover{text-decoration:underline}

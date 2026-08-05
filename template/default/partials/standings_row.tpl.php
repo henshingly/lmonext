@@ -1,5 +1,5 @@
 <!--
-  Partial: standings_row.tpl.php | Fileversion: 1.4.0
+  Partial: standings_row.tpl.php | Fileversion: 1.5.0
   Eine Zeile in der Liga-Tabelle
 -->
 <tr<!--RowStyle-->>
@@ -12,4 +12,6 @@
   <td class="st-num"><!--Tore--></td>
   <td class="st-num<!--DiffClass-->"><!--Diff--></td>
   <td class="st-pkt"><!--Pkt--></td>
+  <td class="st-form"><!--Form--></td>
+  <td class="st-trend"><!--Trend--></td>
 </tr>

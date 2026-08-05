@@ -2,7 +2,7 @@
 /**
  * Project: LMOnext
  * Filename: liga.php
- * Fileversion: 3.10.8
+ * Fileversion: 3.10.9
  *
  * PHP version 8.2
  *
@@ -103,14 +103,16 @@ switch ($currentView) {
     case 'tabelle':
         $tabelleNr = isset($_GET['nr']) ? (int)$_GET['nr'] : null;
         $activeNr  = ($tabelleNr !== null && $tabelleNr >= 1 && $tabelleNr <= $maxNr) ? $tabelleNr : $maxNr;
+        $tableMode = $_GET['table'] ?? 'gesamt';
         if (isset($_GET['pdf']) && $showPdfButtons) {
-            exportTabellePdf($liga['name'], $ligaId, $allSpieltage, $showLogos);
+            exportTabellePdf($liga['name'], $ligaId, $allSpieltage, $showLogos, $tableMode);
             exit;
         }
         $tabellePicker = renderSpieltagPicker($allSpieltage, $ligaId, $activeNr, $isKO, $maxNr, 'tabelle');
-        $viewInhalt = $tabellePicker . renderStandingsView($ligaId, $allSpieltage, $tabelleNr);
+        $viewInhalt = $tabellePicker . renderStandingsView($ligaId, $allSpieltage, $tabelleNr, $tableMode);
         if ($showPdfButtons) {
-            $viewInhalt .= '<div class="pdf-export-row"><a class="btn-pdf-export" href="?id=' . $ligaId . '&view=tabelle&pdf=1" title="' . h(tf('liga_pdf_export_button')) . '">'
+            $pdfTableParam = $tableMode !== 'gesamt' ? ('&table=' . $tableMode) : '';
+            $viewInhalt .= '<div class="pdf-export-row"><a class="btn-pdf-export" href="?id=' . $ligaId . '&view=tabelle&pdf=1' . $pdfTableParam . '" title="' . h(tf('liga_pdf_export_button')) . '">'
                 . '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">'
                 . '<rect x="7" y="3" width="13" height="16" rx="2"/><path d="M4 7v13a2 2 0 0 0 2 2h11"/>'
                 . '</svg>'

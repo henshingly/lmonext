@@ -1,5 +1,5 @@
 <!--
-  Partial: standings_view.tpl.php | Fileversion: 1.2.0
+  Partial: standings_view.tpl.php | Fileversion: 1.3.0
   Rahmen um die Liga-Tabelle
 -->
 <div class="card">
@@ -17,6 +17,8 @@
           <th class="st-num"><!--ColTore--></th>
           <th class="st-num"><!--ColDiff--></th>
           <th class="st-pkt"><!--ColPkt--></th>
+          <th class="st-form"><!--ColForm--></th>
+          <th class="st-trend"><!--ColTrend--></th>
         </tr>
       </thead>
       <tbody>

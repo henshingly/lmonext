@@ -2,7 +2,7 @@
 /**
  * Project: LMOnext
  * Filename: frontend/pdf_export.php
- * Fileversion: 1.7.2
+ * Fileversion: 1.8.0
  *
  * PHP version 8.2
  *
@@ -1436,12 +1436,37 @@ function exportErgebnissePdf(string $ligaName, array $sectionSpecs, bool $showLo
  * sendet es direkt als Download an den Browser. Beendet danach das Skript
  * nicht selbst – der Aufrufer (liga.php) macht nach dem Aufruf ein exit.
  */
-function exportTabellePdf(string $ligaName, int $ligaId, array $allSpieltage, bool $showLogos = false) : void
+/**
+ * Exportiert die Liga-Tabelle als PDF. $tableMode wählt zwischen Gesamt-/
+ * Heim-/Auswärts-/Hin-/Rückrunden-Tabelle (Beitrag: Torsten Hofmann),
+ * identische Logik wie renderStandingsView() im Web (siehe
+ * src/Liga/RenderViewsTrait.php).
+ */
+function exportTabellePdf(string $ligaName, int $ligaId, array $allSpieltage, bool $showLogos = false, string $tableMode = 'gesamt') : void
 {
     $opts    = getLigaOptions($ligaId);
     $teams   = getLigaTeamsList($ligaId);
     $partien = getAllLigaPartien($allSpieltage);
-    $rows    = computeStandings($teams, $partien, $opts, $ligaId);
+
+    $validModes = ['gesamt', 'heim', 'gast', 'hin', 'rueck'];
+    $tableMode  = in_array($tableMode, $validModes, true) ? $tableMode : 'gesamt';
+
+    $partienForMode = $partien;
+    if ($tableMode === 'hin' || $tableMode === 'rueck') {
+        $maxNr = getMaxSpieltagNummer($allSpieltage);
+        $half  = intdiv($maxNr, 2);
+        $partienForMode = array_filter($partien, static function (array $p) use ($tableMode, $half) : bool {
+            $nr = (int)($p['_spieltag_nummer'] ?? 0);
+            return $tableMode === 'hin' ? $nr <= $half : $nr > $half;
+        });
+    }
+    $csMode = match ($tableMode) {
+        'heim'  => 'home',
+        'gast'  => 'away',
+        default => 'overall',
+    };
+
+    $rows = computeStandings($teams, $partienForMode, $opts, $ligaId, $csMode);
 
     $headers = [
         tf('liga_standings_col_platz'),
@@ -1500,9 +1525,14 @@ function exportTabellePdf(string $ligaName, int $ligaId, array $allSpieltage, bo
         'version' => getAppVersion(),
     ]);
 
-    $pdfBytes = buildStandingsPdf($ligaName, tf('liga_tab_tabelle'), $headers, $aligns, $tableRows, $footerText, count($headers) - 1, $rowBorderColors, $teamLogos, $logoCols, $rowTeamIds, null, null, $footnoteLines);
+    $subtitle = tf('liga_tab_tabelle');
+    if ($tableMode !== 'gesamt') {
+        $subtitle .= ' – ' . tf('liga_standings_nav_' . $tableMode);
+    }
+    $pdfBytes = buildStandingsPdf($ligaName, $subtitle, $headers, $aligns, $tableRows, $footerText, count($headers) - 1, $rowBorderColors, $teamLogos, $logoCols, $rowTeamIds, null, null, $footnoteLines);
 
-    $filenameBase = preg_replace('/[^A-Za-z0-9_-]+/', '_', $ligaName . '_Tabelle');
+    $modeSuffix = $tableMode !== 'gesamt' ? ('_' . ucfirst($tableMode)) : '';
+    $filenameBase = preg_replace('/[^A-Za-z0-9_-]+/', '_', $ligaName . '_Tabelle' . $modeSuffix);
     $filenameBase = trim((string)$filenameBase, '_');
     $filename     = ($filenameBase !== '' ? $filenameBase : 'tabelle') . '.pdf';
 

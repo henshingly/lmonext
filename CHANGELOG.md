@@ -1,5 +1,10 @@
 # Changelog LMOnext
 
+## addon/mini/debugTeamCompare.php
+
+- Changelog: 1.0.1 - Review-Korrektur (Dietmar Kersting / Claude): fehlender require_once für src/Liga/Eternal/EternalTableService.php ergänzt (gleicher Fehler wie in lmo-ewigetab.php 1.0.1 - Klasse war nicht auffindbar). Kein Produktivwerkzeug - reines Entwickler-Debug-Skript von Torsten Hofmann zur Verifikation der Ewige-Tabelle-Berechnung (fest auf "Borussia Dortmund" verdrahtet), nicht von irgendeiner Navigation aus verlinkt
+- Changelog: 1.0.0 - Initiale Version (Torsten Hofmann)
+
 ## addon/mini/lmo-ewigetab.php
 
 - Changelog: 1.0.1 - Review-Korrekturen (Dietmar Kersting / Claude): (1) kritisch - fehlender require_once für src/Liga/Eternal/EternalTableService.php ergänzt (Klasse war nicht auffindbar, jeder Aufruf endete in einem Fatal Error); (2) Standard-Sortierung von 'pkt3' auf 'pkt' (historische Original-Punkte) geändert - entspricht dem traditionellen "Ewige Tabelle"-Ansatz; (3) die im Docblock dokumentierte PHP-Variable $wertung für den include()-Modus wurde vom Code nie gelesen (nur $_GET) - jetzt konsistent mit den anderen drei Parametern ($_REQUEST, dann vorher gesetzte Variable, dann Standard); (4) $wertung-Dokumentationsbeispiel im Docblock korrigiert (fehlende Anführungszeichen) und als Steuerparameter ergänzt (fehlte komplett)
@@ -76,7 +81,7 @@
 
 ## addon/tipp/tipp_lib.php
 
-- Changelog: 0.6.1 - Kundenwunsch: tippRequestPasswordReset() sucht jetzt wahlweise über Nickname ODER Email (statt nur Email) und liefert bei Nichtfund eine konkrete Rückmeldung (welches der beiden Felder nichts fand) statt der bisherigen neutralen "falls diese Email existiert..."-Meldung - bewusste Abkehr vom Standard-Security-Pattern auf expliziten Wunsch für diese Testinstallation. Signatur geändert: (string $nickname, string $email), Rückgabe jetzt array{ok,reason} statt bool
+- Changelog: 0.6.1 - tippRequestPasswordReset() sucht jetzt wahlweise über Nickname ODER Email (statt nur Email) und liefert bei Nichtfund eine konkrete Rückmeldung (welches der beiden Felder nichts fand) statt der bisherigen neutralen "falls diese Email existiert..."-Meldung - bewusste Abkehr vom Standard-Security-Pattern auf expliziten Wunsch für diese Testinstallation. Signatur geändert: (string $nickname, string $email), Rückgabe jetzt array{ok,reason} statt bool
 - Changelog: 0.6.0 - Self-Service-Kontobearbeitung für Tipper: tippUpdateOwnAccount() (Nickname und "freigeschaltet" bleiben admin-exklusiv unveränderbar), tippRequestPasswordReset()/tippResetPassword() ("Passwort vergessen", Reset-Code 1h gültig, Einmal-Nutzung). Neue DB-Spalten reset_code/ reset_code_expires per Migration (SHOW COLUMNS/ALTER TABLE, analog zu admin/bootstrap.php) ergänzt
 - Changelog: 0.5.1 - Nav-Link/Startseiten-Karte zeigen jetzt auf home.php?view=tippspiel statt auf die entfernte eigenständige addon/tipp/tipp.php - Tippspiel läuft jetzt als View innerhalb des Templates, analog zur Spielerstatistik (siehe view_tippspiel_frontend.php). Nebenbei: falsche CSS-Klasse "btn" in der Startseiten-Karte korrigiert (nur "btn-primary" existiert)
 - Changelog: 0.5.0 - Neue Funktionen tippIstAktiv() (mind. eine Liga fürs Tippspiel freigegeben?), tippRenderSiteLink() (Header-/Footer-Link, je nach Template - siehe layout.tpl.php) und tippRenderHomeCard() (Werbe-Karte auf der Startseite, siehe home.tpl.php). Behebt eine echte Lücke: das Tippspiel war bislang nirgends von der Besucherseite aus verlinkt, nur per direkter URL erreichbar
@@ -105,7 +110,7 @@
 ## addon/tipp/view_tippspiel_frontend.php
 
 - Changelog: 1.4.1 - Bugfix: Die Tippeinsicht hatte (anders als die Tippabgabe) gar keinen Liga-Umschalter - bei mehr als einer abonnierten Liga wurde immer nur die erste angezeigt, die zweite war unerreichbar. Denselben Umschalter-Block wie in der Tippabgabe ergänzt
-- Changelog: 1.4.0 - Kundenwunsch: "Passwort vergessen" bietet jetzt zwei Eingabefelder (Nickname ODER Email) statt nur Email, sucht entsprechend und meldet bei Nichtfund konkret zurück, welches Feld nichts fand - siehe tippRequestPasswordReset() in tipp_lib.php 0.6.1
+- Changelog: 1.4.0 - "Passwort vergessen" bietet jetzt zwei Eingabefelder (Nickname ODER Email) statt nur Email, sucht entsprechend und meldet bei Nichtfund konkret zurück, welches Feld nichts fand - siehe tippRequestPasswordReset() in tipp_lib.php 0.6.1
 - Changelog: 1.3.0 - Verhalten korrigiert (Rückmeldung: Fallback war andersrum gewünscht): tippFilterLigenByAbo() liefert jetzt bei leerem Abo eine LEERE Liste statt aller Ligen. Dafür fragt die Registrierung (renderTippRegisterView()) die zu abonnierenden Ligen direkt mit ab (Checkboxen unter den Passwortfeldern), damit ein frisch registrierter Tipper nicht ohne Abo dasteht. Tippabgabe/-einsicht zeigen bei leerem Abo (aber vorhandenen Ligen) jetzt einen Hinweis mit Link zur Kontoseite statt der irreführenden "keine Liga freigegeben"-Meldung
 - Changelog: 1.2.0 - Liga-Abo wirkt jetzt tatsächlich: neue Funktion tippFilterLigenByAbo() schränkt Tippabgabe/Tippeinsicht auf die abonnierten Ligen ein - bisher war das Abo nur eine wirkungslose Merkliste. Ohne jegliches Abo bleibt die volle Liste sichtbar (kein versehentliches Aussperren neu registrierter Tipper). Speichern eines Tipps (?action=save) bleibt bewusst uneingeschränkt - das Abo ist eine Anzeige-Filterung, keine Zugriffssperre
 - Changelog: 1.1.1 - Bugfix: Die Kontoseite (?action=konto) hatte keinerlei Navigation zurück zur Tippabgabe/Einsicht/Rangliste - jetzt bekommt sie dieselbe Tab-Leiste wie die anderen Ansichten (keiner der drei Tabs aktiv markiert, da Konto kein eigener Tab ist)
@@ -347,7 +352,7 @@
 
 ## admin/view_liga_settings.php
 
-- Changelog: 1.5.3 - Spaltenreihenfolge im Tab "Strafen" geändert: Punkte, Minuspunkte, Erzielte Tore, Gegentore (Kundenwunsch) - reine Anzeigeänderung, die Felder werden weiterhin über ihren Namen ausgewertet, nicht die Position
+- Changelog: 1.5.3 - Spaltenreihenfolge im Tab "Strafen" geändert: Punkte, Minuspunkte, Erzielte Tore, Gegentore  - reine Anzeigeänderung, die Felder werden weiterhin über ihren Namen ausgewertet, nicht die Position
 - Changelog: 1.5.2 - Tab "Strafen": Eingabe auf Dropdown (+/−) + positives Betragsfeld umgestellt statt eines Zahlenfelds mit Minuszeichen (auf Mobilgeräten oft nicht per Zifferntastatur eingebbar). Vierte Spalte "Minuspunkte" ergänzt
 - Changelog: 1.5.1 - Tab "Strafen": dritte Spalte "Erzielte Tore +/-" ergänzt, alle drei Spalten als "+/-" beschriftet (Bonus/Strafe), Erklärungstext erweitert inkl. Lizenzentzug-Beispiel
 - Changelog: 1.5.0 - Neuer Tab "Teams": komplette Team-Verwaltung (Name/Mittel/Kürzel bearbeiten, DB-Suche, direkte ID-Übernahme) von der Liga-Detailseite hierher verschoben (siehe admin/view_liga_detail.php 1.9.0), damit sie zusammen mit den übrigen Liga-Einstellungen an einem Ort liegt. Läuft bewusst OHNE das äußere <form action="?action=save_liga_settings"> - jede Zeile speichert einzeln über ein eigenes <form>, verschachtelte Forms wären ungültiges HTML
@@ -473,6 +478,7 @@
 
 ## frontend/data_liga.php
 
+- Changelog: 3.0.5 - renderStandingsView()-Wrapper reicht den neuen $tableMode-Parameter durch.
 - Changelog: 3.0.4 - renderTabsBar()- und renderSpieltagPicker()-Wrapper reichen die neuen optionalen Parameter ($activeNr bzw. $targetView) durch.
 - Changelog: 3.0.3 - renderStandingsView()-Wrapper reicht den neuen optionalen $uptoSpieltag-Parameter durch (siehe src/Liga/RenderViewsTrait.php 1.4.0).
 - Changelog: 3.0.2 - computeStandings()-Wrapper reicht jetzt den neuen optionalen $ligaId- Parameter durch, neue Wrapper getLigaStrafpunkte()/setLigaStrafpunkte() ergänzt (siehe src/Liga/StandingsTrait.php 1.1.0, neues Strafpunkte-Feature)
@@ -540,9 +546,10 @@
 
 ## frontend/pdf_export.php
 
+- Changelog: 1.8.0 - exportTabellePdf() um Torstens Heim/Auswärts/Hin-Rück-Modus erweitert (identische Logik wie im Web), dabei einen vorhandenen Bugfix nachgezogen: \u{2013} in einem einfach gequoteten String wurde nie interpretiert (PHP wertet \u{}-Escapes nur in Doppelt-Quotes aus) - der PDF-Untertitel zeigte bisher wörtlich "\u{2913}" statt eines Gedankenstrichs. Jetzt echtes UTF-8-Zeichen.
 - Changelog: 1.7.2 - Regressions-Bugfix (Kundenrückmeldung mit konkretem Beispiel): das pauschale Entfernen von clip-path-Referenzen (siehe 1.6.x-Changelog, ursprünglich fürs FC-Bayern-Rautenmuster gedacht) hat sich als falsch herausgestellt - beim Eintracht-Braunschweig-Logo nutzt clip-path gerade dazu, Farbverlaufs-Rechtecke in die Wappenform zu beschneiden; ohne Beschneidung wurde daraus ein unkenntlicher Fleck aus großen Farbblöcken. Mit compare -metric AE bestätigt: das Entfernen erzeugte exakt das vom Kunden gemeldete Fehlbild, mit intaktem clip-path rendert das Logo wieder korrekt (Löwe + Rundschrift vollständig sichtbar). clip-path wird jetzt nicht mehr angetastet
 - Changelog: 1.7.1 - Bugfix (Kundenrückmeldung): manche SVG-Team-Logos wurden im PDF gar nicht oder fast leer dargestellt, obwohl kein Fehler auftrat. Ursache: fehlt auf dem Server sowohl rsvg-convert als auch ein voller librsvg-Imagick-Delegate, fällt ImageMagick auf seinen eigenen, eingeschränkten SVG-Renderer zurück - der hat bekannte Schwächen bei der allgemeinen matrix(a,b,c,d,e,f)- Transform-Form. pdfInlineSvgClassStyles() vereinfacht reine Skalierung+Verschiebung (b=0, c=0, keine Rotation/Scherung) jetzt zu getrennten translate()/scale()-Aufrufen, die von einfacheren Renderern zuverlässiger unterstützt werden. Mit den beiden vom Kunden gemeldeten Logos verifiziert: pixelgenau identisches Ergebnis (compare -metric AE = 0) gegenüber der unveränderten Fassung, wo sie ohnehin schon funktionierte
-- Changelog: 1.7.0 - Kundenwunsch: Strafpunkte-Begründungen erscheinen jetzt auch im PDF-Export der Tabelle, im selben Wikipedia-Stil wie in der Besucheransicht - Teamname bekommt "(N)" angehängt, unter der Tabelle erscheint eine Fußnotenliste "(N) Begründungstext" (mit Zeilenumbruch für lange Texte, neue Hilfsfunktion pdfWrapText()). Neuer optionaler Parameter $footnotes in buildStandingsPdf() (rückwärtskompatibel, Standard null = keine Verhaltensänderung für andere PDF-Exporte, die diesen Parameter nicht nutzen)
+- Changelog: 1.7.0 - Strafpunkte-Begründungen erscheinen jetzt auch im PDF-Export der Tabelle, im selben Wikipedia-Stil wie in der Besucheransicht - Teamname bekommt "(N)" angehängt, unter der Tabelle erscheint eine Fußnotenliste "(N) Begründungstext" (mit Zeilenumbruch für lange Texte, neue Hilfsfunktion pdfWrapText()). Neuer optionaler Parameter $footnotes in buildStandingsPdf() (rückwärtskompatibel, Standard null = keine Verhaltensänderung für andere PDF-Exporte, die diesen Parameter nicht nutzen)
 - Changelog: 1.6.9 - Bugfix: der "(heute TEAM_HEUTE)"-Zusatz wurde bisher an JEDE einzelne Ergebniszeile angehängt, wodurch die Ergebnis-Spalten im Teamvergleich-PDF unnötig breit wurden (siehe Nutzer-Feedback mit Beispiel-PDF). Steht jetzt nur noch einmal als zusammenfassender Hinweis unter dem Untertitel (neuer optionaler Parameter $noteLine in buildStandingsPdf(), Default null - betrifft die normale Tabellen-PDF nicht). Tabellenzeilen zeigen wieder die schlichten historischen Namen ohne Zusatz
 - Changelog: 1.6.8 - Angepasst an die neue Feldaufteilung in getHeadToHeadMatches() (heim_today/gast_today statt im Namen enthalten, siehe data_liga.php 2.20.0) – rekonstruiert den "(heute TEAM_HEUTE)"-Zusatz weiterhin inline an den Namen angehängt, da PDF-Text keinen Zeilenumbruch dieser Art kennt
 - Changelog: 1.6.7 - "Spielfrei: TEAMNAME"-Zeile jetzt auch im PDF-Export der Ergebnisse (direkt nach den Ergebniszeilen, vor der Tore-Schnitt-Zeile - gleiche Reihenfolge wie in der HTML-Ansicht), siehe liga.php 3.10.2
@@ -763,6 +770,7 @@
 
 ## lang/frontend/de.php
 
+- Changelog: 1.28.0 - Übersetzungen für Form/Trend/Tabellen-Modus-Navigation ergänzt (Beitrag Torsten Hofmann).
 - Changelog: 1.27.0 - Übersetzungen für die neue "vorheriger/nächster Spieltag"-Navigation in der Tabellenansicht ergänzt.
 - Changelog: 1.26.0 - Tooltip-Key für die neue Minuspunkte-Korrektur ergänzt
 - Changelog: 1.25.0 - Strafpunkte-Tooltip-Keys aktualisiert für die erweiterten Bonus/Strafe-Felder (erzielte Tore ergänzt)
@@ -814,6 +822,7 @@
 
 ## lang/frontend/en.php
 
+- Changelog: 1.28.0 - Added translations for form/trend/table mode navigation (contribution by Torsten Hofmann).
 - Changelog: 1.27.0 - Added translations for the new "previous/next matchday" navigation in the standings view.
 - Changelog: 1.26.0 - Added tooltip key for the new minus-points correction field
 - Changelog: 1.25.0 - Updated penalty-points tooltip keys for the extended bonus/penalty fields (goals scored added)
@@ -873,7 +882,8 @@
 
 ## liga.php
 
-- Changelog: 3.10.8 - Kundenwunsch: $activeNr (aktuell angezeigter Spieltag bei Ergebnisse/Tabelle) wird jetzt an renderTabsBar() übergeben, damit ein Wechsel zwischen den beiden Reitern denselben Spieltag beibehält statt auf den letzten zurückzuspringen. Neuer Spieltag-Picker (renderSpieltagPicker(..., 'tabelle')) auch für die Tabellenansicht, analog zu Ergebnisse.
+- Changelog: 3.10.9 - Liest jetzt zusätzlich ?table= (Gesamt/Heim/Gast/Hin/Rück, Beitrag Torsten Hofmann) und reicht es an renderStandingsView()/exportTabellePdf() durch, bleibt beim Spieltag-Wechsel erhalten.
+- Changelog: 3.10.8 - $activeNr (aktuell angezeigter Spieltag bei Ergebnisse/Tabelle) wird jetzt an renderTabsBar() übergeben, damit ein Wechsel zwischen den beiden Reitern denselben Spieltag beibehält statt auf den letzten zurückzuspringen. Neuer Spieltag-Picker (renderSpieltagPicker(..., 'tabelle')) auch für die Tabellenansicht, analog zu Ergebnisse.
 - Changelog: 3.10.7 - Liest jetzt ?nr=N für die Tabellen-Ansicht (Tabelle nach Spieltag N, siehe RenderViewsTrait.php 1.4.0), analog zum bereits bestehenden ?nr= bei der Ergebnisse-Ansicht.
 - Changelog: 3.10.6 - renderBackLinkBlock() nach frontend/data_liga.php verschoben (siehe dortiger Changelog 3.0.1), damit auch home.php (Tippspiel-View) denselben Link nutzen kann - hier nur noch der Aufruf, keine Verhaltensänderung
 - Changelog: 3.10.5 - Neue globale Einstellung "Übersicht-Link anzeigen?" (Admin → Einstellungen → Besucherbereich), entspricht "Ligaauswahl" im alten LMO. Neue Funktion renderBackLinkBlock() baut den "← Zur Übersicht"-Link jetzt als vollständigen HTML-Block (statt nur den Text), damit er sich bei Bedarf komplett ausblenden lässt - alle Templates nutzen jetzt den neuen Platzhalter "ZurueckLinkBlock" statt der fest verankerten Verlinkung
@@ -946,6 +956,7 @@
 
 ## src/Liga/RenderViewsTrait.php
 
+- Changelog: 1.6.0 - Torstens Gesamt/Heim/Auswärts/Hin-/Rückrunde-Umschalter (renderStandingsModeNav()) mit der bestehenden Spieltag-Navigation zusammengeführt: der Spieltag-Filter wirkt zuerst, der Tabellen-Modus danach (z.B. "Rückrunde bis Spieltag 20" funktioniert sinnvoll). Neue Spalten "Form" und "Trend" in der Tabelle. Beide Navigationsleisten behalten die jeweils andere Auswahl beim Wechsel bei (Modus bleibt bei Spieltag-Wechsel erhalten und umgekehrt).
 - Changelog: 1.5.0 - renderTabsBar() bekommt einen optionalen $activeNr-Parameter, hängt "&nr=N" gezielt an die Links zu "ergebnisse"/"tabelle" an (die einzigen zwei Reiter, die ?nr= lesen). renderSpieltagPicker() bekommt einen optionalen $targetView-Parameter (Standard 'ergebnisse', rückwärtskompatibel), damit derselbe Picker jetzt auch für "Tabelle nach Spieltag N" wiederverwendet werden kann statt einen zweiten Picker zu bauen.
 - Changelog: 1.4.0 - Neue Kundenfunktion: Tabelle nach Spieltag N ("Tabelle nach dem X. Spieltag", analog zu kicker.de). renderStandingsView() bekommt einen optionalen $uptoSpieltag-Parameter, filtert die Partien auf _spieltag_nummer <= N vor der Berechnung. Neue "vorheriger/nächster Spieltag"-Navigation ober- und unterhalb der Tabelle (renderStandingsSpieltagNav()), fehlt am ersten bzw. letzten Spieltag automatisch. Ohne Parameter unverändertes bisheriges Verhalten (aktueller/finaler Stand).
 - Changelog: 1.3.0 - Neuer Platzhalter "Fussnoten" für die Strafpunkte-Begründungen im Wikipedia-Stil (siehe StandingsTrait.php 1.4.0)
@@ -959,10 +970,11 @@
 
 ## src/Liga/StandingsTrait.php
 
-- Changelog: 1.4.1 - Kundenwunsch: Die Fußnote erscheint jetzt schon, sobald "Grund" befüllt ist - unabhängig davon, ob überhaupt eine der vier Zahlenkorrekturen (Punkte/erzielte Tore/Gegentore/Minuspunkte) von 0 abweicht. Vorher wurde ein reiner Grund ohne Zahlenänderung fälschlich unterdrückt
-- Changelog: 1.4.0 - Kundenwunsch: Strafpunkte-Begründungen erscheinen jetzt automatisch als Fußnoten unter der Tabelle, im Wikipedia-Stil ("(1) Begründungstext") - neue Funktionen assignStrafFootnotes() (vergibt fortlaufende Nummern in Tabellenreihenfolge, nur an Teams mit Grund UND tatsächlichem Effekt) und renderStrafFootnotes() (baut die Liste). renderStrafHinweis() zeigt bei vorhandenem Grund jetzt eine anklickbare Fußnoten-Nummer "(N)" statt nur eines Warnsymbols, Tooltip mit den genauen Deltas bleibt zusätzlich erhalten
-- Changelog: 1.3.0 - Kundenwunsch (Mobile-Rückmeldung): (1) Vierten Korrekturwert "minuspunkte_korrektur" ergänzt, damit die separate Minuspunkte-Anzeige ebenfalls (z.B. auf 0) korrigierbar ist - vorher blieb sie bei einer Punkte-Korrektur unverändert bestehen; (2) die eigentliche Vorzeichen- Eingabe (Minuszeichen auf Mobilgeräten oft nicht erreichbar) wurde in admin/view_liga_settings.php auf ein Dropdown (+/−) plus Betragsfeld umgestellt - hier nur die Datenschicht dafür erweitert
-- Changelog: 1.2.0 - Kundenwunsch (2 Punkte): (1) Minuspunkte-Anzeige (Admin-Einstellung "MinusPoints" existierte schon lange, wurde aber nirgends gelesen) - neue Berechnung der klassischen "Gewinnpunkte:Verlustpunkte"-Darstellung je Team, respektiert das jeweils konfigurierte Punktesystem statt fest 2/1/0 anzunehmen; (2) Strafen/Bonus-Feature erweitert: dritter Korrekturwert "tore_korrektur" (erzielte Tore) ergänzt, damit Punkte UND beide Tor-Werte unabhängig voneinander mit +/- korrigiert werden können (z.B. Lizenzentzug: Team komplett auf 0:0/0 setzen). Alle drei Werte jetzt klar als vorzeichenbehaftet (Bonus/Strafe) dokumentiert und im Tooltip entsprechend mit korrektem Vorzeichen angezeigt
+- Changelog: 1.5.0 - Beitrag von Torsten Hofmann integriert (aus lmonext_plastic.zip, gegen Torstens veralteten Ausgangsstand neu aufgebaut statt direkt übernommen, da er auf einem älteren Commit basierte): computeStandings() bekommt einen $mode-Parameter ('overall'/'home'/'away') für Heim-/Auswärts-Tabellen, mit der bestehenden Strafpunkte-/Minuspunkte-Logik zusammengeführt. Neue Funktionen computeLast5Form() (Form der letzten 5 Spiele) und computePositionTrend() (Positionsänderung zum vorherigen Spieltag) - Letztere so angepasst, dass sie sich korrekt auf den gerade angezeigten Spieltag bezieht statt immer auf den letzten der Saison, damit sie mit der Tabelle-nach-Spieltag-Navigation zusammenspielt.
+- Changelog: 1.4.1 - Die Fußnote erscheint jetzt schon, sobald "Grund" befüllt ist - unabhängig davon, ob überhaupt eine der vier Zahlenkorrekturen (Punkte/erzielte Tore/Gegentore/Minuspunkte) von 0 abweicht. Vorher wurde ein reiner Grund ohne Zahlenänderung fälschlich unterdrückt
+- Changelog: 1.4.0 - Strafpunkte-Begründungen erscheinen jetzt automatisch als Fußnoten unter der Tabelle, im Wikipedia-Stil ("(1) Begründungstext") - neue Funktionen assignStrafFootnotes() (vergibt fortlaufende Nummern in Tabellenreihenfolge, nur an Teams mit Grund UND tatsächlichem Effekt) und renderStrafFootnotes() (baut die Liste). renderStrafHinweis() zeigt bei vorhandenem Grund jetzt eine anklickbare Fußnoten-Nummer "(N)" statt nur eines Warnsymbols, Tooltip mit den genauen Deltas bleibt zusätzlich erhalten
+- Changelog: 1.3.0 - (Mobile-Rückmeldung): (1) Vierten Korrekturwert "minuspunkte_korrektur" ergänzt, damit die separate Minuspunkte-Anzeige ebenfalls (z.B. auf 0) korrigierbar ist - vorher blieb sie bei einer Punkte-Korrektur unverändert bestehen; (2) die eigentliche Vorzeichen- Eingabe (Minuszeichen auf Mobilgeräten oft nicht erreichbar) wurde in admin/view_liga_settings.php auf ein Dropdown (+/−) plus Betragsfeld umgestellt - hier nur die Datenschicht dafür erweitert
+- Changelog: 1.2.0 - (2 Punkte): (1) Minuspunkte-Anzeige (Admin-Einstellung "MinusPoints" existierte schon lange, wurde aber nirgends gelesen) - neue Berechnung der klassischen "Gewinnpunkte:Verlustpunkte"-Darstellung je Team, respektiert das jeweils konfigurierte Punktesystem statt fest 2/1/0 anzunehmen; (2) Strafen/Bonus-Feature erweitert: dritter Korrekturwert "tore_korrektur" (erzielte Tore) ergänzt, damit Punkte UND beide Tor-Werte unabhängig voneinander mit +/- korrigiert werden können (z.B. Lizenzentzug: Team komplett auf 0:0/0 setzen). Alle drei Werte jetzt klar als vorzeichenbehaftet (Bonus/Strafe) dokumentiert und im Tooltip entsprechend mit korrektem Vorzeichen angezeigt
 - Changelog: 1.1.0 - Neues Feature "Strafpunkte/Straftore": computeStandings() bekommt einen optionalen $ligaId-Parameter (Rückwärtskompatibel, Standard null = kein Verhaltenswechsel für bestehende Aufrufer ohne Liga-Bezug) und zieht damit admin-seitig hinterlegte Strafpunkte von den regulär berechneten Punkten ab bzw. addiert Straftore zu den Gegentoren, VOR der finalen Sortierung - wirkt sich also korrekt auf Tabellenplatz und Tordifferenz aus. Neue Funktionen getLigaStrafpunkte()/setLigaStrafpunkte() plus neue Tabelle liga_strafpunkte (per ensureStrafpunkteSchema() bei Bedarf angelegt, auch auf Bestandsinstallationen ohne erneuten install.php-Lauf)
 - Changelog: 1.0.0 - Initiale Version: Teil der Umstrukturierung von frontend/data_liga.php in fokussierte Traits (siehe frontend/data_liga.php 3.0.0 für den vollen Kontext der Umstellung). Tabellenberechnung (computeStandings, computeStandingsMarkerColor, renderStandingsView).
 
@@ -972,8 +984,8 @@
 
 ## src/Liga/TeamFormattingTrait.php
 
-- Changelog: 1.0.2 - Kundenwunsch: Logo-Format-Priorität umgekehrt - Rasterformate (jpg/png/gif) werden jetzt VOR svg gesucht. Grund: SVG-Rasterung für den PDF-Export ist je nach Server unterschiedlich zuverlässig, während JPG/PNG über GD garantiert funktionieren.
-- Changelog: 1.0.2 - Kundenwunsch: Logo-Format-Priorität umgekehrt - Rasterformate (jpg/png/gif) werden jetzt VOR svg gesucht, nicht mehr danach. Grund: SVG-Rasterung für den PDF-Export ist je nach Server unterschiedlich zuverlässig (mehrere SVG-Logos wurden falsch/gar nicht im PDF dargestellt), während JPG/PNG über GD garantiert funktionieren - wer beide Formate hinterlegt, bekommt jetzt automatisch die zuverlässigere Variante
+- Changelog: 1.0.2 - Logo-Format-Priorität umgekehrt - Rasterformate (jpg/png/gif) werden jetzt VOR svg gesucht. Grund: SVG-Rasterung für den PDF-Export ist je nach Server unterschiedlich zuverlässig, während JPG/PNG über GD garantiert funktionieren.
+- Changelog: 1.0.2 - Logo-Format-Priorität umgekehrt - Rasterformate (jpg/png/gif) werden jetzt VOR svg gesucht, nicht mehr danach. Grund: SVG-Rasterung für den PDF-Export ist je nach Server unterschiedlich zuverlässig (mehrere SVG-Logos wurden falsch/gar nicht im PDF dargestellt), während JPG/PNG über GD garantiert funktionieren - wer beide Formate hinterlegt, bekommt jetzt automatisch die zuverlässigere Variante
 - Changelog: 1.0.1 - Kritischer Bugfix: findTeamLogoPathFrontend() suchte Team-Logos unter src/assets/img/teams/ statt im echten assets/img/teams/-Ordner im Projekt-Root. Ursache: dirname(__DIR__) geht nur eine Verzeichnisebene hoch - korrekt für admin/bootstrap.php (liegt 1 Ebene unter Root), aber diese Datei liegt unter src/Liga/, also 2 Ebenen unter Root. Jede Besucheransicht zeigte dadurch für JEDES Team immer nur den "kein Logo"-Platzhalter, obwohl im Admin hochgeladene Logos korrekt vorhanden waren. Jetzt dirname(__DIR__, 2)
 - Changelog: 1.0.0 - Initiale Version: Teil der Umstrukturierung von frontend/data_liga.php in fokussierte Traits (siehe frontend/data_liga.php 3.0.0 für den vollen Kontext der Umstellung). Team-Anzeige/Logos in Partie-Zeilen (partieTeamName, findTeamLogoPathFrontend, renderTeamLogoImg(Wrapped), partieTeamNameWithLogo(Reversed)).
 
@@ -1108,6 +1120,7 @@
 
 ## template/default/partials/standings_row.tpl.php
 
+- Changelog: 1.5.0 - Neue Platzhalter "Form"/"Trend" (Beitrag Torsten Hofmann).
 - Changelog: 1.4.0 - Neuer Platzhalter "StrafHinweis" (⚠-Marker mit Tooltip bei Strafpunkten/ Straftoren, siehe renderStrafHinweis() in src/Liga/StandingsTrait.php)
 - Changelog: 1.3.0 - Platzhalter "Logo" von "Team" getrennt (eigenes <span> mit fester Breite), damit die Teamnamen untereinander bündig ausgerichtet bleiben, auch wenn die Logos unterschiedlich breit sind (siehe .st-team-logo-wrap CSS)
 - Changelog: 1.2.0 - Neuer Platzhalter "RowStyle" für die farbige Rand-Markierung (Champions League/Europa League/Relegation/Abstieg usw., siehe Admin → Liga- Einstellungen → Tabelle → Tabellenmarkierungen)
@@ -1116,6 +1129,7 @@
 
 ## template/default/partials/standings_view.tpl.php
 
+- Changelog: 1.4.0 - Neue Spaltenüberschriften "ColForm"/"ColTrend" (Beitrag Torsten Hofmann).
 - Changelog: 1.3.0 - Neue Platzhalter "SpieltagNavOben"/"SpieltagNavUnten" für die vorheriger/nächster-Spieltag-Navigation (siehe RenderViewsTrait.php 1.4.0).
 - Changelog: 1.2.0 - Neuer Platzhalter "Fussnoten" für die Strafpunkte-Begründungen im Wikipedia-Stil ("(1) Begründungstext" unter der Tabelle, siehe renderStrafFootnotes() in src/Liga/StandingsTrait.php)
 - Changelog: 1.1.0 - Wertungshinweis-Zeile entfernt
@@ -1174,10 +1188,12 @@
 
 ## template/matchday/partials/standings_row.tpl.php
 
+- Changelog: 1.2.0 - Neue Platzhalter "Form"/"Trend" (siehe default 1.5.0).
 - Changelog: 1.1.0 - Neuer Platzhalter "StrafHinweis" (⚠-Marker mit Tooltip bei Strafpunkten/ Straftoren, siehe default 1.4.0 für die Begründung)
 
 ## template/matchday/partials/standings_view.tpl.php
 
+- Changelog: 1.3.0 - Neue Spaltenüberschriften "ColForm"/"ColTrend" (siehe default 1.4.0).
 - Changelog: 1.2.0 - Neue Platzhalter "SpieltagNavOben"/"SpieltagNavUnten" (siehe default 1.3.0).
 - Changelog: 1.1.0 - Neuer Platzhalter "Fussnoten" (siehe default 1.2.0)
 
@@ -1188,22 +1204,27 @@
 
 ## template/default/layout.tpl.php
 
+- Changelog: 1.16.4 - CSS für Form-Dots/Trend-Pfeile/Tabellen-Modus-Navigation ergänzt (Beitrag Torsten Hofmann).
 - Changelog: 1.16.3 - CSS für die neue Spieltag-Navigation (.st-spieltag-nav) in der Tabellenansicht ergänzt.
 
 ## template/colored/layout.tpl.php
 
+- Changelog: 1.5.4 - CSS für Form-Dots/Trend-Pfeile/Tabellen-Modus-Navigation ergänzt (siehe default 1.16.4).
 - Changelog: 1.5.3 - CSS für die neue Spieltag-Navigation ergänzt (siehe default 1.16.3).
 
 ## template/dark/layout.tpl.php
 
+- Changelog: 1.4.4 - CSS für Form-Dots/Trend-Pfeile/Tabellen-Modus-Navigation ergänzt (siehe default 1.16.4).
 - Changelog: 1.4.3 - CSS für die neue Spieltag-Navigation ergänzt (siehe default 1.16.3).
 
 ## template/light/layout.tpl.php
 
+- Changelog: 1.4.4 - CSS für Form-Dots/Trend-Pfeile/Tabellen-Modus-Navigation ergänzt (siehe default 1.16.4).
 - Changelog: 1.4.3 - CSS für die neue Spieltag-Navigation ergänzt (siehe default 1.16.3).
 
 ## template/matchday/layout.tpl.php
 
+- Changelog: 1.1.4 - CSS für Form-Dots/Trend-Pfeile/Tabellen-Modus-Navigation ergänzt (siehe default 1.16.4).
 - Changelog: 1.1.3 - CSS für die neue Spieltag-Navigation ergänzt (siehe default 1.16.3).
 
 ## template/matchday/partials/tab_item.tpl.php
