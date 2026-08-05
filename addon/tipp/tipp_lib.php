@@ -431,7 +431,7 @@ function tippUpdateOwnAccount(int $tipperId, array $data, ?string $newPassword) 
  * Sucht wahlweise über $nickname ODER $email (genau eines der beiden sollte
  * befüllt sein; ist der Nickname befüllt, hat er Vorrang). Liefert bewusst
  * ein konkretes "nicht gefunden" zurück statt der sonst in solchen Flows
- * üblichen neutralen Meldung - für diese Testinstallation.
+ * üblichen neutralen Meldung.
  *
  * @return array{ok:bool,reason:?string} reason ist bei ok=false eine der
  *         Sprachschlüssel-Endungen 'not_found_nickname'/'not_found_email'/
