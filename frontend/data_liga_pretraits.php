@@ -818,7 +818,7 @@ const TEAM_LOGO_EXT_LIST = ['svg', 'jpg', 'jpeg', 'png', 'gif'];
  * Sucht ein hochgeladenes Team-Logo (siehe Admin → Teams (global)). Gibt den
  * Web-Pfad relativ zum Projekt-Root zurück, oder null wenn keins hinterlegt
  * ist. Eigenständige, schlanke Kopie der gleichnamigen Logik aus
- * admin/bootstrap.php – das Frontend bindet die Admin-Bootstrap-Kette nicht
+ * frontend/TeamFormattingTrait.php – das Frontend bindet die Admin-Bootstrap-Kette nicht
  * ein, daher hier separat statt geteilt.
  */
 function findTeamLogoPathFrontend(int $teamId) : ?string

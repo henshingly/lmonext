@@ -2,7 +2,7 @@
 /**
  * Project: LMOnext
  * Filename: src/Liga/TeamFormattingTrait.php
- * Fileversion: 1.0.2
+ * Fileversion: 1.0.3
  *
  * PHP version 8.2
  *
@@ -20,7 +20,24 @@ namespace LMOnext\Liga;
  */
 trait TeamFormattingTrait
 {
+    /**
+     * Reihenfolge der Logo-Formate für die Browser-Ansicht:
+     * SVG (beste Qualität), PNG, JPEG, GIF
+     */
+    public const TEAM_LOGO_EXT_LIST_BROWSER = ['svg', 'png', 'jpg', 'jpeg', 'gif'];
+    
+    /**
+     * Reihenfolge der Logo-Formate für PDF-Export:
+     * JPEG/PNG/GIF (zuverlässig embedded), dann SVG als Best-Effort
+     */
+    public const TEAM_LOGO_EXT_LIST_PDF = ['jpg', 'jpeg', 'png', 'gif', 'svg'];
+    
+    /**
+     * Legacy-Konstante für Rückwärtskompatibilität (veraltet, nutze stattdessen
+     * TEAM_LOGO_EXT_LIST_BROWSER oder TEAM_LOGO_EXT_LIST_PDF)
+     */
     public const TEAM_LOGO_EXT_LIST = ['jpg', 'jpeg', 'png', 'gif', 'svg'];
+    
     /**
      * Ob eine Partie eine reine Platzhalter-Leerbegegnung ist – weder Heim noch
      * Gast haben ein echtes Team ODER auch nur einen Anzeige-Namen (heim_label/
@@ -55,18 +72,26 @@ trait TeamFormattingTrait
     /**
      * Sucht ein hochgeladenes Team-Logo (siehe Admin → Teams (global)). Gibt den
      * Web-Pfad relativ zum Projekt-Root zurück, oder null wenn keins hinterlegt
-     * ist. Eigenständige, schlanke Kopie der gleichnamigen Logik aus
+     * ist. 
+     * 
+     * $forBrowser kontrolliert die Suchpriorität:
+     * - true (Standard): Browser-Ausgabe, Reihenfolge SVG, PNG, JPEG, GIF
+     * - false: PDF-Export, Reihenfolge JPEG, PNG, GIF, SVG (zuverlässiger bei Embedding)
+     * 
+     * Eigenständige, schlanke Kopie der gleichnamigen Logik aus
      * admin/bootstrap.php – das Frontend bindet die Admin-Bootstrap-Kette nicht
      * ein, daher hier separat statt geteilt.
      */
-    public static function findTeamLogoPathFrontend(int $teamId) : ?string
+    public static function findTeamLogoPathFrontend(int $teamId, bool $forBrowser = true) : ?string
     {
         // WICHTIG: diese Datei liegt unter src/Liga/, also ZWEI Ebenen unter
         // dem Projekt-Root - dirname(__DIR__, 2) ist hier nötig, nicht
         // dirname(__DIR__) (das ginge nur eine Ebene hoch, landet fälschlich
         // in src/assets/... statt im echten assets/-Ordner im Projekt-Root).
         $dir = dirname(__DIR__, 2) . '/assets/img/teams';
-        foreach (self::TEAM_LOGO_EXT_LIST as $ext) {
+        $extList = $forBrowser ? self::TEAM_LOGO_EXT_LIST_BROWSER : self::TEAM_LOGO_EXT_LIST_PDF;
+        
+        foreach ($extList as $ext) {
             if (is_file($dir . '/' . $teamId . '.' . $ext)) {
                 return 'assets/img/teams/' . $teamId . '.' . $ext;
             }
@@ -84,7 +109,7 @@ trait TeamFormattingTrait
         if (!$showLogos || $teamId <= 0) {
             return '';
         }
-        $path = self::findTeamLogoPathFrontend($teamId) ?? 'assets/img/nopic-team.svg';
+        $path = self::findTeamLogoPathFrontend($teamId, true) ?? 'assets/img/nopic-team.svg';
         return '<img src="' . h($path) . '" alt="" class="team-logo-inline">';
     }
     /**

@@ -31,10 +31,6 @@ require_once __DIR__ . '/../src/Liga/StatisticsTrait.php';
 require_once __DIR__ . '/../src/Liga/RenderViewsTrait.php';
 require_once __DIR__ . '/../src/Liga/LigaService.php';
 
-if (!defined('TEAM_LOGO_EXT_LIST')) {
-    define('TEAM_LOGO_EXT_LIST', ['svg', 'jpg', 'jpeg', 'png', 'gif']);
-}
-
 function getLigaById(int $id) : ?array
 {
     return \LMOnext\Liga\LigaService::getLigaById($id);

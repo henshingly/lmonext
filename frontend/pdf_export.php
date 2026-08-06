@@ -512,7 +512,7 @@ function pdfLoadTeamLogos(array $teamIds) : array
         if ($teamId <= 0) {
             continue;
         }
-        $path = findTeamLogoPathFrontend($teamId);
+        $path = findTeamLogoPathFrontend($teamId, false); // false = PDF-Export, bevorzugt JPEG/PNG/GIF vor SVG
         if ($path === null) {
             continue; // kein Logo hochgeladen -> im PDF nur der Name (kein "nopic"-Platzhalter im PDF)
         }
