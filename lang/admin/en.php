@@ -2,12 +2,13 @@
 /**
  * Project: LMOnext
  * Filename: lang/admin/en.php
- * Fileversion: 1.15.0
+ * Fileversion: 1.15.1
  *
  * PHP version 8.2
  *
  * @author    Dietmar Kersting <webmaster@liga-manager-online.org>
- * @copyright 2026 Dietmar Kersting
+ * @author    Torsten Hofmann <entwickler@bastel-code.de>
+ * @copyright 2026 Dietmar Kersting, Torsten Hofmann
  * @license   GPL-3.0-only
  *
  * Any key missing here automatically falls back to lang/admin/de.php.
@@ -682,6 +683,8 @@ return [
     'ls_strafen_col_punkte' => 'Points',
     'ls_strafen_col_erzielt' => 'Goals scored',
     'ls_strafen_col_gegentore' => 'Goals against',
+    'ls_strafen_col_ab_spieltag' => 'from matchday',
+    'ls_strafen_col_ab_spieltag_tip' => 'The correction only applies from this matchday onwards (0 = from the start of the season). Useful e.g. for a license revocation announced mid-season.',
     'ls_strafen_col_minuspunkte' => 'Minus points',
     'ls_strafen_col_grund' => 'Reason (optional)',
     'ls_tab_spieltage'     => 'Matchday & match count',

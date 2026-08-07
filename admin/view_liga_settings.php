@@ -2,12 +2,13 @@
 /**
  * Project: LMOnext
  * Filename: view_liga_settings.php
- * Fileversion: 1.5.3
+ * Fileversion: 1.6.0
  *
  * PHP version 8.2
  *
  * @author    Dietmar Kersting <webmaster@liga-manager-online.org>
- * @copyright 2026 Dietmar Kersting
+ * @author    Torsten Hofmann <entwickler@bastel-code.de>
+ * @copyright 2026 Dietmar Kersting, Torsten Hofmann
  * @license   GPL-3.0-only
  *
  */
@@ -647,11 +648,12 @@ if ($tab === 'grundwerte') { ?>
               <th style="text-align:center;padding:6px 8px;font-size:.8rem;color:var(--muted)"><?= h(t('ls_strafen_col_minuspunkte')) ?></th>
               <th style="text-align:center;padding:6px 8px;font-size:.8rem;color:var(--muted)"><?= h(t('ls_strafen_col_erzielt')) ?></th>
               <th style="text-align:center;padding:6px 8px;font-size:.8rem;color:var(--muted)"><?= h(t('ls_strafen_col_gegentore')) ?></th>
+              <th style="text-align:center;padding:6px 8px;font-size:.8rem;color:var(--muted)"><?= h(t('ls_strafen_col_ab_spieltag')) ?></th>
               <th style="text-align:left;padding:6px 8px;font-size:.8rem;color:var(--muted)"><?= h(t('ls_strafen_col_grund')) ?></th>
             </tr>
 <?php foreach ($ligaTeams as $i => $team) {
     $teamId = (int)$team['id'];
-    $s = $strafen[$teamId] ?? ['strafpunkte' => 0, 'straftore' => 0, 'tore_korrektur' => 0, 'minuspunkte_korrektur' => 0, 'grund' => '']; ?>
+    $s = $strafen[$teamId] ?? ['strafpunkte' => 0, 'straftore' => 0, 'tore_korrektur' => 0, 'minuspunkte_korrektur' => 0, 'ab_spieltag' => 0, 'grund' => '']; ?>
             <tr>
               <td style="padding:5px 8px;font-size:.87rem"><?= h($team['name']) ?>
                 <input type="hidden" name="strafe_team_id[<?= $i ?>]" value="<?= $teamId ?>"></td>
@@ -659,6 +661,9 @@ if ($tab === 'grundwerte') { ?>
               <td style="padding:5px 8px;text-align:center;white-space:nowrap"><?= $strafField('strafe_minus', $i, (int)($s['minuspunkte_korrektur'] ?? 0)) ?></td>
               <td style="padding:5px 8px;text-align:center;white-space:nowrap"><?= $strafField('strafe_erzielt', $i, (int)($s['tore_korrektur'] ?? 0)) ?></td>
               <td style="padding:5px 8px;text-align:center;white-space:nowrap"><?= $strafField('strafe_tore', $i, (int)$s['straftore']) ?></td>
+              <td style="padding:5px 8px;text-align:center">
+                <input type="number" name="strafe_ab_spieltag[<?= $i ?>]" min="0" inputmode="numeric" value="<?= (int)($s['ab_spieltag'] ?? 0) ?>" style="width:55px;text-align:center;<?= $selSt ?>" title="<?= h(t('ls_strafen_col_ab_spieltag_tip')) ?>">
+              </td>
               <td style="padding:5px 8px">
                 <input type="text" name="strafe_grund[<?= $i ?>]" value="<?= h($s['grund'] ?? '') ?>" maxlength="255" style="width:100%;box-sizing:border-box;<?= $selSt ?>">
               </td>

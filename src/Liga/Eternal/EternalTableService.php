@@ -2,7 +2,12 @@
 /**
  * Project: LMOnext
  * Filename: src/Liga/Eternal/EternalTableService.php
- * Fileversion: 1.0.1
+ * Fileversion: 1.1.0
+ *
+ * @author    Dietmar Kersting <webmaster@liga-manager-online.org>
+ * @author    Torsten Hofmann <entwickler@bastel-code.de>
+ * @copyright 2026 Dietmar Kersting, Torsten Hofmann
+ * @license   GPL-3.0-only
  *
  * Ewige Tabelle + Mehrjahres-Vergleich (Teamvergleich über mehrere Jahre).
  *
@@ -161,6 +166,17 @@ final class EternalTableService
                         'pkt3'    => 0, // immer 3 Punkte
                         'mpkt2'    => 0,   // Minuspunkte (2-Punkte-System)
                         'mpkt3'    => 0,   // Minuspunkte (3-Punkte-System)
+                        // Strafen über Saisons aufsummiert (Beitrag: Torsten
+                        // Hofmann) - "pkt"/"tore_h"/"tore_g" oben enthalten die
+                        // Korrekturen bereits (computeStandings() wendet sie VOR
+                        // der Aggregation an), diese Felder dienen nur der
+                        // Anzeige/Fußnote (siehe ewigeStrafHinweis() im
+                        // Ewige-Tabelle-Addon)
+                        'strafpunkte'     => 0,
+                        'straftore'       => 0,
+                        'torekorrektur'   => 0,
+                        'minuspunktekorrektur' => 0,
+                        'strafgruende'    => [],  // ['Liganame: Grund', ...]
                     ];
                 }
 
@@ -179,6 +195,17 @@ final class EternalTableService
                 // Immer 3 Punkte
                 $agg[$id]['pkt3'] += $r['s'] * 3 + $r['u'];
                 $agg[$id]['mpkt3'] += $r['n'] * 3 + $r['u'];
+
+                // Strafen aufsummieren (Beitrag: Torsten Hofmann)
+                $agg[$id]['strafpunkte']          += (int)($r['strafpunkte'] ?? 0);
+                $agg[$id]['straftore']            += (int)($r['straftore'] ?? 0);
+                $agg[$id]['torekorrektur']        += (int)($r['torekorrektur'] ?? 0);
+                $agg[$id]['minuspunktekorrektur'] += (int)($r['minuspunktekorrektur'] ?? 0);
+                $grund = trim((string)($r['strafgrund'] ?? ''));
+                if ($grund !== '') {
+                    $ligaName = LigaService::getLigaById((int)$lid)['name'] ?? ('Liga ' . $lid);
+                    $agg[$id]['strafgruende'][] = $ligaName . ': ' . $grund;
+                }
             }
         }
 

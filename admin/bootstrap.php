@@ -2,12 +2,13 @@
 /**
  * Project: LMOnext
  * Filename: bootstrap.php
- * Fileversion: 1.10.2
+ * Fileversion: 1.10.3
  *
  * PHP version 8.2
  *
  * @author    Dietmar Kersting <webmaster@liga-manager-online.org>
- * @copyright 2026 Dietmar Kersting
+ * @author    Torsten Hofmann <entwickler@bastel-code.de>
+ * @copyright 2026 Dietmar Kersting, Torsten Hofmann
  * @license   GPL-3.0-only
  *
  */
@@ -546,7 +547,14 @@ function ensureTeamUrlSchema() : void
     } catch (Throwable) {}
 }
 
-const TEAM_LOGO_ALLOWED_EXT  = ['jpg', 'jpeg', 'png', 'gif', 'svg'];
+// Reihenfolge = Priorität bei mehreren vorhandenen Dateien für dieselbe
+// Team-ID (z.B. team.svg UND team.png) - SVG zuerst (beste Qualität), dann
+// Rasterformate. Diese Konstante wird nur für die Admin-Vorschau (Browser-
+// Ausgabe) und zum Löschen genutzt, NIE für den PDF-Export - der hat seine
+// eigene, unabhängige Priorität (Rasterformate zuerst), siehe
+// TeamFormattingTrait::TEAM_LOGO_EXT_LIST_PDF für die ausführliche
+// Begründung. Admin-Vorschau soll dasselbe zeigen wie die echte Website.
+const TEAM_LOGO_ALLOWED_EXT  = ['svg', 'png', 'jpg', 'jpeg', 'gif'];
 const TEAM_LOGO_MIN_HEIGHT_PX = 50;
 
 /** Absoluter Dateisystempfad zum Team-Logo-Verzeichnis (wird bei Bedarf angelegt). */

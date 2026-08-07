@@ -2,12 +2,13 @@
 /**
  * Project: LMOnext
  * Filename: src/Liga/TeamFormattingTrait.php
- * Fileversion: 1.0.2
+ * Fileversion: 1.0.3
  *
  * PHP version 8.2
  *
- * @author    Torsten Hofmann <https://bastel-code.de/>
- * @copyright 2026 Torsten Hofmann
+ * @author    Dietmar Kersting <webmaster@liga-manager-online.org>
+ * @author    Torsten Hofmann <entwickler@bastel-code.de>
+ * @copyright 2026 Dietmar Kersting, Torsten Hofmann
  * @license   GPL-3.0-only
  */
 declare(strict_types=1);
@@ -20,7 +21,28 @@ namespace LMOnext\Liga;
  */
 trait TeamFormattingTrait
 {
-    public const TEAM_LOGO_EXT_LIST = ['jpg', 'jpeg', 'png', 'gif', 'svg'];
+    /**
+     * Reihenfolge der Logo-Formate für die Browser-Ansicht: SVG zuerst (beste
+     * Qualität/Schärfe, Browser rendern SVG zuverlässig), dann Rasterformate.
+     */
+    public const TEAM_LOGO_EXT_LIST_BROWSER = ['svg', 'png', 'jpg', 'jpeg', 'gif'];
+
+    /**
+     * Reihenfolge der Logo-Formate für den PDF-Export: Rasterformate zuerst,
+     * SVG als Fallback zuletzt - SVG-Rasterung für PDFs ist je nach Server
+     * (verfügbares ImageMagick/rsvg-convert) unterschiedlich zuverlässig,
+     * während JPG/PNG über GD auf praktisch jedem Server garantiert
+     * funktionieren. Mehrere SVG-Logos wurden im PDF
+     * falsch/gar nicht dargestellt).
+     */
+    public const TEAM_LOGO_EXT_LIST_PDF = ['jpg', 'jpeg', 'png', 'gif', 'svg'];
+
+    /**
+     * Legacy-Alias für Rückwärtskompatibilität - entspricht TEAM_LOGO_EXT_LIST_PDF
+     * (die zuverlässigere Reihenfolge), falls irgendwo noch direkt referenziert.
+     * @deprecated nutze TEAM_LOGO_EXT_LIST_BROWSER bzw. TEAM_LOGO_EXT_LIST_PDF
+     */
+    public const TEAM_LOGO_EXT_LIST = self::TEAM_LOGO_EXT_LIST_PDF;
     /**
      * Ob eine Partie eine reine Platzhalter-Leerbegegnung ist – weder Heim noch
      * Gast haben ein echtes Team ODER auch nur einen Anzeige-Namen (heim_label/
@@ -58,15 +80,21 @@ trait TeamFormattingTrait
      * ist. Eigenständige, schlanke Kopie der gleichnamigen Logik aus
      * admin/bootstrap.php – das Frontend bindet die Admin-Bootstrap-Kette nicht
      * ein, daher hier separat statt geteilt.
+     *
+     * $forBrowser steuert die Suchreihenfolge: true (Standard)
+     * = Browser-Ausgabe, SVG bevorzugt (TEAM_LOGO_EXT_LIST_BROWSER). false =
+     * PDF-Export, Rasterformate bevorzugt (TEAM_LOGO_EXT_LIST_PDF, siehe dort
+     * für die Begründung).
      */
-    public static function findTeamLogoPathFrontend(int $teamId) : ?string
+    public static function findTeamLogoPathFrontend(int $teamId, bool $forBrowser = true) : ?string
     {
         // WICHTIG: diese Datei liegt unter src/Liga/, also ZWEI Ebenen unter
         // dem Projekt-Root - dirname(__DIR__, 2) ist hier nötig, nicht
         // dirname(__DIR__) (das ginge nur eine Ebene hoch, landet fälschlich
         // in src/assets/... statt im echten assets/-Ordner im Projekt-Root).
         $dir = dirname(__DIR__, 2) . '/assets/img/teams';
-        foreach (self::TEAM_LOGO_EXT_LIST as $ext) {
+        $extList = $forBrowser ? self::TEAM_LOGO_EXT_LIST_BROWSER : self::TEAM_LOGO_EXT_LIST_PDF;
+        foreach ($extList as $ext) {
             if (is_file($dir . '/' . $teamId . '.' . $ext)) {
                 return 'assets/img/teams/' . $teamId . '.' . $ext;
             }

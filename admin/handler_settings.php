@@ -2,12 +2,13 @@
 /**
  * Project: LMOnext
  * Filename: handler_settings.php
- * Fileversion: 1.3.9
+ * Fileversion: 1.4.0
  *
  * PHP version 8.2
  *
  * @author    Dietmar Kersting <webmaster@liga-manager-online.org>
- * @copyright 2026 Dietmar Kersting
+ * @author    Torsten Hofmann <entwickler@bastel-code.de>
+ * @copyright 2026 Dietmar Kersting, Torsten Hofmann
  * @license   GPL-3.0-only
  *
  */
@@ -149,12 +150,13 @@ if ($action === 'save_liga_settings' && $_SERVER['REQUEST_METHOD'] === 'POST') {
                     `straftore`             INT NOT NULL DEFAULT 0,
                     `tore_korrektur`        INT NOT NULL DEFAULT 0,
                     `minuspunkte_korrektur` INT NOT NULL DEFAULT 0,
+                    `ab_spieltag`           INT NOT NULL DEFAULT 0,
                     `grund`                 VARCHAR(255) NULL DEFAULT NULL,
                     `updated_at`            TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
                     UNIQUE KEY `liga_team` (`liga_id`, `team_id`)
                 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci');
                 // Migration für Installationen, die diese Tabelle schon vor der
-                // "erzielte Tore"/"Minuspunkte"-Erweiterung angelegt hatten
+                // "erzielte Tore"/"Minuspunkte"/"ab Spieltag"-Erweiterung angelegt hatten
                 $strafCols = $db->query('SHOW COLUMNS FROM ' . tbl('liga_strafpunkte'))->fetchAll(PDO::FETCH_COLUMN);
                 if (!in_array('tore_korrektur', $strafCols, true)) {
                     $db->exec('ALTER TABLE ' . tbl('liga_strafpunkte') . ' ADD COLUMN `tore_korrektur` INT NOT NULL DEFAULT 0 AFTER `straftore`');
@@ -162,13 +164,20 @@ if ($action === 'save_liga_settings' && $_SERVER['REQUEST_METHOD'] === 'POST') {
                 if (!in_array('minuspunkte_korrektur', $strafCols, true)) {
                     $db->exec('ALTER TABLE ' . tbl('liga_strafpunkte') . ' ADD COLUMN `minuspunkte_korrektur` INT NOT NULL DEFAULT 0 AFTER `tore_korrektur`');
                 }
+                // "ab Spieltag" (Beitrag: Torsten Hofmann) - die Strafe/der
+                // Bonus greift erst ab dem eingestellten Spieltag (0 = ab
+                // Saisonbeginn), siehe StandingsTrait::computeStandings().
+                if (!in_array('ab_spieltag', $strafCols, true)) {
+                    $db->exec('ALTER TABLE ' . tbl('liga_strafpunkte') . ' ADD COLUMN `ab_spieltag` INT NOT NULL DEFAULT 0 AFTER `minuspunkte_korrektur`');
+                }
 
                 $strafUpsert = $db->prepare(
-                    'INSERT INTO ' . tbl('liga_strafpunkte') . ' (liga_id, team_id, strafpunkte, straftore, tore_korrektur, minuspunkte_korrektur, grund)
-                     VALUES (?, ?, ?, ?, ?, ?, ?)
+                    'INSERT INTO ' . tbl('liga_strafpunkte') . ' (liga_id, team_id, strafpunkte, straftore, tore_korrektur, minuspunkte_korrektur, ab_spieltag, grund)
+                     VALUES (?, ?, ?, ?, ?, ?, ?, ?)
                      ON DUPLICATE KEY UPDATE strafpunkte = VALUES(strafpunkte), straftore = VALUES(straftore),
                                              tore_korrektur = VALUES(tore_korrektur),
-                                             minuspunkte_korrektur = VALUES(minuspunkte_korrektur), grund = VALUES(grund)'
+                                             minuspunkte_korrektur = VALUES(minuspunkte_korrektur),
+                                             ab_spieltag = VALUES(ab_spieltag), grund = VALUES(grund)'
                 );
                 $strafDelete = $db->prepare('DELETE FROM ' . tbl('liga_strafpunkte') . ' WHERE liga_id = ? AND team_id = ?');
 
@@ -189,12 +198,13 @@ if ($action === 'save_liga_settings' && $_SERVER['REQUEST_METHOD'] === 'POST') {
                     $st    = $combine('strafe_tore', $i);
                     $tk    = $combine('strafe_erzielt', $i);
                     $mk    = $combine('strafe_minus', $i);
+                    $abSt  = max(0, (int)($_POST['strafe_ab_spieltag'][$i] ?? 0));
                     $grund = trim((string)($_POST['strafe_grund'][$i] ?? ''));
                     if ($sp === 0 && $st === 0 && $tk === 0 && $mk === 0 && $grund === '') {
                         $strafDelete->execute([$lid, $teamId]);
                         continue;
                     }
-                    $strafUpsert->execute([$lid, $teamId, $sp, $st, $tk, $mk, $grund !== '' ? $grund : null]);
+                    $strafUpsert->execute([$lid, $teamId, $sp, $st, $tk, $mk, $abSt, $grund !== '' ? $grund : null]);
                 }
                 break;
         }

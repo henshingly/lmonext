@@ -2,12 +2,13 @@
 /**
  * Project: LMOnext
  * Filename: lang/admin/de.php
- * Fileversion: 1.16.0
+ * Fileversion: 1.16.1
  *
  * PHP version 8.2
  *
  * @author    Dietmar Kersting <webmaster@liga-manager-online.org>
- * @copyright 2026 Dietmar Kersting
+ * @author    Torsten Hofmann <entwickler@bastel-code.de>
+ * @copyright 2026 Dietmar Kersting, Torsten Hofmann
  * @license   GPL-3.0-only
  *
  * Deutsch ist die Referenzsprache: jeder Schlüssel, der in einer anderen
@@ -683,6 +684,8 @@ return [
     'ls_strafen_col_punkte' => 'Punkte',
     'ls_strafen_col_erzielt' => 'Erzielte Tore',
     'ls_strafen_col_gegentore' => 'Gegentore',
+    'ls_strafen_col_ab_spieltag' => 'ab Spieltag',
+    'ls_strafen_col_ab_spieltag_tip' => 'Die Korrektur greift erst ab diesem Spieltag (0 = ab Saisonbeginn). Nützlich z.B. bei einem Lizenzentzug, der erst mitten in der Saison bekannt wird.',
     'ls_strafen_col_minuspunkte' => 'Minuspunkte',
     'ls_strafen_col_grund' => 'Grund (optional)',
     'ls_tab_spieltage'     => 'Spieltags- und Spiel-Anzahl',

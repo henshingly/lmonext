@@ -2,7 +2,7 @@
 /**
  * Project: LMOnext
  * Filename: frontend/data_liga.php
- * Fileversion: 3.0.5
+ * Fileversion: 3.0.6
  *
  * PHP version 8.2
  *
@@ -150,9 +150,9 @@ function partieTeamName(array $partie, string $side) : string
     return \LMOnext\Liga\LigaService::partieTeamName($partie, $side);
 }
 
-function findTeamLogoPathFrontend(int $teamId) : ?string
+function findTeamLogoPathFrontend(int $teamId, bool $forBrowser = true) : ?string
 {
-    return \LMOnext\Liga\LigaService::findTeamLogoPathFrontend($teamId);
+    return \LMOnext\Liga\LigaService::findTeamLogoPathFrontend($teamId, $forBrowser);
 }
 
 function renderTeamLogoImg(int $teamId, bool $showLogos) : string

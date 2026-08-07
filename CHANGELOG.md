@@ -7,6 +7,7 @@
 
 ## addon/mini/lmo-ewigetab.php
 
+- Changelog: 1.1.0 - Neue Strafpunkte-Fußnoten in der Ewigen Tabelle (ewigeStrafHinweis()/ewigeStrafFootnotes(), Beitrag Torsten Hofmann, hier auf den Stil/die Sprachkeys der normalen Tabelle angepasst) - dabei eine doppelte HTML-Escaping in Torstens Original behoben (führte bei Sonderzeichen im Grund-Text zu doppelt kodierten Tooltips).
 - Changelog: 1.0.1 - Review-Korrekturen (Dietmar Kersting / Claude): (1) kritisch - fehlender require_once für src/Liga/Eternal/EternalTableService.php ergänzt (Klasse war nicht auffindbar, jeder Aufruf endete in einem Fatal Error); (2) Standard-Sortierung von 'pkt3' auf 'pkt' (historische Original-Punkte) geändert - entspricht dem traditionellen "Ewige Tabelle"-Ansatz; (3) die im Docblock dokumentierte PHP-Variable $wertung für den include()-Modus wurde vom Code nie gelesen (nur $_GET) - jetzt konsistent mit den anderen drei Parametern ($_REQUEST, dann vorher gesetzte Variable, dann Standard); (4) $wertung-Dokumentationsbeispiel im Docblock korrigiert (fehlende Anführungszeichen) und als Steuerparameter ergänzt (fehlte komplett)
 - Changelog: 1.0.0 - Initiale Version: Ewige Tabelle (aufsummierte Stände über mehrere Ligen) + Mehrjahres-Vergleich (Rang/Punkte je Saison) als Addon. Nutzt dieselbe Mechanik (Direktaufruf vs. include(), ProjektRoot-URL-Präfix, Template-System mit "<!-- BEGIN ... -->"-Blöcken). Die eigentliche Optik steckt in template/addon/ewige/{standard,matrix}.tpl.php Berechnung über LMOnext\Liga\Eternal\EternalTableService, der wiederum LigaService::computeStandings() je Liga aufruft – gleiche Punktwerte wie im normalen Ligabetrieb.
 
@@ -133,6 +134,7 @@
 
 ## admin/bootstrap.php
 
+- Changelog: 1.10.3 - Logo-Format-Priorität für die Admin-Vorschau auf SVG-zuerst umgestellt (TEAM_LOGO_ALLOWED_EXT), passend zur Browser-Ausgabe der echten Website - betrifft nur die Vorschau/Löschfunktion, nie den PDF-Export.
 - Changelog: 1.10.2 - Logo-Format-Priorität umgekehrt (Rasterformate vor svg), identisch zu src/Liga/TeamFormattingTrait.php 1.0.2, damit Admin-Vorschau und tatsächliche Anzeige übereinstimmen.
 - Changelog: 1.10.2 - Logo-Format-Priorität umgekehrt (Rasterformate vor svg), siehe src/Liga/TeamFormattingTrait.php 1.0.2 für die Begründung - identische Reihenfolge, damit Admin-Vorschau und tatsächliche Anzeige übereinstimmen
 - Changelog: 1.10.1 - ensureAdminSettings() seedet jetzt zusätzlich show_back_link=1 (Liga- Übersicht sichtbar), analog zu timezone - für Bestandsinstallationen, die die neue install.php-Seedung (1.8.0) nie durchlaufen haben
@@ -159,6 +161,7 @@
 
 ## admin/data_loader.php
 
+- Changelog: 1.7.8 - Lädt jetzt die neue "ab Spieltag"-Spalte mit (Beitrag Torsten Hofmann), inkl. Schema-Migration.
 - Changelog: 1.7.7 - minuspunkte_korrektur-Spalte/Migration ergänzt (analog zu tore_korrektur)
 - Changelog: 1.7.6 - tore_korrektur-Spalte/Migration auch beim reinen Anzeigen des "Strafen"-Tabs berücksichtigt (nicht erst beim Speichern), damit bereits gespeicherte Strafpunkte/Straftore nicht scheinbar verschwinden
 - Changelog: 1.7.5 - $ligaSettingsData['teams'] liefert jetzt auch kurz/mittel (nicht nur id/name), benötigt für den neuen "Teams"-Tab in admin/view_liga_settings.php 1.5.0
@@ -244,6 +247,7 @@
 
 ## admin/handler_settings.php
 
+- Changelog: 1.4.0 - Speichert jetzt die neue "ab Spieltag"-Spalte mit (Beitrag Torsten Hofmann), inkl. Schema-Migration.
 - Changelog: 1.3.9 - Vorzeichen-Eingabe im Tab "Strafen" auf Dropdown (+/−) + Betragsfeld umgestellt (Minuszeichen auf Mobilgeräten oft nicht per Zifferntastatur erreichbar). Vierter Korrekturwert "Minuspunkte" ergänzt
 - Changelog: 1.3.8 - Tab "Strafen" um dritten Korrekturwert "erzielte Tore" erweitert (neue Spalte tore_korrektur, Migration inklusive), damit z.B. bei Lizenzentzug Punkte UND beide Tor-Werte unabhängig korrigiert werden können
 - Changelog: 1.3.7 - Neuer Tab "Strafen" (Liga-Einstellungen): Strafpunkte/Straftore je Team, eigene Tabelle liga_strafpunkte, wirkt sich nur in dieser Liga aus (siehe admin/view_liga_settings.php, computeStandings() in src/Liga/StandingsTrait.php 1.1.0)
@@ -352,6 +356,7 @@
 
 ## admin/view_liga_settings.php
 
+- Changelog: 1.6.0 - Neue Spalte "ab Spieltag" im Strafen-Tab (Beitrag Torsten Hofmann, siehe src/Liga/StandingsTrait.php).
 - Changelog: 1.5.3 - Spaltenreihenfolge im Tab "Strafen" geändert: Punkte, Minuspunkte, Erzielte Tore, Gegentore - reine Anzeigeänderung, die Felder werden weiterhin über ihren Namen ausgewertet, nicht die Position
 - Changelog: 1.5.2 - Tab "Strafen": Eingabe auf Dropdown (+/−) + positives Betragsfeld umgestellt statt eines Zahlenfelds mit Minuszeichen (auf Mobilgeräten oft nicht per Zifferntastatur eingebbar). Vierte Spalte "Minuspunkte" ergänzt
 - Changelog: 1.5.1 - Tab "Strafen": dritte Spalte "Erzielte Tore +/-" ergänzt, alle drei Spalten als "+/-" beschriftet (Bonus/Strafe), Erklärungstext erweitert inkl. Lizenzentzug-Beispiel
@@ -478,6 +483,7 @@
 
 ## frontend/data_liga.php
 
+- Changelog: 3.0.6 - BUGFIX: der findTeamLogoPathFrontend()-Kompatibilitäts-Wrapper akzeptierte nur EINEN Parameter (int $teamId) und ignorierte den neu ergänzten zweiten Parameter $forBrowser komplett - dadurch wurde ein von frontend/pdf_export.php explizit übergebenes "false" (PDF-Modus) stillschweigend verworfen, das PDF landete immer im Browser-Modus (SVG zuerst) statt beim gewünschten Raster-zuerst. Wrapper reicht $forBrowser jetzt korrekt durch.
 - Changelog: 3.0.5 - renderStandingsView()-Wrapper reicht den neuen $tableMode-Parameter durch.
 - Changelog: 3.0.4 - renderTabsBar()- und renderSpieltagPicker()-Wrapper reichen die neuen optionalen Parameter ($activeNr bzw. $targetView) durch.
 - Changelog: 3.0.3 - renderStandingsView()-Wrapper reicht den neuen optionalen $uptoSpieltag-Parameter durch (siehe src/Liga/RenderViewsTrait.php 1.4.0).
@@ -546,9 +552,10 @@
 
 ## frontend/pdf_export.php
 
+- Changelog: 1.9.0 - Architektur-Umbau analog zu template_engine.php: Implementierung liegt jetzt unter src/Pdf/PdfExporter.php. WICHTIG: die Klasse wurde aus dem eigenen, vollständigen Stand neu aufgebaut statt Torstens Version zu übernehmen, da dort das Strafpunkte-Fußnoten-Feature fehlte (Torsten hatte auf einem älteren Zwischenstand aufgesetzt) - mit PDF-Export verifiziert, dass Fußnoten weiterhin korrekt erscheinen.
 - Changelog: 1.8.0 - exportTabellePdf() um Torstens Heim/Auswärts/Hin-Rück-Modus erweitert (identische Logik wie im Web), dabei einen vorhandenen Bugfix nachgezogen: \u{2013} in einem einfach gequoteten String wurde nie interpretiert (PHP wertet \u{}-Escapes nur in Doppelt-Quotes aus) - der PDF-Untertitel zeigte bisher wörtlich "\u{2913}" statt eines Gedankenstrichs. Jetzt echtes UTF-8-Zeichen.
-- Changelog: 1.7.2 - Regressions-Bugfix (Kundenrückmeldung mit konkretem Beispiel): das pauschale Entfernen von clip-path-Referenzen (siehe 1.6.x-Changelog, ursprünglich fürs FC-Bayern-Rautenmuster gedacht) hat sich als falsch herausgestellt - beim Eintracht-Braunschweig-Logo nutzt clip-path gerade dazu, Farbverlaufs-Rechtecke in die Wappenform zu beschneiden; ohne Beschneidung wurde daraus ein unkenntlicher Fleck aus großen Farbblöcken. Mit compare -metric AE bestätigt: das Entfernen erzeugte exakt das vom Kunden gemeldete Fehlbild, mit intaktem clip-path rendert das Logo wieder korrekt (Löwe + Rundschrift vollständig sichtbar). clip-path wird jetzt nicht mehr angetastet
-- Changelog: 1.7.1 - Bugfix (Kundenrückmeldung): manche SVG-Team-Logos wurden im PDF gar nicht oder fast leer dargestellt, obwohl kein Fehler auftrat. Ursache: fehlt auf dem Server sowohl rsvg-convert als auch ein voller librsvg-Imagick-Delegate, fällt ImageMagick auf seinen eigenen, eingeschränkten SVG-Renderer zurück - der hat bekannte Schwächen bei der allgemeinen matrix(a,b,c,d,e,f)- Transform-Form. pdfInlineSvgClassStyles() vereinfacht reine Skalierung+Verschiebung (b=0, c=0, keine Rotation/Scherung) jetzt zu getrennten translate()/scale()-Aufrufen, die von einfacheren Renderern zuverlässiger unterstützt werden. Mit den beiden vom Kunden gemeldeten Logos verifiziert: pixelgenau identisches Ergebnis (compare -metric AE = 0) gegenüber der unveränderten Fassung, wo sie ohnehin schon funktionierte
+- Changelog: 1.7.2 - Regressions-Bugfix: das pauschale Entfernen von clip-path-Referenzen (siehe 1.6.x-Changelog, ursprünglich fürs FC-Bayern-Rautenmuster gedacht) hat sich als falsch herausgestellt - beim Eintracht-Braunschweig-Logo nutzt clip-path gerade dazu, Farbverlaufs-Rechtecke in die Wappenform zu beschneiden; ohne Beschneidung wurde daraus ein unkenntlicher Fleck aus großen Farbblöcken. Mit compare -metric AE bestätigt: das Entfernen erzeugte exakt das gemeldete Fehlbild, mit intaktem clip-path rendert das Logo wieder korrekt (Löwe + Rundschrift vollständig sichtbar). clip-path wird jetzt nicht mehr angetastet
+- Changelog: 1.7.1 - Bugfix: manche SVG-Team-Logos wurden im PDF gar nicht oder fast leer dargestellt, obwohl kein Fehler auftrat. Ursache: fehlt auf dem Server sowohl rsvg-convert als auch ein voller librsvg-Imagick-Delegate, fällt ImageMagick auf seinen eigenen, eingeschränkten SVG-Renderer zurück - der hat bekannte Schwächen bei der allgemeinen matrix(a,b,c,d,e,f)- Transform-Form. pdfInlineSvgClassStyles() vereinfacht reine Skalierung+Verschiebung (b=0, c=0, keine Rotation/Scherung) jetzt zu getrennten translate()/scale()-Aufrufen, die von einfacheren Renderern zuverlässiger unterstützt werden. Mit den beiden Logos verifiziert: pixelgenau identisches Ergebnis (compare -metric AE = 0) gegenüber der unveränderten Fassung, wo sie ohnehin schon funktionierte
 - Changelog: 1.7.0 - Strafpunkte-Begründungen erscheinen jetzt auch im PDF-Export der Tabelle, im selben Wikipedia-Stil wie in der Besucheransicht - Teamname bekommt "(N)" angehängt, unter der Tabelle erscheint eine Fußnotenliste "(N) Begründungstext" (mit Zeilenumbruch für lange Texte, neue Hilfsfunktion pdfWrapText()). Neuer optionaler Parameter $footnotes in buildStandingsPdf() (rückwärtskompatibel, Standard null = keine Verhaltensänderung für andere PDF-Exporte, die diesen Parameter nicht nutzen)
 - Changelog: 1.6.9 - Bugfix: der "(heute TEAM_HEUTE)"-Zusatz wurde bisher an JEDE einzelne Ergebniszeile angehängt, wodurch die Ergebnis-Spalten im Teamvergleich-PDF unnötig breit wurden (siehe Nutzer-Feedback mit Beispiel-PDF). Steht jetzt nur noch einmal als zusammenfassender Hinweis unter dem Untertitel (neuer optionaler Parameter $noteLine in buildStandingsPdf(), Default null - betrifft die normale Tabellen-PDF nicht). Tabellenzeilen zeigen wieder die schlichten historischen Namen ohne Zusatz
 - Changelog: 1.6.8 - Angepasst an die neue Feldaufteilung in getHeadToHeadMatches() (heim_today/gast_today statt im Namen enthalten, siehe data_liga.php 2.20.0) – rekonstruiert den "(heute TEAM_HEUTE)"-Zusatz weiterhin inline an den Namen angehängt, da PDF-Text keinen Zeilenumbruch dieser Art kennt
@@ -579,6 +586,7 @@
 
 ## frontend/template_engine.php
 
+- Changelog: 3.0.0 - Architektur-Umbau (Beitrag Torsten Hofmann): die eigentliche Implementierung liegt jetzt unter src/Template/TemplateEngine.php, diese Datei ist nur noch eine dünne Kompatibilitätsschicht mit denselben globalen Funktionsnamen wie bisher. 1:1 geprüft identisches Verhalten.
 - Changelog: 2.6.0 - Neuer automatischer Platzhalter "TippspielLink" (analog zu "Sprachauswahl"): renderTemplate() ruft tippRenderSiteLink() auf, das selbst prüft ob das Tippspiel aktiv ist (tippIstAktiv()) und ggf. leer bleibt - Controller/Templates müssen nichts Zusätzliches tun
 - Changelog: 2.5.1 - Neue globale Einstellung "Sprachauswahl anzeigen?" ausgewertet: die Sprachauswahl im Footer/Header wird unterdrückt, wenn deaktiviert – gilt zentral für alle Templates und alle Seiten (renderTemplate() wird sowohl von home.php als auch liga.php genutzt)
 - Changelog: 2.5.0 - Template-Auswahl-Dropdown vom Header in den Footer verschoben: steht jetzt direkt in der "Template: ..."-Zeile anstelle des Klartext-Namens (nur wenn der Wechsel erlaubt ist und mehr als ein Template existiert – sonst wie gehabt reiner Klartext). Der separate Header-Platzhalter "Vorlagenauswahl" entfällt dadurch wieder
@@ -623,6 +631,7 @@
 
 ## lang/admin/de.php
 
+- Changelog: 1.16.1 - Übersetzungen für die neue "ab Spieltag"-Spalte ergänzt (Torsten hatte den Schlüssel in der Ansicht verwendet, aber nie in den Sprachdateien definiert).
 - Changelog: 1.16.0 - Übersetzungen für die vierte Strafen-Spalte "Minuspunkte" und die überarbeitete Dropdown-Eingabe ergänzt
 - Changelog: 1.15.9 - Übersetzungen für die erweiterten Strafen/Bonus-Felder (Punkte/erzielte Tore/Gegentore, alle vorzeichenbehaftet) aktualisiert
 - Changelog: 1.15.8 - Übersetzungen für den neuen "Teams"-Tab bei Liga-Einstellungen sowie den neuen Schnellzugriffs-Button auf der Liga-Detailseite ergänzt
@@ -697,6 +706,7 @@
 
 ## lang/admin/en.php
 
+- Changelog: 1.15.1 - Added translations for the new "from matchday" column (the key was used in the view but never defined in the language files).
 - Changelog: 1.15.0 - Added translations for the fourth "Minus points" penalty column and the reworked dropdown-based input
 - Changelog: 1.14.9 - Updated translations for the extended penalty/bonus fields (points/goals scored/goals against, all signed)
 - Changelog: 1.14.8 - Added translations for the new "Teams" tab in league settings and the new quick-access button on the league detail page
@@ -939,6 +949,7 @@
 
 ## src/Liga/Eternal/EternalTableService.php
 
+- Changelog: 1.1.0 - Strafpunkte/Straftore/Korrekturen werden jetzt über alle Saisons aufsummiert und die Begründungen gesammelt (Beitrag Torsten Hofmann), für die neue Fußnoten-Anzeige in der Ewigen Tabelle (siehe addon/mini/lmo-ewigetab.php).
 - Changelog: 1.0.1 - $ligaId an LigaService::computeStandings() übergeben, damit admin-seitig hinterlegte Strafpunkte/Straftore (siehe StandingsTrait.php 1.1.0) auch in der Ewigen Tabelle korrekt in die historischen Punkte einfließen, statt dort ignoriert zu werden
 - Changelog: 1.0.0 - Initiale Version (Torsten Hofmann) Ewige Tabelle + Mehrjahres-Vergleich (Teamvergleich über mehrere Jahre). Grundlage sind die vorhandenen Liga-Daten (lmonext_liga_partien / lmonext_teams_global). Die eigentliche Tabellenberechnung je Liga läuft über LigaService::computeStandings(), damit Punktewerte (3/1/0, n.V., i.E.) und Status genau wie im normalen Ligabetrieb behandelt werden. Dieser Service summiert nur die bereits berechneten Liga-Zeilen über mehrere Ligen hinweg auf bzw. stellt sie pro Saison als Matrix bereit. Eingebaut als eigenständige PSR-4-Klasse – bestehende Dateien bleiben unangetastet.
 
@@ -956,9 +967,10 @@
 
 ## src/Liga/RenderViewsTrait.php
 
+- Changelog: 1.6.0 - $currentSpieltag ($nr) wird jetzt an computeStandings() durchgereicht, damit das neue "ab Spieltag"-Feature (siehe StandingsTrait.php) mit der Tabelle-nach-Spieltag-Navigation korrekt zusammenspielt.
 - Changelog: 1.6.0 - Torstens Gesamt/Heim/Auswärts/Hin-/Rückrunde-Umschalter (renderStandingsModeNav()) mit der bestehenden Spieltag-Navigation zusammengeführt: der Spieltag-Filter wirkt zuerst, der Tabellen-Modus danach (z.B. "Rückrunde bis Spieltag 20" funktioniert sinnvoll). Neue Spalten "Form" und "Trend" in der Tabelle. Beide Navigationsleisten behalten die jeweils andere Auswahl beim Wechsel bei (Modus bleibt bei Spieltag-Wechsel erhalten und umgekehrt).
 - Changelog: 1.5.0 - renderTabsBar() bekommt einen optionalen $activeNr-Parameter, hängt "&nr=N" gezielt an die Links zu "ergebnisse"/"tabelle" an (die einzigen zwei Reiter, die ?nr= lesen). renderSpieltagPicker() bekommt einen optionalen $targetView-Parameter (Standard 'ergebnisse', rückwärtskompatibel), damit derselbe Picker jetzt auch für "Tabelle nach Spieltag N" wiederverwendet werden kann statt einen zweiten Picker zu bauen.
-- Changelog: 1.4.0 - Neue Kundenfunktion: Tabelle nach Spieltag N ("Tabelle nach dem X. Spieltag", analog zu kicker.de). renderStandingsView() bekommt einen optionalen $uptoSpieltag-Parameter, filtert die Partien auf _spieltag_nummer <= N vor der Berechnung. Neue "vorheriger/nächster Spieltag"-Navigation ober- und unterhalb der Tabelle (renderStandingsSpieltagNav()), fehlt am ersten bzw. letzten Spieltag automatisch. Ohne Parameter unverändertes bisheriges Verhalten (aktueller/finaler Stand).
+- Changelog: 1.4.0 - Neue Funktion: Tabelle nach Spieltag N ("Tabelle nach dem X. Spieltag", analog zu kicker.de). renderStandingsView() bekommt einen optionalen $uptoSpieltag-Parameter, filtert die Partien auf _spieltag_nummer <= N vor der Berechnung. Neue "vorheriger/nächster Spieltag"-Navigation ober- und unterhalb der Tabelle (renderStandingsSpieltagNav()), fehlt am ersten bzw. letzten Spieltag automatisch. Ohne Parameter unverändertes bisheriges Verhalten (aktueller/finaler Stand).
 - Changelog: 1.3.0 - Neuer Platzhalter "Fussnoten" für die Strafpunkte-Begründungen im Wikipedia-Stil (siehe StandingsTrait.php 1.4.0)
 - Changelog: 1.2.0 - Die Admin-Einstellung "Minuspunkte" (Tab Spielsystem) wird jetzt tatsächlich ausgewertet: Pkt-Spalte zeigt bei aktivierter Option "Pkt:Minuspunkte" statt nur "Pkt" (siehe StandingsTrait.php 1.2.0 für die Berechnung)
 - Changelog: 1.1.0 - $ligaId an alle vier computeStandings()-Aufrufe übergeben (Tabelle, Kreuztabelle, Fieberkurven, Ligastatistik), damit admin-seitig hinterlegte Strafpunkte/Straftore korrekt einfließen (siehe StandingsTrait.php 1.1.0). Neuer Platzhalter "StrafHinweis" in der Tabellen-Zeile (⚠-Marker mit Tooltip, renderStrafHinweis())
@@ -970,11 +982,12 @@
 
 ## src/Liga/StandingsTrait.php
 
+- Changelog: 1.5.0 - Torstens "ab Spieltag"-Feature integriert (Beitrag Torsten Hofmann): eine Strafe/ein Bonus kann jetzt erst ab einem bestimmten Spieltag greifen (neue Spalte ab_spieltag, neuer Parameter $currentSpieltag in computeStandings()), sinnvoll bei Lizenzentzügen, die erst mitten in der Saison bekannt werden. computePositionTrend() übergibt jetzt korrekt den jeweiligen Spieltag-Kontext an beide internen computeStandings()-Aufrufe. WICHTIGER BUGFIX (vorbestehend, nicht durch diese Änderung verursacht, aber dadurch aufgedeckt): "PDO::FETCH_COLUMN" ohne führenden Backslash wurde innerhalb des Namespace LMOnext\Liga fälschlich als LMOnext\Liga\PDO aufgelöst - dadurch schlug die komplette Schema-Migration in ensureStrafpunkteSchema() bisher IMMER mit einer stillschweigend verschluckten Exception fehl. Nie aufgefallen, weil admin/handler_settings.php dieselben Spalten über einen eigenen Migrationscode im globalen Namespace ohnehin schon anlegte.
 - Changelog: 1.5.0 - Beitrag von Torsten Hofmann integriert (aus lmonext_plastic.zip, gegen Torstens veralteten Ausgangsstand neu aufgebaut statt direkt übernommen, da er auf einem älteren Commit basierte): computeStandings() bekommt einen $mode-Parameter ('overall'/'home'/'away') für Heim-/Auswärts-Tabellen, mit der bestehenden Strafpunkte-/Minuspunkte-Logik zusammengeführt. Neue Funktionen computeLast5Form() (Form der letzten 5 Spiele) und computePositionTrend() (Positionsänderung zum vorherigen Spieltag) - Letztere so angepasst, dass sie sich korrekt auf den gerade angezeigten Spieltag bezieht statt immer auf den letzten der Saison, damit sie mit der Tabelle-nach-Spieltag-Navigation zusammenspielt.
 - Changelog: 1.4.1 - Die Fußnote erscheint jetzt schon, sobald "Grund" befüllt ist - unabhängig davon, ob überhaupt eine der vier Zahlenkorrekturen (Punkte/erzielte Tore/Gegentore/Minuspunkte) von 0 abweicht. Vorher wurde ein reiner Grund ohne Zahlenänderung fälschlich unterdrückt
 - Changelog: 1.4.0 - Strafpunkte-Begründungen erscheinen jetzt automatisch als Fußnoten unter der Tabelle, im Wikipedia-Stil ("(1) Begründungstext") - neue Funktionen assignStrafFootnotes() (vergibt fortlaufende Nummern in Tabellenreihenfolge, nur an Teams mit Grund UND tatsächlichem Effekt) und renderStrafFootnotes() (baut die Liste). renderStrafHinweis() zeigt bei vorhandenem Grund jetzt eine anklickbare Fußnoten-Nummer "(N)" statt nur eines Warnsymbols, Tooltip mit den genauen Deltas bleibt zusätzlich erhalten
-- Changelog: 1.3.0 - Kundenwunsch (Mobile-Rückmeldung): (1) Vierten Korrekturwert "minuspunkte_korrektur" ergänzt, damit die separate Minuspunkte-Anzeige ebenfalls (z.B. auf 0) korrigierbar ist - vorher blieb sie bei einer Punkte-Korrektur unverändert bestehen; (2) die eigentliche Vorzeichen- Eingabe (Minuszeichen auf Mobilgeräten oft nicht erreichbar) wurde in admin/view_liga_settings.php auf ein Dropdown (+/−) plus Betragsfeld umgestellt - hier nur die Datenschicht dafür erweitert
-- Changelog: 1.2.0 - Kundenwunsch (2 Punkte): (1) Minuspunkte-Anzeige (Admin-Einstellung "MinusPoints" existierte schon lange, wurde aber nirgends gelesen) - neue Berechnung der klassischen "Gewinnpunkte:Verlustpunkte"-Darstellung je Team, respektiert das jeweils konfigurierte Punktesystem statt fest 2/1/0 anzunehmen; (2) Strafen/Bonus-Feature erweitert: dritter Korrekturwert "tore_korrektur" (erzielte Tore) ergänzt, damit Punkte UND beide Tor-Werte unabhängig voneinander mit +/- korrigiert werden können (z.B. Lizenzentzug: Team komplett auf 0:0/0 setzen). Alle drei Werte jetzt klar als vorzeichenbehaftet (Bonus/Strafe) dokumentiert und im Tooltip entsprechend mit korrektem Vorzeichen angezeigt
+- Changelog: 1.3.0 - (1) Vierten Korrekturwert "minuspunkte_korrektur" ergänzt, damit die separate Minuspunkte-Anzeige ebenfalls (z.B. auf 0) korrigierbar ist - vorher blieb sie bei einer Punkte-Korrektur unverändert bestehen; (2) die eigentliche Vorzeichen- Eingabe (Minuszeichen auf Mobilgeräten oft nicht erreichbar) wurde in admin/view_liga_settings.php auf ein Dropdown (+/−) plus Betragsfeld umgestellt - hier nur die Datenschicht dafür erweitert
+- Changelog: 1.2.0 - (1) Minuspunkte-Anzeige (Admin-Einstellung "MinusPoints" existierte schon lange, wurde aber nirgends gelesen) - neue Berechnung der klassischen "Gewinnpunkte:Verlustpunkte"-Darstellung je Team, respektiert das jeweils konfigurierte Punktesystem statt fest 2/1/0 anzunehmen; (2) Strafen/Bonus-Feature erweitert: dritter Korrekturwert "tore_korrektur" (erzielte Tore) ergänzt, damit Punkte UND beide Tor-Werte unabhängig voneinander mit +/- korrigiert werden können (z.B. Lizenzentzug: Team komplett auf 0:0/0 setzen). Alle drei Werte jetzt klar als vorzeichenbehaftet (Bonus/Strafe) dokumentiert und im Tooltip entsprechend mit korrektem Vorzeichen angezeigt
 - Changelog: 1.1.0 - Neues Feature "Strafpunkte/Straftore": computeStandings() bekommt einen optionalen $ligaId-Parameter (Rückwärtskompatibel, Standard null = kein Verhaltenswechsel für bestehende Aufrufer ohne Liga-Bezug) und zieht damit admin-seitig hinterlegte Strafpunkte von den regulär berechneten Punkten ab bzw. addiert Straftore zu den Gegentoren, VOR der finalen Sortierung - wirkt sich also korrekt auf Tabellenplatz und Tordifferenz aus. Neue Funktionen getLigaStrafpunkte()/setLigaStrafpunkte() plus neue Tabelle liga_strafpunkte (per ensureStrafpunkteSchema() bei Bedarf angelegt, auch auf Bestandsinstallationen ohne erneuten install.php-Lauf)
 - Changelog: 1.0.0 - Initiale Version: Teil der Umstrukturierung von frontend/data_liga.php in fokussierte Traits (siehe frontend/data_liga.php 3.0.0 für den vollen Kontext der Umstellung). Tabellenberechnung (computeStandings, computeStandingsMarkerColor, renderStandingsView).
 
@@ -984,6 +997,7 @@
 
 ## src/Liga/TeamFormattingTrait.php
 
+- Changelog: 1.0.3 - Logo-Format-Priorität für Browser-Ausgabe und PDF-Export getrennt - Browser zeigt jetzt wieder SVG zuerst (beste Qualität), PDF-Export bleibt bei Rasterformaten zuerst (zuverlässiger). Ich habe nur den Bug behoben, der die Trennung verhinderte (siehe frontend/data_liga.php).
 - Changelog: 1.0.2 - Logo-Format-Priorität umgekehrt - Rasterformate (jpg/png/gif) werden jetzt VOR svg gesucht. Grund: SVG-Rasterung für den PDF-Export ist je nach Server unterschiedlich zuverlässig, während JPG/PNG über GD garantiert funktionieren.
 - Changelog: 1.0.2 - Logo-Format-Priorität umgekehrt - Rasterformate (jpg/png/gif) werden jetzt VOR svg gesucht, nicht mehr danach. Grund: SVG-Rasterung für den PDF-Export ist je nach Server unterschiedlich zuverlässig (mehrere SVG-Logos wurden falsch/gar nicht im PDF dargestellt), während JPG/PNG über GD garantiert funktionieren - wer beide Formate hinterlegt, bekommt jetzt automatisch die zuverlässigere Variante
 - Changelog: 1.0.1 - Kritischer Bugfix: findTeamLogoPathFrontend() suchte Team-Logos unter src/assets/img/teams/ statt im echten assets/img/teams/-Ordner im Projekt-Root. Ursache: dirname(__DIR__) geht nur eine Verzeichnisebene hoch - korrekt für admin/bootstrap.php (liegt 1 Ebene unter Root), aber diese Datei liegt unter src/Liga/, also 2 Ebenen unter Root. Jede Besucheransicht zeigte dadurch für JEDES Team immer nur den "kein Logo"-Platzhalter, obwohl im Admin hochgeladene Logos korrekt vorhanden waren. Jetzt dirname(__DIR__, 2)
@@ -1235,3 +1249,13 @@
 
 - Changelog: 1.1.0 - Neuer Platzhalter "View" (siehe default 1.1.0).
 
+
+## src/Template/TemplateEngine.php
+
+- Changelog: 1.0.0 - Neu (Beitrag Torsten Hofmann): enthält die tatsächliche Implementierung, vorher direkt in frontend/template_engine.php. 1:1 identisches Verhalten geprüft.
+
+## src/Pdf/PdfExporter.php
+
+- Changelog: 1.8.2 - KRITISCHER BUGFIX: "Class LMOnext\\Pdf\\Imagick not found" - beim Umbau von frontend/pdf_export.php in diese Klasse wurden mehrere bare globale Klassennamen (Imagick, ImagickPixel, DateTime) sowie ALLE vier "catch (Throwable)"-Blöcke nicht mit einem führenden Backslash versehen. Innerhalb des Namespace LMOnext\\Pdf wurden diese fälschlich als LMOnext\\Pdf\\Imagick usw. aufgelöst statt als globale PHP-Klassen - dadurch stürzte der PDF-Export mit einem unabgefangenen Fatal Error ab, sobald ein SVG-Logo über den Imagick-Rasterungsweg verarbeitet werden sollte (die catch-Blöcke konnten den Fehler nicht abfangen, da auch "Throwable" bare war). Alle Vorkommen auf \\Imagick/\\ImagickPixel/\\DateTime/\\Throwable korrigiert und mit einem SVG-Logo end-to-end verifiziert (kein Absturz mehr, PDF wird korrekt erzeugt). Alle anderen seit dieser Session neu in Namespaces verschobenen Dateien auf denselben Fehler geprüft - keine weiteren Fälle gefunden.
+- Changelog: 1.8.1 - BUGFIX (unabhängig vom Logo-Prioritäts-Thema, aber dabei aufgefallen): pdfLoadLogoData() und pdfLoadTeamLogoImage() nutzten noch "dirname(__DIR__)" von der Zeit, als dieser Code direkt in frontend/pdf_export.php lag (eine Ebene unter dem Projekt-Root). Nach dem Umbau in diese Klasse unter src/Pdf/ (zwei Ebenen unter dem Root) zeigte der Pfad fälschlich auf src/assets/... statt auf das echte assets/-Verzeichnis - dadurch wurden das LMOnext-Logo im PDF-Kopf UND alle Team-Logos (PNG/JPEG/GIF/SVG gleichermaßen) seit diesem Umbau nie mehr gefunden. Beide Stellen auf dirname(__DIR__, 2) korrigiert. Zusätzlich: findTeamLogoPathFrontend()-Aufruf für Team-Logos übergibt jetzt explizit "false" (PDF-Modus, Rasterformate zuerst).
+- Changelog: 1.0.0 - Neu: enthält die tatsächliche PDF-Export-Implementierung, vorher direkt in frontend/pdf_export.php. Aus dem eigenen vollständigen Stand aufgebaut (nicht aus Torstens Zwischenstand), damit das Strafpunkte-Fußnoten-Feature erhalten bleibt.

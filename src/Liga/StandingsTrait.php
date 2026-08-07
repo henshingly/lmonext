@@ -6,8 +6,9 @@
  *
  * PHP version 8.2
  *
- * @author    Torsten Hofmann <https://bastel-code.de/>
- * @copyright 2026 Torsten Hofmann
+ * @author    Dietmar Kersting <webmaster@liga-manager-online.org>
+ * @author    Torsten Hofmann <entwickler@bastel-code.de>
+ * @copyright 2026 Dietmar Kersting, Torsten Hofmann
  * @license   GPL-3.0-only
  */
 declare(strict_types=1);
@@ -55,7 +56,7 @@ trait StandingsTrait
      * Heimmannschaft war) oder 'away' (nur Auswärtsspiele) - für die
      * Heim-/Auswärts-Tabelle (Beitrag: Torsten Hofmann).
      */
-    public static function computeStandings(array $teamsList, array $partien, array $ligaOptions, ?int $ligaId = null, string $mode = 'overall') : array
+    public static function computeStandings(array $teamsList, array $partien, array $ligaOptions, ?int $ligaId = null, string $mode = 'overall', ?int $currentSpieltag = null) : array
     {
         $ptW = (int)($ligaOptions['PointsForWin']  ?? 3);
         $ptD = (int)($ligaOptions['PointsForDraw'] ?? 1);
@@ -178,6 +179,18 @@ trait StandingsTrait
                 if (!isset($rows[$teamId])) {
                     continue; // Team ist nicht (mehr) Teil dieser Liga
                 }
+                // "ab Spieltag"-Filter (Beitrag: Torsten Hofmann): die Strafe
+                // greift erst ab dem eingestellten Spieltag (0 = ab
+                // Saisonbeginn, bisheriges Verhalten). Nützlich z.B. bei einem
+                // Lizenzentzug, der erst mitten in der Saison bekannt wird -
+                // beim Blick auf einen älteren Spieltag (siehe "Tabelle nach
+                // Spieltag N") soll die Korrektur dort noch nicht greifen.
+                // $currentSpieltag ist null bei Aufrufen ohne Spieltag-Bezug
+                // (z.B. Ewige Tabelle) - dort greift die Strafe immer.
+                $abSt = (int)($s['ab_spieltag'] ?? 0);
+                if ($currentSpieltag !== null && $abSt > 0 && $currentSpieltag < $abSt) {
+                    continue; // Strafe greift an diesem Spieltag noch nicht
+                }
                 $rows[$teamId]['strafpunkte']    = $s['strafpunkte'];
                 $rows[$teamId]['straftore']      = $s['straftore'];
                 $rows[$teamId]['torekorrektur']  = $s['tore_korrektur'];
@@ -297,7 +310,7 @@ trait StandingsTrait
             }
         }
 
-        $currentStandings = self::computeStandings($teams, $played, $opts, $ligaId, $mode);
+        $currentStandings = self::computeStandings($teams, $played, $opts, $ligaId, $mode, $latestNr);
 
         $trendByTeam = [];
         if (count($sortedNrs) < 2) {
@@ -307,7 +320,8 @@ trait StandingsTrait
             return $trendByTeam;
         }
 
-        $previousStandings = self::computeStandings($teams, $previousPartien, $opts, $ligaId, $mode);
+        $previousNr = $sortedNrs[count($sortedNrs) - 2];
+        $previousStandings = self::computeStandings($teams, $previousPartien, $opts, $ligaId, $mode, $previousNr);
 
         $prevPositions = [];
         foreach ($previousStandings as $i => $r) {
@@ -349,12 +363,28 @@ trait StandingsTrait
             // gab es nur "straftore" (wirkt auf die Gegentore/tore_g). Ergänzt
             // um die Bielefeld-Lizenzentzug-Situation abzudecken (Punkte UND
             // beide Tor-Werte auf 0 korrigieren zu können), siehe Changelog.
-            $cols = $db->query('SHOW COLUMNS FROM ' . tbl('liga_strafpunkte'))->fetchAll(PDO::FETCH_COLUMN);
+            // BUGFIX: "PDO::FETCH_COLUMN" (ohne führenden Backslash) wurde
+            // innerhalb dieses Namespace (LMOnext\Liga) fälschlich als
+            // LMOnext\Liga\PDO aufgelöst statt als globale PDO-Klasse - dadurch
+            // schlug diese komplette Migration bisher IMMER mit einer von
+            // catch(\Throwable) verschluckten Exception fehl. Nie aufgefallen,
+            // weil admin/handler_settings.php dieselben Spalten über einen
+            // eigenen, im globalen Namespace laufenden Migrationscode ohnehin
+            // schon anlegte - erst mit der neuen "ab Spieltag"-Spalte (die
+            // NUR über diesen Codepfad angelegt wird) wurde der Fehler sichtbar.
+            $cols = $db->query('SHOW COLUMNS FROM ' . tbl('liga_strafpunkte'))->fetchAll(\PDO::FETCH_COLUMN);
             if (!in_array('tore_korrektur', $cols, true)) {
                 $db->exec('ALTER TABLE ' . tbl('liga_strafpunkte') . ' ADD COLUMN `tore_korrektur` INT NOT NULL DEFAULT 0 AFTER `straftore`');
             }
             if (!in_array('minuspunkte_korrektur', $cols, true)) {
                 $db->exec('ALTER TABLE ' . tbl('liga_strafpunkte') . ' ADD COLUMN `minuspunkte_korrektur` INT NOT NULL DEFAULT 0 AFTER `tore_korrektur`');
+            }
+            // Migration: "ab Spieltag" (Beitrag: Torsten Hofmann) - eine
+            // Strafe/ein Bonus kann jetzt erst ab einem bestimmten Spieltag
+            // greifen (0 = ab Saisonbeginn, bisheriges Verhalten), z.B. bei
+            // einem Lizenzentzug, der erst mitten in der Saison bekannt wird.
+            if (!in_array('ab_spieltag', $cols, true)) {
+                $db->exec('ALTER TABLE ' . tbl('liga_strafpunkte') . ' ADD COLUMN `ab_spieltag` INT NOT NULL DEFAULT 0 AFTER `minuspunkte_korrektur`');
             }
         } catch (\Throwable) {
             // Wird bei jedem Aufruf erneut versucht (static $done bleibt auf
@@ -372,14 +402,14 @@ trait StandingsTrait
      * ohne Eintrag fehlen im Ergebnis (kein Datensatz angelegt für 0/0/0 -
      * siehe setLigaStrafpunkte()).
      *
-     * @return array<int,array{strafpunkte:int,straftore:int,tore_korrektur:int,minuspunkte_korrektur:int,grund:string}>
+     * @return array<int,array{strafpunkte:int,straftore:int,tore_korrektur:int,minuspunkte_korrektur:int,ab_spieltag:int,grund:string}>
      */
     public static function getLigaStrafpunkte(int $ligaId) : array
     {
         self::ensureStrafpunkteSchema();
         try {
             $stmt = getDB()->prepare(
-                'SELECT team_id, strafpunkte, straftore, tore_korrektur, minuspunkte_korrektur, grund FROM ' . tbl('liga_strafpunkte') . ' WHERE liga_id = ?'
+                'SELECT team_id, strafpunkte, straftore, tore_korrektur, minuspunkte_korrektur, ab_spieltag, grund FROM ' . tbl('liga_strafpunkte') . ' WHERE liga_id = ?'
             );
             $stmt->execute([$ligaId]);
             $result = [];
@@ -389,6 +419,7 @@ trait StandingsTrait
                     'straftore'      => (int)$r['straftore'],
                     'tore_korrektur' => (int)($r['tore_korrektur'] ?? 0),
                     'minuspunkte_korrektur' => (int)($r['minuspunkte_korrektur'] ?? 0),
+                    'ab_spieltag'    => (int)($r['ab_spieltag'] ?? 0),
                     'grund'          => (string)($r['grund'] ?? ''),
                 ];
             }
@@ -406,7 +437,7 @@ trait StandingsTrait
      * statt als Leerzeile gespeichert - hält die Tabelle sauber und "kein
      * Eintrag" bedeutet eindeutig "keine Korrektur".
      *
-     * @param array<int,array{strafpunkte?:int|string,straftore?:int|string,tore_korrektur?:int|string,minuspunkte_korrektur?:int|string,grund?:string}> $eintraege team_id => Werte
+     * @param array<int,array{strafpunkte?:int|string,straftore?:int|string,tore_korrektur?:int|string,minuspunkte_korrektur?:int|string,ab_spieltag?:int|string,grund?:string}> $eintraege team_id => Werte
      */
     public static function setLigaStrafpunkte(int $ligaId, array $eintraege) : bool
     {
@@ -414,11 +445,12 @@ trait StandingsTrait
         try {
             $db = getDB();
             $upsert = $db->prepare(
-                'INSERT INTO ' . tbl('liga_strafpunkte') . ' (liga_id, team_id, strafpunkte, straftore, tore_korrektur, minuspunkte_korrektur, grund)
-                 VALUES (?, ?, ?, ?, ?, ?, ?)
+                'INSERT INTO ' . tbl('liga_strafpunkte') . ' (liga_id, team_id, strafpunkte, straftore, tore_korrektur, minuspunkte_korrektur, ab_spieltag, grund)
+                 VALUES (?, ?, ?, ?, ?, ?, ?, ?)
                  ON DUPLICATE KEY UPDATE strafpunkte = VALUES(strafpunkte), straftore = VALUES(straftore),
                                          tore_korrektur = VALUES(tore_korrektur),
-                                         minuspunkte_korrektur = VALUES(minuspunkte_korrektur), grund = VALUES(grund)'
+                                         minuspunkte_korrektur = VALUES(minuspunkte_korrektur),
+                                         ab_spieltag = VALUES(ab_spieltag), grund = VALUES(grund)'
             );
             $delete = $db->prepare('DELETE FROM ' . tbl('liga_strafpunkte') . ' WHERE liga_id = ? AND team_id = ?');
 
@@ -428,13 +460,14 @@ trait StandingsTrait
                 $st     = (int)($e['straftore'] ?? 0);
                 $tk     = (int)($e['tore_korrektur'] ?? 0);
                 $mk     = (int)($e['minuspunkte_korrektur'] ?? 0);
+                $abSt   = max(0, (int)($e['ab_spieltag'] ?? 0));
                 $grund  = trim((string)($e['grund'] ?? ''));
 
                 if ($sp === 0 && $st === 0 && $tk === 0 && $mk === 0 && $grund === '') {
                     $delete->execute([$ligaId, $teamId]);
                     continue;
                 }
-                $upsert->execute([$ligaId, $teamId, $sp, $st, $tk, $mk, $grund !== '' ? $grund : null]);
+                $upsert->execute([$ligaId, $teamId, $sp, $st, $tk, $mk, $abSt, $grund !== '' ? $grund : null]);
             }
             return true;
         } catch (\Throwable) {

@@ -2,12 +2,13 @@
 /**
  * Project: LMOnext
  * Filename: data_loader.php
- * Fileversion: 1.7.7
+ * Fileversion: 1.7.8
  *
  * PHP version 8.2
  *
  * @author    Dietmar Kersting <webmaster@liga-manager-online.org>
- * @copyright 2026 Dietmar Kersting
+ * @author    Torsten Hofmann <entwickler@bastel-code.de>
+ * @copyright 2026 Dietmar Kersting, Torsten Hofmann
  * @license   GPL-3.0-only
  *
  */
@@ -336,7 +337,12 @@ if ($action === 'liga_settings' && isLoggedIn()) {
                 if (!in_array('minuspunkte_korrektur', $strafCols, true)) {
                     $db->exec('ALTER TABLE '.tbl('liga_strafpunkte').' ADD COLUMN `minuspunkte_korrektur` INT NOT NULL DEFAULT 0 AFTER `tore_korrektur`');
                 }
-                $sS = $db->prepare('SELECT team_id, strafpunkte, straftore, tore_korrektur, minuspunkte_korrektur, grund FROM '.tbl('liga_strafpunkte').' WHERE liga_id=?');
+                // "ab Spieltag" (Beitrag: Torsten Hofmann) - siehe
+                // src/Liga/StandingsTrait.php für die Anwendung beim Berechnen.
+                if (!in_array('ab_spieltag', $strafCols, true)) {
+                    $db->exec('ALTER TABLE '.tbl('liga_strafpunkte').' ADD COLUMN `ab_spieltag` INT NOT NULL DEFAULT 0 AFTER `minuspunkte_korrektur`');
+                }
+                $sS = $db->prepare('SELECT team_id, strafpunkte, straftore, tore_korrektur, minuspunkte_korrektur, ab_spieltag, grund FROM '.tbl('liga_strafpunkte').' WHERE liga_id=?');
                 $sS->execute([$lid]);
                 $ligaSettingsData['strafen'] = array_column($sS->fetchAll(), null, 'team_id');
             } catch (Throwable) {

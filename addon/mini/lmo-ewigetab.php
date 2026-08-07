@@ -6,8 +6,9 @@
  *
  * PHP version 8.2
  *
- * @author    Torsten Hofmann <webmaster@liga-manager-online.org>
- * @copyright 2026 Torsten Hofmann
+ * @author    Dietmar Kersting <webmaster@liga-manager-online.org>
+ * @author    Torsten Hofmann <entwickler@bastel-code.de>
+ * @copyright 2026 Dietmar Kersting, Torsten Hofmann
  * @license   GPL-3.0-only
  *
  * ── Einbindung ────────────────────────────────────────────────────────────────
@@ -235,6 +236,18 @@ function ewige_render_eternal(string $templateSrc, array $rows, array $ligaIds) 
         return '<p style="font-family:sans-serif;color:#a33">Ungültiges Template (kein Inhalt-Block gefunden)</p>';
     }
 
+    // Fußnoten-Nummern für Teams mit hinterlegtem(n) Strafgrund/Strafgründen
+    // vergeben (Tabellenreihenfolge, wie bei der normalen Liga-Tabelle - siehe
+    // assignStrafFootnotes() in src/Liga/StandingsTrait.php). Ein Grund allein
+    // reicht, unabhängig davon, ob eine der vier Korrekturen von 0 abweicht.
+    $footnoteNrs = [];
+    $next = 1;
+    foreach ($rows as $r) {
+        if (!empty($r['strafgruende'])) {
+            $footnoteNrs[(int)$r['id']] = $next++;
+        }
+    }
+
     $rowsHtml = '';
     foreach ($rows as $r) {
         $diff = (int)$r['tore_h'] - (int)$r['tore_g'];
@@ -243,6 +256,7 @@ function ewige_render_eternal(string $templateSrc, array $rows, array $ligaIds) 
             '<!--Logo-->'          => ewigeLogoImg((int)$r['id']),
             '<!--Team-->'          => h($r['kurz'] !== '' ? $r['kurz'] : $r['name']),
             '<!--TeamLang-->'      => h($r['name']),
+            '<!--StrafHinweis-->'  => ewigeStrafHinweis($r, $footnoteNrs[(int)$r['id']] ?? 0),
             '<!--Saisons-->'       => (string)$r['saisons'],
             '<!--Spiele-->'        => (string)$r['sp'],
             '<!--Siege-->'         => (string)$r['s'],
@@ -264,11 +278,69 @@ function ewige_render_eternal(string $templateSrc, array $rows, array $ligaIds) 
     $outer = [
         '<!--Tabelle-->'  => h('Ewige Tabelle'),
         '<!--Fusszeile-->' => h(count($rows) . ' Teams · ' . count($ligaIds) . ' Liga(en)'),
+        '<!--Fussnoten-->' => ewigeStrafFootnotes($rows, $footnoteNrs),
     ];
     $before = strtr($before, $outer);
     $after  = strtr($after, $outer);
 
     return $before . $rowsHtml . $after;
+}
+
+/**
+ * Straf-Hinweis für eine Zeile der Ewigen Tabelle (Beitrag: Torsten Hofmann,
+ * hier an den Stil/die Sprachkeys der normalen Tabelle angepasst - siehe
+ * renderStrafHinweis() in src/Liga/StandingsTrait.php). Zeigt bei
+ * hinterlegtem(n) Grund eine anklickbare Fußnoten-Nummer, sonst (nur
+ * Zahlenkorrektur ohne Begründung) nur ein ⚠-Symbol mit Tooltip.
+ */
+function ewigeStrafHinweis(array $r, int $fnNr = 0) : string
+{
+    $sp = (int)($r['strafpunkte'] ?? 0);
+    $st = (int)($r['straftore'] ?? 0);
+    $tk = (int)($r['torekorrektur'] ?? 0);
+    $mk = (int)($r['minuspunktekorrektur'] ?? 0);
+    $gruende = $r['strafgruende'] ?? [];
+    if ($sp === 0 && $st === 0 && $tk === 0 && $mk === 0 && empty($gruende)) {
+        return '';
+    }
+    $teile = [];
+    if ($sp !== 0) { $teile[] = ($sp > 0 ? '+' : '') . $sp . ' ' . tf('liga_standings_col_pkt'); }
+    if ($tk !== 0) { $teile[] = ($tk > 0 ? '+' : '') . $tk . ' ' . tf('liga_standings_straf_erzielt'); }
+    if ($st !== 0) { $teile[] = ($st > 0 ? '+' : '') . $st . ' ' . tf('liga_standings_straf_gegentore'); }
+    if ($mk !== 0) { $teile[] = ($mk > 0 ? '+' : '') . $mk . ' ' . tf('liga_standings_straf_minuspunkte'); }
+    $tip = implode(', ', $teile);
+    if (!empty($gruende)) {
+        $tip .= ' (' . implode('; ', $gruende) . ')'; // NICHT hier schon h() aufrufen - passiert unten einmalig
+    }
+    if (!empty($gruende) && $fnNr > 0) {
+        return ' <sup class="st-straf-hinweis" title="' . h($tip) . '" id="etstraf-ref-' . $fnNr . '">'
+             . '<a href="#etstraf-' . $fnNr . '">(' . $fnNr . ')</a></sup>';
+    }
+    return ' <span class="st-straf-hinweis" title="' . h($tip) . '">⚠</span>';
+}
+
+/**
+ * Fußnoten-Liste unter der Ewigen Tabelle, im Wikipedia-Stil - analog zu
+ * renderStrafFootnotes() in src/Liga/StandingsTrait.php, aber mit den ggf.
+ * mehreren Gründen über verschiedene Saisons hinweg (jeweils
+ * "Liganame: Grund", siehe eternalStandings()).
+ */
+function ewigeStrafFootnotes(array $rows, array $footnoteNrs) : string
+{
+    if (empty($footnoteNrs)) {
+        return '';
+    }
+    $byId = [];
+    foreach ($rows as $r) {
+        $byId[(int)$r['id']] = $r;
+    }
+    $items = '';
+    foreach ($footnoteNrs as $teamId => $nr) {
+        $gruende = $byId[$teamId]['strafgruende'] ?? [];
+        $items .= '<p id="etstraf-' . $nr . '" class="st-footnote-item">'
+                . '<a href="#etstraf-ref-' . $nr . '">(' . $nr . ')</a> ' . h(implode('; ', $gruende)) . '</p>';
+    }
+    return '<div class="st-footnotes">' . $items . '</div>';
 }
 
 /** Mehrjahres-Vergleich (Matrix) über matrix.tpl.php. */
