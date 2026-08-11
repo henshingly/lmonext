@@ -2,7 +2,7 @@
 /**
  * Project: LMOnext
  * Filename: data_loader.php
- * Fileversion: 1.7.8
+ * Fileversion: 1.7.10
  *
  * PHP version 8.2
  *
@@ -25,6 +25,7 @@ $spieltagData = null; $tabelleData = null; $spielerstatData = null;
 if (isLoggedIn()) {
     ensureArchivColumns();
     ensureSpielstatusColumns();
+    ensureSportProfileColumns();
     ensureAdminSettings();
     ensureKoLabelColumns();
     // Zeitzone global setzen – gilt für alle date()-Aufrufe und den Import
@@ -312,7 +313,7 @@ if ($action === 'liga_settings' && isLoggedIn()) {
     if ($lid > 0) {
         try {
             $db = getDB();
-            $sL = $db->prepare('SELECT id,name FROM '.tbl('liga').' WHERE id=?');
+            $sL = $db->prepare('SELECT id,name,sport_type FROM '.tbl('liga').' WHERE id=?');
             $sL->execute([$lid]); $ligaSettingsData['liga'] = $sL->fetch();
             $sO = $db->prepare('SELECT option_key,option_value FROM '.tbl('liga_options').' WHERE liga_id=?');
             $sO->execute([$lid]);

@@ -2,7 +2,7 @@
 /**
  * Project: LMOnext
  * Filename: addon/tipp/frontend_tipp.php
- * Fileversion: 0.4.1
+ * Fileversion: 0.10.0
  *
  * PHP version 8.2
  *
@@ -323,6 +323,422 @@ function tippGetEinsichtDaten(array $partien) : array
  * Nutzt durchgehend strict_types und ===-Vergleiche - genau die Klarheit,
  * die im alten Addon gefehlt hat.
  */
+/**
+ * Liefert alle Daten für die kombinierte Rangliste+Tippübersicht EINES
+ * Spieltags einer Liga (Beitrag: Vorbild kicktipp.de, siehe Kundenbild) -
+ * pro Tipper: Rang, Rangveränderung zum vorherigen Spieltag, Punkte DIESES
+ * Spieltags, kumulierte Gesamtpunkte bis einschließlich diesem Spieltag,
+ * und die einzelnen Tipps für die Partien dieses Spieltags (für die
+ * Matrix-Spalten). Berücksichtigt dieselbe Sichtbarkeits-Einstellung wie
+ * tippGetEinsichtDaten() (sofort/nach Ergebnis/nach Abgabeschluss) - ein
+ * noch nicht sichtbarer Tipp wird als "-:-" ohne Punkte geführt, fließt
+ * aber (sobald er sichtbar wird) ganz normal in P/G ein.
+ *
+ * @param array $allSpieltage Ergebnis von getAllSpieltage($ligaId)
+ * @return array{partien:array,rows:array}
+ */
+function tippGetSpieltagMatrix(int $ligaId, array $allSpieltage, int $spieltagNr) : array
+{
+    $partienAktuell = [];
+    $spieltagIdAktuell = null;
+    foreach ($allSpieltage as $st) {
+        if ((int)$st['nummer'] === $spieltagNr) {
+            $spieltagIdAktuell = (int)$st['id'];
+            $partienAktuell = getSpieltagPartien($spieltagIdAktuell);
+            foreach ($partienAktuell as &$p) { $p['spieltag_start'] = $st['start'] ?? null; }
+            unset($p);
+            break;
+        }
+    }
+
+    // Alle Partien der Liga bis einschließlich diesem Spieltag (für G) sowie
+    // bis einschließlich dem VORHERIGEN Spieltag (für die Rang-Veränderung).
+    $partienIdsBisAktuell = [];
+    $partienIdsBisVorherig = [];
+    $partieToSpieltagNr = [];
+    foreach ($allSpieltage as $st) {
+        $nr = (int)$st['nummer'];
+        if ($nr > $spieltagNr) {
+            continue;
+        }
+        foreach (getSpieltagPartien((int)$st['id']) as $p) {
+            $pid = (int)$p['id'];
+            $partieToSpieltagNr[$pid] = $nr;
+            $partienIdsBisAktuell[] = $pid;
+            if ($nr < $spieltagNr) {
+                $partienIdsBisVorherig[] = $pid;
+            }
+        }
+    }
+
+    $zeitpunkt = getTippSetting('tippeinsicht_zeitpunkt', 'abgabeschluss');
+    $istSichtbar = static function (array $partie) use ($zeitpunkt) : bool {
+        return match ($zeitpunkt) {
+            'sofort'   => true,
+            'ergebnis' => $partie['h_tore'] !== null && $partie['g_tore'] !== null,
+            default    => !tippIstAenderbar($partie['zeit'] ?? null, $partie['spieltag_start'] ?? null),
+        };
+    };
+    // Sichtbarkeit je Partie vorab bestimmen (braucht spieltag_start, siehe oben)
+    $sichtbarByPartie = [];
+    foreach ($allSpieltage as $st) {
+        if ((int)$st['nummer'] > $spieltagNr) {
+            continue;
+        }
+        foreach (getSpieltagPartien((int)$st['id']) as $p) {
+            $p['spieltag_start'] = $st['start'] ?? null;
+            $sichtbarByPartie[(int)$p['id']] = $istSichtbar($p);
+        }
+    }
+
+    if (empty($partienIdsBisAktuell)) {
+        return ['partien' => $partienAktuell, 'rows' => []];
+    }
+
+    try {
+        $ph = implode(',', array_fill(0, count($partienIdsBisAktuell), '?'));
+        $stmt = getDB()->prepare(
+            'SELECT tt.tipper_id, u.nickname, tt.partie_id, tt.tipp_heim, tt.tipp_gast, tt.ist_joker,
+                    p.h_tore, p.g_tore
+               FROM ' . tbl('tipp_tipp') . ' tt
+               JOIN ' . tbl('tipp_user') . ' u ON u.id = tt.tipper_id
+               JOIN ' . tbl('liga_partien') . ' p ON p.id = tt.partie_id
+              WHERE tt.partie_id IN (' . $ph . ')
+                AND tt.tipp_heim IS NOT NULL AND tt.tipp_gast IS NOT NULL'
+        );
+        $stmt->execute($partienIdsBisAktuell);
+        $tipps = $stmt->fetchAll();
+    } catch (Throwable) {
+        return ['partien' => $partienAktuell, 'rows' => []];
+    }
+
+    $tipper = []; // tid => ['nickname'=>..., 'punkte_aktuell'=>0, 'punkte_vorherig'=>0, 'punkte_spieltag'=>0, 'zellen'=>[partieId=>[...]]]
+    foreach ($tipps as $t) {
+        $tid = (int)$t['tipper_id'];
+        $pid = (int)$t['partie_id'];
+        if (!isset($sichtbarByPartie[$pid]) || !$sichtbarByPartie[$pid]) {
+            continue; // dieser einzelne Tipp ist für Dritte noch nicht sichtbar
+        }
+        if (!isset($tipper[$tid])) {
+            $tipper[$tid] = [
+                'tipper_id' => $tid, 'nickname' => $t['nickname'],
+                'punkte_aktuell' => 0, 'punkte_vorherig' => 0, 'punkte_spieltag' => 0,
+                'zellen' => [],
+            ];
+        }
+        $heim = (int)$t['tipp_heim'];
+        $gast = (int)$t['tipp_gast'];
+        $eh   = $t['h_tore'] !== null ? (int)$t['h_tore'] : null;
+        $eg   = $t['g_tore'] !== null ? (int)$t['g_tore'] : null;
+        $joker = (bool)$t['ist_joker'];
+        $punkte = calculateTippPunkte($heim, $gast, $eh, $eg, $joker);
+
+        $tipper[$tid]['punkte_aktuell'] += $punkte;
+        if (in_array($pid, $partienIdsBisVorherig, true)) {
+            $tipper[$tid]['punkte_vorherig'] += $punkte;
+        }
+        if (($partieToSpieltagNr[$pid] ?? null) === $spieltagNr) {
+            $tipper[$tid]['punkte_spieltag'] += $punkte;
+            $tipper[$tid]['zellen'][$pid] = ['heim' => $heim, 'gast' => $gast, 'joker' => $joker, 'punkte' => $punkte];
+        }
+    }
+
+    $rangfolge = static function (array $liste, string $feld) : array {
+        usort($liste, static fn(array $a, array $b) => $b[$feld] <=> $a[$feld] ?: strcasecmp((string)$a['nickname'], (string)$b['nickname']));
+        $rang = [];
+        foreach ($liste as $i => $r) { $rang[$r['tipper_id']] = $i + 1; }
+        return $rang;
+    };
+    $rangAktuell  = $rangfolge(array_values($tipper), 'punkte_aktuell');
+    $rangVorherig = $rangfolge(array_values($tipper), 'punkte_vorherig');
+
+    $rows = [];
+    foreach ($tipper as $tid => $r) {
+        $r['rang'] = $rangAktuell[$tid];
+        $r['rang_delta'] = ($rangVorherig[$tid] ?? $r['rang']) - $r['rang']; // positiv = aufgestiegen
+        $rows[] = $r;
+    }
+    usort($rows, static fn(array $a, array $b) => $a['rang'] <=> $b['rang']);
+
+    return ['partien' => $partienAktuell, 'rows' => $rows];
+}
+
+/**
+ * Liefert die "Spieltagspunkte"-Gesamtübersicht einer Liga (Vorbild
+ * kicktipp.de, Reiter "Gesamtübersicht" → "Spieltagspunkte") - pro Tipper
+ * die je Spieltag erzielten Punkte (unabhängig von tippGetSpieltagMatrix(),
+ * die nur EINEN Spieltag im Detail zeigt) sowie die Gesamtsumme. Zusätzlich
+ * wird je Spieltag markiert, wer die (echt erreichte, >0) Höchstpunktzahl
+ * hatte - analog zu "spieltagswertungen" in tippGetRangliste(), hier aber
+ * je Spieltag statt aufsummiert.
+ *
+ * @return array{maxNr:int,rows:array} rows: tipper_id => ['nickname'=>...,
+ *         'punkte'=>[spieltagNr=>int], 'gesamt'=>int, 'sieger'=>[spieltagNr=>bool]]
+ */
+function tippGetSpieltagspunkteUebersicht(int $ligaId, array $allSpieltage) : array
+{
+    $maxNr = getMaxSpieltagNummer($allSpieltage);
+    if ($maxNr < 1) {
+        return ['maxNr' => 0, 'rows' => []];
+    }
+
+    $partieIds = [];
+    $partieToSpieltagNr = [];
+    foreach ($allSpieltage as $st) {
+        $nr = (int)$st['nummer'];
+        foreach (getSpieltagPartien((int)$st['id']) as $p) {
+            $pid = (int)$p['id'];
+            $partieIds[] = $pid;
+            $partieToSpieltagNr[$pid] = $nr;
+        }
+    }
+    if (empty($partieIds)) {
+        return ['maxNr' => $maxNr, 'rows' => []];
+    }
+
+    try {
+        $ph = implode(',', array_fill(0, count($partieIds), '?'));
+        $stmt = getDB()->prepare(
+            'SELECT tt.tipper_id, u.nickname, tt.partie_id, tt.tipp_heim, tt.tipp_gast, tt.ist_joker,
+                    p.h_tore, p.g_tore
+               FROM ' . tbl('tipp_tipp') . ' tt
+               JOIN ' . tbl('tipp_user') . ' u ON u.id = tt.tipper_id
+               JOIN ' . tbl('liga_partien') . ' p ON p.id = tt.partie_id
+              WHERE tt.partie_id IN (' . $ph . ')
+                AND tt.tipp_heim IS NOT NULL AND tt.tipp_gast IS NOT NULL'
+        );
+        $stmt->execute($partieIds);
+        $tipps = $stmt->fetchAll();
+    } catch (Throwable) {
+        return ['maxNr' => $maxNr, 'rows' => []];
+    }
+
+    $rows = [];
+    $spieltagPunkte = []; // [spieltagNr => [tipperId => punkte]]
+    foreach ($tipps as $t) {
+        $tid = (int)$t['tipper_id'];
+        $pid = (int)$t['partie_id'];
+        $nr  = $partieToSpieltagNr[$pid] ?? null;
+        if ($nr === null) {
+            continue;
+        }
+        if (!isset($rows[$tid])) {
+            $rows[$tid] = ['tipper_id' => $tid, 'nickname' => $t['nickname'], 'punkte' => [], 'gesamt' => 0, 'sieger' => []];
+        }
+        $eh = $t['h_tore'] !== null ? (int)$t['h_tore'] : null;
+        $eg = $t['g_tore'] !== null ? (int)$t['g_tore'] : null;
+        $punkte = calculateTippPunkte((int)$t['tipp_heim'], (int)$t['tipp_gast'], $eh, $eg, (bool)$t['ist_joker']);
+
+        $rows[$tid]['punkte'][$nr] = ($rows[$tid]['punkte'][$nr] ?? 0) + $punkte;
+        $rows[$tid]['gesamt'] += $punkte;
+        $spieltagPunkte[$nr][$tid] = $rows[$tid]['punkte'][$nr];
+    }
+
+    foreach ($spieltagPunkte as $nr => $tipperPunkte) {
+        $max = max($tipperPunkte);
+        if ($max <= 0) {
+            continue;
+        }
+        foreach ($tipperPunkte as $tid => $p) {
+            if ($p === $max) {
+                $rows[$tid]['sieger'][$nr] = true;
+            }
+        }
+    }
+
+    $liste = array_values($rows);
+    usort($liste, static fn(array $a, array $b) => $b['gesamt'] <=> $a['gesamt'] ?: strcasecmp((string)$a['nickname'], (string)$b['nickname']));
+
+    return ['maxNr' => $maxNr, 'rows' => $liste];
+}
+
+/**
+ * Statistiken für EINEN Tipper einer Liga (Vorbild kicktipp.de "Statistik") -
+ * Tipp-/Punkte-Verteilung nach Tendenz, Rang-Verlauf über die Saison,
+ * Punkte je Mannschaft (für Top-3/Flop-3), sowie (zweite Ausbaustufe, Seite
+ * 2 der Statistik-Ansicht): Verteilung der ECHTEN Ergebnisse der Liga nach
+ * Tendenz, die eigene Tipp-Tendenz je Spieltag, Punkte je Spieltag und der
+ * Punkte-Abstand zum jeweiligen Spieltagsführenden. Baut auf
+ * tippGetSpieltagspunkteUebersicht() auf (keine zusätzliche Abfrage nötig
+ * für den Rang-Verlauf/Punkte-zur-Spitze - die Spieltagspunkte aller Tipper
+ * sind da schon vorhanden, hier wird daraus nur abgeleitet).
+ *
+ * @return array{tipps_tendenz:array,punkte_tendenz:array,rang_verlauf:array,anzahl_tipper:int,punkte_team:array,ergebnisse_tendenz:array,tipps_pro_spieltag:array,punkte_pro_spieltag:array,punkte_zur_spitze:array}
+ */
+function tippGetTipperStatistik(int $ligaId, array $allSpieltage, int $tipperId) : array
+{
+    $uebersicht = tippGetSpieltagspunkteUebersicht($ligaId, $allSpieltage);
+    $maxNr = $uebersicht['maxNr'];
+
+    // Rang-Verlauf + "Punkte zur Spitze" + Spieltagsplatzierung (Rang NUR
+    // an diesem Spieltag, nicht kumuliert) + Vergleich mit dem
+    // Spieltagssieger: aus den (nicht-kumulierten) Spieltagspunkten aller
+    // Tipper eine laufende Summe bilden und je Spieltag neu sortieren. Der
+    // Spieltagsführende (Gesamtwertung) ist der höchste kumulierte Wert an
+    // diesem Spieltag, der Spieltagssieger (Tageswertung) der höchste
+    // NICHT-kumulierte Wert an diesem einen Spieltag.
+    $kumuliert = []; // tipperId => laufende Summe
+    $rangVerlauf = [];
+    $punkteZurSpitze = [];
+    $punkteProSpieltag = [];
+    $spieltagsplatzierungVerlauf = [];
+    $vergleichSpieltagssieger = [];
+    foreach ($uebersicht['rows'] as $r) {
+        $kumuliert[$r['tipper_id']] = 0;
+    }
+    for ($n = 1; $n <= $maxNr; $n++) {
+        $tagespunkte = []; // tipperId => Punkte NUR an diesem Spieltag
+        foreach ($uebersicht['rows'] as $r) {
+            $kumuliert[$r['tipper_id']] += $r['punkte'][$n] ?? 0;
+            $tagespunkte[$r['tipper_id']] = $r['punkte'][$n] ?? 0;
+            if ((int)$r['tipper_id'] === $tipperId) {
+                $punkteProSpieltag[$n] = $r['punkte'][$n] ?? 0;
+            }
+        }
+        $sortiert = $kumuliert;
+        arsort($sortiert);
+        $rang = 1;
+        $spitzenwert = reset($sortiert);
+        foreach ($sortiert as $tid => $punkte) {
+            if ($tid === $tipperId) {
+                $rangVerlauf[$n] = $rang;
+                $punkteZurSpitze[$n] = ($spitzenwert !== false ? $spitzenwert : 0) - $punkte;
+                break;
+            }
+            $rang++;
+        }
+
+        $tagesSortiert = $tagespunkte;
+        arsort($tagesSortiert);
+        $tagesRang = 1;
+        foreach ($tagesSortiert as $tid => $punkte) {
+            if ($tid === $tipperId) {
+                $spieltagsplatzierungVerlauf[$n] = $tagesRang;
+                break;
+            }
+            $tagesRang++;
+        }
+        $spieltagssieger = reset($tagesSortiert);
+        $vergleichSpieltagssieger[$n] = [
+            'mich'   => $tagespunkte[$tipperId] ?? 0,
+            'sieger' => $spieltagssieger !== false ? $spieltagssieger : 0,
+        ];
+    }
+
+    // Tipp-/Punkte-Verteilung nach Tendenz + Punkte je Mannschaft + Tipp-
+    // Tendenz je Spieltag + häufigste getippte Ergebnisse je Tendenz: eigene,
+    // schlanke Abfrage nur für diesen einen Tipper (die Rangliste oben
+    // enthält keine Team-/Tendenz-/Ergebnis-Zuordnung).
+    $tippsTendenz  = ['Heim' => 0, 'Remis' => 0, 'Gast' => 0];
+    $punkteTendenz = ['Heim' => 0, 'Remis' => 0, 'Gast' => 0];
+    $punkteTeam    = [];
+    $tippsProSpieltag = [];
+    $tippsErgebnisRoh = ['Heim' => [], 'Remis' => [], 'Gast' => []]; // "H:G" => Anzahl
+    try {
+        $stmt = getDB()->prepare(
+            'SELECT tt.tipp_heim, tt.tipp_gast, tt.ist_joker, p.h_tore, p.g_tore, s.nummer AS spieltag_nr,
+                    th.name AS heim_name, tg.name AS gast_name
+               FROM ' . tbl('tipp_tipp') . ' tt
+               JOIN ' . tbl('liga_partien') . ' p ON p.id = tt.partie_id
+               JOIN ' . tbl('liga_spieltage') . ' s ON s.id = p.spieltag_id
+               LEFT JOIN ' . tbl('teams_global') . ' th ON th.id = p.heim_id
+               LEFT JOIN ' . tbl('teams_global') . ' tg ON tg.id = p.gast_id
+              WHERE tt.tipper_id = ? AND s.liga_id = ?
+                AND tt.tipp_heim IS NOT NULL AND tt.tipp_gast IS NOT NULL'
+        );
+        $stmt->execute([$tipperId, $ligaId]);
+        foreach ($stmt->fetchAll() as $t) {
+            $tippTendenz = (int)$t['tipp_heim'] <=> (int)$t['tipp_gast'];
+            $tendenzLabel = $tippTendenz > 0 ? 'Heim' : ($tippTendenz < 0 ? 'Gast' : 'Remis');
+            $tippsTendenz[$tendenzLabel]++;
+
+            $ergebnisStr = (int)$t['tipp_heim'] . ':' . (int)$t['tipp_gast'];
+            $tippsErgebnisRoh[$tendenzLabel][$ergebnisStr] = ($tippsErgebnisRoh[$tendenzLabel][$ergebnisStr] ?? 0) + 1;
+
+            $nr = (int)$t['spieltag_nr'];
+            if (!isset($tippsProSpieltag[$nr])) {
+                $tippsProSpieltag[$nr] = ['Heim' => 0, 'Remis' => 0, 'Gast' => 0];
+            }
+            $tippsProSpieltag[$nr][$tendenzLabel]++;
+
+            $eh = $t['h_tore'] !== null ? (int)$t['h_tore'] : null;
+            $eg = $t['g_tore'] !== null ? (int)$t['g_tore'] : null;
+            if ($eh === null || $eg === null) {
+                continue; // noch nicht ausgewertet - fließt nicht in Punkte/Team-Stats ein
+            }
+            $punkte = calculateTippPunkte((int)$t['tipp_heim'], (int)$t['tipp_gast'], $eh, $eg, (bool)$t['ist_joker']);
+            $punkteTendenz[$tendenzLabel] += $punkte;
+
+            foreach ([$t['heim_name'], $t['gast_name']] as $teamName) {
+                if ($teamName === null || $teamName === '') {
+                    continue;
+                }
+                $punkteTeam[$teamName] = ($punkteTeam[$teamName] ?? 0) + $punkte;
+            }
+        }
+    } catch (Throwable) {
+        // Rückgabe bleibt bei den Default-Werten (alles 0/leer)
+    }
+    $tippsTop3Ergebnis = [];
+    foreach ($tippsErgebnisRoh as $tendenz => $werte) {
+        arsort($werte);
+        $tippsTop3Ergebnis[$tendenz] = array_slice($werte, 0, 3, true);
+    }
+
+    // Verteilung der ECHTEN Ergebnisse dieser Liga nach Tendenz + häufigste
+    // tatsächliche Ergebnisse je Tendenz + Verlauf je Spieltag - unabhängig
+    // vom Tipper, alle bereits gespielten Partien der Liga.
+    $ergebnisseTendenz = ['Heim' => 0, 'Remis' => 0, 'Gast' => 0];
+    $ergebnisseRoh = ['Heim' => [], 'Remis' => [], 'Gast' => []];
+    $ergebnisseProSpieltag = [];
+    try {
+        $stmt = getDB()->prepare(
+            'SELECT p.h_tore, p.g_tore, s.nummer AS spieltag_nr
+               FROM ' . tbl('liga_partien') . ' p
+               JOIN ' . tbl('liga_spieltage') . ' s ON s.id = p.spieltag_id
+              WHERE s.liga_id = ? AND p.h_tore IS NOT NULL AND p.g_tore IS NOT NULL'
+        );
+        $stmt->execute([$ligaId]);
+        foreach ($stmt->fetchAll() as $p) {
+            $ergTendenz = (int)$p['h_tore'] <=> (int)$p['g_tore'];
+            $label = $ergTendenz > 0 ? 'Heim' : ($ergTendenz < 0 ? 'Gast' : 'Remis');
+            $ergebnisseTendenz[$label]++;
+            $ergebnisStr = (int)$p['h_tore'] . ':' . (int)$p['g_tore'];
+            $ergebnisseRoh[$label][$ergebnisStr] = ($ergebnisseRoh[$label][$ergebnisStr] ?? 0) + 1;
+
+            $nr = (int)$p['spieltag_nr'];
+            if (!isset($ergebnisseProSpieltag[$nr])) {
+                $ergebnisseProSpieltag[$nr] = ['Heim' => 0, 'Remis' => 0, 'Gast' => 0];
+            }
+            $ergebnisseProSpieltag[$nr][$label]++;
+        }
+    } catch (Throwable) {
+        // Rückgabe bleibt bei 0/0/0
+    }
+    $ergebnisseTop3Ergebnis = [];
+    foreach ($ergebnisseRoh as $tendenz => $werte) {
+        arsort($werte);
+        $ergebnisseTop3Ergebnis[$tendenz] = array_slice($werte, 0, 3, true);
+    }
+
+    return [
+        'tipps_tendenz'       => $tippsTendenz,
+        'punkte_tendenz'      => $punkteTendenz,
+        'rang_verlauf'        => $rangVerlauf,
+        'anzahl_tipper'       => count($uebersicht['rows']),
+        'punkte_team'         => $punkteTeam,
+        'ergebnisse_tendenz'  => $ergebnisseTendenz,
+        'tipps_pro_spieltag'  => $tippsProSpieltag,
+        'punkte_pro_spieltag' => $punkteProSpieltag,
+        'ergebnisse_pro_spieltag' => $ergebnisseProSpieltag,
+        'punkte_zur_spitze'   => $punkteZurSpitze,
+        'tipps_top3_ergebnis'      => $tippsTop3Ergebnis,
+        'ergebnisse_top3_ergebnis' => $ergebnisseTop3Ergebnis,
+        'spieltagsplatzierung_verlauf' => $spieltagsplatzierungVerlauf,
+        'vergleich_spieltagssieger'    => $vergleichSpieltagssieger,
+    ];
+}
+
 function calculateTippPunkte(int $tippHeim, int $tippGast, ?int $ergHeim, ?int $ergGast, bool $istJoker) : int
 {
     if ($ergHeim === null || $ergGast === null) {

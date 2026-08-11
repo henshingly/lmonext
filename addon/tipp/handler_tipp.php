@@ -2,7 +2,7 @@
 /**
  * Project: LMOnext
  * Filename: addon/tipp/handler_tipp.php
- * Fileversion: 0.8.0
+ * Fileversion: 1.2.0
  *
  * PHP version 8.2
  *
@@ -114,6 +114,49 @@ if ($action === 'save_tipp_anmeldung' && $_SERVER['REQUEST_METHOD'] === 'POST') 
 
     flash(t('tipp_flash_settings_saved'));
     redirect('?action=tippspiel&tab=optionen&subtab=anmeldung');
+}
+
+if ($action === 'save_tipp_anzeige' && $_SERVER['REQUEST_METHOD'] === 'POST') {
+    requireLogin();
+
+    setTippSettings([
+        'anzeige_einsicht_oeffentlich' => isset($_POST['einsicht_oeffentlich']) ? '1' : '0',
+        'anzeige_spielregeln'          => isset($_POST['spielregeln_anzeigen']) ? '1' : '0',
+    ]);
+
+    flash(t('tipp_flash_settings_saved'));
+    redirect('?action=tippspiel&tab=anzeige');
+}
+
+if ($action === 'save_tipp_nachtragen' && $_SERVER['REQUEST_METHOD'] === 'POST') {
+    requireLogin();
+
+    $tipperId   = (int)($_POST['tipper_id'] ?? 0);
+    $ligaId     = (int)($_POST['liga_id'] ?? 0);
+    $spieltagNr = (int)($_POST['spieltag_nr'] ?? 0);
+    $jokerPartieId = isset($_POST['joker']) && $_POST['joker'] !== '' ? (int)$_POST['joker'] : null;
+
+    if ($tipperId > 0 && $ligaId > 0 && in_array($ligaId, getTipperAboLigaIds($tipperId), true)) {
+        $spieltag = null;
+        foreach (adminTippGetSpieltage($ligaId) as $st) {
+            if ((int)$st['nummer'] === $spieltagNr) { $spieltag = $st; break; }
+        }
+        if ($spieltag !== null) {
+            $partien = adminTippGetSpieltagPartien((int)$spieltag['id']);
+            $partieIds = array_map('intval', array_column($partien, 'id'));
+            $eingaben = [];
+            foreach ($partieIds as $pid) {
+                $eingaben[$pid] = [
+                    'heim' => $_POST['heim'][$pid] ?? '',
+                    'gast' => $_POST['gast'][$pid] ?? '',
+                ];
+            }
+            adminTippNachtragen($tipperId, $partieIds, $eingaben, $jokerPartieId);
+            flash(t('tipp_flash_nachtragen_saved'));
+        }
+    }
+
+    redirect('?action=tippspiel&tab=userverwaltung&nachtragen=' . $tipperId . '&nt_liga=' . $ligaId . '&nt_spieltag=' . $spieltagNr);
 }
 
 if ($action === 'save_tipp_punktgleichheit' && $_SERVER['REQUEST_METHOD'] === 'POST') {

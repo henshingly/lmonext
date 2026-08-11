@@ -2,7 +2,7 @@
 /**
  * Project: LMOnext
  * Filename: addon/tipp/tipp_lib.php
- * Fileversion: 0.6.1
+ * Fileversion: 1.0.0
  *
  * PHP version 8.2
  *
@@ -130,6 +130,56 @@ function getTippbareLigenKandidaten() : array
 }
 
 /**
+ * Liefert archivierte Ligen, für die tatsächlich Tipps abgegeben wurden -
+ * für den Link "Archivierte Tippsaisons" unter Tippeinsicht/Gesamtübersicht.
+ * Archivierte Ligen OHNE jede Tipp-Historie tauchen hier bewusst nicht auf
+ * (sonst würde der Link auch bei völlig irrelevanten archivierten Ligen
+ * erscheinen). Nicht auf den aktuellen Tipper gefiltert - "wurde getippt"
+ * bezieht sich auf alle Tipper, nicht nur den gerade Angemeldeten, analog
+ * zur Tippeinsicht selbst (die zeigt ja auch alle Tipper, nicht nur den
+ * eigenen).
+ */
+/**
+ * Höchste Spieltag-Nummer einer Liga, für die mindestens eine Partie bereits
+ * ein echtes Ergebnis hat - für den Sprung zum "zuletzt ausgewerteten
+ * Spieltag" beim Klick auf einen Tippernamen in der Tippeinsicht (Vorbild
+ * kicktipp.de). Fällt auf 1 zurück, wenn noch gar nichts gespielt wurde.
+ */
+function tippGetLetzterAusgewerteterSpieltag(int $ligaId) : int
+{
+    try {
+        $nr = getDB()->prepare(
+            'SELECT MAX(s.nummer)
+               FROM ' . tbl('liga_spieltage') . ' s
+               JOIN ' . tbl('liga_partien') . ' p ON p.spieltag_id = s.id
+              WHERE s.liga_id = ? AND p.h_tore IS NOT NULL AND p.g_tore IS NOT NULL'
+        );
+        $nr->execute([$ligaId]);
+        $result = $nr->fetchColumn();
+        return $result !== null && $result !== false ? (int)$result : 1;
+    } catch (Throwable) {
+        return 1;
+    }
+}
+
+function getArchivierteLigenMitTipps() : array
+{
+    try {
+        return getDB()->query(
+            'SELECT DISTINCT l.id, l.name
+               FROM ' . tbl('liga') . ' l
+               JOIN ' . tbl('liga_spieltage') . ' s ON s.liga_id = l.id
+               JOIN ' . tbl('liga_partien') . ' p ON p.spieltag_id = s.id
+               JOIN ' . tbl('tipp_tipp') . ' tt ON tt.partie_id = p.id
+              WHERE l.archiv_folder_id IS NOT NULL
+              ORDER BY l.name'
+        )->fetchAll();
+    } catch (Throwable) {
+        return [];
+    }
+}
+
+/**
  * Liefert die Liga-IDs, die aktuell konkret für das Tippspiel freigegeben
  * sind (nur relevant, wenn "immer alle" NICHT aktiv ist).
  *
@@ -172,8 +222,32 @@ function tippRenderSiteLink() : string
     if (!tippIstAktiv()) {
         return '';
     }
-    return '<a class="tipp-site-link" href="home.php?view=tippspiel">'
+    return '<a class="tipp-site-link" href="' . htmlspecialchars(tippZielUrlOhneLogin(), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') . '">'
          . htmlspecialchars(tf('tf_tipp_header_link'), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') . '</a>';
+}
+
+/**
+ * Ziel-URL für die allgemeinen Tippspiel-Einstiegspunkte (Header-Link,
+ * Startseiten-Karte, siehe tippRenderSiteLink()/tippRenderHomeCard()).
+ * Normalerweise einfach "home.php?view=tippspiel" (landet bei ?action=abgabe,
+ * siehe view_tippspiel_frontend.php - setzt Login voraus). Für einen NICHT
+ * eingeloggten Besucher, wenn "Tippeinsicht öffentlich" aktiv ist (Admin →
+ * Tippspiel → Anzeigen/Darstellung), stattdessen direkt zur öffentlichen
+ * Tippeinsicht verlinken statt zu einem Login-Zwang zu führen, der sonst
+ * ohne jeden erkennbaren Ausweg wäre.
+ *
+ * Bewusst direkte Session-Prüfung statt tippCurrentUserId() - diese Funktion
+ * muss auch auf Seiten funktionieren, die frontend_tipp.php nie laden (z.B.
+ * eine normale liga.php-Seite lädt nur tipp_lib.php über
+ * frontend/bootstrap.php, nicht die komplette Tippspiel-Routing-Kette).
+ */
+function tippZielUrlOhneLogin() : string
+{
+    $eingeloggt = !empty($_SESSION['tipp_user_id']);
+    if (!$eingeloggt && getTippSetting('anzeige_einsicht_oeffentlich', '0') === '1') {
+        return 'home.php?view=tippspiel&action=einsicht';
+    }
+    return 'home.php?view=tippspiel';
 }
 
 /**
@@ -192,7 +266,7 @@ function tippRenderHomeCard() : string
     return '<div class="card tipp-home-card">'
          . '<h2>' . $esc(tf('tf_tipp_home_card_titel')) . '</h2>'
          . '<p>' . $esc(tf('tf_tipp_home_card_text')) . '</p>'
-         . '<p><a class="btn-primary" href="home.php?view=tippspiel">' . $esc(tf('tf_tipp_home_card_button')) . '</a></p>'
+         . '<p><a class="btn-primary" href="' . $esc(tippZielUrlOhneLogin()) . '">' . $esc(tf('tf_tipp_home_card_button')) . '</a></p>'
          . '</div>';
 }
 
@@ -252,6 +326,100 @@ function getTipperByNickname(string $nickname) : ?array
         return $row ?: null;
     } catch (Throwable) {
         return null;
+    }
+}
+
+function getTipperById(int $id) : ?array
+{
+    ensureTippSchema();
+    try {
+        $stmt = getDB()->prepare('SELECT * FROM ' . tbl('tipp_user') . ' WHERE id = ?');
+        $stmt->execute([$id]);
+        $row = $stmt->fetch();
+        return $row ?: null;
+    } catch (Throwable) {
+        return null;
+    }
+}
+
+/**
+ * Eigenständige, schlanke Kopien der gleichnamigen Liga-Funktionen aus
+ * src/Liga/SpieltagRepositoryTrait.php - für "Tipps nachtragen" im
+ * Adminbereich (siehe view_tippspiel.php, Tab Userverwaltung). Der Admin-
+ * Bereich bindet frontend/data_liga.php bewusst NICHT ein (eigene, komplett
+ * getrennte Bootstrap-Kette mit eigenen getDB()/tbl()) - ein require_once
+ * davon würde "Cannot redeclare getDB()" auslösen. Daher hier eigene,
+ * minimale Varianten statt der frontend-seitigen Funktionen.
+ */
+function adminTippGetSpieltage(int $ligaId) : array
+{
+    try {
+        $stmt = getDB()->prepare('SELECT id, nummer, start FROM ' . tbl('liga_spieltage') . ' WHERE liga_id = ? ORDER BY nummer');
+        $stmt->execute([$ligaId]);
+        return $stmt->fetchAll();
+    } catch (Throwable) {
+        return [];
+    }
+}
+
+function adminTippGetSpieltagPartien(int $spieltagId) : array
+{
+    try {
+        $stmt = getDB()->prepare(
+            'SELECT p.id, p.heim_id, p.gast_id, p.heim_label, p.gast_label, p.zeit,
+                    th.name AS heim_name, tg.name AS gast_name
+               FROM ' . tbl('liga_partien') . ' p
+               LEFT JOIN ' . tbl('teams_global') . ' th ON th.id = p.heim_id
+               LEFT JOIN ' . tbl('teams_global') . ' tg ON tg.id = p.gast_id
+              WHERE p.spieltag_id = ?
+              ORDER BY p.zeit, p.id'
+        );
+        $stmt->execute([$spieltagId]);
+        return $stmt->fetchAll();
+    } catch (Throwable) {
+        return [];
+    }
+}
+
+/**
+ * Speichert vom Admin nachgetragene Tipps für einen Tipper - IMMER, auch
+ * wenn die reguläre Abgabefrist (tippIstAenderbar()) längst abgelaufen ist.
+ * Historisches Feature aus dem alten LMO: Tipper, die nicht rechtzeitig über
+ * die Website tippen konnten, schicken ihren Tipp per Mail VOR Anpfiff - der
+ * Admin trägt ihn nach, unabhängig vom sonst geltenden Zeitlimit. Bewusst
+ * eigenständig statt tippSaveAbgabe() zu erweitern, da diese Funktion (und
+ * ihre Sicherheitsprüfung der Frist) im Frontend-Kontext lebt, der im
+ * Adminbereich nicht eingebunden ist (siehe adminTippGetSpieltage() oben).
+ *
+ * @param array $eingaben [partieId => ['heim'=>int|string, 'gast'=>int|string]]
+ * @param int|null $jokerPartieId Welche Partie den Joker bekommt (oder null)
+ */
+function adminTippNachtragen(int $tipperId, array $partieIds, array $eingaben, ?int $jokerPartieId) : void
+{
+    ensureTippSchema();
+    $db = getDB();
+    $upsert = $db->prepare(
+        'INSERT INTO ' . tbl('tipp_tipp') . ' (tipper_id, partie_id, tipp_heim, tipp_gast, ist_joker)
+         VALUES (?, ?, ?, ?, ?)
+         ON DUPLICATE KEY UPDATE tipp_heim = VALUES(tipp_heim), tipp_gast = VALUES(tipp_gast), ist_joker = VALUES(ist_joker)'
+    );
+    foreach ($partieIds as $pid) {
+        $pid = (int)$pid;
+        $e = $eingaben[$pid] ?? null;
+        if ($e === null) {
+            continue;
+        }
+        $heim = $e['heim'] ?? '';
+        $gast = $e['gast'] ?? '';
+        if ($heim === '' || $gast === '') {
+            continue; // leeres Feld -> nichts eingetragen, unverändert lassen
+        }
+        $heim = max(0, (int)$heim);
+        $gast = max(0, (int)$gast);
+        $joker = ($jokerPartieId === $pid) && getTippSetting('joker_zulassen', '1') === '1';
+        try {
+            $upsert->execute([$tipperId, $pid, $heim, $gast, $joker ? 1 : 0]);
+        } catch (Throwable) {}
     }
 }
 

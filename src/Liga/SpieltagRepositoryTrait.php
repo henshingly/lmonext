@@ -2,7 +2,7 @@
 /**
  * Project: LMOnext
  * Filename: src/Liga/SpieltagRepositoryTrait.php
- * Fileversion: 1.0.0
+ * Fileversion: 1.3.0
  *
  * PHP version 8.2
  *
@@ -107,12 +107,27 @@ trait SpieltagRepositoryTrait
             }
         }
         $statusSelect = $hasStatusColumn ? ', p.status' : '';
+
+        // "extra_data" (Sätze/Drittel/Viertel für Nicht-Fußball-Sportarten,
+        // Beitrag: Torsten Hofmann) - dieselbe defensive Prüfung wie oben bei
+        // status, für Installationen vor der Sport-Profile-Migration.
+        static $hasExtraDataColumn = null;
+        if ($hasExtraDataColumn === null) {
+            try {
+                getDB()->query('SELECT extra_data FROM ' . tbl('liga_partien') . ' LIMIT 0');
+                $hasExtraDataColumn = true;
+            } catch (\Throwable) {
+                $hasExtraDataColumn = false;
+            }
+        }
+        $extraDataSelect = $hasExtraDataColumn ? ', p.extra_data' : '';
     
         try {
             $s = getDB()->prepare(
                 'SELECT p.id, p.heim_id, p.gast_id, p.heim_label, p.gast_label,
-                        p.h_tore, p.g_tore, p.zeit, p.spiel_nr' . $statusSelect . ',
-                        th.name AS heim_name, tg.name AS gast_name
+                        p.h_tore, p.g_tore, p.zeit, p.spiel_nr' . $statusSelect . $extraDataSelect . ',
+                        th.name AS heim_name, tg.name AS gast_name,
+                        th.kurz AS heim_kurz, tg.kurz AS gast_kurz
                    FROM ' . tbl('liga_partien') . ' p
                    LEFT JOIN ' . tbl('teams_global') . ' th ON th.id = p.heim_id
                    LEFT JOIN ' . tbl('teams_global') . ' tg ON tg.id = p.gast_id
@@ -137,12 +152,18 @@ trait SpieltagRepositoryTrait
      * Alle Partien einer Liga über alle Spieltage hinweg (für Tabelle, Spielpläne,
      * Kreuztabelle, Fieberkurven, Ligastatistik).
      */
-    public static function getAllLigaPartien(array $allSpieltage) : array
+    public static function getAllLigaPartien(array $allSpieltage, ?int $ligaId = null) : array
     {
         $all = [];
         foreach ($allSpieltage as $st) {
             foreach (self::getSpieltagPartien((int)$st['id']) as $p) {
                 $p['_spieltag_nummer'] = (int)$st['nummer'];
+                // Für die sport-profil-abhängige Anzeige (Beitrag: Torsten
+                // Hofmann, siehe RenderViewsTrait::formatScore()) - optional,
+                // bestehende Aufrufer ohne $ligaId bleiben unverändert.
+                if ($ligaId !== null) {
+                    $p['_liga_id'] = $ligaId;
+                }
                 $all[] = $p;
             }
         }

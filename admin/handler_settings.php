@@ -2,7 +2,7 @@
 /**
  * Project: LMOnext
  * Filename: handler_settings.php
- * Fileversion: 1.4.0
+ * Fileversion: 1.5.0
  *
  * PHP version 8.2
  *
@@ -37,6 +37,26 @@ if ($action === 'save_liga_settings' && $_SERVER['REQUEST_METHOD'] === 'POST') {
                 $name = trim($_POST['liga_name'] ?? '');
                 if ($name !== '') {
                     $db->prepare('UPDATE '.tbl('liga').' SET name=? WHERE id=?')->execute([$name, $lid]);
+                }
+                // Sportart speichern (Beitrag: Torsten Hofmann, in liga-Tabelle,
+                // nicht liga_options - siehe getLigaSportType() in LigaRepositoryTrait.php)
+                $sportType = trim($_POST['sport_type'] ?? 'football');
+                if (!in_array($sportType, ['football', 'volleyball', 'icehockey', 'basketball', 'handball', 'badminton'], true)) {
+                    $sportType = 'football';
+                }
+                $db->prepare('UPDATE '.tbl('liga').' SET sport_type=? WHERE id=?')->execute([$sportType, $lid]);
+                // Standard-Punktekonfiguration aus dem Sport-Profil übernehmen,
+                // aber nur, wenn noch keine Werte gesetzt sind (nicht überschreiben!).
+                // Eigenständige Abfrage statt LigaService::getLigaOptions() - der
+                // Adminbereich bindet die Liga-Trait-Kette bewusst nicht ein
+                // (siehe admin/bootstrap.php, "Tipps nachtragen"-Feature).
+                $existingKeys = $db->prepare('SELECT option_key FROM '.tbl('liga_options').' WHERE liga_id=? AND option_key IN ("PointsForWin","PointsForDraw")');
+                $existingKeys->execute([$lid]);
+                if (count($existingKeys->fetchAll()) === 0) {
+                    $profile = \LMOnext\Sport\SportRegistry::get($sportType);
+                    foreach ($profile->getDefaultPointsConfig() as $k => $v) {
+                        $save($k, (string)$v);
+                    }
                 }
                 break;
 

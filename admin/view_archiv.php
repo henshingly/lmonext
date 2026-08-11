@@ -2,7 +2,7 @@
 /**
  * Project: LMOnext
  * Filename: view_archiv.php
- * Fileversion: 1.5.1
+ * Fileversion: 1.6.0
  *
  * PHP version 8.2
  *
@@ -98,16 +98,24 @@ function archivRenderFolder(array $f, array $ligenByFolder, array $folderMap, in
           <form method="post" action="?action=move_liga_archiv" style="display:inline">
             <input type="hidden" name="liga_id" value="<?= (int)$l['id'] ?>">
             <input type="hidden" name="redirect" value="?action=archiv">
-            <select name="folder_id" onchange="this.form.submit()"
+            <input type="hidden" name="folder_id" value="">
+            <button type="submit" class="btn btn-muted btn-sm" style="padding:2px 8px;font-size:.75rem"><?= h(t('arch_btn_reactivate')) ?></button>
+          </form>
+          <?php if (count($folderMap) > 1) { ?>
+          <form method="post" action="?action=move_liga_archiv" style="display:inline">
+            <input type="hidden" name="liga_id" value="<?= (int)$l['id'] ?>">
+            <input type="hidden" name="redirect" value="?action=archiv">
+            <select name="folder_id" onchange="if(this.value!==''){this.form.submit()}"
                     style="background:var(--bg);border:1px solid var(--border);color:var(--muted);
                            border-radius:var(--radius);padding:2px 6px;font-size:.75rem">
-              <option value=""><?= h(t('arch_btn_reactivate')) ?></option>
+              <option value=""><?= h(t('arch_btn_move_to_folder')) ?></option>
               <?php foreach ($folderMap as $foldId => $fold) {
                   if ((int)$foldId === $fid) continue; ?>
               <option value="<?= $foldId ?>"><?= h($fold['name']) ?></option>
               <?php } ?>
             </select>
           </form>
+          <?php } ?>
           <form method="post" action="?action=delete_liga" style="display:inline"
                 onsubmit="return confirm('<?= h(addslashes(t('dash_confirm_delete', ['name' => $l['name']]))) ?>')">
             <input type="hidden" name="liga_id" value="<?= (int)$l['id'] ?>">

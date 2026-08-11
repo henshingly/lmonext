@@ -2,7 +2,7 @@
 /**
  * Project: LMOnext
  * Filename: lang/admin/de.php
- * Fileversion: 1.16.1
+ * Fileversion: 1.23.0
  *
  * PHP version 8.2
  *
@@ -32,6 +32,12 @@ return [
     'tipp_tab_newsletter'     => 'Newsletter/Reminder',
     'tipp_tab_userverwaltung' => 'Userverwaltung',
     'tipp_tab_optionen'       => 'Optionen',
+    'tipp_tab_anzeige'        => 'Anzeigen/Darstellung',
+    'tipp_anzeige_hinweis'    => 'Hier legst du fest, wie bestimmte Tippspiel-Bereiche für Besucher angezeigt werden.',
+    'tipp_label_einsicht_oeffentlich'     => 'Tippeinsicht öffentlich',
+    'tipp_label_einsicht_oeffentlich_tip' => 'Wenn aktiviert, kann jeder Besucher die Tippeinsicht ohne Anmeldung als Tipper sehen. Sonst nur eingeloggte Tipper.',
+    'tipp_label_spielregeln_anzeigen'     => 'Spielregeln-Link anzeigen',
+    'tipp_label_spielregeln_anzeigen_tip' => 'Zeigt einen "Spielregeln"-Reiter mit einer Erklärungsseite (Anleitung, Punkteverteilung, Haftungsausschluss) neben Tippabgabe/Tippeinsicht/Rangliste/Gesamtübersicht.',
     'tipp_placeholder_text_auswertung'     => 'Hier entstehen die Ranglisten (Einzel- und Teamwertung), sobald Tipps und Ergebnisse vorliegen.',
     'tipp_placeholder_text_newsletter'     => 'Hier entsteht der Mailversand: Newsletter an Alle, Tipp-Reminder und persönliche E-Mails an einzelne Tipper.',
     'tipp_placeholder_text_userverwaltung' => 'Hier entsteht die Verwaltung der Tipper-Konten: bearbeiten, löschen, neu anlegen, inkl. Team-Zuordnung.',
@@ -150,6 +156,15 @@ return [
     'tipp_label_pkt_tendenz_treffer' => 'richtige Tendenz getippt',
     'tipp_punkte_suffix'            => 'Punkte',
     'tipp_flash_settings_saved'     => 'Einstellungen gespeichert.',
+    'tipp_flash_nachtragen_saved'   => 'Tipps nachgetragen.',
+    'tipp_nachtragen_link'          => 'Tipps nachtragen',
+    'tipp_nachtragen_titel'         => 'Tipps nachtragen',
+    'tipp_nachtragen_hinweis'       => 'Trägt Tipps für diesen Tipper ein - unabhängig von der sonst geltenden Abgabefrist, auch nach Anpfiff oder Abpfiff der Partie. Gedacht für Tipper, die ihren Tipp rechtzeitig vor Anpfiff per Mail geschickt haben, statt selbst über die Website zu tippen.',
+    'tipp_nachtragen_kein_abo'      => 'Dieser Tipper hat keine Liga abonniert - erst ein Liga-Abo im Konto des Tippers einrichten, dann können hier Tipps nachgetragen werden.',
+    'tipp_col_tipp'                 => 'Tipp',
+    'tipp_col_joker'                => 'Joker',
+    'tipp_spieltag_n'               => '{n}. Spieltag',
+    'tipp_kein_spieltag'            => 'Für diesen Spieltag liegen keine Spiele vor.',
     'tipp_label_abgabe_minuten'         => 'Tippabgabe bis',
     'tipp_minuten_suffix'               => 'Minuten vor dem Anpfiff',
     'tipp_label_abgabeschluss_ohne_termin' => 'Tippabgabeschluss wenn kein Anstoßtermin eingegeben',
@@ -436,6 +451,8 @@ return [
     'sp_status_nv'                   => 'n.V. (nach Verlängerung)',
     'sp_placeholder_venue'           => '📍 Spielort',
     'sp_placeholder_report_link'     => '🔗 Link zum Spielbericht (optional)',
+    'sp_label_saetze'                => 'Sätze',
+    'sp_btn_satz_add'                => 'Weiteren Satz hinzufügen',
     'sp_btn_add_pair'                => '＋ Paarung hinzufügen',
     'sp_btn_save_round'              => '💾 Runde speichern',
     'sp_next_round'                  => 'Weiter: Runde {n} →',
@@ -570,6 +587,7 @@ return [
     'arch_count_subfolders'     => ', {n} Unterordner',
     'arch_confirm_delete_folder'=> 'Ordner löschen?',
     'arch_btn_reactivate'       => '↩ Reaktivieren',
+    'arch_btn_move_to_folder'   => 'In anderen Ordner verschieben...',
     'arch_btn_new_folder'       => '📁 Neuer Ordner',
     'arch_btn_missing_results_one'  => '⚠️ 1 Liga mit fehlenden Ergebnissen',
     'arch_btn_missing_results_many' => '⚠️ {n} Ligen mit fehlenden Ergebnissen',
@@ -691,6 +709,8 @@ return [
     'ls_tab_spieltage'     => 'Spieltags- und Spiel-Anzahl',
 
     'ls_label_liga_name'   => 'Name der Liga',
+    'ls_label_sportart'    => 'Sportart',
+    'ls_hinweis_keine_unentschieden' => 'Hinweis: Bei dieser Sportart gibt es keine Unentschieden.',
     'ls_label_alt_pkt'     => 'Alternative für Pkt.',
     'ls_label_alt_tore'    => 'Alternative für Tore',
     'ls_label_dec_pkt'     => 'Kommastellen Pkt.',
@@ -875,6 +895,8 @@ return [
     'imp_review_item'         => '{import} → ähnelt vorhandenem Team {db} (ID {id}).',
     'imp_review_item_multi'   => '{import} → ähnelt {n} vorhandenen Teams.',
     'imp_review_select_label' => 'Team aus der DB übernehmen:',
+    'imp_review_sportart_label' => 'Sportart dieser Liga:',
+    'imp_review_erkannt' => 'erkannt',
     'imp_review_option_new'   => '– Kein passendes Team – neues Team anlegen –',
     'imp_review_db_details'   => 'Kurz: {kurz} · Mittel: {mittel}',
     'imp_review_btn_confirm'  => 'Import fortsetzen',

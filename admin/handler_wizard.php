@@ -2,7 +2,7 @@
 /**
  * Project: LMOnext
  * Filename: handler_wizard.php
- * Fileversion: 1.3.2
+ * Fileversion: 1.4.0
  *
  * PHP version 8.2
  *
@@ -59,6 +59,13 @@ if ($action === 'create_liga') {
     if ($step === 2 && $_SERVER['REQUEST_METHOD'] === 'POST') {
         $name    = trim($_POST['liga_name'] ?? '');
         $type    = (int)($_POST['liga_type'] ?? 0);
+        // Sportart (Beitrag: Torsten Hofmann für das Sport-Profile-Feature,
+        // hier bereits in Schritt 1 statt erst nachträglich in den
+        // Ligaeinstellungen wählbar).
+        $sportType = trim($_POST['sport_type'] ?? 'football');
+        if (!in_array($sportType, ['football', 'volleyball', 'icehockey', 'basketball', 'handball', 'badminton'], true)) {
+            $sportType = 'football';
+        }
         // Liga und KO haben getrennte Felder (team_count_liga/team_count_ko),
         // damit ein einzelner gemeinsamer Feldname nicht durch das jeweils
         // andere (unsichtbare) Feld überschrieben werden kann.
@@ -67,7 +74,7 @@ if ($action === 'create_liga') {
             : max(2, min(256, (int)($_POST['team_count_liga'] ?? 2)));
         $rndCnt  = ($type === 1) ? max(1, (int)($_POST['round_count'] ?? 1)) : 0;
         if ($name === '') { flash(t('wiz_flash_name_required'), 'error'); redirect('?action=create_liga&step=1'); }
-        $_SESSION['wiz'] = ['name'=>$name,'type'=>$type,'team_count'=>$teamCnt,'round_count'=>$rndCnt,'teams'=>[],'spieltage'=>[]];
+        $_SESSION['wiz'] = ['name'=>$name,'type'=>$type,'sport_type'=>$sportType,'team_count'=>$teamCnt,'round_count'=>$rndCnt,'teams'=>[],'spieltage'=>[]];
         redirect('?action=create_liga&step=2');
     }
     if ($step === 3 && !isset($_GET['regen']) && $_SERVER['REQUEST_METHOD'] === 'POST') {
@@ -173,7 +180,7 @@ if ($action === 'create_liga') {
         if (!empty($wiz['tpl_options'])) {
             $wiz['options'] = array_merge($wiz['tpl_options'], $wiz['options'] ?? []);
         }
-        $result = createLigaInDB($wiz['name'], $wiz['type'], $wiz['teams'], $wiz['spieltage'], $wiz['options'] ?? []);
+        $result = createLigaInDB($wiz['name'], $wiz['type'], $wiz['teams'], $wiz['spieltage'], $wiz['options'] ?? [], $wiz['sport_type'] ?? null);
         unset($_SESSION['wiz']);
         flash($result['msg'], $result['ok'] ? 'success' : 'error');
         redirect($result['ok'] ? '?action=liga_detail&id='.$result['liga_id'] : '?action=create_liga&step=1');

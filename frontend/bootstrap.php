@@ -2,7 +2,7 @@
 /**
  * Project: LMOnext
  * Filename: bootstrap.php
- * Fileversion: 1.6.1
+ * Fileversion: 1.7.0
  *
  * PHP version 8.2
  *
@@ -146,6 +146,18 @@ require_once __DIR__ . '/template_engine.php';
 $activeTemplateDefault = getAdminSetting('active_template', DEFAULT_TEMPLATE);
 $allowTemplateSwitch   = getAdminSetting('allow_template_switch', '0') === '1';
 $activeTemplate        = resolveActiveTemplate($activeTemplateDefault, $allowTemplateSwitch);
+
+// ── Sport-Profile (Beitrag: Torsten Hofmann) - müssen VOR data_liga.php
+// geladen sein, da StandingsTrait/RenderViewsTrait (Teil der Kette dort)
+// LMOnext\Sport\SportRegistry referenzieren ─────────────────────────────────
+require_once dirname(__DIR__) . '/src/Sport/SportProfile.php';
+require_once dirname(__DIR__) . '/src/Sport/SportRegistry.php';
+require_once dirname(__DIR__) . '/src/Sport/FootballProfile.php';
+require_once dirname(__DIR__) . '/src/Sport/VolleyballProfile.php';
+require_once dirname(__DIR__) . '/src/Sport/IceHockeyProfile.php';
+require_once dirname(__DIR__) . '/src/Sport/BasketballProfile.php';
+require_once dirname(__DIR__) . '/src/Sport/HandballProfile.php';
+require_once dirname(__DIR__) . '/src/Sport/BadmintonProfile.php';
 
 // ── Datenfunktionen (Abfragen) ────────────────────────────────────────────────
 require_once __DIR__ . '/data_home.php';

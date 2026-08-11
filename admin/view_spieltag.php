@@ -2,7 +2,7 @@
 /**
  * Project: LMOnext
  * Filename: view_spieltag.php
- * Fileversion: 1.3.3
+ * Fileversion: 1.4.0
  *
  * PHP version 8.2
  *
@@ -523,6 +523,25 @@ $tickerText  = $spieltagData['tickertext'] ?? '';
 <?php
         } else {
             // ── Liga-Modus: feste Tabelle (unverändert) ──────────────────────
+            // Sport-Profil (Beitrag: Torsten Hofmann) - eigenständige Abfrage
+            // statt LigaService::getLigaSportType(), da der Adminbereich die
+            // Liga-Trait-Kette bewusst nicht einbindet (siehe "Tipps
+            // nachtragen"-Feature). Nur für Sportarten mit eigenen
+            // Ergebnisfeldern (aktuell Volleyball: Sätze) wird unter jeder
+            // Zeile eine zusätzliche Satz-Eingabe eingeblendet.
+            $sSportType = $db->prepare('SELECT sport_type FROM ' . tbl('liga') . ' WHERE id=?');
+            $sSportType->execute([$lid]);
+            $ligaSportType = (string)($sSportType->fetchColumn() ?: 'football');
+            $sportProfileForForm = \LMOnext\Sport\SportRegistry::get($ligaSportType);
+            $resultFormFieldsAll = $sportProfileForForm->getResultFormFields();
+            // Nur "dynamic-score-list"-Felder (aktuell: Sätze bei Volleyball)
+            // werden hier als Satz-Eingabe gerendert - Fußballs eigenes Feld
+            // ("Halbzeit", Typ "score-pair") ist ein anderer UI-Baustein und
+            // absichtlich nicht Teil dieser Änderung.
+            $resultFormFields = array_values(array_filter(
+                $resultFormFieldsAll,
+                static fn(array $f) => ($f['type'] ?? '') === 'dynamic-score-list'
+            ));
             ?>
         <!-- Einheitliches Formular: Paarungen + Ergebnisse + Anstoß -->
         <form method="post" action="?action=save_partie_teams">
@@ -548,7 +567,14 @@ $tickerText  = $spieltagData['tickertext'] ?? '';
                     $atVal = str_replace(' ', 'T', substr($p['zeit'], 0, 16));
                 }
                 $status  = (int)($p['status'] ?? 0);
-                $bericht = $p['bericht_url'] ?? ''; ?>
+                $bericht = $p['bericht_url'] ?? '';
+                $existingSets = [];
+                if (!empty($p['extra_data'])) {
+                    $decoded = json_decode((string)$p['extra_data'], true);
+                    if (is_array($decoded) && !empty($decoded['sets'])) {
+                        $existingSets = $decoded['sets'];
+                    }
+                } ?>
             <tr>
               <td>
                 <select name="heim_<?= (int)$p['id'] ?>"
@@ -604,10 +630,57 @@ $tickerText  = $spieltagData['tickertext'] ?? '';
                               border-radius:var(--radius);padding:4px 8px;font-size:.78rem">
               </td>
             </tr>
+<?php       if (!empty($resultFormFields)) { ?>
+            <tr class="sport-satz-row">
+              <td colspan="6" style="padding:2px 8px 10px">
+                <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;font-size:.8rem;color:var(--muted)">
+                  <span><?= h(t('sp_label_saetze')) ?>:</span>
+                  <span class="satz-eingaben" data-partie="<?= (int)$p['id'] ?>">
+<?php
+                    $satzCount = max(3, count($existingSets));
+                    for ($si = 0; $si < $satzCount; $si++) {
+                        $sh = $existingSets[$si]['h'] ?? '';
+                        $sg = $existingSets[$si]['g'] ?? ''; ?>
+                    <span class="satz-eingabe" style="display:inline-flex;align-items:center;gap:2px;margin-right:6px">
+                      <?= $si + 1 ?>.
+                      <input type="number" name="satz_h_<?= (int)$p['id'] ?>[]" value="<?= h((string)$sh) ?>" min="0" max="99"
+                             style="width:38px;text-align:center;background:var(--bg);border:1px solid var(--border);color:var(--text);border-radius:var(--radius);padding:3px 4px;font-size:.82rem">
+                      :
+                      <input type="number" name="satz_g_<?= (int)$p['id'] ?>[]" value="<?= h((string)$sg) ?>" min="0" max="99"
+                             style="width:38px;text-align:center;background:var(--bg);border:1px solid var(--border);color:var(--text);border-radius:var(--radius);padding:3px 4px;font-size:.82rem">
+                    </span>
+<?php               } ?>
+                  </span>
+                  <button type="button" class="btn-satz-add" data-partie="<?= (int)$p['id'] ?>"
+                          style="background:var(--bg);border:1px solid var(--border);color:var(--text);border-radius:var(--radius);padding:3px 9px;font-size:.85rem;cursor:pointer" title="<?= h(t('sp_btn_satz_add')) ?>">+</button>
+                </div>
+              </td>
+            </tr>
+<?php       } ?>
 <?php
             } ?>
           </tbody>
         </table>
+<?php if (!empty($resultFormFields)) { ?>
+        <script>
+document.querySelectorAll('.btn-satz-add').forEach(function (btn) {
+    btn.addEventListener('click', function () {
+        var pid = btn.getAttribute('data-partie');
+        var container = document.querySelector('.satz-eingaben[data-partie="' + pid + '"]');
+        if (!container) { return; }
+        var nr = container.querySelectorAll('.satz-eingabe').length + 1;
+        var wrap = document.createElement('span');
+        wrap.className = 'satz-eingabe';
+        wrap.style.cssText = 'display:inline-flex;align-items:center;gap:2px;margin-right:6px';
+        wrap.innerHTML = nr + '. '
+            + '<input type="number" name="satz_h_' + pid + '[]" min="0" max="99" style="width:38px;text-align:center;background:var(--bg);border:1px solid var(--border);color:var(--text);border-radius:var(--radius);padding:3px 4px;font-size:.82rem">'
+            + ' : '
+            + '<input type="number" name="satz_g_' + pid + '[]" min="0" max="99" style="width:38px;text-align:center;background:var(--bg);border:1px solid var(--border);color:var(--text);border-radius:var(--radius);padding:3px 4px;font-size:.82rem">';
+        container.appendChild(wrap);
+    });
+});
+        </script>
+<?php } ?>
         <div style="display:flex;gap:10px;flex-wrap:wrap">
           <button type="submit" class="btn btn-success"><?= h(t('sp_btn_save_all')) ?></button>
           <?php if ($next !== null) { ?><a href="?action=spieltag&liga_id=<?= $lid ?>&nr=<?= $next ?>" class="btn btn-muted"><?= h(t('sp_next_matchday', ['n' => $next])) ?></a><?php } ?>

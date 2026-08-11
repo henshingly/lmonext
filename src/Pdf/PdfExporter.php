@@ -9,7 +9,7 @@ final class PdfExporter
 /**
  * Project: LMOnext
  * Filename: frontend/pdf_export.php
- * Fileversion: 1.8.2
+ * Fileversion: 1.9.0
  *
  * PHP version 8.2
  *
@@ -1388,12 +1388,21 @@ public static function exportErgebnissePdf(string $ligaName, array $sectionSpecs
     $allTeamIds = [];
     foreach ($sectionSpecs as $spec) {
         $partien = $spec['partien'];
+        // Sport-Profil (Beitrag: Torsten Hofmann) - $spec['ligaId'] ist ein
+        // neuer, optionaler Schlüssel; fehlt er, wird ganz wie bisher mit
+        // "h_tore - g_tore" formatiert (100% rückwärtskompatibel).
+        $ligaIdForSpec = $spec['ligaId'] ?? null;
+        $sportProfile  = $ligaIdForSpec !== null ? \LMOnext\Liga\LigaService::sportProfile((int)$ligaIdForSpec) : null;
         $rows = [];
         foreach ($partien as $p) {
             $gespielt = $p['h_tore'] !== null && $p['g_tore'] !== null;
-            $ergebnis = $gespielt
-                ? $p['h_tore'] . ' - ' . $p['g_tore'] . statusSuffix($p)
-                : '- - -';
+            if ($gespielt && $sportProfile !== null) {
+                $ergebnis = $sportProfile->formatResult($p, true);
+            } elseif ($gespielt) {
+                $ergebnis = $p['h_tore'] . ' - ' . $p['g_tore'] . statusSuffix($p);
+            } else {
+                $ergebnis = '- - -';
+            }
             $heimId = (int)($p['heim_id'] ?? 0);
             $gastId = (int)($p['gast_id'] ?? 0);
             $rows[] = [

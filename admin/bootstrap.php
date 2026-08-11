@@ -2,7 +2,7 @@
 /**
  * Project: LMOnext
  * Filename: bootstrap.php
- * Fileversion: 1.10.3
+ * Fileversion: 1.12.0
  *
  * PHP version 8.2
  *
@@ -54,6 +54,23 @@ session_start();
 
 // ── Mehrsprachigkeit ─────────────────────────────────────────────────────────
 require_once dirname(__DIR__) . '/lang/i18n.php';
+
+// ── Sport-Profile (Beitrag: Torsten Hofmann) - bewusst NUR die Sport-Klassen,
+// NICHT die Liga-Trait-Kette (LigaService, StandingsTrait, ...): Torstens
+// Version band diese komplett in admin/bootstrap.php ein, was der bewussten
+// Trennung von Admin- und Frontend-Bootstrap widerspricht (getDB()/tbl() sind
+// hier komplett eigenständig definiert, siehe "Tipps nachtragen"-Feature).
+// Die Sport-Profile selbst sind zustandslos (kein DB-Zugriff im Konstruktor,
+// siehe src/Sport/INTEGRATION.md) und daher gefahrlos einbindbar.
+require_once dirname(__DIR__) . '/src/Sport/SportProfile.php';
+require_once dirname(__DIR__) . '/src/Sport/SportRegistry.php';
+require_once dirname(__DIR__) . '/src/Sport/FootballProfile.php';
+require_once dirname(__DIR__) . '/src/Sport/VolleyballProfile.php';
+require_once dirname(__DIR__) . '/src/Sport/IceHockeyProfile.php';
+require_once dirname(__DIR__) . '/src/Sport/BasketballProfile.php';
+require_once dirname(__DIR__) . '/src/Sport/HandballProfile.php';
+require_once dirname(__DIR__) . '/src/Sport/BadmintonProfile.php';
+
 ensureAdminSettings(); // legt admin_settings ggf. an (Funktionsdefinition weiter unten, aber dank Hoisting hier schon nutzbar)
 getCurrentLanguage('admin', getAdminSetting('language', DEFAULT_LANGUAGE)); // ermittelt/persistiert Sprache; kann bei ?lang=xx redirecten
 
@@ -679,6 +696,33 @@ function ensureSpielstatusColumns() : void
         }
         if (!in_array('bericht_url', $cols, true)) {
             $db->exec('ALTER TABLE '.tbl('liga_partien').' ADD COLUMN `bericht_url` VARCHAR(500) NULL DEFAULT NULL');
+        }
+    } catch (Throwable) {}
+}
+
+/**
+ * On-demand-Migration für die Sport-Profile-Erweiterung (Beitrag: Torsten
+ * Hofmann) - sport_type auf liga, extra_data (Sätze/Drittel/Viertel) auf
+ * liga_partien. Bugfix: fehlte hier ursprünglich komplett - führte auf jeder
+ * Installation, die install.php seit der Erweiterung noch nicht erneut
+ * ausgeführt hatte, zu "Unknown column 'sport_type'" beim .l98-Import UND
+ * beim Öffnen der Liga-Einstellungen (admin/data_loader.php liest
+ * sport_type direkt, ohne eigene Absicherung). Analog zu
+ * ensureSpielstatusColumns() bewusst zentral hier statt einzeln in jedem
+ * Aufrufer geprüft.
+ */
+function ensureSportProfileColumns() : void
+{
+    static $done = false; if ($done) return; $done = true;
+    try {
+        $db = getDB();
+        $ligaCols = $db->query('SHOW COLUMNS FROM '.tbl('liga'))->fetchAll(PDO::FETCH_COLUMN);
+        if (!in_array('sport_type', $ligaCols, true)) {
+            $db->exec('ALTER TABLE '.tbl('liga')." ADD COLUMN `sport_type` VARCHAR(20) NOT NULL DEFAULT 'football' AFTER `archiv_folder_id`");
+        }
+        $partienCols = $db->query('SHOW COLUMNS FROM '.tbl('liga_partien'))->fetchAll(PDO::FETCH_COLUMN);
+        if (!in_array('extra_data', $partienCols, true)) {
+            $db->exec('ALTER TABLE '.tbl('liga_partien').' ADD COLUMN `extra_data` JSON NULL DEFAULT NULL AFTER `g_tore`');
         }
     } catch (Throwable) {}
 }

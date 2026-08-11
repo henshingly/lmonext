@@ -2,7 +2,7 @@
 /**
  * Project: LMOnext
  * Filename: view_liga_settings.php
- * Fileversion: 1.6.0
+ * Fileversion: 1.7.0
  *
  * PHP version 8.2
  *
@@ -22,6 +22,10 @@
         $o         = fn(string $k, string $d = '') => $opts[$k] ?? $d;
         $oc        = fn(string $k) => ($opts[$k] ?? '0') === '1';
         $isKO      = ($o('Type', '0') === '1');
+        // Sportart-Auswahl (Beitrag: Torsten Hofmann) - abschaltbar über eine
+        // globale Admin-Einstellung, damit reine Fußball-Installationen (wie
+        // der Standardfall) die Auswahl gar nicht erst sehen müssen.
+        $showSportType = getAdminSetting('show_sport_type', '1') === '1';
 
         // Tab-Definitionen je nach Liga-Typ
         $tabs = $isKO
@@ -74,6 +78,21 @@ if ($tab === 'grundwerte') { ?>
                        style="width:100%;max-width:340px;<?= $selSt ?>">
               </td>
             </tr>
+<?php if ($showSportType): ?>
+            <tr>
+              <td style="text-align:right;padding:7px 12px;font-size:.85rem;color:var(--muted)"><?= h(t('ls_label_sportart')) ?></td>
+              <td <?= $tdL ?>>
+                <select name="sport_type" style="<?= $selSt ?>" onchange="document.getElementById('sportart-draws-hinweis').style.display = (this.value !== 'football' && this.value !== 'handball') ? 'block' : 'none';">
+                  <?php foreach (\LMOnext\Sport\SportRegistry::all() as $sp) { ?>
+                  <option value="<?= h($sp->getKey()) ?>"<?= ($liga['sport_type'] ?? 'football') === $sp->getKey() ? ' selected' : '' ?>><?= h($sp->getLabel()) ?></option>
+                  <?php } ?>
+                </select>
+                <div id="sportart-draws-hinweis" style="display:<?= !in_array($liga['sport_type'] ?? 'football', ['football', 'handball'], true) ? 'block' : 'none' ?>;font-size:.75rem;color:var(--muted);margin-top:4px"><?= h(t('ls_hinweis_keine_unentschieden')) ?></div>
+              </td>
+            </tr>
+<?php else: ?>
+            <input type="hidden" name="sport_type" value="<?= h($liga['sport_type'] ?? 'football') ?>">
+<?php endif; ?>
 <?php if (!$isKO) { ?>
             <tr>
               <td style="text-align:right;padding:7px 12px;font-size:.85rem;color:var(--muted)"><?= h(t('ls_label_alt_pkt')) ?></td>

@@ -2,7 +2,7 @@
 /**
  * Project: LMOnext
  * Filename: frontend/data_liga.php
- * Fileversion: 3.0.6
+ * Fileversion: 3.0.7
  *
  * PHP version 8.2
  *
@@ -270,9 +270,9 @@ function getLigaTeamsListUncached(int $ligaId) : array
     return \LMOnext\Liga\LigaService::getLigaTeamsListUncached($ligaId);
 }
 
-function getAllLigaPartien(array $allSpieltage) : array
+function getAllLigaPartien(array $allSpieltage, ?int $ligaId = null) : array
 {
-    return \LMOnext\Liga\LigaService::getAllLigaPartien($allSpieltage);
+    return \LMOnext\Liga\LigaService::getAllLigaPartien($allSpieltage, $ligaId);
 }
 
 function computeStandings(array $teamsList, array $partien, array $ligaOptions, ?int $ligaId = null) : array

@@ -2,7 +2,7 @@
 /**
  * Project: LMOnext
  * Filename: addon/tipp/view_tippspiel.php
- * Fileversion: 1.0.1
+ * Fileversion: 1.4.0
  *
  * PHP version 8.2
  *
@@ -24,6 +24,7 @@ $tippTabs = [
     'newsletter'     => t('tipp_tab_newsletter'),
     'userverwaltung' => t('tipp_tab_userverwaltung'),
     'optionen'       => t('tipp_tab_optionen'),
+    'anzeige'        => t('tipp_tab_anzeige'),
 ];
 ?>
 
@@ -155,10 +156,122 @@ if ($tippTab === 'auswertung') { ?>
 // TAB: USERVERWALTUNG
 // ═══════════════════════════════════════════════════════════════════════
 } elseif ($tippTab === 'userverwaltung') {
+    $tippNachtragenId = isset($_GET['nachtragen']) ? (int)$_GET['nachtragen'] : null;
     $tippEditNick = $_GET['edit'] ?? null;
     $tippIsNew    = isset($_GET['new']);
 
-    if ($tippEditNick !== null || $tippIsNew) {
+    if ($tippNachtragenId !== null) {
+        // ── Tipps für einen Tipper nachtragen (auch nach Anpfiff/Abpfiff) ──
+        // Historisches Feature aus dem alten LMO: Tipper, die nicht rechtzeitig
+        // über die Website tippen konnten, schicken ihren Tipp per Mail VOR
+        // Anpfiff - der Admin trägt ihn hier nach, unabhängig von der sonst
+        // geltenden Abgabefrist (siehe tippSaveAbgabe()-Parameter $bypassDeadline).
+        $tippNachtragenUser = getTipperById($tippNachtragenId);
+        if ($tippNachtragenUser === null) {
+            echo '<p style="color:var(--red)">' . h(t('tipp_user_nicht_gefunden')) . '</p>';
+        } else {
+            // Nur Ligen zeigen, die DIESER Tipper tatsächlich abonniert hat -
+            // nicht einfach alle tippbaren Ligen (sonst könnte der Admin
+            // versehentlich Tipps in einer Liga nachtragen, die der Tipper nie
+            // gewählt hat).
+            $ntAboIds = getTipperAboLigaIds($tippNachtragenId);
+            $ntLigen = [];
+            if (!empty($ntAboIds)) {
+                $ph = implode(',', array_fill(0, count($ntAboIds), '?'));
+                $ntLigenStmt = getDB()->prepare('SELECT id, name FROM ' . tbl('liga') . ' WHERE id IN (' . $ph . ') ORDER BY name');
+                $ntLigenStmt->execute($ntAboIds);
+                $ntLigen = $ntLigenStmt->fetchAll();
+            }
+            $ntLigaId = (int)($_GET['nt_liga'] ?? ($ntLigen[0]['id'] ?? 0));
+            $ntLigaGueltig = in_array($ntLigaId, array_map('intval', array_column($ntLigen, 'id')), true);
+            if (!$ntLigaGueltig) {
+                $ntLigaId = (int)($ntLigen[0]['id'] ?? 0); // ungültige/manipulierte Liga-ID -> auf die erste abonnierte zurückfallen
+            }
+            $ntSpieltage = $ntLigaId > 0 ? adminTippGetSpieltage($ntLigaId) : [];
+            $ntMaxNr = 0;
+            foreach ($ntSpieltage as $st) { $ntMaxNr = max($ntMaxNr, (int)$st['nummer']); }
+            $ntSpieltagNr = (int)($_GET['nt_spieltag'] ?? 1);
+            if ($ntSpieltagNr < 1) { $ntSpieltagNr = 1; }
+            if ($ntMaxNr > 0 && $ntSpieltagNr > $ntMaxNr) { $ntSpieltagNr = $ntMaxNr; }
+            $ntSpieltag = null;
+            foreach ($ntSpieltage as $st) {
+                if ((int)$st['nummer'] === $ntSpieltagNr) { $ntSpieltag = $st; break; }
+            }
+            $ntPartien = $ntSpieltag !== null ? adminTippGetSpieltagPartien((int)$ntSpieltag['id']) : [];
+            $ntPartieIds = array_map('intval', array_column($ntPartien, 'id'));
+            $ntAbgabe = [];
+            if (!empty($ntPartieIds)) {
+                $ph = implode(',', array_fill(0, count($ntPartieIds), '?'));
+                $ntStmt = getDB()->prepare('SELECT * FROM ' . tbl('tipp_tipp') . ' WHERE tipper_id = ? AND partie_id IN (' . $ph . ')');
+                $ntStmt->execute(array_merge([$tippNachtragenId], $ntPartieIds));
+                foreach ($ntStmt->fetchAll() as $row) {
+                    $ntAbgabe[(int)$row['partie_id']] = $row;
+                }
+            }
+            ?>
+  <h2 style="margin-bottom:8px"><?= h(t('tipp_nachtragen_titel')) ?> – <?= h($tippNachtragenUser['nickname']) ?></h2>
+  <p style="color:var(--muted);font-size:.9rem;margin-bottom:16px"><?= h(t('tipp_nachtragen_hinweis')) ?></p>
+<?php if (empty($ntLigen)) { ?>
+  <p class="empty-msg"><?= h(t('tipp_nachtragen_kein_abo')) ?></p>
+<?php } else { ?>
+  <form method="get" action="?" style="margin-bottom:16px">
+    <input type="hidden" name="action" value="tippspiel">
+    <input type="hidden" name="tab" value="userverwaltung">
+    <input type="hidden" name="nachtragen" value="<?= $tippNachtragenId ?>">
+    <select name="nt_liga" onchange="this.form.submit()" style="<?= $inpSt ?>">
+<?php foreach ($ntLigen as $l) { ?>
+      <option value="<?= (int)$l['id'] ?>"<?= (int)$l['id'] === $ntLigaId ? ' selected' : '' ?>><?= h($l['name']) ?></option>
+<?php } ?>
+    </select>
+    <select name="nt_spieltag" onchange="this.form.submit()" style="<?= $inpSt ?>">
+<?php for ($n = 1; $n <= $ntMaxNr; $n++) { ?>
+      <option value="<?= $n ?>"<?= $n === $ntSpieltagNr ? ' selected' : '' ?>><?= h(t('tipp_spieltag_n', ['n' => $n])) ?></option>
+<?php } ?>
+    </select>
+  </form>
+<?php if (empty($ntPartien)) { ?>
+  <p class="empty-msg"><?= h(t('tipp_kein_spieltag')) ?></p>
+<?php } else { ?>
+  <form method="post" action="?action=save_tipp_nachtragen">
+    <input type="hidden" name="tipper_id" value="<?= $tippNachtragenId ?>">
+    <input type="hidden" name="liga_id" value="<?= $ntLigaId ?>">
+    <input type="hidden" name="spieltag_nr" value="<?= $ntSpieltagNr ?>">
+    <table style="width:100%;border-collapse:collapse;font-size:.87rem">
+      <tr style="border-bottom:1px solid var(--border)">
+        <th style="text-align:left;padding:6px 10px"><?= h(t('sp_col_heim')) ?></th>
+        <th style="text-align:left;padding:6px 10px"><?= h(t('sp_col_gast')) ?></th>
+        <th style="text-align:center;padding:6px 10px"><?= h(t('tipp_col_tipp')) ?></th>
+        <th style="text-align:center;padding:6px 10px"><?= h(t('tipp_col_joker')) ?></th>
+      </tr>
+<?php foreach ($ntPartien as $p) {
+    $pid = (int)$p['id'];
+    $vorhandenerTipp = $ntAbgabe[$pid] ?? null;
+    $heimName = $p['heim_name'] ?? $p['heim_label'] ?? '';
+    $gastName = $p['gast_name'] ?? $p['gast_label'] ?? ''; ?>
+      <tr style="border-bottom:1px solid var(--border)">
+        <td style="padding:6px 10px"><?= h($heimName) ?></td>
+        <td style="padding:6px 10px"><?= h($gastName) ?></td>
+        <td style="padding:6px 10px;text-align:center;white-space:nowrap">
+          <input type="number" name="heim[<?= $pid ?>]" min="0" inputmode="numeric" value="<?= $vorhandenerTipp !== null ? (int)$vorhandenerTipp['tipp_heim'] : '' ?>" style="<?= $inpSt ?>;width:45px;text-align:center">
+          :
+          <input type="number" name="gast[<?= $pid ?>]" min="0" inputmode="numeric" value="<?= $vorhandenerTipp !== null ? (int)$vorhandenerTipp['tipp_gast'] : '' ?>" style="<?= $inpSt ?>;width:45px;text-align:center">
+        </td>
+        <td style="padding:6px 10px;text-align:center">
+          <input type="radio" name="joker" value="<?= $pid ?>"<?= ($vorhandenerTipp !== null && (int)$vorhandenerTipp['ist_joker'] === 1) ? ' checked' : '' ?>>
+        </td>
+      </tr>
+<?php } ?>
+    </table>
+    <div style="padding-top:14px">
+      <button type="submit" class="btn btn-primary"><?= h(t('common_save')) ?></button>
+      <a href="?action=tippspiel&tab=userverwaltung" class="btn" style="margin-left:8px"><?= h(t('common_cancel')) ?></a>
+    </div>
+  </form>
+<?php } ?>
+<?php } ?>
+<?php
+        }
+    } elseif ($tippEditNick !== null || $tippIsNew) {
         // ── Bearbeiten / Neuanlegen ─────────────────────────────────────
         $tippUserRow = $tippIsNew ? null : getTipperByNickname($tippEditNick);
         if (!$tippIsNew && $tippUserRow === null) {
@@ -300,7 +413,8 @@ if ($tippTab === 'auswertung') { ?>
         <td style="padding:6px 10px"><?= h(trim(($u['vorname'] ?? '') . ' ' . ($u['nachname'] ?? ''))) ?></td>
         <td style="padding:6px 10px"><?= h($u['team_name'] ?? '') ?></td>
         <td style="padding:6px 10px"><?= h($u['letzter_tipp'] ?? '–') ?></td>
-        <td style="padding:6px 10px"><a href="?action=tippspiel&tab=userverwaltung&edit=<?= urlencode($u['nickname']) ?>"><?= h(t('common_edit')) ?></a></td>
+        <td style="padding:6px 10px"><a href="?action=tippspiel&tab=userverwaltung&edit=<?= urlencode($u['nickname']) ?>"><?= h(t('common_edit')) ?></a>
+          · <a href="?action=tippspiel&tab=userverwaltung&nachtragen=<?= (int)$u['id'] ?>"><?= h(t('tipp_nachtragen_link')) ?></a></td>
       </tr>
 <?php } } ?>
     </tbody>
@@ -638,5 +752,37 @@ if ($tippTab === 'auswertung') { ?>
     }
   </script>
 <?php }
-} ?>
+// ═══════════════════════════════════════════════════════════════════════
+// TAB: ANZEIGEN/DARSTELLUNG
+// ═══════════════════════════════════════════════════════════════════════
+} elseif ($tippTab === 'anzeige') {
+    $ts  = fn(string $k, string $d = '') => getTippSetting($k, $d);
+    $tsc = fn(string $k, string $d = '0') => getTippSetting($k, $d) === '1';
+    ?>
+  <h2 style="margin-bottom:8px"><?= h(t('tipp_tab_anzeige')) ?></h2>
+  <p style="color:var(--muted);font-size:.9rem;margin-bottom:16px"><?= h(t('tipp_anzeige_hinweis')) ?></p>
+  <form method="post" action="?action=save_tipp_anzeige">
+    <table style="width:100%;border-collapse:collapse">
+      <tr>
+        <td <?= $tdR ?>><?= h(t('tipp_label_einsicht_oeffentlich')) ?></td>
+        <td <?= $tdL ?>>
+          <label style="display:flex;align-items:center;gap:8px">
+            <input type="checkbox" name="einsicht_oeffentlich" value="1"<?= $tsc('anzeige_einsicht_oeffentlich', '0') ? ' checked' : '' ?>>
+            <span style="font-size:.82rem;color:var(--muted)"><?= h(t('tipp_label_einsicht_oeffentlich_tip')) ?></span>
+          </label>
+        </td>
+      </tr>
+      <tr>
+        <td <?= $tdR ?>><?= h(t('tipp_label_spielregeln_anzeigen')) ?></td>
+        <td <?= $tdL ?>>
+          <label style="display:flex;align-items:center;gap:8px">
+            <input type="checkbox" name="spielregeln_anzeigen" value="1"<?= $tsc('anzeige_spielregeln', '0') ? ' checked' : '' ?>>
+            <span style="font-size:.82rem;color:var(--muted)"><?= h(t('tipp_label_spielregeln_anzeigen_tip')) ?></span>
+          </label>
+        </td>
+      </tr>
+    </table>
+    <div style="padding-top:14px"><button type="submit" class="btn btn-primary"><?= h(t('common_save')) ?></button></div>
+  </form>
+<?php } ?>
 </div>

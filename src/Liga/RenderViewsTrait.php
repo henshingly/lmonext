@@ -2,7 +2,7 @@
 /**
  * Project: LMOnext
  * Filename: src/Liga/RenderViewsTrait.php
- * Fileversion: 1.6.0
+ * Fileversion: 1.10.0
  *
  * PHP version 8.2
  *
@@ -22,6 +22,34 @@ namespace LMOnext\Liga;
 trait RenderViewsTrait
 {
     /**
+     * Liefert das Sport-Profil für die angegebene Liga (Beitrag: Torsten
+     * Hofmann, siehe src/Sport/). Fallback auf Fußball, falls $ligaId nicht
+     * gesetzt ist (z.B. Ewige Tabelle, die mehrere Ligen mischt).
+     */
+    public static function sportProfile(?int $ligaId) : \LMOnext\Sport\SportProfile
+    {
+        if ($ligaId === null || $ligaId === 0) {
+            return \LMOnext\Sport\SportRegistry::get('football');
+        }
+        return \LMOnext\Sport\SportRegistry::get(self::getLigaSportType($ligaId));
+    }
+
+    /**
+     * Formatiert ein Spielergebnis über das Sport-Profil der Liga, statt
+     * "h_tore : g_tore" + statusSuffix() hart einzucodieren - für Fußball
+     * bleibt die Anzeige dadurch unverändert (FootballProfile bildet die
+     * bisherige Logik 1:1 nach), andere Sportarten bekommen ihre eigene
+     * Darstellung (z.B. "3 : 1 Sätze" bei Volleyball).
+     */
+    public static function formatScore(array $partie, ?int $ligaId = null, bool $withPeriods = false) : string
+    {
+        if ($partie['h_tore'] === null || $partie['g_tore'] === null) {
+            return '- : -';
+        }
+        return h(self::sportProfile($ligaId)->formatResult($partie, $withPeriods));
+    }
+
+    /**
      * Rendert eine einzelne Ergebniszeile über das Partial "partie_row"
      * (template/<aktiv>/partials/partie_row.tpl.php). $spieltagStart dient als
      * Datums-Fallback, falls die einzelne Partie keine eigene Zeit hat.
@@ -35,7 +63,11 @@ trait RenderViewsTrait
             : partieTeamNameWithLogo($partie, 'heim', $showLogos);
         $gast     = self::partieTeamNameWithLogo($partie, 'gast', $showLogos);
         $gespielt = $partie['h_tore'] !== null && $partie['g_tore'] !== null;
-        $score    = $gespielt ? h((string)$partie['h_tore']) . ' : ' . h((string)$partie['g_tore']) . h(self::statusSuffix($partie)) : '- : -';
+        // Sport-Profil-Anzeige (Beitrag: Torsten Hofmann) - _liga_id ist ein
+        // optionales, vom Aufrufer injizierbares Feld (siehe getAllLigaPartien()
+        // in SpieltagRepositoryTrait.php); fehlt es, wird auf 'football'
+        // zurückgefallen (bisheriges Verhalten, 100% rückwärtskompatibel).
+        $score    = self::formatScore($partie, $partie['_liga_id'] ?? null, true);
         $datum    = h(self::partieZeitDisplay($partie, $spieltagStart));
         $hId      = (int)($partie['heim_id'] ?? 0);
         $gId      = (int)($partie['gast_id'] ?? 0);
@@ -402,7 +434,7 @@ trait RenderViewsTrait
     {
         $opts      = self::getLigaOptions($ligaId);
         $teams     = self::getLigaTeamsList($ligaId);
-        $partien   = self::getAllLigaPartien($allSpieltage);
+        $partien   = self::getAllLigaPartien($allSpieltage, $ligaId);
         $maxNr     = self::getMaxSpieltagNummer($allSpieltage);
 
         $nr = $uptoSpieltag;
@@ -436,6 +468,20 @@ trait RenderViewsTrait
         };
 
         $rows      = self::computeStandings($teams, $partienForMode, $opts, $ligaId, $csMode, $nr);
+
+        // Dynamische Tabellenspalten (Beitrag: Torsten Hofmann, Vorbild
+        // volleyball-bundesliga.de) - Sportarten mit eigenen Darstellungs-
+        // modi (aktuell nur Volleyball: kurz/mittel/vollständig) bekommen
+        // eine eigene Tabellendarstellung mit sportartspezifischen Spalten
+        // (3:0/3:1/3:2-Siege, Ballquotient, ...) statt der normalen
+        // Sp/S/U/N/Tore/Diff/Pkt-Tabelle. Fußball & alle anderen Sportarten
+        // ohne eigene Modi (leeres getDisplayModes()) nutzen unverändert
+        // die bestehende Logik unten.
+        $sportProfile = self::sportProfile($ligaId);
+        if (!empty($sportProfile->getDisplayModes())) {
+            return self::renderDynamicStandingsTable($rows, $sportProfile, $ligaId, $opts, $nr, $maxNr, $tableMode);
+        }
+
         $favTeamId = self::resolveTeamNumberToId($ligaId, (int)($opts['favTeam'] ?? 0));
         $totalTeams = count($rows);
         $showLogos  = ($opts['ShowLogos'] ?? '0') === '1';
@@ -506,6 +552,137 @@ trait RenderViewsTrait
      * Leiste (Beitrag: Torsten Hofmann, hier um die Spieltag-Auswahl $nr
      * ergänzt, damit sie beim Moduswechsel erhalten bleibt).
      */
+    /**
+     * Tabelle mit sportartspezifischen, umschaltbaren Spalten (Beitrag:
+     * Torsten Hofmann, Vorbild volleyball-bundesliga.de: "Tabellendarstellung:
+     * kurz | mittel | vollständig"). Wird von renderStandingsView() nur für
+     * Sportarten mit eigenen Darstellungsmodi (SportProfile::getDisplayModes())
+     * aufgerufen - Fußball bleibt komplett unberührt. Baut die Tabelle als
+     * eigenständiges HTML statt über renderPartial('standings_row', ...),
+     * da die Spaltenzahl/-reihenfolge hier variabel ist. Nutzt dieselben
+     * CSS-Klassen wie die normale Tabelle (card/table-scroll/standings-table/
+     * st-*), damit sie optisch identisch aussieht.
+     */
+    private static function renderDynamicStandingsTable(array $rows, \LMOnext\Sport\SportProfile $sportProfile, int $ligaId, array $opts, int $nr, int $maxNr, string $tableMode) : string
+    {
+        $modes = $sportProfile->getDisplayModes(); // z.B. ['short','medium','long']
+        $tmode = $_GET['tmode'] ?? $modes[0];
+        if (!in_array($tmode, $modes, true)) {
+            $tmode = $modes[0];
+        }
+        $columns = $sportProfile->getStandingsColumnsForMode($tmode);
+
+        $favTeamId   = self::resolveTeamNumberToId($ligaId, (int)($opts['favTeam'] ?? 0));
+        $footnoteNrs = self::assignStrafFootnotes($rows);
+        $totalTeams  = count($rows);
+
+        $nrParam = ($nr > 0 && $nr < $maxNr) ? ('&nr=' . $nr) : '';
+
+        // "Tabellendarstellung: kurz mittel vollständig" - Klartext-Links,
+        // aktiver Modus fett, exakt wie im Vorbild.
+        $modeLabels = ['short' => 'kurz', 'medium' => 'mittel', 'long' => 'vollständig'];
+        $darstellungLinks = [];
+        foreach ($modes as $m) {
+            $label = h($modeLabels[$m] ?? $m);
+            $url = '?id=' . $ligaId . '&view=tabelle&table=' . $tableMode . $nrParam . '&tmode=' . $m;
+            $darstellungLinks[] = $m === $tmode
+                ? '<strong>' . $label . '</strong>'
+                : '<a href="' . h($url) . '">' . $label . '</a>';
+        }
+        $darstellungHtml = '<p class="standings-tmode-nav">' . h(tf('liga_standings_darstellung')) . ': '
+                          . implode(' ', $darstellungLinks) . '</p>';
+
+        $theadHtml = '<th class="st-platz">' . h(tf('liga_standings_col_platz')) . '</th><th class="st-team">' . h(tf('liga_standings_col_team')) . '</th>';
+        foreach ($columns as $col) {
+            if ($tmode === 'long') {
+                $theadHtml .= '<th class="' . h($col['class']) . ' st-diag"><span>' . h($col['label']) . '</span></th>';
+            } else {
+                $theadHtml .= '<th class="' . h($col['class']) . '">' . h($col['label']) . '</th>';
+            }
+        }
+
+        $rowsHtml = '';
+        foreach ($rows as $i => $r) {
+            $markerColor = self::computeStandingsMarkerColor($i, $totalTeams, $opts);
+            $tid = (int)$r['id'];
+            $rowStyle = $markerColor !== '' ? ' style="border-left-color:' . h($markerColor) . '"' : '';
+            $teamClass = ($favTeamId !== null && $r['id'] === $favTeamId) ? ' fav-team' : '';
+
+            $rowsHtml .= '<tr' . $rowStyle . '>'
+                       . '<td class="st-platz">' . ($i + 1) . '</td>'
+                       . '<td class="st-team' . $teamClass . '">' . h($r['name']) . self::renderStrafHinweis($r, $footnoteNrs[$tid] ?? 0) . '</td>';
+            foreach ($columns as $col) {
+                $rowsHtml .= '<td class="' . h($col['class']) . '">' . h(self::resolveStandingsCell($r, $col['key'])) . '</td>';
+            }
+            $rowsHtml .= '</tr>';
+        }
+
+        $spieltagNav = self::renderStandingsSpieltagNav($ligaId, $nr, $maxNr, $tableMode);
+        $modeNav     = self::renderStandingsModeNav($ligaId, $tableMode, $nr, $maxNr);
+
+        return $modeNav . '<div class="card">' . $spieltagNav
+             . '<div class="table-scroll"><table class="standings-table"><thead><tr>' . $theadHtml . '</tr></thead><tbody>' . $rowsHtml . '</tbody></table></div>'
+             . self::renderStrafFootnotes($rows, $footnoteNrs)
+             . $darstellungHtml
+             . $spieltagNav . '</div>';
+    }
+
+    /**
+     * Liefert den Anzeigewert einer dynamischen Tabellenspalte für eine
+     * Tabellenzeile (siehe renderDynamicStandingsTable()). Volleyball-
+     * spezifische Schlüssel (w30/w31/w32/... , bquot/bverh/squot/sverh,
+     * p3/p2/p1/p0) werden aus den von computeStandings() gelieferten
+     * Zusatzfeldern abgeleitet; unbekannte Schlüssel geben einen Leerstring
+     * zurück statt eines Fehlers, damit ein künftiges Sport-Profil mit
+     * anderen Spalten nicht crasht.
+     */
+    private static function resolveStandingsCell(array $r, string $key) : string
+    {
+        return match ($key) {
+            'sp'    => (string)$r['sp'],
+            's'     => (string)$r['s'],
+            'u'     => (string)$r['u'],
+            'n'     => (string)$r['n'],
+            'tore'  => $r['tore_h'] . ':' . $r['tore_g'],
+            'diff'  => (static function () use ($r) : string {
+                $d = $r['tore_h'] - $r['tore_g'];
+                return ($d > 0 ? '+' : '') . $d;
+            })(),
+            'pkt'   => (string)$r['pkt'],
+            'w30'   => (string)($r['w30'] ?? 0),
+            'w31'   => (string)($r['w31'] ?? 0),
+            'w32'   => (string)($r['w32'] ?? 0),
+            'l23'   => (string)($r['l23'] ?? 0),
+            'l13'   => (string)($r['l13'] ?? 0),
+            'l03'   => (string)($r['l03'] ?? 0),
+            // "3-Punkte-Erfolge" (3:0+3:1), "2-Punkte-Erfolg" (3:2),
+            // "1-Punkt-Niederlage" (2:3), "0-Punkte-Niederlagen" (1:3+0:3) -
+            // Zusammenfassung der Satzergebnisse nach Punktwert.
+            'p3'    => (string)(($r['w30'] ?? 0) + ($r['w31'] ?? 0)),
+            'p2'    => (string)($r['w32'] ?? 0),
+            'p1'    => (string)($r['l23'] ?? 0),
+            'p0'    => (string)(($r['l13'] ?? 0) + ($r['l03'] ?? 0)),
+            'bquot' => self::formatQuotient($r['balls_h'] ?? 0, $r['balls_g'] ?? 0),
+            'bverh' => ($r['balls_h'] ?? 0) . ':' . ($r['balls_g'] ?? 0),
+            'squot' => self::formatQuotient($r['tore_h'] ?? 0, $r['tore_g'] ?? 0),
+            'sverh' => $r['tore_h'] . ':' . $r['tore_g'],
+            default => '',
+        };
+    }
+
+    /**
+     * Quotient zweier Werte, deutsches Zahlenformat mit 3 Nachkommastellen
+     * (Vorbild volleyball-bundesliga.de: "1,191"). 0:0 ergibt "0,000" statt
+     * einer Division durch Null.
+     */
+    private static function formatQuotient(int $a, int $b) : string
+    {
+        if ($b === 0) {
+            return $a === 0 ? '0,000' : '∞';
+        }
+        return number_format($a / $b, 3, ',', '');
+    }
+
     private static function renderStandingsModeNav(int $ligaId, string $activeMode, int $nr, int $maxNr) : string
     {
         $modes = [
@@ -557,22 +734,40 @@ trait RenderViewsTrait
     {
         $teams     = self::getLigaTeamsList($ligaId);
         $showLogos = (self::getLigaOptions($ligaId)['ShowLogos'] ?? '0') === '1';
-    
+        // Team-Auswahl sportartabhängig (auf Wunsch: Dropdown nur bei
+        // Volleyball, alle anderen Sportarten behalten die bisherige
+        // Sidebar-Liste bei) - Vorbild für das Dropdown: Torsten Hofmanns
+        // Vorschlag, hier an mein Kartenlayout angepasst statt 1:1 übernommen.
+        $useDropdownPicker = self::getLigaSportType($ligaId) === 'volleyball';
+
         $sidebarHtml = '';
-        foreach ($teams as $t) {
-            $sidebarHtml .= renderPartial('team_sidebar_item', [
-                'ActiveClass' => ((int)$t['id'] === $selectedTeamId) ? ' team-sidebar-active' : '',
-                'LigaId'      => $ligaId,
-                'TeamId'      => (int)$t['id'],
-                'Logo'        => self::renderTeamLogoImg((int)$t['id'], $showLogos),
-                'Kurz'        => h($t['mittel'] !== '' ? $t['mittel'] : $t['name']),
-            ]);
+        if ($useDropdownPicker) {
+            $sidebarHtml = '<select onchange="if(this.value)window.location.href=this.value" class="schedule-picker-select">'
+                         . '<option value="">' . h(tf('liga_schedule_pick_team')) . '</option>';
+            foreach ($teams as $t) {
+                $tid   = (int)$t['id'];
+                $url   = 'liga.php?id=' . $ligaId . '&view=spielplaene&team=' . $tid;
+                $sel   = $tid === $selectedTeamId ? ' selected' : '';
+                $label = h($t['mittel'] !== '' ? $t['mittel'] : $t['name']);
+                $sidebarHtml .= '<option value="' . $url . '"' . $sel . '>' . $label . '</option>';
+            }
+            $sidebarHtml .= '</select>';
+        } else {
+            foreach ($teams as $t) {
+                $sidebarHtml .= renderPartial('team_sidebar_item', [
+                    'ActiveClass' => ((int)$t['id'] === $selectedTeamId) ? ' team-sidebar-active' : '',
+                    'LigaId'      => $ligaId,
+                    'TeamId'      => (int)$t['id'],
+                    'Logo'        => self::renderTeamLogoImg((int)$t['id'], $showLogos),
+                    'Kurz'        => h($t['mittel'] !== '' ? $t['mittel'] : $t['name']),
+                ]);
+            }
         }
     
         if ($selectedTeamId === null) {
             $contentHtml = '<p class="empty-msg">' . h(tf('liga_schedule_pick_team')) . '</p>';
         } else {
-            $partien = self::getAllLigaPartien($allSpieltage);
+            $partien = self::getAllLigaPartien($allSpieltage, $ligaId);
             $rowsHtml = '';
             foreach ($partien as $p) {
                 $hId = (int)($p['heim_id'] ?? 0);
@@ -581,9 +776,7 @@ trait RenderViewsTrait
                     continue;
                 }
                 $gespielt = $p['h_tore'] !== null && $p['g_tore'] !== null;
-                $score    = $gespielt
-                    ? h((string)$p['h_tore']) . ' : ' . h((string)$p['g_tore']) . h(self::statusSuffix($p))
-                    : '- : -';
+                $score    = self::formatScore($p, $p['_liga_id'] ?? $ligaId, true);
                 $heimRaw = self::partieTeamName($p, 'heim');
                 $gastRaw = self::partieTeamName($p, 'gast');
                 $rowsHtml .= renderPartial('team_schedule_row', [
@@ -600,7 +793,10 @@ trait RenderViewsTrait
             }
             $contentHtml = renderPartial('team_schedule_table', ['Rows' => $rowsHtml]) . self::renderH2hModalAssets();
         }
-    
+
+        if ($useDropdownPicker) {
+            return '<div class="card schedule-picker-card">' . $sidebarHtml . '</div><div class="card">' . $contentHtml . '</div>';
+        }
         return renderPartial('team_schedule_view', [
             'Sidebar' => $sidebarHtml,
             'Content' => $contentHtml,
@@ -616,7 +812,7 @@ trait RenderViewsTrait
     {
         $opts      = self::getLigaOptions($ligaId);
         $teams     = self::getLigaTeamsList($ligaId);
-        $partien   = self::getAllLigaPartien($allSpieltage);
+        $partien   = self::getAllLigaPartien($allSpieltage, $ligaId);
         $standing  = self::computeStandings($teams, $partien, $opts, $ligaId);
         $favTeamId = self::resolveTeamNumberToId($ligaId, (int)($opts['favTeam'] ?? 0));
         $showLogos = ($opts['ShowLogos'] ?? '0') === '1';
@@ -668,7 +864,7 @@ trait RenderViewsTrait
                 if ($p === null || $p['h_tore'] === null || $p['g_tore'] === null) {
                     $cellsHtml .= renderPartial('kreuz_cell', $cellVars + ['CellClass' => $favClass, 'Content' => '']);
                 } else {
-                    $content = h((string)$p['h_tore']) . ':' . h((string)$p['g_tore']) . h(self::statusSuffix($p));
+                    $content = self::formatScore($p, $p['_liga_id'] ?? $ligaId, false);
                     $cellsHtml .= renderPartial('kreuz_cell', $cellVars + ['CellClass' => $favClass, 'Content' => $content]);
                 }
             }
@@ -894,7 +1090,7 @@ trait RenderViewsTrait
         $extremes = self::findExtremeMatches($partien);
         $matchLine = static function (array $p) : string {
             return h(self::partieTeamName($p, 'heim')) . ' - ' . h(self::partieTeamName($p, 'gast')) . '&nbsp;&nbsp;'
-                 . h((string)$p['h_tore']) . ':' . h((string)$p['g_tore'])
+                 . self::formatScore($p, $p['_liga_id'] ?? null, false)
                  . ' (' . (int)$p['_spieltag_nummer'] . '.)';
         };
     
@@ -949,7 +1145,7 @@ trait RenderViewsTrait
     {
         $opts     = self::getLigaOptions($ligaId);
         $teams    = self::getLigaTeamsList($ligaId);
-        $partien  = self::getAllLigaPartien($allSpieltage);
+        $partien  = self::getAllLigaPartien($allSpieltage, $ligaId);
         $standing = self::computeStandings($teams, $partien, $opts, $ligaId);
         $showLogos = ($opts['ShowLogos'] ?? '0') === '1';
     

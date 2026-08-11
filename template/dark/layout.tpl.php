@@ -2,7 +2,7 @@
 <html lang="<!--HtmlLang-->">
 <head>
 <!--
-  Template: dark | Filename: layout.tpl.php | Fileversion: 1.4.4
+  Template: dark | Filename: layout.tpl.php | Fileversion: 1.5.5
 -->
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -172,6 +172,62 @@ table.tipp-table input[type=number]{width:52px;box-sizing:border-box;background:
   font-size:.9rem;text-align:center}
 .tipp-row-me{font-weight:700}
 .tipp-readonly{color:var(--muted)}
+/* Tippübersicht-Matrix (Rangliste + Tipps je Spieltag in einer Tabelle) */
+table.tipp-matrix{width:100%;border-collapse:collapse;font-size:.8rem;background:var(--surface);white-space:nowrap}
+table.tipp-matrix th,table.tipp-matrix td{padding:5px 8px;text-align:center;border-top:1px solid var(--border)}
+table.tipp-matrix thead th{font-weight:600;color:var(--muted);font-size:.72rem}
+table.tipp-matrix .tipp-matrix-team{line-height:1.3}
+table.tipp-matrix .tipp-matrix-erg{font-weight:700;color:var(--text)}
+table.tipp-matrix tbody td:nth-child(3){text-align:left;font-weight:600}
+table.tipp-matrix .tipp-matrix-treffer{color:var(--text);font-weight:600}
+table.tipp-matrix .tipp-matrix-treffer sub{color:var(--accent);font-weight:700;margin-left:1px}
+table.tipp-matrix .tipp-matrix-leer{color:var(--muted)}
+.tipp-rang-auf{color:var(--green)}
+.tipp-rang-ab{color:#dc2626}
+.tipp-spieltag-nav a{color:var(--accent);text-decoration:none;font-size:1rem}
+.tipp-spieltag-sieger{color:#dc2626;font-weight:700}
+.tipp-archiv-badge{display:inline-block;font-size:.65rem;font-weight:600;text-transform:uppercase;letter-spacing:.03em;padding:2px 7px;border-radius:999px;background:var(--bg);color:var(--muted);border:1px solid var(--border);vertical-align:middle}
+/* Spielregeln-Erklärseite */
+.tipp-regeln-block{border:1px solid var(--border);border-radius:var(--radius);margin-bottom:14px;padding:0 14px}
+.tipp-regeln-block summary{padding:14px 4px;font-weight:700;cursor:pointer;color:var(--accent);list-style:none}
+.tipp-regeln-block summary::-webkit-details-marker{display:none}
+.tipp-regeln-block summary::after{content:"+";float:right;font-size:1.3rem;line-height:1}
+.tipp-regeln-block[open] summary::after{content:"−"}
+.tipp-regeln-block p{font-size:.88rem;margin:0 0 10px}
+.tipp-regeln-punkte-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:10px;margin:12px 0 16px}
+.tipp-regeln-punkt-karte{background:var(--bg);border:1px solid var(--border);border-radius:var(--radius);padding:12px;text-align:center;display:flex;flex-direction:column;gap:2px}
+.tipp-regeln-punkt-karte .wert{font-size:1.4rem;font-weight:800;color:var(--accent)}
+.tipp-regeln-punkt-karte .einheit{font-size:.62rem;color:var(--muted);text-transform:uppercase;letter-spacing:.05em}
+.tipp-regeln-punkt-karte .label{font-size:.72rem;color:var(--muted);font-weight:600;margin-top:4px}
+/* Statistik-Seite (Chart.js-Diagramme) */
+.tipp-stat-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:16px}
+.tipp-stat-box{border:1px solid var(--border);border-radius:var(--radius);padding:12px}
+.tipp-stat-box h3{font-size:.85rem;margin:0 0 8px;color:var(--muted)}
+.tipp-stat-erklaerung{font-size:.75rem;color:var(--muted);margin:0 0 8px}
+.tipp-stat-chart{position:relative;height:200px}
+.tipp-stat-chart-hoch{height:420px}
+/* Diagonale Spaltenüberschriften für dynamische Sport-Tabellen (Vorbild
+   volleyball-bundesliga.de) - wird gezielt auf die Kopfzellen der
+   Zusatzspalten (nicht Platz/Team) der Volleyball-Tabelle angewendet. */
+.standings-table thead th.st-diag{
+  height:90px;white-space:nowrap;position:relative;vertical-align:bottom;padding:0 2px 4px;
+}
+
+/* Dropdown-Team-Auswahl im Spielplan (nur Volleyball) */
+.schedule-picker-card{padding:14px 16px}
+.schedule-picker-select{width:100%;max-width:320px;background:var(--surface);border:1px solid var(--border);
+  color:var(--text);border-radius:var(--radius);padding:8px 10px;font-size:.9rem}
+
+.standings-table thead th.st-diag > span{
+  display:inline-block;transform:rotate(-45deg);transform-origin:left bottom;
+  white-space:nowrap;font-size:.72rem;
+}
+
+.tipp-tipptabelle-hinweis{background:#fdf3d8;border:1px solid #f0d68a;color:#7a5c00;border-radius:var(--radius);padding:12px 14px;font-size:.85rem;margin-bottom:16px}
+
+
+
+
 
 .card p{margin-bottom:10px;font-size:.9rem;line-height:1.55}
 .card p:last-child{margin-bottom:0}

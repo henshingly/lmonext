@@ -2,7 +2,7 @@
 /**
  * Project: LMOnext
  * Filename: src/Liga/StandingsTrait.php
- * Fileversion: 1.5.0
+ * Fileversion: 1.6.0
  *
  * PHP version 8.2
  *
@@ -14,6 +14,8 @@
 declare(strict_types=1);
 
 namespace LMOnext\Liga;
+
+use LMOnext\Sport\VolleyballProfile;
 
 /**
  * Extracted from the legacy frontend/data_liga.php.
@@ -72,6 +74,15 @@ trait StandingsTrait
         $ptWPS = (int)($ligaOptions['PointsForWinPS']  ?? $ptW);
         $ptDPS = (int)($ligaOptions['PointsForDrawPS'] ?? $ptD);
         $ptLPS = (int)($ligaOptions['PointsForLostPS'] ?? $ptL);
+
+        // Sport-Profil (Beitrag: Torsten Hofmann, siehe src/Sport/) - bei
+        // Volleyball wird die Punktevergabe satzabhängig statt über die
+        // normale Sieg/Unentschieden/Niederlage-Tabelle berechnet (3:0/3:1 =
+        // 3 Punkte, 3:2 = 2 Punkte für den Sieger/1 für den Verlierer). Alle
+        // anderen Sportarten (inkl. der Standardwert 'football' für jede
+        // bestehende Liga) nutzen unverändert die bisherige Logik.
+        $sportType = $ligaId !== null ? self::getLigaSportType($ligaId) : 'football';
+        $isVolleyball = $sportType === 'volleyball';
     
         $rows = [];
         foreach ($teamsList as $t) {
@@ -80,6 +91,10 @@ trait StandingsTrait
                 'sp' => 0, 's' => 0, 'u' => 0, 'n' => 0,
                 'tore_h' => 0, 'tore_g' => 0, 'pkt' => 0, 'minuspunkte' => 0,
                 'strafpunkte' => 0, 'straftore' => 0, 'torekorrektur' => 0, 'minuspunktekorrektur' => 0, 'strafgrund' => '',
+                // Volleyball-Detailstatistik (Beitrag: Torsten Hofmann) - bei
+                // anderen Sportarten bleiben diese Felder einfach bei 0.
+                'w30' => 0, 'w31' => 0, 'w32' => 0, 'l23' => 0, 'l13' => 0, 'l03' => 0,
+                'balls_h' => 0, 'balls_g' => 0,
             ];
         }
     
@@ -93,10 +108,10 @@ trait StandingsTrait
                 continue;
             }
             if (!isset($rows[$hId])) {
-                $rows[$hId] = ['id' => $hId, 'name' => $p['heim_name'] ?? '', 'kurz' => '', 'sp' => 0, 's' => 0, 'u' => 0, 'n' => 0, 'tore_h' => 0, 'tore_g' => 0, 'pkt' => 0, 'minuspunkte' => 0, 'strafpunkte' => 0, 'straftore' => 0, 'torekorrektur' => 0, 'minuspunktekorrektur' => 0, 'strafgrund' => ''];
+                $rows[$hId] = ['id' => $hId, 'name' => $p['heim_name'] ?? '', 'kurz' => '', 'sp' => 0, 's' => 0, 'u' => 0, 'n' => 0, 'tore_h' => 0, 'tore_g' => 0, 'pkt' => 0, 'minuspunkte' => 0, 'strafpunkte' => 0, 'straftore' => 0, 'torekorrektur' => 0, 'minuspunktekorrektur' => 0, 'strafgrund' => '', 'w30' => 0, 'w31' => 0, 'w32' => 0, 'l23' => 0, 'l13' => 0, 'l03' => 0, 'balls_h' => 0, 'balls_g' => 0];
             }
             if (!isset($rows[$gId])) {
-                $rows[$gId] = ['id' => $gId, 'name' => $p['gast_name'] ?? '', 'kurz' => '', 'sp' => 0, 's' => 0, 'u' => 0, 'n' => 0, 'tore_h' => 0, 'tore_g' => 0, 'pkt' => 0, 'minuspunkte' => 0, 'strafpunkte' => 0, 'straftore' => 0, 'torekorrektur' => 0, 'minuspunktekorrektur' => 0, 'strafgrund' => ''];
+                $rows[$gId] = ['id' => $gId, 'name' => $p['gast_name'] ?? '', 'kurz' => '', 'sp' => 0, 's' => 0, 'u' => 0, 'n' => 0, 'tore_h' => 0, 'tore_g' => 0, 'pkt' => 0, 'minuspunkte' => 0, 'strafpunkte' => 0, 'straftore' => 0, 'torekorrektur' => 0, 'minuspunktekorrektur' => 0, 'strafgrund' => '', 'w30' => 0, 'w31' => 0, 'w32' => 0, 'l23' => 0, 'l13' => 0, 'l03' => 0, 'balls_h' => 0, 'balls_g' => 0];
             }
     
             $ht = (int)$p['h_tore'];
@@ -127,7 +142,74 @@ trait StandingsTrait
                 default => [$ptW, $ptD, $ptL],
             };
     
-            if ($ht > $gt) {
+            // Volleyball: satzabhängige Punkte (3:0/3:1 = 3, 3:2 = 2/1) +
+            // Detail-Statistik (w30/w31/w32/l23/l13/l03, Ballpunkte aus
+            // extra_data) statt der normalen Sieg/Unentschieden/Niederlage-
+            // Punktetabelle (Beitrag: Torsten Hofmann).
+            if ($isVolleyball) {
+                $vbPts = (new VolleyballProfile())->computeMatchPoints($ht, $gt);
+                $ballsH = 0; $ballsG = 0;
+                $extraData = $p['extra_data'] ?? null;
+                if ($extraData !== null) {
+                    $decoded = json_decode($extraData, true);
+                    if (is_array($decoded)) {
+                        $sets = $decoded['sets'] ?? $decoded['set'] ?? null;
+                        if (is_array($sets)) {
+                            foreach ($sets as $set) {
+                                $ballsH += (int)($set['h'] ?? 0);
+                                $ballsG += (int)($set['g'] ?? 0);
+                            }
+                        }
+                    }
+                }
+                if ($ht > $gt) {
+                    $catH = "{$ht}:{$gt}"; // "3:0", "3:1" oder "3:2"
+                    if ($trackHome) {
+                        $rows[$hId]['s']++;
+                        $rows[$hId]['pkt'] += $vbPts['home_pts'];
+                        $rows[$hId]['minuspunkte'] += $vbPts['guest_pts'];
+                        $rows[$hId]['balls_h'] += $ballsH;
+                        $rows[$hId]['balls_g'] += $ballsG;
+                        if ($catH === '3:0') { $rows[$hId]['w30']++; }
+                        elseif ($catH === '3:1') { $rows[$hId]['w31']++; }
+                        elseif ($catH === '3:2') { $rows[$hId]['w32']++; }
+                    }
+                    if ($trackAway) {
+                        $rows[$gId]['n']++;
+                        $rows[$gId]['pkt'] += $vbPts['guest_pts'];
+                        $rows[$gId]['minuspunkte'] += $vbPts['home_pts'];
+                        $rows[$gId]['balls_h'] += $ballsG;
+                        $rows[$gId]['balls_g'] += $ballsH;
+                        $catG = "{$gt}:{$ht}"; // "0:3", "1:3" oder "2:3"
+                        if ($catG === '0:3') { $rows[$gId]['l03']++; }
+                        elseif ($catG === '1:3') { $rows[$gId]['l13']++; }
+                        elseif ($catG === '2:3') { $rows[$gId]['l23']++; }
+                    }
+                } else {
+                    $catG = "{$gt}:{$ht}"; // "3:0", "3:1" oder "3:2"
+                    if ($trackAway) {
+                        $rows[$gId]['s']++;
+                        $rows[$gId]['pkt'] += $vbPts['guest_pts'];
+                        $rows[$gId]['minuspunkte'] += $vbPts['home_pts'];
+                        $rows[$gId]['balls_h'] += $ballsG;
+                        $rows[$gId]['balls_g'] += $ballsH;
+                        if ($catG === '3:0') { $rows[$gId]['w30']++; }
+                        elseif ($catG === '3:1') { $rows[$gId]['w31']++; }
+                        elseif ($catG === '3:2') { $rows[$gId]['w32']++; }
+                    }
+                    if ($trackHome) {
+                        $rows[$hId]['n']++;
+                        $rows[$hId]['pkt'] += $vbPts['home_pts'];
+                        $rows[$hId]['minuspunkte'] += $vbPts['guest_pts'];
+                        $rows[$hId]['balls_h'] += $ballsH;
+                        $rows[$hId]['balls_g'] += $ballsG;
+                        $catH = "{$ht}:{$gt}"; // "0:3", "1:3" oder "2:3"
+                        if ($catH === '0:3') { $rows[$hId]['l03']++; }
+                        elseif ($catH === '1:3') { $rows[$hId]['l13']++; }
+                        elseif ($catH === '2:3') { $rows[$hId]['l23']++; }
+                    }
+                }
+            } elseif ($ht > $gt) {
                 if ($trackHome) {
                     $rows[$hId]['s']++;
                     $rows[$hId]['pkt'] += $curW;

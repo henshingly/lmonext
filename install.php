@@ -2,7 +2,7 @@
 /**
  * Project: LMOnext
  * Filename: install.php
- * Fileversion: 2.1.1
+ * Fileversion: 2.3.0
  *
  * PHP version 8.2
  *
@@ -180,6 +180,7 @@ function setupDatabase(array $cfg): array {
                 `name`             VARCHAR(255) NOT NULL DEFAULT '',
                 `datum`            TIMESTAMP    NOT NULL DEFAULT CURRENT_TIMESTAMP,
                 `archiv_folder_id` INT          NULL DEFAULT NULL,
+                `sport_type`       VARCHAR(20)  NOT NULL DEFAULT 'football',
                 UNIQUE KEY `uniq_liga_name` (`name`),
                 KEY `archiv_folder_id` (`archiv_folder_id`)
             ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci",
@@ -229,6 +230,9 @@ function setupDatabase(array $cfg): array {
                 `team_id`     INT NOT NULL,
                 `strafpunkte` INT NOT NULL DEFAULT 0,
                 `straftore`   INT NOT NULL DEFAULT 0,
+                `tore_korrektur`         INT NOT NULL DEFAULT 0,
+                `minuspunkte_korrektur`  INT NOT NULL DEFAULT 0,
+                `ab_spieltag`            INT NOT NULL DEFAULT 0,
                 `grund`       VARCHAR(255) NULL DEFAULT NULL,
                 `updated_at`  TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
                 UNIQUE KEY `liga_team` (`liga_id`, `team_id`)
@@ -254,10 +258,13 @@ function setupDatabase(array $cfg): array {
                 `heim_label`  VARCHAR(120) NULL DEFAULT NULL,
                 `gast_id`     INT          NULL DEFAULT NULL,
                 `gast_label`  VARCHAR(120) NULL DEFAULT NULL,
-                `h_tore`      TINYINT      NULL DEFAULT NULL,
-                `g_tore`      TINYINT      NULL DEFAULT NULL,
+                `h_tore`      SMALLINT     NULL DEFAULT NULL,
+                `g_tore`      SMALLINT     NULL DEFAULT NULL,
+                `extra_data`  JSON         NULL DEFAULT NULL,
                 `zeit`        DATETIME     NULL DEFAULT NULL,
                 `notiz`       VARCHAR(255) NULL DEFAULT NULL,
+                `status`      TINYINT      NOT NULL DEFAULT 0,
+                `bericht_url` VARCHAR(500) NULL DEFAULT NULL,
                 `spiel_nr`    VARCHAR(20)  NOT NULL DEFAULT '1',
                 KEY `spieltag_id` (`spieltag_id`),
                 KEY `heim_id` (`heim_id`),
@@ -320,6 +327,44 @@ function setupDatabase(array $cfg): array {
             $pdo->exec("ALTER TABLE `{$p}liga_partien` ADD COLUMN `gast_label` VARCHAR(120) NULL DEFAULT NULL AFTER `gast_id`");
         }
         $pdo->exec("ALTER TABLE `{$p}liga_partien` MODIFY COLUMN `heim_id` INT NULL, MODIFY COLUMN `gast_id` INT NULL");
+
+        // ── Sport-Profile (Beitrag: Torsten Hofmann) - sport_type auf der
+        // Liga, extra_data für Sätze/Drittel/Viertel bei den Partien, sowie
+        // h_tore/g_tore von TINYINT auf SMALLINT erweitert (Basketball-
+        // Ergebnisse können über 127 liegen) ────────────────────────────────
+        $ligaCols = $pdo->query("SHOW COLUMNS FROM `{$p}liga`")->fetchAll(PDO::FETCH_COLUMN);
+        if (!in_array('sport_type', $ligaCols, true)) {
+            $pdo->exec("ALTER TABLE `{$p}liga` ADD COLUMN `sport_type` VARCHAR(20) NOT NULL DEFAULT 'football' AFTER `archiv_folder_id`");
+        }
+        if (!in_array('extra_data', $partienCols, true)) {
+            $pdo->exec("ALTER TABLE `{$p}liga_partien` ADD COLUMN `extra_data` JSON NULL DEFAULT NULL AFTER `g_tore`");
+        }
+        $pdo->exec("ALTER TABLE `{$p}liga_partien` MODIFY COLUMN `h_tore` SMALLINT NULL DEFAULT NULL, MODIFY COLUMN `g_tore` SMALLINT NULL DEFAULT NULL");
+
+        // ── Strafpunkte-Erweiterung ("ab Spieltag"-Feature + .l98-Import mit
+        // Strafpunkten, siehe admin/handler_settings.php bzw.
+        // admin/handler_import_export.php) - war bisher NUR über
+        // Laufzeit-Migration an mehreren Stellen abgedeckt, nicht hier ────
+        $strafCols = $pdo->query("SHOW COLUMNS FROM `{$p}liga_strafpunkte`")->fetchAll(PDO::FETCH_COLUMN);
+        if (!in_array('tore_korrektur', $strafCols, true)) {
+            $pdo->exec("ALTER TABLE `{$p}liga_strafpunkte` ADD COLUMN `tore_korrektur` INT NOT NULL DEFAULT 0 AFTER `straftore`");
+        }
+        if (!in_array('minuspunkte_korrektur', $strafCols, true)) {
+            $pdo->exec("ALTER TABLE `{$p}liga_strafpunkte` ADD COLUMN `minuspunkte_korrektur` INT NOT NULL DEFAULT 0 AFTER `tore_korrektur`");
+        }
+        if (!in_array('ab_spieltag', $strafCols, true)) {
+            $pdo->exec("ALTER TABLE `{$p}liga_strafpunkte` ADD COLUMN `ab_spieltag` INT NOT NULL DEFAULT 0 AFTER `minuspunkte_korrektur`");
+        }
+
+        // ── Status/Spielbericht-Link (Beitrag: ensureSpielstatusColumns() in
+        // admin/bootstrap.php - dieselbe Migration hier ergänzt, damit auch
+        // ein frischer install.php-Lauf allein schon vollständig ist) ─────
+        if (!in_array('status', $partienCols, true)) {
+            $pdo->exec("ALTER TABLE `{$p}liga_partien` ADD COLUMN `status` TINYINT NOT NULL DEFAULT 0");
+        }
+        if (!in_array('bericht_url', $partienCols, true)) {
+            $pdo->exec("ALTER TABLE `{$p}liga_partien` ADD COLUMN `bericht_url` VARCHAR(500) NULL DEFAULT NULL");
+        }
 
         // password_hash → password (Spaltenname-Migration)
         $userCols = $pdo->query("SHOW COLUMNS FROM `{$p}admin_users`")->fetchAll(PDO::FETCH_COLUMN);

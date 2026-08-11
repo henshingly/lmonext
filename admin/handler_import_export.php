@@ -2,7 +2,7 @@
 /**
  * Project: LMOnext
  * Filename: handler_import_export.php
- * Fileversion: 1.6.0
+ * Fileversion: 1.11.0
  *
  * PHP version 8.2
  *
@@ -172,11 +172,31 @@ function getOrCreateDummyTeam(): int {
 }
 
 // ── Liga erstellen ────────────────────────────────────────────────────────────
-function createLigaInDB(string $name, int $type, array $teamData, array $spieltage, array $options = []): array {
+function createLigaInDB(string $name, int $type, array $teamData, array $spieltage, array $options = [], ?string $sportType = null): array {
     $db = getDB();
+
+    // sport_type ist eine on-demand-Spalte (siehe ensureSportProfileColumns()
+    // in admin/bootstrap.php, das läuft aber nur bei ISLOGGEDIN-Seiten mit
+    // ensure*()-Aufrufen - hier defensiv nochmal geprüft, analog zu
+    // importL98IntoDB(), und bewusst VOR beginTransaction() (ALTER TABLE
+    // löst sonst ein implizites Commit aus, siehe dortiger Bugfix-Kommentar).
+    if ($sportType !== null) {
+        $ligaColsPre = $db->query('SHOW COLUMNS FROM '.tbl('liga'))->fetchAll(PDO::FETCH_COLUMN);
+        if (!in_array('sport_type', $ligaColsPre, true)) {
+            $db->exec('ALTER TABLE '.tbl('liga')." ADD COLUMN `sport_type` VARCHAR(20) NOT NULL DEFAULT 'football' AFTER `archiv_folder_id`");
+        }
+    }
+    if (!in_array($sportType, ['football', 'volleyball', 'icehockey', 'basketball', 'handball', 'badminton'], true)) {
+        $sportType = null;
+    }
+
     try {
         $db->beginTransaction();
-        $db->prepare('INSERT INTO '.tbl('liga').' (name) VALUES (?)')->execute([$name]);
+        if ($sportType !== null) {
+            $db->prepare('INSERT INTO '.tbl('liga').' (name, sport_type) VALUES (?, ?)')->execute([$name, $sportType]);
+        } else {
+            $db->prepare('INSERT INTO '.tbl('liga').' (name) VALUES (?)')->execute([$name]);
+        }
         $ligaId = (int)$db->lastInsertId();
         $stmtOpt = $db->prepare('INSERT INTO '.tbl('liga_options').' (liga_id, option_key, option_value) VALUES (?,?,?) ON DUPLICATE KEY UPDATE option_value=VALUES(option_value)');
         $stmtOpt->execute([$ligaId, 'Type',   (string)$type]);
@@ -280,6 +300,91 @@ function l98DecodeText(string $s) : string
     return html_entity_decode($s, ENT_QUOTES | ENT_HTML5, 'UTF-8');
 }
 
+/**
+ * Erkennt und parst Satzergebnisse aus dem NTx-Feld eines .l98-Exports, wie
+ * sie bei Volleyball-Ligen des alten LMO verwendet wurden - dort wird das
+ * eigentlich für freien Text ("Notiz") gedachte Feld stattdessen für die
+ * Satzergebnisse zweckentfremdet, z.B. "(18:25, 25:22, 25:19, 22:25, 12:15)"
+ * oder mit Semikolon statt Komma getrennt "(25:23;25:18;27:25)" - beide
+ * Trennzeichen kommen in echten Exporten vor (siehe zwei verschiedene
+ * Volleyball-.l98-Dateien, die genau das gezeigt haben) und werden beide
+ * unterstützt. Gibt null zurück, wenn der Text NICHT diesem Muster
+ * entspricht (normaler Freitext-Kommentar bei Fußball-Ligen etc.) - der
+ * Aufrufer behält den Text dann unverändert als "notiz".
+ *
+ * @return array<int,array{h:int,g:int}>|null
+ */
+function l98ParseSets(?string $nt) : ?array
+{
+    if ($nt === null || $nt === '') {
+        return null;
+    }
+    $trimmed = trim($nt);
+    if ($trimmed === '' || $trimmed[0] !== '(' || substr($trimmed, -1) !== ')') {
+        return null;
+    }
+    $inner = substr($trimmed, 1, -1);
+    if ($inner === '') {
+        return null;
+    }
+    $parts = preg_split('/[,;]/', $inner);
+    if ($parts === false || count($parts) === 0) {
+        return null;
+    }
+    $sets = [];
+    foreach ($parts as $part) {
+        if (!preg_match('/^\s*(\d+)\s*:\s*(\d+)\s*$/', $part, $m)) {
+            return null; // ein einzelner Teil passt nicht -> gesamter Text ist kein Satz-Muster
+        }
+        $sets[] = ['h' => (int)$m[1], 'g' => (int)$m[2]];
+    }
+    return $sets;
+}
+
+/**
+ * Erkennt anhand typischer Merkmale, ob eine .l98-Datei eine Volleyball-Liga
+ * enthält, statt der Standardannahme Fußball. Zwei Signale werden geprüft:
+ * 1. options['nameTor'] wurde auf "Satz"/"Set" umbenannt (starkes,
+ *    sportartspezifisches Signal - "Tore" macht bei Volleyball keinen Sinn).
+ * 2. Die NTx-Felder des ersten gefundenen Spieltags lassen sich als
+ *    Satzergebnisse parsen (siehe l98ParseSets()).
+ * Nur ein reines "keine Unentschieden möglich" (HideDraw=1) wird bewusst
+ * NICHT als Signal gewertet - dasträfe z.B. auch auf Basketball zu und
+ * wäre daher zu unspezifisch für eine verlässliche Erkennung.
+ * Dient nur als Vorschlag für das Dropdown im Import-Formular, der Admin
+ * kann die Sportart dort jederzeit manuell übersteuern.
+ */
+function l98DetectSportType(array $options, array $spieltage) : string
+{
+    $nameTor = strtolower((string)($options['nameTor'] ?? ''));
+    if (str_contains($nameTor, 'satz') || str_contains($nameTor, 'set')) {
+        return 'volleyball';
+    }
+    foreach ($spieltage as $st) {
+        // Liga-Format: Partien liegen direkt unter 'partien'.
+        foreach (($st['partien'] ?? []) as $p) {
+            if (!empty($p['sets'])) {
+                return 'volleyball';
+            }
+        }
+        // KO-Format: Partien liegen verschachtelt unter 'paarungen'[n]['spiele'].
+        foreach (($st['paarungen'] ?? []) as $paarung) {
+            foreach (($paarung['spiele'] ?? []) as $spiel) {
+                if (!empty($spiel['sets'])) {
+                    return 'volleyball';
+                }
+            }
+        }
+        // Nur den ersten gefundenen Spieltag mit Begegnungen prüfen - reicht
+        // als Stichprobe und spart unnötige Schleifendurchläufe bei großen
+        // Ligen/Turnieren.
+        if (!empty($st['partien']) || !empty($st['paarungen'])) {
+            break;
+        }
+    }
+    return 'football';
+}
+
 function parseL98(string $content): array {
     $sections = []; $current = null;
     foreach (explode("\n", $content) as $line) {
@@ -361,6 +466,7 @@ function parseL98(string $content): array {
                     $spiele[$s] = [
                         'h_tore' => $ga, 'g_tore' => $gb,
                         'zeit'   => $at, 'notiz'  => $notiz,
+                        'sets'   => l98ParseSets($sec[$ntKey] ?? null),
                         'status' => $status, 'bericht' => $bericht,
                     ];
                 }
@@ -403,6 +509,7 @@ function parseL98(string $content): array {
                     'h_tore'  => $ga,
                     'g_tore'  => $gb,
                     'notiz'   => isset($sec["NT{$sp}"]) ? l98DecodeText($sec["NT{$sp}"]) : null,
+                    'sets'    => isset($sec["NT{$sp}"]) ? l98ParseSets($sec["NT{$sp}"]) : null,
                     'status'  => $status,
                     'bericht' => $bericht,
                     'spiel_nr'=> (string)$p,
@@ -442,11 +549,45 @@ function parseL98(string $content): array {
 
     return ['name'=>$ligaName,'type'=>$ligaType,'rounds'=>count($spieltage),'matches'=>0,
         'teams_count'=>$teams,'teams'=>$teamNames,'teamMittel'=>$teamMittel,
-        'teamKurz'=>$teamKurz,'teamValues'=>$teamValues,'spieltage'=>$spieltage,'options'=>$ligaOptions];
+        'teamKurz'=>$teamKurz,'teamValues'=>$teamValues,'spieltage'=>$spieltage,'options'=>$ligaOptions,
+        'detectedSportType'=>l98DetectSportType($ligaOptions, $spieltage)];
 }
 
-function importL98IntoDB(array $data, array $teamNameOverrides = []): array {
+function importL98IntoDB(array $data, array $teamNameOverrides = [], ?string $sportTypeOverride = null): array {
     $db = getDB();
+
+    // ── Schema-Migration IMMER außerhalb der Transaktion ────────────────────
+    // ALTER TABLE löst in MySQL/MariaDB ein implizites Commit aus - würde das
+    // innerhalb von $db->beginTransaction()/commit()/rollBack() unten laufen,
+    // bräche das die Transaktion unbemerkt mittendrin auf (ein späterer
+    // rollBack() würde dann nur noch den Teil NACH der ALTER TABLE
+    // zurückrollen, nicht den ganzen Import). Beide Spalten-Gruppen sind
+    // on-demand-Migrationen für Installationen, die die jeweilige
+    // Admin-Seite bzw. install.php seit der entsprechenden Erweiterung noch
+    // nicht (erneut) aufgerufen haben.
+    $strafCols = $db->query('SHOW COLUMNS FROM ' . tbl('liga_strafpunkte'))->fetchAll(PDO::FETCH_COLUMN);
+    if (!in_array('tore_korrektur', $strafCols, true)) {
+        $db->exec('ALTER TABLE ' . tbl('liga_strafpunkte') . ' ADD COLUMN `tore_korrektur` INT NOT NULL DEFAULT 0 AFTER `straftore`');
+    }
+    if (!in_array('minuspunkte_korrektur', $strafCols, true)) {
+        $db->exec('ALTER TABLE ' . tbl('liga_strafpunkte') . ' ADD COLUMN `minuspunkte_korrektur` INT NOT NULL DEFAULT 0 AFTER `tore_korrektur`');
+    }
+    if (!in_array('ab_spieltag', $strafCols, true)) {
+        $db->exec('ALTER TABLE ' . tbl('liga_strafpunkte') . ' ADD COLUMN `ab_spieltag` INT NOT NULL DEFAULT 0 AFTER `minuspunkte_korrektur`');
+    }
+    $partienColsCheck = $db->query('SHOW COLUMNS FROM ' . tbl('liga_partien'))->fetchAll(PDO::FETCH_COLUMN);
+    if (!in_array('extra_data', $partienColsCheck, true)) {
+        $db->exec('ALTER TABLE ' . tbl('liga_partien') . ' ADD COLUMN `extra_data` JSON NULL DEFAULT NULL AFTER `g_tore`');
+    }
+    // sport_type fehlte hier bisher (Bugfix: der Import versuchte, sport_type
+    // zu setzen, ohne vorher zu prüfen, ob die Spalte existiert - schlug auf
+    // Installationen fehl, die install.php seit der Sport-Profile-Erweiterung
+    // noch nicht erneut ausgeführt hatten, siehe "Unknown column sport_type").
+    $ligaColsCheck = $db->query('SHOW COLUMNS FROM ' . tbl('liga'))->fetchAll(PDO::FETCH_COLUMN);
+    if (!in_array('sport_type', $ligaColsCheck, true)) {
+        $db->exec('ALTER TABLE ' . tbl('liga') . ' ADD COLUMN `sport_type` VARCHAR(20) NOT NULL DEFAULT \'football\' AFTER `archiv_folder_id`');
+    }
+
     try {
         $db->beginTransaction();
         $stmt = $db->prepare('INSERT INTO '.tbl('liga').' (name) VALUES (?) ON DUPLICATE KEY UPDATE id=LAST_INSERT_ID(id)');
@@ -456,6 +597,16 @@ function importL98IntoDB(array $data, array $teamNameOverrides = []): array {
             $s = $db->prepare('SELECT id FROM '.tbl('liga').' WHERE name=?');
             $s->execute([$data['name']]); $ligaId = (int)$s->fetchColumn();
         }
+        // Sportart (Beitrag: Torsten Hofmann für das Sport-Profile-Feature,
+        // hier um die Erkennung/Übersteuerung beim .l98-Import ergänzt) -
+        // $sportTypeOverride kommt vom Admin-Dropdown im Import-Formular,
+        // fehlt es (z.B. bei einem direkten, programmatischen Aufruf ohne
+        // Formular), wird auf die automatische Erkennung zurückgefallen.
+        $sportType = $sportTypeOverride ?? ($data['detectedSportType'] ?? 'football');
+        if (!in_array($sportType, ['football', 'volleyball', 'icehockey', 'basketball', 'handball', 'badminton'], true)) {
+            $sportType = 'football';
+        }
+        $db->prepare('UPDATE '.tbl('liga').' SET sport_type=? WHERE id=?')->execute([$sportType, $ligaId]);
         $stmtOpt = $db->prepare('INSERT INTO '.tbl('liga_options').' (liga_id,option_key,option_value) VALUES (?,?,?) ON DUPLICATE KEY UPDATE option_value=VALUES(option_value)');
         foreach ($data['options'] as $k => $v) { $stmtOpt->execute([$ligaId, $k, $v]); }
         $stmtOpt->execute([$ligaId, 'Type', (string)$data['type']]);
@@ -500,8 +651,52 @@ function importL98IntoDB(array $data, array $teamNameOverrides = []): array {
             foreach (($data['teamValues'][$nr] ?? []) as $k => $v) { $stmtTV->execute([$ligaId, $tid, $k, $v]); }
         }
 
+        // ── Strafpunkte aus .l98 importieren (Beitrag: Torsten Hofmann) ─────
+        // LMO speichert Straf-/Bonuspunkte pro Team in [TeamN].SP,
+        // Straftore in TOR1 (Tore-Korrektur) und TOR2 (Gegentore-Korrektur),
+        // den Grund in NOT und "ab Spieltag" in STDA. Diese Werte werden
+        // zusätzlich in die liga_strafpunkte-Tabelle übernommen, damit sie
+        // in der Tabellenberechnung greifen (computeStandings →
+        // getLigaStrafpunkte). Bereits vorhandene manuelle Einträge
+        // werden dabei überschrieben.
+        //
+        // tore_korrektur/minuspunkte_korrektur/ab_spieltag sind on-demand-
+        // Spalten (erst später zur liga_strafpunkte-Tabelle hinzugekommen,
+        // siehe admin/handler_settings.php); extra_data ebenso (siehe
+        // l98ParseSets()) - beide bereits VOR Transaktionsbeginn geprüft
+        // (siehe oben, ALTER TABLE würde sonst die Transaktion durch ein
+        // implizites Commit unbemerkt aufbrechen).
+        $stmtStraf = $db->prepare(
+            'INSERT INTO '.tbl('liga_strafpunkte')
+            .' (liga_id,team_id,strafpunkte,straftore,tore_korrektur,minuspunkte_korrektur,ab_spieltag,grund)'
+            .' VALUES (?,?,?,?,?,?,?,?)'
+            .' ON DUPLICATE KEY UPDATE strafpunkte=VALUES(strafpunkte),straftore=VALUES(straftore),'
+            .' tore_korrektur=VALUES(tore_korrektur),minuspunkte_korrektur=VALUES(minuspunkte_korrektur),'
+            .' ab_spieltag=VALUES(ab_spieltag),grund=VALUES(grund)'
+        );
+        foreach ($teamMap as $nr => $tid) {
+            $tv = $data['teamValues'][$nr] ?? [];
+            $sp   = isset($tv['SP'])   ? (int)$tv['SP']   : 0;
+            $tor1 = isset($tv['TOR1']) ? (int)$tv['TOR1'] : 0;
+            $tor2 = isset($tv['TOR2']) ? (int)$tv['TOR2'] : 0;
+            $stda = isset($tv['STDA']) ? (int)$tv['STDA'] : 0;
+            $not  = isset($tv['NOT'])  ? l98DecodeText($tv['NOT']) : '';
+            if ($sp === 0 && $tor1 === 0 && $tor2 === 0) { continue; }
+            // SP ist im LMO positiv = Abzug → negativ für strafpunkte
+            // TOR1 = Korrektur erzielte Tore (tore_korrektur), TOR2 = Korrektur Gegentore (straftore)
+            $stmtStraf->execute([
+                $ligaId, $tid,
+                -$sp,       // strafpunkte (negativ = Abzug)
+                $tor2,      // straftore (wirkt auf tore_g / Gegentore)
+                $tor1,      // tore_korrektur (wirkt auf tore_h / erzielte Tore)
+                0,          // minuspunkte_korrektur (kein LMO-Äquivalent)
+                $stda,      // ab_spieltag
+                $not !== '' ? $not : null,
+            ]);
+        }
+
         $stmtST = $db->prepare('INSERT INTO '.tbl('liga_spieltage').' (liga_id,nummer,start,modus) VALUES (?,?,?,?) ON DUPLICATE KEY UPDATE id=LAST_INSERT_ID(id),start=VALUES(start),modus=VALUES(modus)');
-        $stmtP  = $db->prepare('INSERT INTO '.tbl('liga_partien').' (spieltag_id,heim_id,gast_id,h_tore,g_tore,zeit,notiz,status,bericht_url,spiel_nr) VALUES (?,?,?,?,?,?,?,?,?,?) ON DUPLICATE KEY UPDATE h_tore=VALUES(h_tore),g_tore=VALUES(g_tore),zeit=VALUES(zeit),notiz=VALUES(notiz),status=VALUES(status),bericht_url=VALUES(bericht_url)');
+        $stmtP  = $db->prepare('INSERT INTO '.tbl('liga_partien').' (spieltag_id,heim_id,gast_id,h_tore,g_tore,zeit,notiz,status,bericht_url,spiel_nr,extra_data) VALUES (?,?,?,?,?,?,?,?,?,?,?) ON DUPLICATE KEY UPDATE h_tore=VALUES(h_tore),g_tore=VALUES(g_tore),zeit=VALUES(zeit),notiz=VALUES(notiz),status=VALUES(status),bericht_url=VALUES(bericht_url),extra_data=VALUES(extra_data)');
 
         foreach ($data['spieltage'] as $nr => $st) {
             // Startdatum parsen
@@ -532,10 +727,10 @@ function importL98IntoDB(array $data, array $teamNameOverrides = []): array {
 
                 $stmtPL = $db->prepare(
                     'INSERT INTO '.tbl('liga_partien').'
-                     (spieltag_id,heim_id,gast_id,heim_label,gast_label,h_tore,g_tore,zeit,notiz,status,bericht_url,spiel_nr)
-                     VALUES (?,?,?,?,?,?,?,?,?,?,?,?)
+                     (spieltag_id,heim_id,gast_id,heim_label,gast_label,h_tore,g_tore,zeit,notiz,status,bericht_url,spiel_nr,extra_data)
+                     VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?)
                      ON DUPLICATE KEY UPDATE h_tore=VALUES(h_tore),g_tore=VALUES(g_tore),zeit=VALUES(zeit),
-                       notiz=VALUES(notiz),status=VALUES(status),bericht_url=VALUES(bericht_url)'
+                       notiz=VALUES(notiz),status=VALUES(status),bericht_url=VALUES(bericht_url),extra_data=VALUES(extra_data)'
                 );
 
                 foreach ($st['paarungen'] as $pNr => $paarung) {
@@ -564,6 +759,7 @@ function importL98IntoDB(array $data, array $teamNameOverrides = []): array {
                             $spiel['zeit'], $spiel['notiz'] ?: null,
                             $spiel['status'] ?? 0, $spiel['bericht'] ?? null,
                             $spielNr,
+                            !empty($spiel['sets']) ? json_encode(['sets' => $spiel['sets']]) : null,
                         ]);
                     }
                 }
@@ -572,7 +768,11 @@ function importL98IntoDB(array $data, array $teamNameOverrides = []): array {
                 foreach (($st['partien'] ?? []) as $p) {
                     $hId = $teamMap[$p['heim']] ?? null; $gId = $teamMap[$p['gast']] ?? null;
                     if ($hId && $gId) {
-                        $stmtP->execute([$stid, $hId, $gId, $p['h_tore'], $p['g_tore'], $p['zeit'], $p['notiz'] ?: null, $p['status'] ?? 0, $p['bericht'] ?? null, $p['spiel_nr']]);
+                        $stmtP->execute([
+                            $stid, $hId, $gId, $p['h_tore'], $p['g_tore'], $p['zeit'], $p['notiz'] ?: null,
+                            $p['status'] ?? 0, $p['bericht'] ?? null, $p['spiel_nr'],
+                            !empty($p['sets']) ? json_encode(['sets' => $p['sets']]) : null,
+                        ]);
                     }
                 }
             }
@@ -595,11 +795,12 @@ function importL98IntoDB(array $data, array $teamNameOverrides = []): array {
  * @param array<int,array<int,array{name:string,kurz:string,mittel:string}>> $overridesByFile Je Datei-Index eine Team-Nr→Override-Map
  * @return array{ok:int,fail:int,msgs:array}
  */
-function runL98Import(array $parsedList, array $overridesByFile = []) : array {
+function runL98Import(array $parsedList, array $overridesByFile = [], array $sportTypeByFile = []) : array {
     $ok = 0; $fail = 0; $msgs = [];
     foreach ($parsedList as $idx => $entry) {
         $overrides = $overridesByFile[$idx] ?? [];
-        $r = importL98IntoDB($entry['data'], $overrides);
+        $sportType = $sportTypeByFile[$idx] ?? null;
+        $r = importL98IntoDB($entry['data'], $overrides, $sportType);
         $msgs[] = ['text' => h(basename($entry['fileName'])).': '.$r['msg'], 'type' => $r['ok'] ? 'success' : 'error'];
         $r['ok'] ? $ok++ : $fail++;
     }
@@ -743,7 +944,21 @@ if ($action === 'import' && $_SERVER['REQUEST_METHOD'] === 'POST') {
     // bereits vorhandenen Teams? Dann erst nachfragen statt sofort zu
     // importieren (siehe view_import_review.php) ───────────────────────────
     $ambiguous = detectFuzzyTeamMatchesForImport($parsedList);
-    if (!empty($ambiguous)) {
+
+    // Zusätzlich: erkennt eine Datei eine andere Sportart als Fußball
+    // (z.B. Volleyball anhand der NTx-Satzergebnisse, siehe
+    // l98DetectSportType()), geht der Import ebenfalls über die
+    // Bestätigungsseite - der Admin soll die Erkennung sehen und bei Bedarf
+    // übersteuern können, statt dass sie unbemerkt im Hintergrund passiert.
+    $hasNonFootball = false;
+    foreach ($parsedList as $entry) {
+        if (($entry['data']['detectedSportType'] ?? 'football') !== 'football') {
+            $hasNonFootball = true;
+            break;
+        }
+    }
+
+    if (!empty($ambiguous) || $hasNonFootball) {
         $_SESSION['import_pending']      = $parsedList;
         $_SESSION['import_pending_msgs'] = $earlyMsgs;
         $_SESSION['import_pending_ambiguous'] = $ambiguous;
@@ -812,7 +1027,18 @@ if ($action === 'import_confirm' && $_SERVER['REQUEST_METHOD'] === 'POST') {
         }
     }
 
-    $result = runL98Import($parsedList, $overridesByFile);
+    // sportType[<fileIdx>] = vom Admin bestätigte/übersteuerte Sportart aus
+    // dem Dropdown der Review-Seite (siehe l98DetectSportType() für die
+    // automatische Vorauswahl).
+    $sportTypeByFile = [];
+    foreach (($_POST['sportType'] ?? []) as $fileIdx => $val) {
+        $val = (string)$val;
+        if (in_array($val, ['football', 'volleyball', 'icehockey', 'basketball', 'handball', 'badminton'], true)) {
+            $sportTypeByFile[(int)$fileIdx] = $val;
+        }
+    }
+
+    $result = runL98Import($parsedList, $overridesByFile, $sportTypeByFile);
     $msgs = array_merge($earlyMsgs, $result['msgs']);
     $ok   = $result['ok'];
     $fail = $result['fail'] + count($earlyMsgs);

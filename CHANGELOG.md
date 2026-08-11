@@ -61,6 +61,12 @@
 
 ## addon/tipp/frontend_tipp.php
 
+- Changelog: 0.10.0 - tippGetTipperStatistik() um "ergebnisse_pro_spieltag" erweitert (vierte Ausbaustufe): Verlauf der tatsächlichen Liga-Ergebnisse nach Tendenz, je Spieltag.
+- Changelog: 0.9.0 - tippGetTipperStatistik() um 4 weitere Datensätze erweitert (dritte Ausbaustufe): häufigste getippte Ergebnisse je Tendenz, häufigste tatsächliche Ergebnisse je Tendenz, Spieltagsplatzierung (Rang nur an diesem Spieltag, nicht kumuliert), Vergleich der eigenen Punkte mit dem jeweiligen Spieltagssieger.
+- Changelog: 0.8.0 - tippGetTipperStatistik() um 4 weitere Datensätze erweitert (zweite Ausbaustufe): Verteilung der echten Liga-Ergebnisse nach Tendenz, eigene Tipp-Tendenz je Spieltag, Punkte je Spieltag, Punkte-Rückstand zum jeweiligen Spieltagsführenden.
+- Changelog: 0.7.0 - Neue Funktion tippGetTipperStatistik() (Vorbild kicktipp.de "Statistik", erste Ausbaustufe): Tipp-/Punkte-Verteilung nach Tendenz, Rang-Verlauf über die Saison und Punkte je Mannschaft für einen Tipper. Der Rang-Verlauf baut auf tippGetSpieltagspunkteUebersicht() auf, keine zusätzliche Abfrage nötig.
+- Changelog: 0.6.0 - Neue Funktion tippGetSpieltagspunkteUebersicht() (Vorbild kicktipp.de "Gesamtübersicht"): liefert pro Tipper die je Spieltag erzielten Punkte über die ganze Saison sowie die Gesamtsumme, inkl. Markierung des jeweiligen Spieltagssiegers.
+- Changelog: 0.5.0 - Neue Funktion tippGetSpieltagMatrix() (Vorbild kicktipp.de): liefert pro Spieltag die kumulierten Gesamtpunkte, die Rangveränderung zum vorherigen Spieltag und die einzelnen Tipps aller Tipper für die Matrix-Ansicht der Tippeinsicht (siehe view_tippspiel_frontend.php).
 - Changelog: 0.4.1 - Bestätigungs-Mail-Link und tippSiteBaseUrl()-Fallback von der entfernten tipp.php auf home.php?view=tippspiel umgestellt (siehe view_tippspiel_ frontend.php 1.0.0)
 - Changelog: 0.4.0 - redirectTo() zeigt jetzt auf home.php?view=tippspiel statt auf die entfernte eigenständige tipp.php - Tippspiel läuft jetzt als View innerhalb des Templates, analog zur Spielerstatistik (siehe addon/tipp/view_tippspiel_frontend.php, home.php). Alle bestehenden redirectTo()-Aufrufstellen unverändert, nur die Basis-URL hat sich geändert
 - Changelog: 0.3.0 - Neue Funktion tippGetRangliste(): globale Rangliste über alle jemals getippten (und ausgewerteten) Spiele, live berechnet aus den Rohdaten. Wendet die drei in "Was zählt bei Punktgleichheit" konfigurierten Tie-Break-Kriterien an (alle acht bestätigten Original-Optionen implementiert, inkl. Trefferquote und geteilter Spieltagswertungen). Deckt nur den Ergebnis-Tippmodus ab - Tendenz-Modus-Tipps werden bewusst übersprungen statt fälschlich mit 0 Punkten gezählt (siehe Funktions- Docblock), da die Tendenz-Punkteberechnung noch aussteht
@@ -69,6 +75,10 @@
 
 ## addon/tipp/handler_tipp.php
 
+- Changelog: 1.2.0 - save_tipp_anzeige speichert jetzt zusätzlich die neue anzeige_spielregeln-Einstellung.
+- Changelog: 1.1.0 - save_tipp_nachtragen prüft jetzt zusätzlich serverseitig, dass die übergebene Liga tatsächlich vom Tipper abonniert ist, bevor Tipps gespeichert werden.
+- Changelog: 1.0.0 - Neuer Handler save_tipp_nachtragen für das "Tipps nachtragen"-Feature.
+- Changelog: 0.9.0 - Neue Speicherfunktion save_tipp_anzeige für den Reiter "Anzeigen/Darstellung".
 - Changelog: 0.8.0 - Neue Aktion send_tipp_mail: verschickt echte Mails für alle drei Versandarten, inkl. Tipper-Bereich/"an alle" und echter [spiele]- Ermittlung beim Reminder (überspringt Tipper ohne offene Tipps)
 - Changelog: 0.7.1 - Bugfix: beim nachträglichen Eintragen der neu erzeugten Team-ID wurde der Array-Operator "+" statt array_merge() genutzt - da "team_id" in $data bereits (mit null) existierte, gewann bei "+" immer die linke Seite, wodurch neu gegründete Teams nie am Tipper gespeichert wurden
 - Changelog: 0.7.0 - Neue Aktionen save_tipp_user (Anlegen/Bearbeiten inkl. Team-Auflösung) und delete_tipp_user für die Userverwaltung
@@ -82,6 +92,10 @@
 
 ## addon/tipp/tipp_lib.php
 
+- Changelog: 1.0.0 - Neue Funktion tippGetLetzterAusgewerteterSpieltag(): höchste Spieltag-Nummer einer Liga mit mindestens einem echten Ergebnis - für den Sprung zum zuletzt ausgewerteten Spieltag beim Klick auf einen Tippernamen in der Tippeinsicht.
+- Changelog: 0.9.0 - Neue Funktion getArchivierteLigenMitTipps(): findet archivierte Ligen, für die tatsächlich Tipps abgegeben wurden - Grundlage für den neuen "Archivierte Tippsaisons"-Link unter Tippeinsicht/Gesamtübersicht.
+- Changelog: 0.8.0 - Neue Funktionen für "Tipps nachtragen": getTipperById(), adminTippGetSpieltage()/adminTippGetSpieltagPartien() (eigenständige, schlanke Kopien der Liga-Funktionen - der Adminbereich bindet frontend/data_liga.php bewusst nicht ein, ein require_once davon würde "Cannot redeclare getDB()" auslösen) sowie adminTippNachtragen() (speichert unabhängig von der sonst geltenden Abgabefrist, live geprüft mit einer Partie aus der Vergangenheit - der reguläre Frontend-Weg lehnt dieselbe Eingabe weiterhin korrekt ab).
+- Changelog: 0.7.0 - Bugfix: die Einstellung "Tippeinsicht öffentlich" (Anzeigen/Darstellung) hatte keinen erreichbaren Einstiegspunkt für nicht angemeldete Besucher - der allgemeine Header-Link und die Startseiten-Karte zeigten weiterhin auf den Standard-Einstieg (?action=abgabe), der Login voraussetzt und ohne erkennbaren Ausweg dorthin führte. Neue Funktion tippZielUrlOhneLogin() verlinkt für nicht eingeloggte Besucher jetzt direkt auf die Tippeinsicht, wenn die Einstellung aktiv ist - für eingeloggte Tipper und bei deaktivierter Einstellung bleibt das Ziel unverändert.
 - Changelog: 0.6.1 - tippRequestPasswordReset() sucht jetzt wahlweise über Nickname ODER Email (statt nur Email) und liefert bei Nichtfund eine konkrete Rückmeldung (welches der beiden Felder nichts fand) statt der bisherigen neutralen "falls diese Email existiert..."-Meldung - bewusste Abkehr vom Standard-Security-Pattern auf expliziten Wunsch für diese Testinstallation. Signatur geändert: (string $nickname, string $email), Rückgabe jetzt array{ok,reason} statt bool
 - Changelog: 0.6.0 - Self-Service-Kontobearbeitung für Tipper: tippUpdateOwnAccount() (Nickname und "freigeschaltet" bleiben admin-exklusiv unveränderbar), tippRequestPasswordReset()/tippResetPassword() ("Passwort vergessen", Reset-Code 1h gültig, Einmal-Nutzung). Neue DB-Spalten reset_code/ reset_code_expires per Migration (SHOW COLUMNS/ALTER TABLE, analog zu admin/bootstrap.php) ergänzt
 - Changelog: 0.5.1 - Nav-Link/Startseiten-Karte zeigen jetzt auf home.php?view=tippspiel statt auf die entfernte eigenständige addon/tipp/tipp.php - Tippspiel läuft jetzt als View innerhalb des Templates, analog zur Spielerstatistik (siehe view_tippspiel_frontend.php). Nebenbei: falsche CSS-Klasse "btn" in der Startseiten-Karte korrigiert (nur "btn-primary" existiert)
@@ -94,6 +108,10 @@
 
 ## addon/tipp/view_tippspiel.php
 
+- Changelog: 1.4.0 - Neue Einstellung "Spielregeln-Link anzeigen" im Tab Anzeigen/Darstellung - steuert, ob der neue Spielregeln-Reiter im Frontend erscheint (Standard: aus).
+- Changelog: 1.3.0 - "Tipps nachtragen": die Liga-Auswahl zeigt jetzt nur noch die Ligen, die der jeweilige Tipper tatsächlich abonniert hat (statt aller tippbaren Ligen). Manipulierte/veraltete URLs mit einer nicht abonnierten Liga fallen serverseitig auf die erste tatsächlich abonnierte Liga zurück. Neue Hinweismeldung, falls der Tipper noch gar keine Liga abonniert hat.
+- Changelog: 1.2.0 - Neues Feature "Tipps nachtragen" im Tab Userverwaltung (historisches Feature aus dem alten LMO): der Admin kann Tipps für einen Tipper eintragen, unabhängig von der sonst geltenden Abgabefrist, auch nach Anpfiff/Abpfiff. Gedacht für Tipper, die ihren Tipp rechtzeitig vor Anpfiff per Mail geschickt haben, statt selbst über die Website zu tippen.
+- Changelog: 1.1.0 - Neuer Reiter "Anzeigen/Darstellung" mit der Einstellung "Tippeinsicht öffentlich".
 - Changelog: 1.0.1 - Bugfix: Die Checkboxen "freigeschaltet"/"Newsletter"/"Tipp-Reminder" im Bearbeiten-Formular zeigten den gespeicherten Zustand nie an (immer unchecked), obwohl der Wert in der DB korrekt 1 war - Ursache: getDB() nutzt PDO::ATTR_EMULATE_PREPARES=false, wodurch TINYINT-Spalten als natives PHP int statt als String zurückkommen. Der bisherige strikte Vergleich mit '1' (String) via === war dadurch immer false. Jetzt (int)-Cast vor dem Vergleich mit int 1
 - Changelog: 1.0.0 - Tab "Newsletter/Reminder" vollständig umgesetzt: drei Versandarten (Newsletter an Alle/Persönliche Email/Tipp-Reminder mit Liga+Spieltag- Auswahl je tippbarer Liga), Tipper-Bereich von-bis PLUS die neue "an alle Tipper"-Kurzoption, Vorlagen-Umschaltung per JS beim Wechsel der Versandart - exakt nach dem vom Nutzer bereitgestellten Original-HTML
 - Changelog: 0.9.1 - Bugfix: $tdR/$tdL/$selSt/$inpSt waren nur innerhalb des "Optionen"-Tabs definiert und fehlten im "Userverwaltung"-Tab (führte zu PHP-Warnungen + kaputtem HTML) - an eine gemeinsame Stelle vor der Tab-Weiche verschoben
@@ -110,6 +128,27 @@
 
 ## addon/tipp/view_tippspiel_frontend.php
 
+- Changelog: 1.19.1 - Besser unterscheidbare Farben im "Vergleich mit dem Spieltagssieger"-Diagramm: Blau (eigener Verlauf) und gestricheltes Rot (Spieltagssieger) statt der schwer zu unterscheidenden Grün-/Orangetöne mit überlappender Füllfläche.
+- Changelog: 1.19.0 - Bugfix: "Vergleich mit dem Spieltagssieger" (Statistik-Seite 3) zeigte verzerrte/verschobene Daten - $vsMich/$vsSieger wurden per array_map() aus einem bei 1 (nicht 0) beginnenden Array gebaut, wodurch json_encode() ein JSON-Objekt statt eines Arrays erzeugte ({"1":26,...} statt [26,...]) - Chart.js interpretierte das fehlerhaft. Mit array_values() behoben, live geprüft (Chart-Daten jetzt als sauberes Array). Alle anderen Statistik-Diagramme auf dasselbe Muster geprüft - keine weiteren Fälle gefunden. Außerdem: die Seiten-Navigation (Seite 1/2/3/4) erscheint jetzt zusätzlich unterhalb der Diagramme, nicht mehr nur oben.
+- Changelog: 1.18.0 - Statistik-Seite 4 mit den letzten beiden noch offenen Diagrammen: "Ergebnisse pro Spieltag" (Verlauf der echten Ergebnisse, analog zu Tipps pro Spieltag) und "Punkte (alle Mannschaften)" als vollständige, sortierte Liste statt nur Top-3/Flop-3 (oberes Drittel grün, unteres Drittel rot).
+- Changelog: 1.17.0 - Statistik-Seite 3 mit vier weiteren Diagrammen: Tipps (Top 3 pro Ergebnis), Ergebnisse (Top 3 pro Ergebnis), Spieltagsplatzierungen, Vergleich mit dem Spieltagssieger.
+- Changelog: 1.16.1 - "Statistik" aus dem Tippspiel-Hauptmenü entfernt - bleibt weiterhin erreichbar über den Link unter der Tipper-Spieltagsansicht (renderTippEinsichtTipperView(), Klick auf einen Tippernamen in der Tippeinsicht).
+- Changelog: 1.16.0 - Statistik-Seite bekommt Seiten-Navigation (Vorbild kicktipp.de: mehrere Diagramm-Seiten statt alles auf einmal) - Seite 2 mit vier weiteren Diagrammen: Ergebnisse-Verteilung, Tipps pro Spieltag, Punkte pro Spieltag, Punkte zur Spitze. BUGFIX während der Entwicklung: $maxNr war in renderTippStatistikView() nie definiert, wodurch die Seite-2-Diagramme trotz vorhandener Daten leer blieben - vor Auslieferung selbst gefunden und behoben.
+- Changelog: 1.15.0 - Kurze Erklärungstexte unter jeder der vier Diagramm-Überschriften auf der Statistik-Seite ergänzt.
+- Changelog: 1.14.1 - Bugfix: renderTippStatistikView() und renderTippTipptabelleView() fehlte der Bypass für archivierte Ligen mit Tipp-Historie (im Gegensatz zu Tippeinsicht/Gesamtübersicht) - eine über die Tipper-Spieltagsansicht angeforderte archivierte Liga fiel dadurch stillschweigend auf die erste aktive Liga des angemeldeten Nutzers zurück (Statistik/Tipptabelle zeigten dann falsche Liga/falschen Tipper). Live geprüft: beide Links aus einer archivierten Liga heraus zeigen jetzt korrekt die Daten des gewählten Tippers in der archivierten Liga.
+- Changelog: 1.14.0 - Tippername in der Tippeinsicht-Matrix ist jetzt anklickbar, öffnet eine neue Detailansicht (renderTippEinsichtTipperView()) mit Heim/Gast/Erg/Tipp/Pkt je Partie des zuletzt ausgewerteten Spieltags, Spieltags- und Gesamtpunkten, sowie Rang- und Spieltag-Navigation. Darunter zwei neue Links zu Statistik und zur neuen "Tipptabelle" (renderTippTipptabelleView()) - letztere berechnet die Liga-Tabelle so, wie sie mit den Tipps eines Tippers statt der echten Ergebnisse aussähe, unter Wiederverwendung von LigaService::computeStandings(). Nur bereits sichtbare Tipps fließen ein - live geprüft: eine noch nicht sichtbare Partie verändert die Tabelle nicht, nach Ablauf der Abgabefrist fließt sie korrekt mit ein.
+- Changelog: 1.13.0 - Neuer Reiter "Statistik" mit vier Chart.js-Diagrammen (Tipps-Verteilung, Punkte-Verteilung, Gesamtplatzierungsverlauf, Top-3/Flop-3-Mannschaften nach Punkten) - erste Ausbaustufe, weitere Diagramme folgen. Nutzt das bereits im Projekt vorhandene, selbst gehostete Chart.js (siehe Fieberkurven), kein zusätzliches Paket. Dieselbe Rang-basierte Vor/Zurück-Navigation wie bei der Gesamtübersicht-Tipper-Detailansicht.
+- Changelog: 1.12.0 - Neue "Spielregeln"-Erklärseite (historisches Feature aus dem alten LMO): Anleitung, Punkteverteilung und Haftungsausschluss, als eigener Reiter neben Tippabgabe/Tippeinsicht/Rangliste/Gesamtübersicht. Die Punktewerte werden live aus den Admin-Einstellungen gelesen (dieselben Schlüssel wie calculateTippPunkte()), nicht hartkodiert - live geprüft: eine Änderung von pkt_ergebnis wirkt sich sofort auf die angezeigte Zahl aus. Enthält keine persönlichen Daten und ist daher immer ohne Login erreichbar, unabhängig von der "Tippeinsicht öffentlich"-Einstellung.
+- Changelog: 1.11.1 - Die "Ergebnis"-Spalte (Kopfzeile und Werte) ist jetzt zentriert - sowohl im Tippabgabe-Formular als auch im Tippeinsicht-Spielplan.
+- Changelog: 1.11.0 - Bugfix: "Gast" (und "Termin"/"Ergebnis") in den .tipp-table-Kopfzeilen wirkten nicht linksbündig, obwohl die CSS-Regel dafür existierte - die Kopfzeile steckte nie in einem <thead>, wodurch die Regel (table.tipp-table thead th) nie griff und der Browser stattdessen seine eigene Standard-Zentrierung für <th> anwendete. Alle .tipp-table-Vorkommen mit Kopfzeile (Tippabgabe, Tippeinsicht-Spielplan, Rangliste) jetzt korrekt in <thead>/<tbody> gekapselt.
+- Changelog: 1.10.1 - Die "Heim"-Spalte in der Partien-Tabelle der Tippeinsicht ist jetzt rechtsbündig ausgerichtet (Überschrift und Teamnamen).
+- Changelog: 1.10.0 - Archivierte Ligen mit Tipp-Historie bleiben jetzt in Tippeinsicht/Gesamtübersicht/Tipper-Detailansicht einsehbar (nur nicht mehr tippbar, mit "archiviert"-Badge). Neuer Link "Archivierte Tippsaisons" unter der Anzeige, erscheint nur, wenn es überhaupt archivierte Ligen mit Tipp-Historie gibt; die Liste dahinter zeigt bewusst nur Ligen mit tatsächlichen Tipps, keine leeren archivierten Ligen. Live geprüft: Link erscheint korrekt erst nach dem Archivieren einer Liga mit Tipps, eine parallel angelegte leere archivierte Liga taucht in der Liste nicht auf.
+- Changelog: 1.9.0 - renderTippspielTabsBar() bekommt einen optionalen $ligaId-Parameter, hängt "&liga=X" an die liga-bezogenen Tabs (Tippabgabe/Tippeinsicht/Gesamtübersicht) an - ein Reiterwechsel bleibt jetzt bei der gerade angeschauten Liga statt immer auf die erste Liga zurückzuspringen. Rangliste bleibt bewusst ohne Parameter (nicht liga-bezogen). Nebenbei einen stehengebliebenen Verweis in einem Kommentar entfernt.
+- Changelog: 1.8.0 - Gesamtübersicht: Spieltag-Spaltenköpfe verlinken jetzt zur Tippeinsicht des jeweiligen Spieltags, Tippernamen verlinken zu einer neuen Detailansicht (renderTippGesamtuebersichtTipperView()) mit Pfeil-Navigation zum nächst-/vorherplatzierten Tipper (nach aktueller Rangliste, nicht alphabetisch).
+- Changelog: 1.7.0 - Neuer Reiter "Gesamtübersicht" neben Tippabgabe/Tippeinsicht/Rangliste - eine Tabelle mit einer Zeile je Tipper und einer Spalte je Spieltag (erzielte Punkte, Spieltagssieger rot hervorgehoben) plus Gesamtsumme. Respektiert dieselbe "Tippeinsicht öffentlich"-Einstellung wie die Tippeinsicht.
+- Changelog: 1.6.0 - Tippeinsicht komplett umgebaut: statt eines Blocks pro Partie (mit allen Tippern darunter) jetzt eine kompakte Matrix-Tabelle - eine Spalte pro Partie mit Team-Kurzcodes im Kopf, jede Zeile ein Tipper mit Rang, Rangveränderung, den einzelnen Tipps (mit erzielten Punkten als Hochzahl bei Treffern) sowie Spieltags- und Gesamtpunkten. Spieltag-Navigation jetzt als Pfeile mit Beschriftung statt einer Liste aller Nummern.
+- Changelog: 1.5.1 - Zusätzlicher Link zur öffentlichen Tippeinsicht auf der Login-Seite selbst (falls jemand trotzdem dort landet, z.B. durch eine abgelaufene Sitzung), wenn die Einstellung aktiv ist.
+- Changelog: 1.5.0 - renderTippEinsichtView() funktioniert jetzt auch ohne eingeloggten Tipper (neue Einstellung "Tippeinsicht öffentlich" unter Admin → Tippspiel → Anzeigen/Darstellung) - zeigt dann alle tippbaren Ligen ohne persönliche Abo-Filterung und einen Hinweistext mit Login-Link statt der Konto-Leiste. Der Login-Zwang wird für die Aktion "einsicht" gezielt übersprungen, wenn die Einstellung aktiv ist.
 - Changelog: 1.4.1 - Bugfix: Die Tippeinsicht hatte (anders als die Tippabgabe) gar keinen Liga-Umschalter - bei mehr als einer abonnierten Liga wurde immer nur die erste angezeigt, die zweite war unerreichbar. Denselben Umschalter-Block wie in der Tippabgabe ergänzt
 - Changelog: 1.4.0 - "Passwort vergessen" bietet jetzt zwei Eingabefelder (Nickname ODER Email) statt nur Email, sucht entsprechend und meldet bei Nichtfund konkret zurück, welches Feld nichts fand - siehe tippRequestPasswordReset() in tipp_lib.php 0.6.1
 - Changelog: 1.3.0 - Verhalten korrigiert (Rückmeldung: Fallback war andersrum gewünscht): tippFilterLigenByAbo() liefert jetzt bei leerem Abo eine LEERE Liste statt aller Ligen. Dafür fragt die Registrierung (renderTippRegisterView()) die zu abonnierenden Ligen direkt mit ab (Checkboxen unter den Passwortfeldern), damit ein frisch registrierter Tipper nicht ohne Abo dasteht. Tippabgabe/-einsicht zeigen bei leerem Abo (aber vorhandenen Ligen) jetzt einen Hinweis mit Link zur Kontoseite statt der irreführenden "keine Liga freigegeben"-Meldung
@@ -134,6 +173,8 @@
 
 ## admin/bootstrap.php
 
+- Changelog: 1.12.0 - Neue Funktion ensureSportProfileColumns(): zentrale on-demand-Migration für sport_type (liga) und extra_data (liga_partien), analog zu ensureSpielstatusColumns(). Bugfix: diese Absicherung fehlte bisher komplett - admin/data_loader.php las sport_type direkt ohne eigenen Schutz, wodurch nicht nur der .l98-Import, sondern die komplette Liga-Einstellungsseite auf einer nicht neu migrierten Installation abgestürzt wäre. Live geprüft: Spalte gezielt entfernt, echte Admin-Seite darüber geladen - kein Absturz, Spalte automatisch wiederhergestellt.
+- Changelog: 1.11.0 - Nur die Sport-Profile eingebunden (bewusst NICHT die komplette Liga-Trait-Kette wie in Torstens ursprünglichem Vorschlag - das hätte der bewussten Trennung von Admin- und Frontend-Bootstrap widersprochen, siehe "Tipps nachtragen"-Feature). Der einzige tatsächlich benötigte Aufruf (getLigaOptions() beim Sportart-Wechsel) wurde stattdessen als eigenständige Admin-Query gebaut.
 - Changelog: 1.10.3 - Logo-Format-Priorität für die Admin-Vorschau auf SVG-zuerst umgestellt (TEAM_LOGO_ALLOWED_EXT), passend zur Browser-Ausgabe der echten Website - betrifft nur die Vorschau/Löschfunktion, nie den PDF-Export.
 - Changelog: 1.10.2 - Logo-Format-Priorität umgekehrt (Rasterformate vor svg), identisch zu src/Liga/TeamFormattingTrait.php 1.0.2, damit Admin-Vorschau und tatsächliche Anzeige übereinstimmen.
 - Changelog: 1.10.2 - Logo-Format-Priorität umgekehrt (Rasterformate vor svg), siehe src/Liga/TeamFormattingTrait.php 1.0.2 für die Begründung - identische Reihenfolge, damit Admin-Vorschau und tatsächliche Anzeige übereinstimmen
@@ -161,6 +202,8 @@
 
 ## admin/data_loader.php
 
+- Changelog: 1.7.10 - Ruft die neue ensureSportProfileColumns() auf jedem eingeloggten Admin-Seitenaufruf auf, analog zu den bestehenden ensure*()-Migrationsfunktionen.
+- Changelog: 1.7.9 - Liga-Settings-Abfrage liest jetzt zusätzlich sport_type mit, für die korrekte Vorauswahl im neuen Sportart-Dropdown.
 - Changelog: 1.7.8 - Lädt jetzt die neue "ab Spieltag"-Spalte mit (Beitrag Torsten Hofmann), inkl. Schema-Migration.
 - Changelog: 1.7.7 - minuspunkte_korrektur-Spalte/Migration ergänzt (analog zu tore_korrektur)
 - Changelog: 1.7.6 - tore_korrektur-Spalte/Migration auch beim reinen Anzeigen des "Strafen"-Tabs berücksichtigt (nicht erst beim Speichern), damit bereits gespeicherte Strafpunkte/Straftore nicht scheinbar verschwinden
@@ -204,6 +247,11 @@
 
 ## admin/handler_import_export.php
 
+- Changelog: 1.11.0 - createLigaInDB() bekommt einen neuen, optionalen $sportType-Parameter (mit derselben defensiven on-demand-Schema-Prüfung wie an anderer Stelle etabliert, bewusst vor beginTransaction()). Bestehende Aufrufer ohne den Parameter bleiben unverändert (Fußball als DB-Standardwert).
+- Changelog: 1.10.0 - Bugfix: importL98IntoDB() versuchte sport_type zu setzen, ohne vorher zu prüfen, ob die Spalte existiert - schlug mit "Unknown column sport_type" fehl auf jeder Installation, die install.php seit der Sport-Profile-Erweiterung noch nicht erneut ausgeführt hatte. Eigene defensive Prüfung ergänzt (zusätzlich zur zentralen in admin/bootstrap.php, damit die Funktion auch bei einem eigenständigen/programmatischen Aufruf außerhalb der normalen admin.php-Anfrage sicher funktioniert).
+- Changelog: 1.9.0 - Bugfix: Bei importL98IntoDB() liefen alle vier on-demand-Schema-Migrationen (Strafpunkte-Spalten tore_korrektur/minuspunkte_korrektur/ab_spieltag, sowie extra_data für Sätze) innerhalb der Import-Transaktion. ALTER TABLE löst in MySQL/MariaDB ein implizites Commit aus - die Transaktion wurde dadurch unbemerkt mittendrin aufgebrochen (ein späterer rollBack() hätte nur noch den Teil NACH der ersten ALTER TABLE zurückgerollt, nicht den kompletten Import). Alle vier Schema-Prüfungen jetzt konsequent VOR beginTransaction() verschoben, derselbe Fehler wie zuvor schon einmal bei der Spielerstatistik-Erweiterung behoben. Live geprüft: Import auf eine frische Datenbank ohne die vier Spalten läuft fehlerfrei durch, inTransaction() sauber vor und nach dem Import, alle Spalten korrekt migriert, Satzdaten vollständig übernommen (90 Partien mit extra_data).
+- Changelog: 1.8.0 - .l98-Import erkennt jetzt automatisch Volleyball-Ligen (nameTor="Satz"/"Set" oder parsebare NTx-Satzergebnisse) und übernimmt die Satzergebnisse selbst als extra_data (vorher gingen sie beim Import komplett verloren). Neue Funktionen l98ParseSets() (Komma- UND Semikolon-Trennung unterstützt, mit/ohne Leerzeichen um die Doppelpunkte) und l98DetectSportType() (prüft sowohl Liga- als auch KO-Turnier-Format). importL98IntoDB()/runL98Import() bekommen einen neuen, optionalen Sportart-Parameter für die manuelle Übersteuerung durch den Admin. Bugfix während der Entwicklung: die erste Version von l98DetectSportType() prüfte nur das Liga-Format (partien), nicht das KO-Turnier-Format (paarungen/spiele) - beim Testen mit einer echten KO-Volleyball-Datei gefunden und behoben. Live mit drei echten Volleyball-.l98-Dateien geprüft (BiH Premijer Liga, 3.Liga Nord, sowie ein KO-Pokal-Turnier) - alle korrekt erkannt, importiert und die Punkteberechnung bestätigt korrekte 3:0/3:1/3:2-Aufschlüsselung.
+- Changelog: 1.7.0 - .l98-Import übernimmt jetzt zusätzlich Strafpunkte-Daten (Beitrag: Torsten Hofmann, unabhängig vom Multi-Sport-Feature): [TeamN].SP (Punkteabzug), TOR1/TOR2 (Tore-/Gegentore-Korrektur), STDA ("ab Spieltag") und NOT (Grund) werden automatisch in liga_strafpunkte übernommen und wirken direkt in der Tabellenberechnung. tore_korrektur/minuspunkte_korrektur/ab_spieltag sind on-demand-Spalten (kommen erst mit dem "ab Spieltag"-Feature in admin/handler_settings.php dazu) - hier defensiv per SHOW COLUMNS geprüft und bei Bedarf angelegt, damit der Import auch auf einer Installation funktioniert, die die entsprechende Admin-Seite noch nie geöffnet hat. Live end-to-end getestet: .l98-Datei mit SP=5/TOR1=2/TOR2=1/STDA=3 importiert, korrekt als strafpunkte=-5/tore_korrektur=2/straftore=1/ab_spieltag=3 in der DB gelandet und wirkt sich nachweislich auf die berechneten Punkte aus (3 Siegpunkte - 5 Strafpunkte = -2).
 - Changelog: 1.6.0 - Team-Abgleich beim Import zeigt jetzt ALLE ähnlichen vorhandenen Teams zur Auswahl an (z.B. Haupt- und Reserve-Team "FC Bayern Muenchen"/"FC Bayern Muenchen II"), statt automatisch nur den einen besten Treffer vorzuschlagen. Neue Funktion findFuzzyTeamMatches() (Mehrzahl) liefert alle Kandidaten sortiert nach Ähnlichkeit; die Review-Seite zeigt sie als Dropdown statt einer einzelnen Ja/Nein-Checkbox. import_confirm liest jetzt die gewählte Team-ID statt eines Häkchens
 - Changelog: 1.5.5 - Bugfix Team-Abgleich beim Import: die reine Trigramm-Ähnlichkeit produzierte zu viele Fehltreffer zwischen thematisch völlig unverwandten, aber ähnlich langen Namen (z.B. "Norwegen" ↔ "TSG Balingen", "Schweden" ↔ "BSV Schwarz-Weiß Rehden" – beide lagen über dem alten Schwellenwert von 0.25 bei Namen >7 Zeichen). teamNamesAreFuzzyMatch() verlangt jetzt zusätzlich eine hohe normalisierte Levenshtein-Distanz (≥0.72) – beide Kennzahlen müssen unabhängig voneinander übereinstimmen, nicht nur eine. Echte Tippfehler-/Formatierungs-Varianten (z.B. "FC St Pauli" ↔ "FC St. Pauli", "Hansa Rostock" ↔ "Hansa Rostock II") erkennt die Funktion weiterhin zuverlässig
 - Changelog: 1.5.4 - l98DecodeText() jetzt auch auf den Spielbericht-Link (BE-Feld) angewendet, in beiden Zweigen (KO und regulär) – relevant für "&amp;" in Query-Parametern von URLs, war bisher übersehen worden
@@ -229,6 +277,7 @@
 
 ## admin/handler_liga.php
 
+- Changelog: 1.7.0 - save_partie_teams speichert jetzt zusätzlich die eingegebenen Satzergebnisse als extra_data (mit derselben defensiven on-demand-Spaltenprüfung wie an anderer Stelle etabliert). Leere Satz-Paare werden übersprungen statt als "0:0" gespeichert.
 - Changelog: 1.6.5 - save_team respektiert jetzt ein optionales POST-Feld "redirect" (nur eigene "?action=..."-Ziele erlaubt), damit der neue "Teams"-Tab in den Liga- Einstellungen nach dem Speichern dorthin zurückkehrt statt zur Liga-Detailseite (Standardverhalten bleibt unverändert, falls kein redirect-Feld gesendet wird)
 - Changelog: 1.6.4 - add_team_link übersetzt jetzt die a/b/unbekannt-Richtungswahl in die tatsächliche Team-ID (newer_team_id). Neue Aktion set_team_link_direction zum nachträglichen Ändern bestehender Verknüpfungen, siehe bootstrap.php 1.9.0
 - Changelog: 1.6.3 - Neue Aktionen team_links_for (JSON, Team-Verknüpfungen laden), add_team_link, delete_team_link – siehe bootstrap.php 1.8.0
@@ -247,6 +296,7 @@
 
 ## admin/handler_settings.php
 
+- Changelog: 1.5.0 - Speichert die gewählte Sportart in der liga-Tabelle und übernimmt beim erstmaligen Sportartwechsel die sport-spezifische Standard-Punktekonfiguration (nur falls noch keine eigene Konfiguration existiert). Eigenständige Admin-Query statt LigaService::getLigaOptions() (siehe admin/bootstrap.php).
 - Changelog: 1.4.0 - Speichert jetzt die neue "ab Spieltag"-Spalte mit (Beitrag Torsten Hofmann), inkl. Schema-Migration.
 - Changelog: 1.3.9 - Vorzeichen-Eingabe im Tab "Strafen" auf Dropdown (+/−) + Betragsfeld umgestellt (Minuszeichen auf Mobilgeräten oft nicht per Zifferntastatur erreichbar). Vierter Korrekturwert "Minuspunkte" ergänzt
 - Changelog: 1.3.8 - Tab "Strafen" um dritten Korrekturwert "erzielte Tore" erweitert (neue Spalte tore_korrektur, Migration inklusive), damit z.B. bei Lizenzentzug Punkte UND beide Tor-Werte unabhängig korrigiert werden können
@@ -279,6 +329,7 @@
 
 ## admin/handler_wizard.php
 
+- Changelog: 1.4.0 - Der Liga-Erstellen-Assistent übernimmt jetzt die in Schritt 1 gewählte Sportart durch den kompletten Ablauf und übergibt sie an createLigaInDB() - die Liga wird direkt mit der richtigen Sportart angelegt, statt sie nachträglich in den Ligaeinstellungen ändern zu müssen.
 - Changelog: 1.3.2 - Umbenennung auf Nutzerwunsch: interne Bezeichnungen jetzt durchgehend auf Englisch ("League Key" statt der vorherigen deutschen Bezeichnung) – Funktionsname, Konstante und interner Modus-Wert entsprechend angepasst (siehe bootstrap.php/league-key_data.php)
 - Changelog: 1.3.1 - Bugfix: liest Teamzahl jetzt aus dem zum Liga-Typ passenden, dauerhaft eigenen Feld ("team_count_liga"/"team_count_ko" statt eines gemeinsamen "team_count"), siehe view_wizard.php 1.3.1 für die Ursache. Liga-Maximum außerdem von 128 auf 256 angehoben (passend zum max-Attribut im Formular)
 - Changelog: 1.3.0 - Reguläre Liga: Spielplan wird jetzt standardmäßig per DFB-League-Key- Muster erstellt (falls für die Teamzahl vorhanden), statt immer per Zufall. Neue Aktion "?action=create_liga&step=3&regen=1" zum Wechseln der Spielplan-Art (League Key/Zufall/kein Spielplan) auf der Vorschauseite, ohne die Teamnamen erneut eingeben zu müssen. Der bestehende Teamnamen-Handler (auch step=3+POST) musste dafür "regen" explizit ausschließen, sonst fing er die regen-Anfrage ab und interpretierte die fehlenden team_name_X-Felder fälschlich als leeren Teamnamen
@@ -315,6 +366,7 @@
 
 ## admin/view_archiv.php
 
+- Changelog: 1.6.0 - Bugfix: der "Reaktivieren"-Link im Archiv war funktionslos - er war die bereits vorausgewählte erste Option in einem <select onchange="this.form.submit()">-Dropdown, wodurch Browser beim Anklicken kein change-Ereignis auslösten (der Wert ändert sich ja nicht). Reaktivieren ist jetzt ein eigenständiger Button, das Dropdown daneben dient nur noch zum gezielten Verschieben in einen anderen Ordner.
 - Changelog: 1.5.1 - Liga-ID (#123) wird jetzt auch in den Archiv-Zeilen angezeigt (sowohl innerhalb von Ordnern als auch bei Ligen ohne Ordner), analog zur ID-Spalte in der Ligen-Übersicht
 - Changelog: 1.5.0 - Löschen-Button pro Liga ergänzt (in Ordnern gruppiert + ohne Ordner), nutzt den bestehenden "delete_liga"-Handler mit redirect=?action=archiv (siehe handler_liga.php 1.6.0 für das zugehörige kaskadierende Löschen)
 - Changelog: 1.4.1 - Projektname auf "LMOnext" umgestellt (vorher "Online-Liga-Verwaltung Board" / "OLVBoard")
@@ -331,6 +383,7 @@
 
 ## admin/view_import_review.php
 
+- Changelog: 1.2.0 - Neue Sportart-Auswahl pro Datei auf der Import-Bestätigungsseite, mit der automatisch erkannten Sportart vorausgewählt (als "erkannt" markiert) - der Admin kann sie bei Bedarf übersteuern. Die Seite erscheint jetzt auch dann, wenn keine unklaren Teamnamen vorliegen, aber eine Nicht-Fußball-Sportart erkannt wurde, damit die Erkennung nicht unbemerkt im Hintergrund passiert.
 - Changelog: 1.1.0 - Zeigt jetzt ALLE ähnlichen vorhandenen Teams als Dropdown-Auswahl an (statt nur den einen besten Treffer per Ja/Nein-Checkbox), z.B. wenn Haupt- und Reserve-Team beide ähnlich zum importierten Namen sind. Zusätzliche Option "Kein passendes Team – neues Team anlegen"
 - Changelog: 1.0.0 - Initiale Version: Abgleichsseite zwischen Upload und tatsächlichem Import. Wird nur angezeigt, wenn detectFuzzyTeamMatchesForImport() ungefähre (nicht exakte) Namenstreffer mit bereits vorhandenen Teams gefunden hat – der Admin entscheidet hier pro Team, ob der Name aus der DB übernommen werden soll, bevor der eigentliche Import (?action=import_confirm) läuft.
 
@@ -356,6 +409,7 @@
 
 ## admin/view_liga_settings.php
 
+- Changelog: 1.7.0 - Sportart-Dropdown im Tab Grundwerte ergänzt (Beitrag: Torsten Hofmann, Bugfix bei der Übernahme: doppeltes name="sport_type"-Feld - verstecktes Input UND Dropdown gleichzeitig im selben Formular - auf ein einziges Feld bereinigt), abschaltbar über die Admin-Einstellung show_sport_type.
 - Changelog: 1.6.0 - Neue Spalte "ab Spieltag" im Strafen-Tab (Beitrag Torsten Hofmann, siehe src/Liga/StandingsTrait.php).
 - Changelog: 1.5.3 - Spaltenreihenfolge im Tab "Strafen" geändert: Punkte, Minuspunkte, Erzielte Tore, Gegentore - reine Anzeigeänderung, die Felder werden weiterhin über ihren Namen ausgewertet, nicht die Position
 - Changelog: 1.5.2 - Tab "Strafen": Eingabe auf Dropdown (+/−) + positives Betragsfeld umgestellt statt eines Zahlenfelds mit Minuszeichen (auf Mobilgeräten oft nicht per Zifferntastatur eingebbar). Vierte Spalte "Minuspunkte" ergänzt
@@ -402,6 +456,7 @@
 
 ## admin/view_spieltag.php
 
+- Changelog: 1.4.0 - Neue Satz-Eingabe für Sportarten mit eigenen Ergebnisfeldern (aktuell Volleyball): unter jeder Partie erscheint jetzt eine "Sätze"-Zeile mit nummerierten Eingabepaaren und einem "+"-Button für weitere Sätze (Vorbild: Torstens Screenshot). Nutzt das bereits vorhandene, aber bisher nirgends angebundene SportProfile::getResultFormFields()-Interface. Bugfix während der Entwicklung: erste Version prüfte nur, ob getResultFormFields() überhaupt Einträge hat - Fußball deklariert dort aber selbst ein Feld (Halbzeit, Typ "score-pair"), wodurch die Satz-Zeile fälschlich auch bei Fußball erschienen wäre. Jetzt gezielt nach Feldtyp "dynamic-score-list" gefiltert. Live geprüft: Fußball zeigt keine Satz-Zeile, Volleyball zeigt sie korrekt, Speichern und erneutes Laden der eingegebenen Sätze bestätigt fehlerfrei.
 - Changelog: 1.3.3 - Hinweistext über dem Team-Dropdown unterscheidet jetzt, ob nur Sieger ("Nur Sieger aus Runde X") oder Sieger+Verlierer angeboten werden (in der letzten Runde bei Finale + Spiel um Platz 3, siehe data_loader.php 1.6.4)
 - Changelog: 1.3.2 - Projektname auf "LMOnext" umgestellt (vorher "Online-Liga-Verwaltung Board" / "OLVBoard")
 - Changelog: 1.3.1 - "Tabelle"-Button ebenfalls über t() übersetzt (war übersehen worden)
@@ -443,6 +498,7 @@
 
 ## admin/view_wizard.php
 
+- Changelog: 1.4.0 - Neues Sportart-Dropdown in Schritt 1 (Ligagrundlagen), direkt nach dem Liganamen, abschaltbar über dieselbe show_sport_type-Einstellung wie in den Liga-Einstellungen. Live geprüft: Sportart wird korrekt bis zur fertigen Liga durchgereicht (createLigaInDB() end-to-end getestet), Standardverhalten ohne Parameter (Fußball) bleibt unverändert.
 - Changelog: 1.3.5 - Umbenennung auf Nutzerwunsch: interne Bezeichnungen jetzt durchgehend auf Englisch ("League Key" statt der vorherigen deutschen Bezeichnung) – Variablenname, Funktionsname, interner Modus-Wert und Lang-Schlüssel entsprechend angepasst (siehe bootstrap.php/league-key_data.php). Der sichtbare UI-Text hieß schon vorher "Schlüsselplan" (siehe Changelog 1.3.2) und ist unverändert
 - Changelog: 1.3.4 - Vorschautabelle zeigt bei "kein Spielplan" jetzt korrekt "___" für die Leerteam-Platzhalter (-1) statt eines PHP-Fehlers/leerer Zelle, siehe bootstrap.php 1.7.1
 - Changelog: 1.3.3 - Auf Wunsch zurückgenommen: Schlüsselplan-Option wieder wie ursprünglich immer sichtbar (nur ausgegraut mit "nicht verfügbar"-Hinweis) statt komplett zu verschwinden, wenn kein Muster zur Teamzahl passt
@@ -460,6 +516,7 @@
 
 ## frontend/bootstrap.php
 
+- Changelog: 1.7.0 - Sport-Profile eingebunden (require_once vor data_liga.php, da StandingsTrait/RenderViewsTrait SportRegistry referenzieren).
 - Changelog: 1.6.1 - addon/tipp/tipp_lib.php zentral eingebunden (analog zu addon/player/frontend_spielerstat.php), damit tippIstAktiv()/ tippRenderSiteLink()/tippRenderHomeCard() auf jeder Besucherseite verfügbar sind - Tippspiel-Link in Header/Footer und Startseiten-Karte
 - Changelog: 1.6.0 - Performance-/Robustheitsverbesserungen: getAdminSetting() liest alle Einstellungen jetzt in EINER Abfrage pro Request statt einer eigenen Abfrage pro Schlüssel. pdf_export.php wird nicht mehr pauschal für jeden Seitenaufruf eingebunden (belastete auch home.php/die Mini-Addons, die es nie brauchen), sondern nur noch direkt in liga.php, dem einzigen tatsächlichen Verwender. Session-Cookie jetzt mit HttpOnly, SameSite=Lax und (bei HTTPS) Secure. Globaler Exception-Handler: unerwartete Fehler landen im Server-Log, Besucher sehen nur eine schlichte, technikfreie Meldung statt Stacktrace/Dateipfaden
 - Changelog: 1.5.0 - data_spielerstat.php eingebunden (Besucher-Ansicht für das neue Spielerstatistik-Addon, siehe admin/spielerstat_lib.php)
@@ -483,6 +540,7 @@
 
 ## frontend/data_liga.php
 
+- Changelog: 3.0.7 - getAllLigaPartien()-Wrapper um den neuen optionalen $ligaId-Parameter erweitert.
 - Changelog: 3.0.6 - BUGFIX: der findTeamLogoPathFrontend()-Kompatibilitäts-Wrapper akzeptierte nur EINEN Parameter (int $teamId) und ignorierte den neu ergänzten zweiten Parameter $forBrowser komplett - dadurch wurde ein von frontend/pdf_export.php explizit übergebenes "false" (PDF-Modus) stillschweigend verworfen, das PDF landete immer im Browser-Modus (SVG zuerst) statt beim gewünschten Raster-zuerst. Wrapper reicht $forBrowser jetzt korrekt durch.
 - Changelog: 3.0.5 - renderStandingsView()-Wrapper reicht den neuen $tableMode-Parameter durch.
 - Changelog: 3.0.4 - renderTabsBar()- und renderSpieltagPicker()-Wrapper reichen die neuen optionalen Parameter ($activeNr bzw. $targetView) durch.
@@ -611,6 +669,8 @@
 
 ## install.php
 
+- Changelog: 2.3.0 - Vervollständigt: install.php erstellte bisher nur sport_type/extra_data (Volleyball-Erweiterung) vollständig, aber nicht die Strafpunkte-Spalten (tore_korrektur/minuspunkte_korrektur/ab_spieltag, benötigt vom "ab Spieltag"-Feature UND vom .l98-Import mit Strafpunkten) sowie status/bericht_url - diese entstanden bisher nur über verstreute Laufzeit-Migrationen. Jetzt in CREATE TABLE und Migrationsblock ergänzt, damit ein einzelner install.php-Lauf die komplette aktuelle Datenbankstruktur abdeckt. Live über die echte install.php-Webroute mit den tatsächlichen Zugangsdaten getestet (Spalten vorher gezielt entfernt, danach korrekt wiederhergestellt, keine bestehenden Daten verloren) - dabei bestätigt, dass sich install.php nach erfolgreichem Lauf wie vorgesehen selbst löscht (Sicherheitsfeature, kein Bug).
+- Changelog: 2.2.0 - Sport-Profile-Migration (Beitrag: Torsten Hofmann, gegen meinen aktuellen Stand nachgezogen statt Torstens älterer Version übernommen): sport_type-Spalte auf liga, extra_data (JSON) auf liga_partien, h_tore/g_tore von TINYINT auf SMALLINT erweitert (Basketball-Ergebnisse über 127). Zwei unabhängige, nicht mit dem Sport-Feature zusammenhängende Spaltenänderungen (key_value/option_value DEFAULT '' entfernt) bewusst NICHT übernommen - technisch nicht nötig auf dieser MariaDB/MySQL-Umgebung (live geprüft) und ein leichtes Rückschritts-Risiko.
 - Changelog: 2.1.1 - Neue Tabelle liga_strafpunkte ergänzt (Strafpunkte/Straftore je Team und Liga, siehe src/Liga/StandingsTrait.php 1.1.0). Auf Bestandsinstallationen wird sie zusätzlich automatisch bei Bedarf nachgezogen (ensureStrafpunkteSchema()), install.php muss dafür nicht erneut laufen
 - Changelog: 2.1.0 - Ein bereits systemweit installiertes composer-Kommando (z.B. /usr/bin/composer) wird jetzt bevorzugt verwendet, falls vorhanden (findSystemComposer()) - meist besser gepflegt/aktueller als die mitgelieferte bin/composer.phar. Schlägt das fehl oder ist keins vorhanden, wird wie bisher auf bin/composer.phar zurückgefallen. Die eigentliche Prozess-Ausführung wurde in runComposerCommand() ausgelagert, damit beide Varianten dieselbe robuste Timeout/Fehlerbehandlung nutzen
 - Changelog: 2.0.1 - composer.phar liegt jetzt in bin/ statt im Projekt-Hauptordner (mit .htaccess-Sperre analog zu store/), damit der Hauptordner übersichtlich bleibt. Composer selbst braucht dafür keine Anpassung, da das Arbeitsverzeichnis für die Abhängigkeitsauflösung ohnehin bewusst auf den Projekt-Hauptordner gesetzt ist (proc_open(..., __DIR__)), unabhängig davon, wo composer.phar selbst liegt
@@ -631,6 +691,14 @@
 
 ## lang/admin/de.php
 
+- Changelog: 1.23.0 - Neue Sprachschlüssel für die Satz-Eingabe.
+- Changelog: 1.22.0 - Neue Sprachschlüssel für die Sportart-Auswahl auf der Import-Bestätigungsseite.
+- Changelog: 1.21.0 - Neue Sprachschlüssel für die Sportart-Auswahl.
+- Changelog: 1.20.0 - Neue Sprachschlüssel für die Spielregeln-Link-Einstellung.
+- Changelog: 1.19.0 - Neuer Sprachschlüssel für die Hinweismeldung, falls ein Tipper keine Liga abonniert hat.
+- Changelog: 1.18.0 - Neue Sprachschlüssel für "Tipps nachtragen".
+- Changelog: 1.17.1 - Neuer Sprachschlüssel für das "In anderen Ordner verschieben"-Dropdown im Archiv (siehe admin/view_archiv.php 1.6.0).
+- Changelog: 1.17.0 - Übersetzungen für den neuen Reiter "Anzeigen/Darstellung" ergänzt.
 - Changelog: 1.16.1 - Übersetzungen für die neue "ab Spieltag"-Spalte ergänzt (Torsten hatte den Schlüssel in der Ansicht verwendet, aber nie in den Sprachdateien definiert).
 - Changelog: 1.16.0 - Übersetzungen für die vierte Strafen-Spalte "Minuspunkte" und die überarbeitete Dropdown-Eingabe ergänzt
 - Changelog: 1.15.9 - Übersetzungen für die erweiterten Strafen/Bonus-Felder (Punkte/erzielte Tore/Gegentore, alle vorzeichenbehaftet) aktualisiert
@@ -706,6 +774,14 @@
 
 ## lang/admin/en.php
 
+- Changelog: 1.22.0 - Added language keys for the set-score entry.
+- Changelog: 1.21.0 - Added language keys for the sport selection on the import review page.
+- Changelog: 1.20.0 - Added language keys for the sport selection.
+- Changelog: 1.19.0 - Added language keys for the game-rules-link setting.
+- Changelog: 1.18.0 - Added the notice message for tippers without a league subscription.
+- Changelog: 1.17.0 - Added language keys for "Enter tips".
+- Changelog: 1.16.1 - Added the "Move to another folder" dropdown label for the archive (see admin/view_archiv.php 1.6.0).
+- Changelog: 1.16.0 - Added translations for the new "Display" tab.
 - Changelog: 1.15.1 - Added translations for the new "from matchday" column (the key was used in the view but never defined in the language files).
 - Changelog: 1.15.0 - Added translations for the fourth "Minus points" penalty column and the reworked dropdown-based input
 - Changelog: 1.14.9 - Updated translations for the extended penalty/bonus fields (points/goals scored/goals against, all signed)
@@ -780,6 +856,22 @@
 
 ## lang/frontend/de.php
 
+- Changelog: 1.43.0 - Neue Sprachschlüssel für die Volleyball-Tabellenspalten.
+- Changelog: 1.42.0 - Neuer Sprachschlüssel für die Tabellendarstellungs-Umschaltung.
+- Changelog: 1.41.0 - Neue Sprachschlüssel für Statistik-Seite 4.
+- Changelog: 1.40.0 - Neue Sprachschlüssel für Statistik-Seite 3.
+- Changelog: 1.39.0 - Neue Sprachschlüssel für Statistik-Seite 2 und die Seiten-Navigation.
+- Changelog: 1.38.0 - Neue Sprachschlüssel für die Diagramm-Erklärungen auf der Statistik-Seite.
+- Changelog: 1.37.0 - Neue Sprachschlüssel für die Tipper-Spieltag-Detailansicht und die Tipptabelle.
+- Changelog: 1.36.0 - Neue Sprachschlüssel für die Statistik-Seite.
+- Changelog: 1.35.1 - Bugfix: der Joker-Erklärtext in den Spielregeln war fachlich falsch - der Multiplikator wirkt auf die Punkte des EINEN gewählten Spiels, nicht auf den ganzen Spieltag (nur die Auswahl ist auf einen Joker pro Spieltag begrenzt, siehe ist_joker in tipp_tipp bzw. calculateTippPunkte()).
+- Changelog: 1.35.0 - Neue Sprachschlüssel für die Spielregeln-Erklärseite.
+- Changelog: 1.34.0 - Neue Sprachschlüssel für "Archivierte Tippsaisons".
+- Changelog: 1.33.0 - Neue Sprachschlüssel für die Tipper-Detailansicht (Vor/Zurück-Navigation, Gesamtpunkte-Zeile).
+- Changelog: 1.32.0 - Neuer Sprachschlüssel für den Gesamtübersicht-Reiter.
+- Changelog: 1.31.0 - Neue Sprachschlüssel für die Tippeinsicht-Matrix (Spaltenüberschriften, Spieltag-Navigation).
+- Changelog: 1.30.0 - Neuer Sprachschlüssel für den Tippeinsicht-Link auf der Login-Seite.
+- Changelog: 1.29.0 - Hinweistext für die öffentliche Tippeinsicht ergänzt.
 - Changelog: 1.28.0 - Übersetzungen für Form/Trend/Tabellen-Modus-Navigation ergänzt (Beitrag Torsten Hofmann).
 - Changelog: 1.27.0 - Übersetzungen für die neue "vorheriger/nächster Spieltag"-Navigation in der Tabellenansicht ergänzt.
 - Changelog: 1.26.0 - Tooltip-Key für die neue Minuspunkte-Korrektur ergänzt
@@ -832,6 +924,22 @@
 
 ## lang/frontend/en.php
 
+- Changelog: 1.43.0 - Added language keys for the volleyball table columns.
+- Changelog: 1.42.0 - Added language key for the table view toggle.
+- Changelog: 1.41.0 - Added language keys for statistics page 4.
+- Changelog: 1.40.0 - Added language keys for statistics page 3.
+- Changelog: 1.39.0 - Added language keys for statistics page 2 and the page navigation.
+- Changelog: 1.38.0 - Added language keys for the chart explanations on the statistics page.
+- Changelog: 1.37.0 - Added language keys for the tipper matchday detail view and the prediction table.
+- Changelog: 1.36.0 - Added language keys for the statistics page.
+- Changelog: 1.35.1 - Same fix as de.php 1.35.1 (Joker explanation text was factually wrong about scope: match vs matchday).
+- Changelog: 1.35.0 - Added language keys for the game rules explanation page.
+- Changelog: 1.34.0 - Added language keys for "Archived tipping seasons".
+- Changelog: 1.33.0 - Added language keys for the per-tipper detail view (prev/next navigation, total points row).
+- Changelog: 1.32.0 - Added the language key for the new overview tab.
+- Changelog: 1.31.0 - Added new language keys for the tip-overview matrix (column headers, matchday navigation).
+- Changelog: 1.30.0 - Added the tip-overview link label for the login page.
+- Changelog: 1.29.0 - Added notice text for public tip viewing.
 - Changelog: 1.28.0 - Added translations for form/trend/table mode navigation (contribution by Torsten Hofmann).
 - Changelog: 1.27.0 - Added translations for the new "previous/next matchday" navigation in the standings view.
 - Changelog: 1.26.0 - Added tooltip key for the new minus-points correction field
@@ -892,6 +1000,7 @@
 
 ## liga.php
 
+- Changelog: 3.11.1 - _liga_id wird jetzt in die für die Ergebnisse-Ansicht geladenen Partien injiziert (getSpieltagPartien() kennt die Liga selbst nicht) - ohne diese Ergänzung blieb die sport-profil-abhängige Anzeige auf der echten Ergebnisse-Seite wirkungslos, obwohl computeStandings() bereits korrekt rechnete (beim Testen selbst gefunden). PDF-Export-Sektionen bekommen ebenfalls die Liga-ID mit.
 - Changelog: 3.10.9 - Liest jetzt zusätzlich ?table= (Gesamt/Heim/Gast/Hin/Rück, Beitrag Torsten Hofmann) und reicht es an renderStandingsView()/exportTabellePdf() durch, bleibt beim Spieltag-Wechsel erhalten.
 - Changelog: 3.10.8 - $activeNr (aktuell angezeigter Spieltag bei Ergebnisse/Tabelle) wird jetzt an renderTabsBar() übergeben, damit ein Wechsel zwischen den beiden Reitern denselben Spieltag beibehält statt auf den letzten zurückzuspringen. Neuer Spieltag-Picker (renderSpieltagPicker(..., 'tabelle')) auch für die Tabellenansicht, analog zu Ergebnisse.
 - Changelog: 3.10.7 - Liest jetzt ?nr=N für die Tabellen-Ansicht (Tabelle nach Spieltag N, siehe RenderViewsTrait.php 1.4.0), analog zum bereits bestehenden ?nr= bei der Ergebnisse-Ansicht.
@@ -959,6 +1068,7 @@
 
 ## src/Liga/LigaRepositoryTrait.php
 
+- Changelog: 1.1.0 - Neue Funktion getLigaSportType() (Beitrag: Torsten Hofmann).
 - Changelog: 1.0.0 - Initiale Version: Teil der Umstrukturierung von frontend/data_liga.php in fokussierte Traits (siehe frontend/data_liga.php 3.0.0 für den vollen Kontext der Umstellung). Grundfunktionen zu einzelnen Ligen (getLigaById, getLigaType, getLigaTeamCount, getLigaOptions, ligaFlagEnabled, getLigaViewFlags).
 
 ## src/Liga/LigaService.php
@@ -967,6 +1077,11 @@
 
 ## src/Liga/RenderViewsTrait.php
 
+- Changelog: 1.10.0 - Team-Auswahl in der Spielplan-Ansicht sportartabhängig gemacht: Volleyball-Ligen zeigen jetzt ein kompaktes Dropdown-Menü statt der Team-Sidebar (Vorbild: Torstens Vorschlag, an mein Kartenlayout angepasst), alle anderen Sportarten (inkl. Fußball) behalten unverändert die bestehende Sidebar-Liste mit Logos. Live geprüft: Fußball rendert weiterhin die echte Sidebar, Volleyball das echte Dropdown, keine Vermischung.
+- Changelog: 1.9.1 - Die diagonalen Spaltenüberschriften gelten jetzt nur noch für die "vollständig"-Ansicht - "kurz" und "mittel" zeigen die Spaltennamen wie gewünscht wieder normal waagerecht.
+- Changelog: 1.9.0 - Spaltenköpfe der dynamischen Sport-Tabelle (Volleyball "vollständig" etc.) werden jetzt diagonal dargestellt (Vorbild volleyball-bundesliga.de), damit auch ausgeschriebene Beschriftungen wie "Ballquotient" auf schmalem Bildschirm Platz finden. Fußball bleibt unberührt (normale waagerechte Kopfzeile, keine st-diag-Klasse).
+- Changelog: 1.8.0 - Dynamische Tabellen-Spaltenbeschriftungen für Sportarten mit eigenen Darstellungsmodi (Beitrag: Torsten Hofmann, Vorbild volleyball-bundesliga.de): neue Funktion renderDynamicStandingsTable() mit "Tabellendarstellung: kurz | mittel | vollständig"-Umschalter. Fußball bleibt komplett unberührt (leeres getDisplayModes() → alte Logik). Live gegen die drei Original-Ansichten von volleyball-bundesliga.de geprüft: "kurz" (Sp/S/Sätze/Pkt) und "vollständig" (inkl. 3:0/3:1/3:2/2:3/1:3/0:3-Aufschlüsselung, Ballquotient, Ballverhältnis, Satzquotient, Satzverhältnis) stimmen exakt überein.
+- Changelog: 1.7.0 - Neue sportProfile()/formatScore()-Hilfsfunktionen (Beitrag: Torsten Hofmann, an mein Format angepasst). Sieben Ergebnis-Anzeige-Stellen auf sport-profil-abhängige Formatierung umgestellt (Ergebnistabelle, Team-Spielplan, Kreuztabelle-Einzelzelle, Ligastatistik-Extremwerte); die Kreuztabelle-Aggregatzelle (Hin-/Rückspiel-Summe) bewusst nicht umgestellt, da Sätze/Perioden sich nicht sinnvoll über zwei Spiele summieren lassen. Live doppelt bestätigt: Fußball zeigt weiterhin exakt "3 : 0", Volleyball korrekt "3 : 1 / 95:85 (25:20 25:22 20:25 25:18)".
 - Changelog: 1.6.0 - $currentSpieltag ($nr) wird jetzt an computeStandings() durchgereicht, damit das neue "ab Spieltag"-Feature (siehe StandingsTrait.php) mit der Tabelle-nach-Spieltag-Navigation korrekt zusammenspielt.
 - Changelog: 1.6.0 - Torstens Gesamt/Heim/Auswärts/Hin-/Rückrunde-Umschalter (renderStandingsModeNav()) mit der bestehenden Spieltag-Navigation zusammengeführt: der Spieltag-Filter wirkt zuerst, der Tabellen-Modus danach (z.B. "Rückrunde bis Spieltag 20" funktioniert sinnvoll). Neue Spalten "Form" und "Trend" in der Tabelle. Beide Navigationsleisten behalten die jeweils andere Auswahl beim Wechsel bei (Modus bleibt bei Spieltag-Wechsel erhalten und umgekehrt).
 - Changelog: 1.5.0 - renderTabsBar() bekommt einen optionalen $activeNr-Parameter, hängt "&nr=N" gezielt an die Links zu "ergebnisse"/"tabelle" an (die einzigen zwei Reiter, die ?nr= lesen). renderSpieltagPicker() bekommt einen optionalen $targetView-Parameter (Standard 'ergebnisse', rückwärtskompatibel), damit derselbe Picker jetzt auch für "Tabelle nach Spieltag N" wiederverwendet werden kann statt einen zweiten Picker zu bauen.
@@ -978,10 +1093,13 @@
 
 ## src/Liga/SpieltagRepositoryTrait.php
 
+- Changelog: 1.3.0 - getSpieltagPartien() liest jetzt zusätzlich extra_data (defensiv geprüft wie status, für Installationen vor der Migration). getAllLigaPartien() bekommt einen neuen, optionalen $ligaId-Parameter, der _liga_id in jede Partie einträgt (Grundlage für die sport-profil-abhängige Anzeige, bestehende Aufrufer bleiben unverändert).
+- Changelog: 1.1.0 - getSpieltagPartien() liefert jetzt zusätzlich die Team-Kurzcodes (heim_kurz/gast_kurz) mit, für die Spaltenköpfe der neuen Tippeinsicht-Matrix.
 - Changelog: 1.0.0 - Initiale Version: Teil der Umstrukturierung von frontend/data_liga.php in fokussierte Traits (siehe frontend/data_liga.php 3.0.0 für den vollen Kontext der Umstellung). Spieltag-Abfragen (getAllSpieltage, getMaxSpieltagNummer, getLatestSpieltagWithResults, getSpieltagByNummer, getSpieltagPartien).
 
 ## src/Liga/StandingsTrait.php
 
+- Changelog: 1.6.0 - Volleyball-Punktevergabe (Beitrag: Torsten Hofmann, gegen meinen aktuellen 1.5.0-Stand nachgezogen statt Torstens älterer 1.4.1-Version, um mein "ab Spieltag"-Feature nicht zu verlieren): satzabhängige Punkte + w30/w31/w32/l23/l13/l03/Ballpunkte-Statistik, wirkt nur bei sport_type=volleyball, alle anderen Sportarten (inkl. football als Standardwert) unverändert. Live an einer Volleyball-Testliga (3:1-Ergebnis) UND einer bestehenden Fußball-Liga (Regressionstest) bestätigt.
 - Changelog: 1.5.0 - Torstens "ab Spieltag"-Feature integriert (Beitrag Torsten Hofmann): eine Strafe/ein Bonus kann jetzt erst ab einem bestimmten Spieltag greifen (neue Spalte ab_spieltag, neuer Parameter $currentSpieltag in computeStandings()), sinnvoll bei Lizenzentzügen, die erst mitten in der Saison bekannt werden. computePositionTrend() übergibt jetzt korrekt den jeweiligen Spieltag-Kontext an beide internen computeStandings()-Aufrufe. WICHTIGER BUGFIX (vorbestehend, nicht durch diese Änderung verursacht, aber dadurch aufgedeckt): "PDO::FETCH_COLUMN" ohne führenden Backslash wurde innerhalb des Namespace LMOnext\Liga fälschlich als LMOnext\Liga\PDO aufgelöst - dadurch schlug die komplette Schema-Migration in ensureStrafpunkteSchema() bisher IMMER mit einer stillschweigend verschluckten Exception fehl. Nie aufgefallen, weil admin/handler_settings.php dieselben Spalten über einen eigenen Migrationscode im globalen Namespace ohnehin schon anlegte.
 - Changelog: 1.5.0 - Beitrag von Torsten Hofmann integriert (aus lmonext_plastic.zip, gegen Torstens veralteten Ausgangsstand neu aufgebaut statt direkt übernommen, da er auf einem älteren Commit basierte): computeStandings() bekommt einen $mode-Parameter ('overall'/'home'/'away') für Heim-/Auswärts-Tabellen, mit der bestehenden Strafpunkte-/Minuspunkte-Logik zusammengeführt. Neue Funktionen computeLast5Form() (Form der letzten 5 Spiele) und computePositionTrend() (Positionsänderung zum vorherigen Spieltag) - Letztere so angepasst, dass sie sich korrekt auf den gerade angezeigten Spieltag bezieht statt immer auf den letzten der Saison, damit sie mit der Tabelle-nach-Spieltag-Navigation zusammenspielt.
 - Changelog: 1.4.1 - Die Fußnote erscheint jetzt schon, sobald "Grund" befüllt ist - unabhängig davon, ob überhaupt eine der vier Zahlenkorrekturen (Punkte/erzielte Tore/Gegentore/Minuspunkte) von 0 abweicht. Vorher wurde ein reiner Grund ohne Zahlenänderung fälschlich unterdrückt
@@ -1218,26 +1336,81 @@
 
 ## template/default/layout.tpl.php
 
+- Changelog: 1.17.5 - CSS für das neue Dropdown-Team-Auswahl (nur Volleyball) ergänzt.
+- Changelog: 1.17.4 - CSS für diagonale Spaltenüberschriften ergänzt.
+- Changelog: 1.17.3 - CSS-Klasse für die höhere Diagramm-Box der vollständigen Mannschafts-Punkteliste ergänzt.
+- Changelog: 1.17.2 - CSS für die Diagramm-Erklärungstexte ergänzt.
+- Changelog: 1.17.1 - CSS für den Tipptabelle-Hinweisbanner ergänzt.
+- Changelog: 1.17.0 - CSS für das Statistik-Diagramm-Grid ergänzt.
+- Changelog: 1.16.9 - Bugfix: das "−"-Zeichen (Minus) für aufgeklappte Spielregeln-Abschnitte zeigte stattdessen eine "2" an. Ursache: beim Einfügen der CSS-Regel wurde die Unicode-Escape-Sequenz durch eine fehlerhafte Zwischenverarbeitung falsch kodiert. Auf Byte-Ebene korrigiert und geprüft, dass keine weiteren Stellen im Projekt denselben Fehler haben.
+- Changelog: 1.16.8 - CSS für die neue Spielregeln-Seite (Accordion-Blöcke, Punkte-Karten) ergänzt.
+- Changelog: 1.16.7 - CSS für das "archiviert"-Badge in Tippeinsicht/Gesamtübersicht ergänzt.
+- Changelog: 1.16.6 - CSS für die Spieltagssieger-Hervorhebung in der Gesamtübersicht ergänzt.
+- Changelog: 1.16.5 - CSS für die neue Tippeinsicht-Matrix (.tipp-matrix) ergänzt.
 - Changelog: 1.16.4 - CSS für Form-Dots/Trend-Pfeile/Tabellen-Modus-Navigation ergänzt (Beitrag Torsten Hofmann).
 - Changelog: 1.16.3 - CSS für die neue Spieltag-Navigation (.st-spieltag-nav) in der Tabellenansicht ergänzt.
 
 ## template/colored/layout.tpl.php
 
+- Changelog: 1.6.5 - CSS wie default 1.17.5 ergänzt.
+- Changelog: 1.6.4 - CSS wie default 1.17.4 ergänzt.
+- Changelog: 1.6.3 - CSS wie default 1.17.3 ergänzt.
+- Changelog: 1.6.2 - CSS für die Diagramm-Erklärungstexte ergänzt (siehe default 1.17.2).
+- Changelog: 1.6.1 - CSS für den Tipptabelle-Hinweisbanner ergänzt (siehe default 1.17.1).
+- Changelog: 1.6.0 - CSS für das Statistik-Diagramm-Grid ergänzt (siehe default 1.17.0).
+- Changelog: 1.5.9 - Bugfix wie default 1.16.9 (falsches Minus-Zeichen bei aufgeklappten Spielregeln-Abschnitten).
+- Changelog: 1.5.8 - CSS für die Spielregeln-Seite ergänzt (siehe default 1.16.8).
+- Changelog: 1.5.7 - CSS für das "archiviert"-Badge ergänzt (siehe default 1.16.7).
+- Changelog: 1.5.6 - CSS für die Spieltagssieger-Hervorhebung ergänzt (siehe default 1.16.6).
+- Changelog: 1.5.5 - CSS für die neue Tippeinsicht-Matrix ergänzt (siehe default 1.16.5).
 - Changelog: 1.5.4 - CSS für Form-Dots/Trend-Pfeile/Tabellen-Modus-Navigation ergänzt (siehe default 1.16.4).
 - Changelog: 1.5.3 - CSS für die neue Spieltag-Navigation ergänzt (siehe default 1.16.3).
 
 ## template/dark/layout.tpl.php
 
+- Changelog: 1.5.5 - CSS wie default 1.17.5 ergänzt.
+- Changelog: 1.5.4 - CSS wie default 1.17.4 ergänzt.
+- Changelog: 1.5.3 - CSS wie default 1.17.3 ergänzt.
+- Changelog: 1.5.2 - CSS für die Diagramm-Erklärungstexte ergänzt (siehe default 1.17.2).
+- Changelog: 1.5.1 - CSS für den Tipptabelle-Hinweisbanner ergänzt (siehe default 1.17.1).
+- Changelog: 1.5.0 - CSS für das Statistik-Diagramm-Grid ergänzt (siehe default 1.17.0).
+- Changelog: 1.4.9 - Bugfix wie default 1.16.9 (falsches Minus-Zeichen bei aufgeklappten Spielregeln-Abschnitten).
+- Changelog: 1.4.8 - CSS für die Spielregeln-Seite ergänzt (siehe default 1.16.8).
+- Changelog: 1.4.7 - CSS für das "archiviert"-Badge ergänzt (siehe default 1.16.7).
+- Changelog: 1.4.6 - CSS für die Spieltagssieger-Hervorhebung ergänzt (siehe default 1.16.6).
+- Changelog: 1.4.5 - CSS für die neue Tippeinsicht-Matrix ergänzt (siehe default 1.16.5).
 - Changelog: 1.4.4 - CSS für Form-Dots/Trend-Pfeile/Tabellen-Modus-Navigation ergänzt (siehe default 1.16.4).
 - Changelog: 1.4.3 - CSS für die neue Spieltag-Navigation ergänzt (siehe default 1.16.3).
 
 ## template/light/layout.tpl.php
 
+- Changelog: 1.5.5 - CSS wie default 1.17.5 ergänzt.
+- Changelog: 1.5.4 - CSS wie default 1.17.4 ergänzt.
+- Changelog: 1.5.3 - CSS wie default 1.17.3 ergänzt.
+- Changelog: 1.5.2 - CSS für die Diagramm-Erklärungstexte ergänzt (siehe default 1.17.2).
+- Changelog: 1.5.1 - CSS für den Tipptabelle-Hinweisbanner ergänzt (siehe default 1.17.1).
+- Changelog: 1.5.0 - CSS für das Statistik-Diagramm-Grid ergänzt (siehe default 1.17.0).
+- Changelog: 1.4.9 - Bugfix wie default 1.16.9 (falsches Minus-Zeichen bei aufgeklappten Spielregeln-Abschnitten).
+- Changelog: 1.4.8 - CSS für die Spielregeln-Seite ergänzt (siehe default 1.16.8).
+- Changelog: 1.4.7 - CSS für das "archiviert"-Badge ergänzt (siehe default 1.16.7).
+- Changelog: 1.4.6 - CSS für die Spieltagssieger-Hervorhebung ergänzt (siehe default 1.16.6).
+- Changelog: 1.4.5 - CSS für die neue Tippeinsicht-Matrix ergänzt (siehe default 1.16.5).
 - Changelog: 1.4.4 - CSS für Form-Dots/Trend-Pfeile/Tabellen-Modus-Navigation ergänzt (siehe default 1.16.4).
 - Changelog: 1.4.3 - CSS für die neue Spieltag-Navigation ergänzt (siehe default 1.16.3).
 
 ## template/matchday/layout.tpl.php
 
+- Changelog: 1.2.5 - CSS wie default 1.17.5 ergänzt.
+- Changelog: 1.2.4 - CSS wie default 1.17.4 ergänzt.
+- Changelog: 1.2.3 - CSS wie default 1.17.3 ergänzt.
+- Changelog: 1.2.2 - CSS für die Diagramm-Erklärungstexte ergänzt (siehe default 1.17.2).
+- Changelog: 1.2.1 - CSS für den Tipptabelle-Hinweisbanner ergänzt (siehe default 1.17.1).
+- Changelog: 1.2.0 - CSS für das Statistik-Diagramm-Grid ergänzt (siehe default 1.17.0).
+- Changelog: 1.1.9 - Bugfix wie default 1.16.9 (falsches Minus-Zeichen bei aufgeklappten Spielregeln-Abschnitten).
+- Changelog: 1.1.8 - CSS für die Spielregeln-Seite ergänzt (siehe default 1.16.8).
+- Changelog: 1.1.7 - CSS für das "archiviert"-Badge ergänzt (siehe default 1.16.7).
+- Changelog: 1.1.6 - CSS für die Spieltagssieger-Hervorhebung ergänzt (siehe default 1.16.6).
+- Changelog: 1.1.5 - CSS für die neue Tippeinsicht-Matrix ergänzt (siehe default 1.16.5).
 - Changelog: 1.1.4 - CSS für Form-Dots/Trend-Pfeile/Tabellen-Modus-Navigation ergänzt (siehe default 1.16.4).
 - Changelog: 1.1.3 - CSS für die neue Spieltag-Navigation ergänzt (siehe default 1.16.3).
 
@@ -1256,6 +1429,40 @@
 
 ## src/Pdf/PdfExporter.php
 
+- Changelog: 1.9.0 - Ergebnis-PDF-Export (exportErgebnissePdf()) sport-profil-abhängig gemacht (Beitrag: Torsten Hofmann, an mein Format angepasst). Live geprüft: beide PDFs (Fußball/Volleyball) korrekt erzeugt, Volleyball zeigt die volle Satz-Formatierung im PDF.
 - Changelog: 1.8.2 - KRITISCHER BUGFIX: "Class LMOnext\\Pdf\\Imagick not found" - beim Umbau von frontend/pdf_export.php in diese Klasse wurden mehrere bare globale Klassennamen (Imagick, ImagickPixel, DateTime) sowie ALLE vier "catch (Throwable)"-Blöcke nicht mit einem führenden Backslash versehen. Innerhalb des Namespace LMOnext\\Pdf wurden diese fälschlich als LMOnext\\Pdf\\Imagick usw. aufgelöst statt als globale PHP-Klassen - dadurch stürzte der PDF-Export mit einem unabgefangenen Fatal Error ab, sobald ein SVG-Logo über den Imagick-Rasterungsweg verarbeitet werden sollte (die catch-Blöcke konnten den Fehler nicht abfangen, da auch "Throwable" bare war). Alle Vorkommen auf \\Imagick/\\ImagickPixel/\\DateTime/\\Throwable korrigiert und mit einem SVG-Logo end-to-end verifiziert (kein Absturz mehr, PDF wird korrekt erzeugt). Alle anderen seit dieser Session neu in Namespaces verschobenen Dateien auf denselben Fehler geprüft - keine weiteren Fälle gefunden.
 - Changelog: 1.8.1 - BUGFIX (unabhängig vom Logo-Prioritäts-Thema, aber dabei aufgefallen): pdfLoadLogoData() und pdfLoadTeamLogoImage() nutzten noch "dirname(__DIR__)" von der Zeit, als dieser Code direkt in frontend/pdf_export.php lag (eine Ebene unter dem Projekt-Root). Nach dem Umbau in diese Klasse unter src/Pdf/ (zwei Ebenen unter dem Root) zeigte der Pfad fälschlich auf src/assets/... statt auf das echte assets/-Verzeichnis - dadurch wurden das LMOnext-Logo im PDF-Kopf UND alle Team-Logos (PNG/JPEG/GIF/SVG gleichermaßen) seit diesem Umbau nie mehr gefunden. Beide Stellen auf dirname(__DIR__, 2) korrigiert. Zusätzlich: findTeamLogoPathFrontend()-Aufruf für Team-Logos übergibt jetzt explizit "false" (PDF-Modus, Rasterformate zuerst).
 - Changelog: 1.0.0 - Neu: enthält die tatsächliche PDF-Export-Implementierung, vorher direkt in frontend/pdf_export.php. Aus dem eigenen vollständigen Stand aufgebaut (nicht aus Torstens Zwischenstand), damit das Strafpunkte-Fußnoten-Feature erhalten bleibt.
+
+## src/Sport/SportProfile.php
+
+- Changelog: 1.0.0 - Neu (Beitrag: Torsten Hofmann): Interface für sportartspezifische Profile (Punktevergabe, Ergebnis-Anzeige, Tabellenspalten). Unverändert übernommen.
+
+## src/Sport/SportRegistry.php
+
+- Changelog: 1.0.0 - Neu (Beitrag: Torsten Hofmann): Factory für Sport-Profile nach Schlüssel. Unverändert übernommen.
+
+## src/Sport/FootballProfile.php
+
+- Changelog: 1.0.1 - Neu (Beitrag: Torsten Hofmann), Bugfix bei der Übernahme: Status-Zusätze ("n.V."/"i.E.") waren fest auf Deutsch einkodiert statt die bestehende Übersetzungsfunktion zu nutzen - hätte für die englische Sprachversion falsche Kürzel gezeigt. Korrigiert, nutzt jetzt wieder tf('liga_status_ie')/tf('liga_status_nv') wie der Rest des Projekts.
+
+## src/Sport/VolleyballProfile.php
+
+- Changelog: 1.1.0 - Spaltenüberschriften der Tabellendarstellung (kurz/mittel/vollständig) sind jetzt sprachabhängig über tf() statt hartkodiert Deutsch ("Sp"/"S"/"N"/"Pkt"/"B-Quot" etc.) - Bugfix bei der Übernahme: die englische Sprachversion hätte trotzdem die deutschen Kürzel gezeigt.
+- Changelog: 1.0.0 - Neu (Beitrag: Torsten Hofmann): Volleyball-Profil mit satzabhängiger Punktevergabe (3:0/3:1 = 3 Punkte, 3:2 = 2/1 Punkte) und Ballpunkte-Statistik. Unverändert übernommen.
+
+## src/Sport/BasketballProfile.php
+
+- Changelog: 1.0.0 - Neu (Beitrag: Torsten Hofmann). Unverändert übernommen.
+
+## src/Sport/HandballProfile.php
+
+- Changelog: 1.0.0 - Neu (Beitrag: Torsten Hofmann). Unverändert übernommen.
+
+## src/Sport/IceHockeyProfile.php
+
+- Changelog: 1.0.0 - Neu (Beitrag: Torsten Hofmann). Unverändert übernommen.
+
+## src/Sport/BadmintonProfile.php
+
+- Changelog: 1.0.0 - Neu (Beitrag: Torsten Hofmann). Unverändert übernommen.

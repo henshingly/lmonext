@@ -2,7 +2,7 @@
 /**
  * Project: LMOnext
  * Filename: liga.php
- * Fileversion: 3.10.9
+ * Fileversion: 3.11.1
  *
  * PHP version 8.2
  *
@@ -179,6 +179,11 @@ switch ($currentView) {
         $activeNr    = $currentNr !== null ? (int)$currentNr : null;
         $currentName = $spieltag !== null ? roundDisplayName($spieltag, $isKO, $maxNr) : '';
         $partien     = $spieltag !== null ? getSpieltagPartien((int)$spieltag['id']) : [];
+        // _liga_id für die sport-profil-abhängige Ergebnis-Anzeige (Beitrag:
+        // Torsten Hofmann, siehe RenderViewsTrait::formatScore()) - getSpieltagPartien()
+        // kennt die Liga selbst nicht (nur den Spieltag), daher hier ergänzt.
+        foreach ($partien as &$_p) { $_p['_liga_id'] = $ligaId; }
+        unset($_p);
         // Reine Leer-Begegnungen (kein Team, kein Label auf beiden Seiten – z.B.
         // Freilos-Auffüllplätze bei KO-Turnieren) werden nicht angezeigt, siehe
         // partieIsEmptyPlaceholder().
@@ -201,6 +206,7 @@ switch ($currentView) {
                         'label'         => $heading . ($groupDateRange !== '' ? ' · ' . $groupDateRange : ''),
                         'partien'       => $groupPartien,
                         'spieltagStart' => $spieltag['start'] ?? null,
+                        'ligaId'        => $ligaId,
                     ];
                 }
             } else {
@@ -210,6 +216,7 @@ switch ($currentView) {
                     'partien'       => $partien,
                     'spieltagStart' => $spieltag['start'] ?? null,
                     'spielfrei'     => $showSpielfrei ? findSpielfreiTeams($ligaId, $partien) : [],
+                    'ligaId'        => $ligaId,
                 ]];
             }
             exportErgebnissePdf($liga['name'], $sectionSpecs, $showLogos);

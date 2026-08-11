@@ -2,7 +2,7 @@
 /**
  * Project: LMOnext
  * Filename: lang/admin/en.php
- * Fileversion: 1.15.1
+ * Fileversion: 1.22.0
  *
  * PHP version 8.2
  *
@@ -31,6 +31,12 @@ return [
     'tipp_tab_newsletter'     => 'Newsletter/Reminder',
     'tipp_tab_userverwaltung' => 'User Management',
     'tipp_tab_optionen'       => 'Options',
+    'tipp_tab_anzeige'        => 'Display',
+    'tipp_anzeige_hinweis'    => 'Here you set how certain prediction game areas are shown to visitors.',
+    'tipp_label_einsicht_oeffentlich'     => 'Public tip viewing',
+    'tipp_label_einsicht_oeffentlich_tip' => 'When enabled, any visitor can view the tip overview without logging in as a tipper. Otherwise only logged-in tippers can.',
+    'tipp_label_spielregeln_anzeigen'     => 'Show game rules link',
+    'tipp_label_spielregeln_anzeigen_tip' => 'Shows a "Game rules" tab with an explanation page (instructions, scoring, disclaimer) next to Predictions/Prediction overview/Leaderboard/Overview.',
     'tipp_placeholder_text_auswertung'     => 'The standings (individual and team rankings) will appear here once tips and results are available.',
     'tipp_placeholder_text_newsletter'     => 'Mail sending will live here: newsletter to everyone, tip reminders, and personal emails to individual tipsters.',
     'tipp_placeholder_text_userverwaltung' => 'Tipster account management will live here: edit, delete, create new, including team assignment.',
@@ -149,6 +155,15 @@ return [
     'tipp_label_pkt_tendenz_treffer' => 'Correct tendency tipped',
     'tipp_punkte_suffix'            => 'points',
     'tipp_flash_settings_saved'     => 'Settings saved.',
+    'tipp_flash_nachtragen_saved'   => 'Tips entered.',
+    'tipp_nachtragen_link'          => 'Enter tips',
+    'tipp_nachtragen_titel'         => 'Enter tips',
+    'tipp_nachtragen_hinweis'       => 'Enters tips for this tipper - regardless of the usual submission deadline, even after kickoff or full time. Intended for tippers who sent their tip by email before kickoff instead of submitting it via the website themselves.',
+    'tipp_nachtragen_kein_abo'      => 'This tipper has not subscribed to any league yet - set up a league subscription in the tipper\'s account first, then tips can be entered here.',
+    'tipp_col_tipp'                 => 'Tip',
+    'tipp_col_joker'                => 'Joker',
+    'tipp_spieltag_n'               => 'Matchday {n}',
+    'tipp_kein_spieltag'            => 'There are no games for this matchday.',
     'tipp_label_abgabe_minuten'         => 'Tips due until',
     'tipp_minuten_suffix'               => 'minutes before kickoff',
     'tipp_label_abgabeschluss_ohne_termin' => 'Deadline when no kickoff time was entered',
@@ -435,6 +450,8 @@ return [
     'sp_status_nv'                   => 'After extra time',
     'sp_placeholder_venue'           => '📍 Venue',
     'sp_placeholder_report_link'     => '🔗 Match report link (optional)',
+    'sp_label_saetze'                => 'Sets',
+    'sp_btn_satz_add'                => 'Add another set',
     'sp_btn_add_pair'                => '＋ Add pairing',
     'sp_btn_save_round'              => '💾 Save round',
     'sp_next_round'                  => 'Next: round {n} →',
@@ -569,6 +586,7 @@ return [
     'arch_count_subfolders'     => ', {n} subfolders',
     'arch_confirm_delete_folder'=> 'Delete folder?',
     'arch_btn_reactivate'       => '↩ Reactivate',
+    'arch_btn_move_to_folder'   => 'Move to another folder...',
     'arch_btn_new_folder'       => '📁 New folder',
     'arch_btn_missing_results_one'  => '⚠️ 1 league with missing results',
     'arch_btn_missing_results_many' => '⚠️ {n} leagues with missing results',
@@ -690,6 +708,8 @@ return [
     'ls_tab_spieltage'     => 'Matchday & match count',
 
     'ls_label_liga_name'   => 'League name',
+    'ls_label_sportart'    => 'Sport',
+    'ls_hinweis_keine_unentschieden' => 'Note: this sport has no draws.',
     'ls_label_alt_pkt'     => 'Alternative for points',
     'ls_label_alt_tore'    => 'Alternative for goals',
     'ls_label_dec_pkt'     => 'Decimal places (points)',
@@ -874,6 +894,8 @@ return [
     'imp_review_item'         => '{import} → resembles existing team {db} (ID {id}).',
     'imp_review_item_multi'   => '{import} → resembles {n} existing teams.',
     'imp_review_select_label' => 'Adopt team from the DB:',
+    'imp_review_sportart_label' => 'Sport of this league:',
+    'imp_review_erkannt' => 'detected',
     'imp_review_option_new'   => '– No matching team – create as new team –',
     'imp_review_db_details'   => 'Short: {kurz} · Medium: {mittel}',
     'imp_review_btn_confirm'  => 'Continue import',

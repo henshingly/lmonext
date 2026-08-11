@@ -2,7 +2,7 @@
 /**
  * Project: LMOnext
  * Filename: handler_liga.php
- * Fileversion: 1.6.5
+ * Fileversion: 1.7.0
  *
  * PHP version 8.2
  *
@@ -203,8 +203,16 @@ if ($action === 'save_partie_teams' && $_SERVER['REQUEST_METHOD'] === 'POST') {
     $stNr = (int)($_POST['spieltag_nr'] ?? 0);
     try {
         $db   = getDB();
+        // extra_data (Sätze bei Volleyball, siehe admin/view_spieltag.php)
+        // ist eine on-demand-Spalte - hier defensiv geprüft wie an anderer
+        // Stelle bereits etabliert, damit das Speichern auch auf einer noch
+        // nicht migrierten Installation nicht mit "Unknown column" scheitert.
+        $partienColsForSave = $db->query('SHOW COLUMNS FROM '.tbl('liga_partien'))->fetchAll(PDO::FETCH_COLUMN);
+        if (!in_array('extra_data', $partienColsForSave, true)) {
+            $db->exec('ALTER TABLE '.tbl('liga_partien').' ADD COLUMN `extra_data` JSON NULL DEFAULT NULL AFTER `g_tore`');
+        }
         $stmtP = $db->prepare(
-            'UPDATE '.tbl('liga_partien').' SET heim_id=?, gast_id=?, h_tore=?, g_tore=?, zeit=? WHERE id=?'
+            'UPDATE '.tbl('liga_partien').' SET heim_id=?, gast_id=?, h_tore=?, g_tore=?, zeit=?, extra_data=? WHERE id=?'
         );
         foreach ($_POST as $key => $val) {
             if (preg_match('/^heim_(\d+)$/', $key, $m)) {
@@ -216,7 +224,24 @@ if ($action === 'save_partie_teams' && $_SERVER['REQUEST_METHOD'] === 'POST') {
                 $gTore = isset($_POST['g_'.$pid]) && $_POST['g_'.$pid] !== '' ? (int)$_POST['g_'.$pid] : null;
                 $zeit  = trim($_POST['at_'.$pid] ?? '');
                 $zeitDb = $zeit !== '' ? str_replace('T', ' ', $zeit).':00' : null;
-                $stmtP->execute([$hid, $gid, $hTore, $gTore, $zeitDb, $pid]);
+
+                // Sätze (Beitrag: Volleyball-Ergebniseingabe) - satz_h_<pid>[]
+                // und satz_g_<pid>[] kommen paarweise aus dem Formular, leere
+                // Paare (beide Felder leer) werden übersprungen, damit
+                // ungenutzte Satz-Zeilen nicht als "0:0" gespeichert werden.
+                $satzH = $_POST['satz_h_'.$pid] ?? [];
+                $satzG = $_POST['satz_g_'.$pid] ?? [];
+                $sets = [];
+                if (is_array($satzH) && is_array($satzG)) {
+                    foreach ($satzH as $i => $sh) {
+                        $sg = $satzG[$i] ?? '';
+                        if ($sh === '' && $sg === '') { continue; }
+                        $sets[] = ['h' => (int)$sh, 'g' => (int)$sg];
+                    }
+                }
+                $extraData = !empty($sets) ? json_encode(['sets' => $sets]) : null;
+
+                $stmtP->execute([$hid, $gid, $hTore, $gTore, $zeitDb, $extraData, $pid]);
             }
         }
         flash(t('hl_flash_spieltag_saved', ['n' => $stNr]));

@@ -2,7 +2,7 @@
 /**
  * Project: LMOnext
  * Filename: view_wizard.php
- * Fileversion: 1.3.5
+ * Fileversion: 1.4.0
  *
  * PHP version 8.2
  *
@@ -51,6 +51,16 @@ $stepLabels = [t('wiz_step_label_1'), t('wiz_step_label_2'), t('wiz_step_label_3
           <h2><?= h(t('wiz_step1_heading')) ?></h2>
           <form method="post" action="?action=create_liga&step=2">
             <div class="form-group"><label><?= h(t('wiz_label_liga_name')) ?></label><input type="text" name="liga_name" placeholder="<?= h(t('wiz_placeholder_liga_name_example')) ?>" required autofocus></div>
+<?php if (getAdminSetting('show_sport_type', '1') === '1') { ?>
+            <div class="form-group">
+              <label><?= h(t('ls_label_sportart')) ?></label>
+              <select name="sport_type">
+<?php foreach (\LMOnext\Sport\SportRegistry::all() as $sp) { ?>
+                <option value="<?= h($sp->getKey()) ?>"<?= $sp->getKey() === 'football' ? ' selected' : '' ?>><?= h($sp->getLabel()) ?></option>
+<?php } ?>
+              </select>
+            </div>
+<?php } ?>
             <div class="form-row">
               <div class="form-group">
                 <label><?= h(t('wiz_label_liga_type')) ?></label>
