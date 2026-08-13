@@ -2,7 +2,7 @@
 /**
  * Project: LMOnext
  * Filename: install.php
- * Fileversion: 2.5.0
+ * Fileversion: 2.6.0
  *
  * PHP version 8.2
  *
@@ -61,6 +61,13 @@ function adminUrl(): string {
     $host = $_SERVER['HTTP_HOST'] ?? 'localhost';
     $dir  = rtrim(dirname($_SERVER['SCRIPT_NAME'] ?? '/install.php'), '/');
     return ($s !== 'off' ? 'https' : 'http') . '://' . $host . $dir . '/admin.php?action=login';
+}
+// Eigenständige Kopie von lmoIsHttps() (config_loader.php) - der Installer
+// bindet diese Datei bewusst nicht ein (sie erwartet eine bereits fertige
+// Konfiguration, die es an dieser Stelle noch gar nicht gibt).
+function installIsHttps(): bool {
+    return (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off')
+        || (($_SERVER['HTTP_X_FORWARDED_PROTO'] ?? '') === 'https');
 }
 
 // ── Systemprüfung ─────────────────────────────────────────────────────────────
@@ -141,6 +148,17 @@ function checkEnvironment(): array {
                  'info'=>function_exists('bzcompress')?t('install_available'):t('install_recommended_missing')];
     $checks[] = ['label'=>t('install_check_adminphp'),'ok'=>file_exists(ADMIN_FILE), 'required'=>true,
                  'info'=>file_exists(ADMIN_FILE)?t('install_adminphp_found'):t('install_adminphp_missing')];
+    // HTTPS-Erkennung - rein informativ (required=false), blockiert die
+    // Installation NICHT: config_loader.php leitet bei jedem Request
+    // automatisch auf https:// weiter (siehe dortiger Sicherheitsfix), außer
+    // die neue Konstante LMO_FORCE_HTTPS wurde bewusst auf false gesetzt.
+    // Läuft der Server ohne SSL-Zertifikat und OHNE diesen Schalter, würde
+    // diese Weiterleitung ins Leere laufen und die komplette Installation
+    // (inkl. dieses Installers) wäre nach dem Speichern der config.php
+    // nicht mehr erreichbar - der Hinweis unten macht rechtzeitig VOR
+    // Schritt 2 darauf aufmerksam.
+    $checks[] = ['label'=>t('install_check_https'), 'ok'=>installIsHttps(), 'required'=>false,
+                 'info'=>installIsHttps()?t('install_https_ok'):t('install_https_missing')];
     return $checks;
 }
 function allChecksPassed(array $checks): bool {
@@ -1000,6 +1018,13 @@ code{background:var(--bg);padding:1px 5px;border-radius:4px;font-size:.8rem}
     <span class="icon">⚠️</span>
     <span><?= t('install_selfdestruct_notice') ?></span>
   </div>
+
+  <?php if (!installIsHttps()) { ?>
+  <div class="warn-box">
+    <span class="icon">🔓</span>
+    <span><?= t('install_https_warning_notice') ?></span>
+  </div>
+  <?php } ?>
 
   <?php if ($allOk) { ?>
   <a href="<?= h(selfUrl('step=2')) ?>" class="btn btn-primary"><?= h(t('install_continue')) ?></a>

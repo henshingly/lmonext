@@ -2,7 +2,7 @@
 /**
  * Project: LMOnext
  * Filename: lang/admin/en.php
- * Fileversion: 1.29.0
+ * Fileversion: 1.30.0
  *
  * PHP version 8.2
  *
@@ -273,6 +273,9 @@ return [
     'install_check_adminphp'         => 'admin.php present',
     'install_adminphp_found'         => 'found',
     'install_adminphp_missing'       => 'NOT found – place admin.php in the same directory',
+    'install_check_https'            => 'Connection over HTTPS',
+    'install_https_ok'               => 'active',
+    'install_https_missing'          => 'No SSL detected – see warning below',
     'install_db_error_unreachable'    => 'Could not reach the database server at that host/port. Check whether MariaDB/MySQL is running and whether the host and port are correct (with most web hosts, the host is NOT "localhost" but a specific server name – check your hosting credentials).',
     'install_db_error_access_denied'  => 'Access denied – the username or password is wrong, or the database user does not have permission for this database.',
     'install_db_error_no_db_permission' => 'The database does not exist and could not be created automatically. With most web hosts, the database must first be created manually in the hosting control panel – the database user usually cannot create new databases.',
@@ -282,6 +285,7 @@ return [
     'install_requirements_heading' => 'System requirements',
     'install_fix_issues'           => 'Please fix the marked issues before installing.',
     'install_selfdestruct_notice'  => '<code>install.php</code> will be <strong>deleted automatically</strong> after completion.',
+    'install_https_warning_notice' => 'This page is currently running <strong>without SSL/HTTPS</strong> (http:// only). LMOnext normally redirects every request to https:// automatically – if this server has no SSL certificate set up, that would make the installation <strong>unreachable</strong> right after saving the configuration. If your hosting doesn\'t offer SSL (yet), you can disable the redirect in <code>config.php</code> with <code>define(\'LMO_FORCE_HTTPS\', false);</code> – but please enable SSL as soon as possible and turn the protection back on afterwards, since without it admin credentials (among other things) are transmitted unencrypted.',
     'install_continue'             => 'Continue to configuration →',
     'install_check_failed'         => 'System check failed',
 
@@ -867,6 +871,10 @@ return [
     'settings_not_loaded'          => 'not loaded',
     'settings_db_connected'        => 'Connected · {version}',
     'settings_hint_db_config'      => 'Adjust connection parameters in <code>config.php</code>.',
+    'settings_heading_ssl'         => 'Connection security (SSL/HTTPS)',
+    'settings_ssl_active'          => 'SSL/HTTPS is active – the connection is encrypted.',
+    'settings_ssl_inactive'        => 'This script is currently running WITHOUT SSL (http:// only).',
+    'settings_ssl_warning_text'    => 'Without SSL, login credentials, session cookies and all other content are transmitted unencrypted and could be intercepted, e.g. on a public WiFi network. Please enable an SSL certificate for this installation as soon as possible (most hosting providers, including shared hosting, offer free Let\'s Encrypt certificates) and afterwards remove <code>define(\'LMO_FORCE_HTTPS\', false);</code> from <code>config.php</code>, if set, so the automatic HTTPS redirect takes effect again.',
     'settings_heading_frontend'         => 'Visitor area',
     'settings_label_active_template'    => 'Active template',
     'settings_hint_active_template'     => 'Design visitors see on the home page and other pages.',

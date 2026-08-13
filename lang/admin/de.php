@@ -2,7 +2,7 @@
 /**
  * Project: LMOnext
  * Filename: lang/admin/de.php
- * Fileversion: 1.30.0
+ * Fileversion: 1.31.0
  *
  * PHP version 8.2
  *
@@ -274,6 +274,9 @@ return [
     'install_check_adminphp'         => 'admin.php vorhanden',
     'install_adminphp_found'         => 'gefunden',
     'install_adminphp_missing'       => 'NICHT gefunden – admin.php ins gleiche Verzeichnis legen',
+    'install_check_https'            => 'Verbindung über HTTPS',
+    'install_https_ok'               => 'aktiv',
+    'install_https_missing'          => 'Kein SSL erkannt – siehe Warnhinweis unten',
     'install_db_error_unreachable'    => 'Der Datenbankserver ist unter Host/Port nicht erreichbar. Prüfe, ob MariaDB/MySQL läuft und ob Host und Port korrekt sind (bei den meisten Webhostern ist der Host NICHT "localhost", sondern ein spezieller Servername – siehe Hosting-Zugangsdaten).',
     'install_db_error_access_denied'  => 'Zugriff verweigert – Benutzername oder Passwort ist falsch, oder der Datenbank-Benutzer hat keine Berechtigung für diese Datenbank.',
     'install_db_error_no_db_permission' => 'Die Datenbank existiert nicht und konnte auch nicht automatisch angelegt werden. Bei den meisten Webhostern muss die Datenbank vorher im Hosting-Kontrollpanel manuell angelegt werden – der Datenbank-Benutzer darf dort meist keine neuen Datenbanken erstellen.',
@@ -283,6 +286,7 @@ return [
     'install_requirements_heading' => 'Systemvoraussetzungen',
     'install_fix_issues'           => 'Bitte behebe die markierten Probleme vor der Installation.',
     'install_selfdestruct_notice'  => '<code>install.php</code> wird nach Abschluss <strong>automatisch gelöscht</strong>.',
+    'install_https_warning_notice' => 'Diese Seite läuft aktuell <strong>ohne SSL/HTTPS</strong> (nur über http://). LMOnext leitet normalerweise automatisch auf https:// um – ist auf diesem Server kein SSL-Zertifikat eingerichtet, führt das dazu, dass die Installation nach dem Speichern der Konfiguration <strong>nicht mehr erreichbar</strong> ist. Falls dein Hosting (noch) kein SSL anbietet, kannst du die Weiterleitung in <code>config.php</code> mit <code>define(\'LMO_FORCE_HTTPS\', false);</code> abschalten – aktiviere SSL aber möglichst bald und schalte den Schutz danach wieder ein, da sonst u.a. Admin-Zugangsdaten unverschlüsselt übertragen werden.',
     'install_continue'             => 'Weiter zur Konfiguration →',
     'install_check_failed'         => 'Systemprüfung fehlgeschlagen',
 
@@ -868,6 +872,10 @@ return [
     'settings_not_loaded'          => 'nicht geladen',
     'settings_db_connected'        => 'Verbunden · {version}',
     'settings_hint_db_config'      => 'Verbindungsparameter in <code>config.php</code> anpassen.',
+    'settings_heading_ssl'         => 'Verbindungssicherheit (SSL/HTTPS)',
+    'settings_ssl_active'          => 'SSL/HTTPS ist aktiv – die Verbindung ist verschlüsselt.',
+    'settings_ssl_inactive'        => 'Dieses Script läuft aktuell OHNE SSL (nur über http://).',
+    'settings_ssl_warning_text'    => 'Ohne SSL werden Login-Daten, Session-Cookies und alle sonstigen Inhalte unverschlüsselt übertragen und können z.B. in einem öffentlichen WLAN mitgelesen werden. Bitte aktiviere für diese Installation so bald wie möglich ein SSL-Zertifikat (die meisten Hoster, auch Shared-Hosting-Anbieter, stellen kostenlose Let\'s-Encrypt-Zertifikate zur Verfügung) und entferne anschließend – falls gesetzt – <code>define(\'LMO_FORCE_HTTPS\', false);</code> aus der <code>config.php</code>, damit die automatische HTTPS-Weiterleitung wieder greift.',
     'settings_heading_frontend'         => 'Besucherbereich',
     'settings_label_active_template'    => 'Aktives Template',
     'settings_hint_active_template'     => 'Design, das Besucher auf der Startseite und den weiteren Seiten sehen.',

@@ -486,6 +486,7 @@
 
 ## admin/view_settings.php
 
+- Changelog: 1.6.0 - Neue Karte "Verbindungssicherheit (SSL/HTTPS)" im Info-Tab, zwischen Datenbankverbindung und PHP-Erweiterungen: zeigt per lmoIsHttps() (config_loader.php 1.5.0), ob die aktuelle Verbindung über HTTPS läuft. Läuft das Script ohne SSL, erscheint zusätzlich eine deutliche Warnbox mit der Empfehlung, ein SSL-Zertifikat zu aktivieren (die meisten Hoster bieten kostenlose Let's-Encrypt-Zertifikate) und dem Hinweis auf den neuen LMO_FORCE_HTTPS-Schalter, falls dieser für einen Testbetrieb gesetzt wurde.
 - Changelog: 1.5.0 - Komplett umgebaut auf zweistufige Tab-Navigation: Haupt-Tabs "Optionen" und "Info" (analog zum bestehenden Tab-Muster der Wartung-Seite). "Optionen" hat zwei Unter-Tabs ("Optionen" mit Sprache/Zeitzone, "Anzeigen/Darstellung" mit Template/PDF/Sprachauswahl-Einstellungen). "Info" enthält die bisherige Datenbankverbindung-Karte plus neu: PHP-Version und eine Tabelle aller für den Betrieb relevanten PHP-Erweiterungen (geladen/nicht geladen, erforderlich/optional). Live alle drei Tab-Kombinationen geprüft, CSRF-Schutz aus der vorherigen Session blieb intakt.
 - Changelog: 1.4.0 - Passwort-ändern-Karte entfernt - war doppelt zur bereits vorhandenen Passwortänderung unter Administrator/Benutzerverwaltung (die auch für den eigenen Account funktioniert). Live geprüft: Karte weg, die anderen drei Karten (Systemeinstellungen, Besucherbereich, Datenbankverbindung) unverändert vorhanden.
 - Changelog: 1.3.5 - Sicherheitsfix: csrfField() in jedes POST-Formular eingefügt (CSRF-Schutz, siehe admin/bootstrap.php).
@@ -566,6 +567,7 @@
 
 ## config_loader.php
 
+- Changelog: 1.5.0 - Neue Konstante LMO_FORCE_HTTPS (Standard: true), mit der die automatische HTTP→HTTPS-Weiterleitung für Testinstallationen auf einem Host ohne SSL-Zertifikat abschaltbar ist (setzbar in config.php per define() oder in der .env als LMO_FORCE_HTTPS=0) - ohne diesen Schalter wäre eine solche Installation nach dem Speichern der Konfiguration komplett unerreichbar (jeder Request würde in einen ins Leere laufenden 301-Redirect auf https:// laufen). Dafür musste der "Konfiguration laden"-Block (config.php/.env einlesen) vor den HTTPS-Erzwingung-Block gezogen werden - die Konstante muss bekannt sein, BEVOR die Weiterleitung entschieden wird; alle anderen Blöcke behalten ihre bisherige Reihenfolge. Neue wiederverwendbare Funktion lmoIsHttps() (vorher inline im Redirect-Block) wird jetzt zusätzlich vom neuen Info-Hinweis unter Administrator → Einstellungen (siehe admin/view_settings.php 1.6.0) und vom Installer (siehe install.php 2.6.0) verwendet.
 - Changelog: 1.4.0 - Neue zentrale Funktionen phpIssueLogFile()/logPhpIssue()/readPhpIssueLog() für die Datei-basierte Fehler/Warnungen-Protokollierung (Datei statt DB-Tabelle, damit das Log auch bei einem Datenbankproblem noch funktioniert), mit automatischer Größenbegrenzung/Rotation.
 - Changelog: 1.3.0 - Sicherheitsfix: aktive HTTP→HTTPS-Weiterleitung (301) ergänzt, unabhängig vom vorherigen Cookie-Secure-Flag-Verhalten. Erkennt sowohl direktes HTTPS als auch X-Forwarded-Proto (für Hosts, die TLS auf einem vorgelagerten Proxy terminieren). Nur im Web-Kontext aktiv, nicht bei CLI-Aufrufen. Live über einen echten HTTP-Request bestätigt: 301 mit korrekt erhaltenem Pfad/Query-String, kein Redirect bei bereits aktivem HTTPS oder korrektem X-Forwarded-Proto-Header.
 - Changelog: 1.2.0 - Sicherheitsfix: PHP-Fehleranzeige (display_errors) wird jetzt unabhängig von der Hosting-Konfiguration explizit abgeschaltet, Fehler werden stattdessen weiterhin protokolliert (log_errors). Verhindert, dass interne Pfade/Details bei einem PHP-Fehler öffentlich sichtbar würden, falls das Hosting display_errors=On gesetzt hat. Live über einen echten HTTP-Request mit absichtlich ausgelöstem PHP-Warning bestätigt: Seiteninhalt bleibt sauber, keine Fehlerdetails sichtbar.
@@ -732,6 +734,7 @@
 
 ## install.php
 
+- Changelog: 2.6.0 - Neuer, optionaler Systemcheck "Verbindung über HTTPS" (blockiert die Installation nicht, nur informativ) plus deutliche Warnbox in Schritt 1, falls kein HTTPS erkannt wird (installIsHttps(), eigenständige Kopie von config_loader.php's lmoIsHttps() - der Installer bindet config_loader.php bewusst nicht ein). Hintergrund: config_loader.php leitet seit 1.4.0 jeden Request automatisch auf https:// um; läuft der Server ohne SSL-Zertifikat und wird das nicht rechtzeitig bemerkt, wäre die komplette Installation nach dem Speichern der config.php nicht mehr erreichbar. Der Hinweis erklärt den neuen Schalter define('LMO_FORCE_HTTPS', false) als Ausweg für reine Testinstallationen.
 - Changelog: 2.5.0 - Neue admin_audit_log-Tabelle für frische Installationen ergänzt.
 - Changelog: 2.4.0 - Neue login_attempts-Tabelle für das Login-Rate-Limiting ergänzt.
 - Changelog: 2.3.0 - Vervollständigt: install.php erstellte bisher nur sport_type/extra_data (Volleyball-Erweiterung) vollständig, aber nicht die Strafpunkte-Spalten (tore_korrektur/minuspunkte_korrektur/ab_spieltag, benötigt vom "ab Spieltag"-Feature UND vom .l98-Import mit Strafpunkten) sowie status/bericht_url - diese entstanden bisher nur über verstreute Laufzeit-Migrationen. Jetzt in CREATE TABLE und Migrationsblock ergänzt, damit ein einzelner install.php-Lauf die komplette aktuelle Datenbankstruktur abdeckt. Live über die echte install.php-Webroute mit den tatsächlichen Zugangsdaten getestet (Spalten vorher gezielt entfernt, danach korrekt wiederhergestellt, keine bestehenden Daten verloren) - dabei bestätigt, dass sich install.php nach erfolgreichem Lauf wie vorgesehen selbst löscht (Sicherheitsfeature, kein Bug).
@@ -756,6 +759,7 @@
 
 ## lang/admin/de.php
 
+- Changelog: 1.31.0 - Neue Sprachschlüssel für die HTTPS-Warnung im Installer (install_check_https, install_https_ok, install_https_missing, install_https_warning_notice) und die neue SSL-Info-Karte im Adminbereich (settings_heading_ssl, settings_ssl_active, settings_ssl_inactive, settings_ssl_warning_text), siehe install.php 2.6.0 und admin/view_settings.php 1.6.0.
 - Changelog: 1.30.0 - Neue Sprachschlüssel für den Wartungsmodus-Tab (wartung_tab_wartung, wartung_maintenance_*, wartung_flash_maintenance_*), siehe admin/view_wartung.php 1.3.0.
 - Changelog: 1.29.0 - Neue Sprachschlüssel für den Fehler/Warnungen-Block.
 - Changelog: 1.28.0 - Neue Sprachschlüssel für die Administrator-Tabs und das Audit-Log.
@@ -846,6 +850,7 @@
 
 ## lang/admin/en.php
 
+- Changelog: 1.30.0 - Added language keys for the installer's HTTPS warning (install_check_https, install_https_ok, install_https_missing, install_https_warning_notice) and the new SSL info card in the admin area (settings_heading_ssl, settings_ssl_active, settings_ssl_inactive, settings_ssl_warning_text), see install.php 2.6.0 and admin/view_settings.php 1.6.0.
 - Changelog: 1.29.0 - Added language keys for the new maintenance mode tab (wartung_tab_wartung, wartung_maintenance_*, wartung_flash_maintenance_*), see admin/view_wartung.php 1.3.0.
 - Changelog: 1.28.0 - Added language keys for the errors/warnings block.
 - Changelog: 1.27.0 - Added language keys for the Administrator tabs and the audit log.

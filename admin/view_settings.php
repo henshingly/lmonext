@@ -2,7 +2,7 @@
 /**
  * Project: LMOnext
  * Filename: view_settings.php
- * Fileversion: 1.5.0
+ * Fileversion: 1.6.0
  *
  * PHP version 8.2
  *
@@ -197,6 +197,18 @@ foreach ($mainTabs as $key => $label) {
           catch (Throwable $e) { echo '<p style="font-size:.88rem;color:var(--red)">✗ '.h($e->getMessage()).'</p>'; }
         ?>
         <p style="font-size:.8rem;color:var(--muted);margin-top:8px"><?= t('settings_hint_db_config') ?></p>
+      </div>
+      <div class="card" style="max-width:560px;margin:16px 0 0">
+        <h2><?= h(t('settings_heading_ssl')) ?></h2>
+<?php if (lmoIsHttps()) { ?>
+        <p style="font-size:.88rem;margin:0;color:var(--green)">✓ <?= h(t('settings_ssl_active')) ?></p>
+<?php } else { ?>
+        <p style="font-size:.88rem;margin:0 0 8px;color:var(--red)">✗ <?= h(t('settings_ssl_inactive')) ?></p>
+        <div style="background:#f59e0b18;border:1px solid #f59e0b44;border-radius:var(--radius);
+                    padding:10px 12px;font-size:.83rem;color:var(--text)">
+          ⚠️ <?= t('settings_ssl_warning_text') ?>
+        </div>
+<?php } ?>
       </div>
       <div class="card" style="max-width:560px;margin:16px 0 0">
         <h2><?= h(t('settings_heading_php')) ?></h2>
