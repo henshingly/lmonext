@@ -2,7 +2,7 @@
 /**
  * Project: LMOnext
  * Filename: lang/frontend/en.php
- * Fileversion: 1.43.0
+ * Fileversion: 1.44.0
  *
  * PHP version 8.2
  *
@@ -381,7 +381,8 @@ return [
     'tf_tipp_regeln_haftung_text1' => 'No liability is assumed for any transmission errors or other technical difficulties.',
     'tf_tipp_regeln_haftung_text2' => 'By registering for the prediction game you accept these terms. The game is for entertainment purposes only.',
     'tf_tipp_regeln_haftung_text3' => 'Legal recourse is excluded.',
-    'tf_tipp_header_link'          => '🎯 Prediction game',
+    'tf_tipp_header_link'          => 'Prediction game',
+    'tf_tipp_section_titel'        => 'Prediction game',
     'tf_tipp_home_card_titel'      => 'Prediction game',
     'tf_tipp_home_card_text'       => 'Predict the results of your favourite league and compete with other players on the leaderboard!',
     'tf_tipp_home_card_button'     => 'Join now',

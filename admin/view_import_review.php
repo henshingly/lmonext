@@ -2,7 +2,7 @@
 /**
  * Project: LMOnext
  * Filename: view_import_review.php
- * Fileversion: 1.2.0
+ * Fileversion: 1.2.1
  *
  * PHP version 8.2
  *
@@ -98,5 +98,5 @@ $sportOptions = \LMOnext\Sport\SportRegistry::all();
             <button type="submit" class="btn btn-success btn-sm"><?= h(t('imp_review_btn_confirm')) ?></button>
             <a href="?action=import_cancel" class="btn btn-muted btn-sm" style="text-decoration:none"><?= h(t('imp_review_btn_cancel')) ?></a>
           </div>
-        </form>
+        <?= csrfField() ?></form>
       </div>

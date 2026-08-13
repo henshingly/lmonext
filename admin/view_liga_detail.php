@@ -2,7 +2,7 @@
 /**
  * Project: LMOnext
  * Filename: view_liga_detail.php
- * Fileversion: 1.9.0
+ * Fileversion: 1.9.1
  *
  * PHP version 8.2
  *
@@ -70,7 +70,7 @@ $lid   = (int)$ligaDetail['liga']['id'];
                         style="padding-left:<?= $pad ?>px;<?= $style ?>">
                   <?= $icon ?> <?= h($af['name']) ?>
                 </button>
-              </form>
+              <?= csrfField() ?></form>
 <?php           renderArchivDdFolders($byParent, $lid, (int)$af['id'], $depth + 1);
                     }
                 }
@@ -90,7 +90,7 @@ $lid   = (int)$ligaDetail['liga']['id'];
             <button type="submit" class="btn btn-muted" style="border-color:var(--yellow);color:var(--yellow)">
               <?= h(t('ld_btn_fix_rounds', ['n' => $expectedRounds - $actualRounds])) ?>
             </button>
-          </form>
+          <?= csrfField() ?></form>
 <?php
             }
         } ?>
@@ -132,7 +132,7 @@ $lid   = (int)$ligaDetail['liga']['id'];
                     <button type="submit" class="btn btn-success btn-sm">💾</button>
                     <button type="button" class="btn btn-muted btn-sm"
                             onclick="document.getElementById('st-edit-<?= (int)$st['id'] ?>').style.display='none'">✕</button>
-                  </form>
+                  <?= csrfField() ?></form>
                 </td>
               </tr>
 <?php

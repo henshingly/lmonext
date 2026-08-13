@@ -2,7 +2,7 @@
 /**
  * Project: LMOnext
  * Filename: bootstrap.php
- * Fileversion: 1.12.0
+ * Fileversion: 1.22.0
  *
  * PHP version 8.2
  *
@@ -21,16 +21,48 @@
 // frontend/bootstrap.php), hier reicht die Kurzfassung.
 set_exception_handler(static function (Throwable $e) : void {
     error_log('LMOnext (admin) uncaught: ' . $e->getMessage() . ' in ' . $e->getFile() . ':' . $e->getLine());
+    if (function_exists('logPhpIssue')) {
+        logPhpIssue('FATAL', $e->getMessage(), $e->getFile(), $e->getLine());
+    }
     if (!headers_sent()) {
         http_response_code(500);
+    }
+    // Link zum Aktivitätsprotokoll nur anzeigen, wenn schon eine
+    // eingeloggte Admin-Session besteht - anonyme Besucher (z.B. falls der
+    // Fehler ganz früh, noch vor dem Login, auftritt) bekommen keinen
+    // Hinweis auf den Adminbereich zu sehen.
+    $logLinkHtml = '';
+    if (!empty($_SESSION['admin_logged_in'])) {
+        $logLinkHtml = '<p style="margin-top:16px"><a href="?action=users&tab=log" '
+                     . 'style="color:#2563eb;text-decoration:underline">Zum Aktivitätsprotokoll (Administrator → Log)</a></p>';
     }
     echo '<!DOCTYPE html><html><head><meta charset="UTF-8"><title>Fehler</title></head>'
        . '<body style="font-family:system-ui;text-align:center;padding:60px 20px;color:#333">'
        . '<h2>⚠️ Ein unerwarteter Fehler ist aufgetreten</h2>'
        . '<p>' . htmlspecialchars($e->getMessage(), ENT_QUOTES) . '</p>'
        . '<p style="color:#888;font-size:.85rem">Details wurden ins Server-Log geschrieben.</p>'
+       . $logLinkHtml
        . '</body></html>';
 });
+
+// Nicht-fatale Warnungen/Notices/Deprecated-Meldungen fangen diesen
+// Handler NICHT über set_exception_handler() ab (der reagiert nur auf
+// tatsächlich geworfene/uncaught Throwables) - dafür ein eigener
+// set_error_handler(). Gibt bewusst false zurück, damit PHPs reguläre
+// Fehlerbehandlung (log_errors etc., siehe config_loader.php) zusätzlich
+// weiterläuft, statt sie zu ersetzen.
+set_error_handler(static function (int $errno, string $errstr, string $errfile = '', int $errline = 0) : bool {
+    if (function_exists('logPhpIssue')) {
+        $level = match ($errno) {
+            E_WARNING, E_USER_WARNING       => 'WARNING',
+            E_NOTICE, E_USER_NOTICE         => 'NOTICE',
+            E_DEPRECATED, E_USER_DEPRECATED => 'DEPRECATED',
+            default                         => 'ERROR',
+        };
+        logPhpIssue($level, $errstr, $errfile, $errline);
+    }
+    return false;
+}, E_WARNING | E_NOTICE | E_DEPRECATED | E_USER_WARNING | E_USER_NOTICE | E_USER_DEPRECATED);
 
 // ── Konfiguration ─────────────────────────────────────────────────────────────
 // Lädt entweder die Composer/.env-Variante oder die klassische config.php,
@@ -51,6 +83,18 @@ session_set_cookie_params([
     'samesite' => 'Lax',
 ]);
 session_start();
+
+// ── Security-Header ───────────────────────────────────────────────────────────
+// Der Adminbereich hat KEINEN legitimen Grund, jemals in ein iframe (auch nicht
+// auf der eigenen Domain) eingebettet zu werden - im Unterschied zu den
+// Embed-Addons (viewer, tabellenrechner, relegation, ewige, mini), die genau
+// dafür gebaut sind und ihre eigenen, permissiveren Header setzen (siehe
+// dortiger Aufruf von header_remove() nach dem Laden von frontend/bootstrap.php).
+if (!headers_sent()) {
+    header('X-Frame-Options: DENY');
+    header('X-Content-Type-Options: nosniff');
+    header("Content-Security-Policy: frame-ancestors 'none'");
+}
 
 // ── Mehrsprachigkeit ─────────────────────────────────────────────────────────
 require_once dirname(__DIR__) . '/lang/i18n.php';
@@ -100,10 +144,82 @@ function isLoggedIn() : bool
     return !empty($_SESSION['admin_logged_in']);
 }
 
+// Minuten ohne Aktivität, nach denen eine Admin-Session automatisch abläuft.
+const SESSION_IDLE_TIMEOUT_MIN = 30;
+
+/**
+ * Prüft bei jedem Aufruf von requireLogin(), ob die Session wegen
+ * Inaktivität abgelaufen ist (kein automatisches Logout vorher - eine
+ * einmal gestartete Session lief bisher beliebig lange). Bei Überschreitung
+ * wird die Session verworfen und zum Login umgeleitet; ansonsten wird der
+ * Aktivitäts-Zeitstempel aktualisiert.
+ */
+function checkSessionIdleTimeout() : void
+{
+    if (empty($_SESSION['admin_logged_in'])) {
+        return;
+    }
+    $now  = time();
+    $last = (int)($_SESSION['last_activity'] ?? $now);
+    if ($now - $last > SESSION_IDLE_TIMEOUT_MIN * 60) {
+        $_SESSION = [];
+        session_destroy();
+        session_start();
+        flash(t('flash_session_expired'), 'error');
+        header('Location: ?action=login');
+        exit;
+    }
+    $_SESSION['last_activity'] = $now;
+}
+
 function requireLogin() : void
 {
+    checkSessionIdleTimeout();
     if (!isLoggedIn()) {
         header('Location: ?action=login');
+        exit;
+    }
+}
+
+// ── CSRF-Schutz ───────────────────────────────────────────────────────────────
+// Ein einziger Token pro Session (nicht pro Formular), damit mehrere gleichzeitig
+// geöffnete Tabs/Formulare nicht gegenseitig ihre Tokens invalidieren. Wird auch
+// für anonyme Sessions ausgestellt (schützt zusätzlich das Login-Formular selbst
+// vor Login-CSRF, bei dem ein Opfer unbemerkt in einen fremden Account eingeloggt
+// wird).
+function csrfToken() : string
+{
+    if (empty($_SESSION['csrf_token']) || !is_string($_SESSION['csrf_token'])) {
+        $_SESSION['csrf_token'] = bin2hex(random_bytes(32));
+    }
+    return $_SESSION['csrf_token'];
+}
+
+/** Verstecktes Formularfeld mit dem aktuellen CSRF-Token, für jedes POST-Formular. */
+function csrfField() : string
+{
+    return '<input type="hidden" name="csrf_token" value="' . h(csrfToken()) . '">';
+}
+
+/**
+ * Prüft bei jedem POST-Request das mitgesendete csrf_token gegen die Session
+ * (zeitkonstanter Vergleich über hash_equals(), um Timing-Angriffe zu
+ * vermeiden). Wird zentral in admin.php vor allen POST-Handlern aufgerufen,
+ * damit keiner der 30+ POST-Aktionen einzeln abgesichert werden muss und
+ * keine versehentlich vergessen wird. Bei fehlendem/falschem Token: Abbruch
+ * mit 403 statt stillschweigendem Ausführen der Aktion.
+ */
+function requireCsrf() : void
+{
+    if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+        return;
+    }
+    $sent = $_POST['csrf_token'] ?? '';
+    $known = $_SESSION['csrf_token'] ?? '';
+    if (!is_string($sent) || !is_string($known) || $known === '' || !hash_equals($known, $sent)) {
+        http_response_code(403);
+        header('Content-Type: text/plain; charset=utf-8');
+        echo "403 Forbidden: Ungültiges oder fehlendes CSRF-Token. Bitte die Seite neu laden und erneut versuchen.";
         exit;
     }
 }
@@ -185,6 +301,29 @@ function redirect(string $url) : never
 {
     header('Location: ' . $url);
     exit;
+}
+
+/**
+ * Validiert eine aus dem Request kommende Redirect-Zielangabe (z.B.
+ * $_POST['redirect'], wie sie einige Formulare mitschicken, um nach dem
+ * Speichern zur ursprünglichen Seite zurückzukehren). Erlaubt sind NUR
+ * interne, mit "?" beginnende Query-Strings (das durchgängige Muster in
+ * diesem Projekt, z.B. "?action=archiv") - alles andere (absolute URLs,
+ * protokollrelative "//evil.com", "javascript:"-Pseudo-URLs etc.) fällt auf
+ * $fallback zurück. Schützt vor Open-Redirect-Phishing, bei dem ein Angreifer
+ * eine eigene Ziel-URL in einen sonst legitimen Link/Formular einschleust.
+ */
+function safeRedirectTarget(mixed $target, string $fallback) : string
+{
+    if (!is_string($target) || $target === '') {
+        return $fallback;
+    }
+    // Muss mit genau einem "?" beginnen (kein "//", kein "http", kein ":") -
+    // alles andere ist potenziell ein externes Ziel.
+    if ($target[0] !== '?' || str_starts_with($target, '?/')) {
+        return $fallback;
+    }
+    return $target;
 }
 
 // ── Timestamp → DATETIME (unterstützt negative Werte, d.h. vor 1970) ─────────
@@ -398,6 +537,185 @@ function ensurePasswordResetSchema() : void
             UNIQUE KEY `token` (`token`),
             KEY `user_id` (`user_id`)
         ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci');
+    } catch (Throwable) {}
+}
+
+// ── Login-Rate-Limiting ───────────────────────────────────────────────────────
+const LOGIN_MAX_ATTEMPTS  = 5;   // erlaubte Fehlversuche im Zeitfenster
+const LOGIN_LOCKOUT_MIN   = 15;  // Sperrzeit in Minuten nach Erreichen des Limits
+
+/**
+ * Legt die login_attempts-Tabelle an, falls sie fehlt (frische
+ * Installationen bekommen sie schon über install.php).
+ */
+/**
+ * Prüft die für den laufenden Betrieb relevanten PHP-Erweiterungen. Eigen-
+ * ständig statt install.php's checkEnvironment() zu nutzen, da sich
+ * install.php nach erfolgreicher Installation selbst löscht (siehe dortige
+ * selfDestructAndRedirect()) und danach nicht mehr verfügbar wäre. Für die
+ * Info-Seite unter Einstellungen (siehe admin/view_settings.php).
+ *
+ * @return array<int,array{label:string,ok:bool,required:bool,info:string}>
+ */
+// ── Audit-Log für Admin-Aktionen ──────────────────────────────────────────────
+/**
+ * Legt die admin_audit_log-Tabelle an, falls sie fehlt (frische
+ * Installationen bekommen sie schon über install.php).
+ */
+function ensureAuditLogTable() : void
+{
+    static $done = false; if ($done) return; $done = true;
+    try {
+        getDB()->exec('CREATE TABLE IF NOT EXISTS '.tbl('admin_audit_log').' (
+            `id`         INT AUTO_INCREMENT PRIMARY KEY,
+            `username`   VARCHAR(80)   NOT NULL,
+            `action`     VARCHAR(60)   NOT NULL,
+            `details`    VARCHAR(500)  NULL DEFAULT NULL,
+            `ip`         VARCHAR(45)   NOT NULL,
+            `created_at` DATETIME      NOT NULL DEFAULT CURRENT_TIMESTAMP,
+            KEY `created_at` (`created_at`),
+            KEY `username` (`username`)
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci');
+    } catch (Throwable) {}
+}
+
+/**
+ * Protokolliert eine sicherheitsrelevante Admin-Aktion (Login, Liga
+ * löschen, Backup wiederherstellen, Benutzer anlegen/löschen, Einstellungen
+ * ändern, Import etc.). $action ist eine kurze, feste Kennung (z.B.
+ * "liga_deleted"), $details ein optionaler Klartext-Zusatz (z.B. der
+ * Liganame) - beide werden bewusst NICHT über t() übersetzt, damit das Log
+ * unabhängig von der aktuell eingestellten Sprache konsistent lesbar bleibt.
+ * Wird unter Administrator → Log angezeigt (siehe admin/view_users.php).
+ */
+function logAdminAction(string $action, string $details = '') : void
+{
+    ensureAuditLogTable();
+    try {
+        getDB()->prepare('INSERT INTO '.tbl('admin_audit_log').' (username, action, details, ip) VALUES (?, ?, ?, ?)')
+               ->execute([$_SESSION['admin_user'] ?? '(unbekannt)', $action, $details !== '' ? $details : null, loginClientIp()]);
+    } catch (Throwable) {}
+}
+
+/**
+ * Prüft die für den laufenden Betrieb relevanten PHP-Erweiterungen. Eigen-
+ * ständig statt install.php's checkEnvironment() zu nutzen, da sich
+ * install.php nach erfolgreicher Installation selbst löscht (siehe dortige
+ * selfDestructAndRedirect()) und danach nicht mehr verfügbar wäre. Für die
+ * Info-Seite unter Einstellungen (siehe admin/view_settings.php).
+ *
+ * @return array<int,array{label:string,ok:bool,required:bool,info:string}>
+ */
+function checkRuntimeExtensions() : array
+{
+    $checks = [];
+    $checks[] = ['label' => 'PDO', 'ok' => extension_loaded('pdo'), 'required' => true,
+                 'info' => extension_loaded('pdo') ? t('install_available') : t('install_missing_ini')];
+    $checks[] = ['label' => 'PDO MySQL', 'ok' => extension_loaded('pdo_mysql'), 'required' => true,
+                 'info' => extension_loaded('pdo_mysql') ? t('install_available') : t('install_missing_pdo_mysql')];
+    $checks[] = ['label' => 'mbstring', 'ok' => extension_loaded('mbstring'), 'required' => false,
+                 'info' => extension_loaded('mbstring') ? t('install_available') : t('install_recommended_missing')];
+    $checks[] = ['label' => 'GD', 'ok' => extension_loaded('gd'), 'required' => false,
+                 'info' => extension_loaded('gd') ? t('install_available') : t('install_recommended_missing')];
+    // DOM/libxml wird seit der SVG-Sanitisierung beim Team-Logo-Upload
+    // benötigt (siehe sanitizeSvgContent() oben) - ohne diese Erweiterung
+    // werden SVG-Uploads komplett abgelehnt statt eine ungeprüfte Datei zu
+    // akzeptieren.
+    $checks[] = ['label' => 'DOM/libxml', 'ok' => class_exists('DOMDocument'), 'required' => false,
+                 'info' => class_exists('DOMDocument') ? t('install_available') : t('install_recommended_missing')];
+    $hasImagick  = class_exists('Imagick');
+    $hasRsvgTool = function_exists('shell_exec') && trim((string)@shell_exec('command -v rsvg-convert 2>/dev/null')) !== '';
+    $svgRasterInfo = ($hasImagick || $hasRsvgTool)
+        ? t('install_available') . ' (' . implode(' + ', array_filter([$hasImagick ? 'Imagick' : null, $hasRsvgTool ? 'rsvg-convert' : null])) . ')'
+        : t('install_recommended_missing');
+    $checks[] = ['label' => 'Imagick / rsvg-convert', 'ok' => ($hasImagick || $hasRsvgTool), 'required' => false, 'info' => $svgRasterInfo];
+    $checks[] = ['label' => 'ZipArchive', 'ok' => class_exists('ZipArchive'), 'required' => false,
+                 'info' => class_exists('ZipArchive') ? t('install_available') : t('install_recommended_missing')];
+    $checks[] = ['label' => 'bzip2', 'ok' => function_exists('bzcompress'), 'required' => false,
+                 'info' => function_exists('bzcompress') ? t('install_available') : t('install_recommended_missing')];
+    return $checks;
+}
+
+/**
+ * Ermittelt die Besucher-IP für das Rate-Limiting. X-Forwarded-For wird nur
+ * verwendet, wenn REMOTE_ADDR nicht gesetzt ist (CLI/Tests) - im Normalfall
+ * zählt ausschließlich REMOTE_ADDR, da X-Forwarded-For vom Client frei
+ * mitgeschickt und damit gefälscht werden kann (ein Angreifer könnte sich
+ * sonst durch wechselnde Fake-Header selbst von der Sperre befreien).
+ */
+function loginClientIp() : string
+{
+    return (string)($_SERVER['REMOTE_ADDR'] ?? '0.0.0.0');
+}
+
+/**
+ * Legt die login_attempts-Tabelle an, falls sie fehlt (frische
+ * Installationen bekommen sie schon über install.php).
+ */
+function ensureLoginAttemptsTable() : void
+{
+    static $done = false; if ($done) return; $done = true;
+    try {
+        getDB()->exec('CREATE TABLE IF NOT EXISTS '.tbl('login_attempts').' (
+            `id`           INT AUTO_INCREMENT PRIMARY KEY,
+            `username`     VARCHAR(80)  NOT NULL,
+            `ip`           VARCHAR(45)  NOT NULL,
+            `attempted_at` DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP,
+            KEY `username` (`username`),
+            KEY `ip` (`ip`),
+            KEY `attempted_at` (`attempted_at`)
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci');
+    } catch (Throwable) {}
+}
+
+/**
+ * Prüft, ob für den angegebenen Benutzernamen ODER die aktuelle IP aktuell
+ * eine Sperre wegen zu vieler Fehlversuche besteht. Beide werden geprüft,
+ * damit weder "viele Versuche auf einen Benutzernamen" noch "viele Versuche
+ * von einer IP über verschiedene Benutzernamen" das Limit umgehen.
+ *
+ * @return int Verbleibende Sperrzeit in Sekunden, 0 = keine Sperre aktiv.
+ */
+function loginRateLimitSecondsLeft(string $username) : int
+{
+    ensureLoginAttemptsTable();
+    try {
+        $db = getDB();
+        $since = date('Y-m-d H:i:s', time() - LOGIN_LOCKOUT_MIN * 60);
+        $s = $db->prepare(
+            'SELECT COUNT(*) AS cnt, MAX(attempted_at) AS last_at FROM '.tbl('login_attempts').'
+             WHERE attempted_at > ? AND (username = ? OR ip = ?)'
+        );
+        $s->execute([$since, $username, loginClientIp()]);
+        $row = $s->fetch();
+        if ($row === false || (int)$row['cnt'] < LOGIN_MAX_ATTEMPTS) {
+            return 0;
+        }
+        $lastAt = strtotime((string)$row['last_at']);
+        $unlockAt = $lastAt + LOGIN_LOCKOUT_MIN * 60;
+        return max(0, $unlockAt - time());
+    } catch (Throwable) {
+        return 0; // im Zweifel nicht aussperren, falls die Tabelle mal nicht erreichbar ist
+    }
+}
+
+/** Trägt einen fehlgeschlagenen Login-Versuch ein. */
+function recordFailedLoginAttempt(string $username) : void
+{
+    ensureLoginAttemptsTable();
+    try {
+        getDB()->prepare('INSERT INTO '.tbl('login_attempts').' (username, ip) VALUES (?, ?)')
+               ->execute([$username, loginClientIp()]);
+    } catch (Throwable) {}
+}
+
+/** Setzt den Fehlversuch-Zähler nach erfolgreichem Login zurück. */
+function clearLoginAttempts(string $username) : void
+{
+    ensureLoginAttemptsTable();
+    try {
+        getDB()->prepare('DELETE FROM '.tbl('login_attempts').' WHERE username = ? OR ip = ?')
+               ->execute([$username, loginClientIp()]);
     } catch (Throwable) {}
 }
 
@@ -626,8 +944,92 @@ function deleteTeamLogo(int $teamId) : void
  *
  * @return array{ok:bool, error:?string}
  */
+/**
+ * Entfernt aktive Inhalte aus einem hochgeladenen SVG (Sicherheitsfix,
+ * Punkt 3 aus dem Security-Audit): <script>-Elemente, alle "on*"-Event-
+ * Handler-Attribute (onload, onclick, onerror, ...), "javascript:"-URIs in
+ * beliebigen Attributen (href, xlink:href, ...) sowie <foreignObject>
+ * (kann beliebiges eingebettetes HTML enthalten). Nutzt DOMDocument statt
+ * reiner Regex-Ersetzung für robustes, korrektes Parsen; externe
+ * Entities/DTDs werden dabei nicht aufgelöst (schützt zusätzlich vor XXE).
+ * Bei ungültigem/nicht parsbarem XML wird null zurückgegeben - der Aufrufer
+ * lehnt die Datei dann komplett ab, statt eine evtl. noch gefährliche Datei
+ * unverändert durchzulassen.
+ */
+function sanitizeSvgContent(string $content) : ?string
+{
+    // DOMDocument ist auf praktisch jedem PHP-Hosting vorhanden (ext-dom),
+    // aber defensiv geprüft: fehlt die Klasse ausnahmsweise, wird die Datei
+    // abgelehnt statt sie unbereinigt zu akzeptieren.
+    if (!class_exists('DOMDocument')) {
+        return null;
+    }
+    $prevEntityLoader = null;
+    if (function_exists('libxml_disable_entity_loader')) {
+        // In PHP 8 ist externes Entity-Laden ohnehin standardmäßig aus,
+        // die Funktion selbst ist ab 8.0 deprecated - defensiv trotzdem
+        // aufrufen, falls auf einer älteren PHP-Version ausgeführt.
+        $prevEntityLoader = @libxml_disable_entity_loader(true);
+    }
+    $prevUseErrors = libxml_use_internal_errors(true);
+
+    $dom = new \DOMDocument();
+    $ok = $dom->loadXML($content, LIBXML_NONET);
+    libxml_clear_errors();
+    libxml_use_internal_errors($prevUseErrors);
+    if ($prevEntityLoader !== null) {
+        @libxml_disable_entity_loader($prevEntityLoader);
+    }
+    if (!$ok) {
+        return null;
+    }
+
+    $xpath = new \DOMXPath($dom);
+
+    // 1. Alle <script>-Elemente komplett entfernen (unabhängig vom Namespace).
+    foreach (iterator_to_array($xpath->query('//*[local-name()="script"]')) as $node) {
+        $node->parentNode?->removeChild($node);
+    }
+
+    // 2. <foreignObject> entfernen - kann beliebiges eingebettetes HTML
+    // (inkl. <script>) enthalten, das von SVG-Parsern oft anders behandelt wird.
+    foreach (iterator_to_array($xpath->query('//*[local-name()="foreignObject"]')) as $node) {
+        $node->parentNode?->removeChild($node);
+    }
+
+    // 3. Auf allen verbleibenden Elementen: "on*"-Attribute entfernen und
+    // "javascript:"-URIs in href/xlink:href/... neutralisieren.
+    foreach (iterator_to_array($xpath->query('//*')) as $el) {
+        if (!($el instanceof \DOMElement)) {
+            continue;
+        }
+        $toRemove = [];
+        foreach (iterator_to_array($el->attributes) as $attr) {
+            $name = strtolower($attr->nodeName);
+            if (str_starts_with($name, 'on')) {
+                $toRemove[] = $attr->nodeName;
+                continue;
+            }
+            $value = trim($attr->nodeValue ?? '');
+            // Führende Steuerzeichen/Whitespace-Tricks (z.B. "java\tscript:")
+            // vor dem Vergleich entfernen.
+            $normalized = strtolower(preg_replace('/[\x00-\x20]+/', '', $value) ?? $value);
+            if (str_starts_with($normalized, 'javascript:') || str_starts_with($normalized, 'data:text/html')) {
+                $toRemove[] = $attr->nodeName;
+            }
+        }
+        foreach ($toRemove as $attrName) {
+            $el->removeAttribute($attrName);
+        }
+    }
+
+    $result = $dom->saveXML();
+    return $result !== false ? $result : null;
+}
+
 function saveTeamLogoUpload(int $teamId, array $file) : array
 {
+
     if (($file['error'] ?? UPLOAD_ERR_NO_FILE) === UPLOAD_ERR_NO_FILE) {
         return ['ok' => true, 'error' => null]; // nichts hochgeladen -> kein Fehler, einfach nichts tun
     }
@@ -645,6 +1047,7 @@ function saveTeamLogoUpload(int $teamId, array $file) : array
         return ['ok' => false, 'error' => t('teams_logo_err_upload')];
     }
 
+    $sanitizedSvgContent = null;
     if ($ext === 'svg') {
         $content = (string)file_get_contents($tmpPath);
         // Grobe Inhaltsprüfung statt reiner Endungs-Prüfung: muss ein
@@ -659,6 +1062,15 @@ function saveTeamLogoUpload(int $teamId, array $file) : array
             if ((float)$hm[1] < TEAM_LOGO_MIN_HEIGHT_PX) {
                 return ['ok' => false, 'error' => t('teams_logo_err_too_small', ['min' => TEAM_LOGO_MIN_HEIGHT_PX])];
             }
+        }
+        // Sicherheitsfix (Security-Audit Punkt 3): Scripts, Event-Handler und
+        // javascript:-URIs entfernen, bevor die Datei überhaupt gespeichert
+        // wird. Ist die Datei danach nicht mehr sauber als XML parsbar, wird
+        // sie komplett abgelehnt statt eine ggf. noch gefährliche Version zu
+        // akzeptieren.
+        $sanitizedSvgContent = sanitizeSvgContent($content);
+        if ($sanitizedSvgContent === null) {
+            return ['ok' => false, 'error' => t('teams_logo_err_invalid')];
         }
     } else {
         $info = @getimagesize($tmpPath);
@@ -677,7 +1089,14 @@ function saveTeamLogoUpload(int $teamId, array $file) : array
 
     deleteTeamLogo($teamId); // altes Logo (ggf. andere Endung) zuerst entfernen
     $destPath = teamLogoDir() . '/' . $teamId . '.' . $ext;
-    if (!move_uploaded_file($tmpPath, $destPath)) {
+    if ($sanitizedSvgContent !== null) {
+        // Bereinigten Inhalt schreiben statt move_uploaded_file() - sonst
+        // würden trotz Sanitizing die ORIGINALEN (ungefilterten) Upload-Bytes
+        // gespeichert werden.
+        if (@file_put_contents($destPath, $sanitizedSvgContent) === false) {
+            return ['ok' => false, 'error' => t('teams_logo_err_upload')];
+        }
+    } elseif (!move_uploaded_file($tmpPath, $destPath)) {
         return ['ok' => false, 'error' => t('teams_logo_err_upload')];
     }
     @chmod($destPath, 0644);

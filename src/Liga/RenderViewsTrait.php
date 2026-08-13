@@ -2,7 +2,7 @@
 /**
  * Project: LMOnext
  * Filename: src/Liga/RenderViewsTrait.php
- * Fileversion: 1.10.0
+ * Fileversion: 1.11.0
  *
  * PHP version 8.2
  *
@@ -1220,5 +1220,22 @@ trait RenderViewsTrait
             'Label' => h(tf('liga_spielfrei_label')),
             'Teams' => $names,
         ]);
+    }
+
+    /**
+     * Copyright-/Spenden-Hinweis für Addon-Ausgaben (Viewer, Tabellenrechner,
+     * Relegation etc., siehe config_loader.php). $addon wird nur als
+     * data-Attribut gesetzt, nicht sichtbar (Beitrag: Torsten Hofmann).
+     *
+     * @return string HTML <p> mit Copyright + Spenden-Link
+     */
+    public static function renderCopyrightNotice(string $addon = '') : string
+    {
+        // Delegiert an die zentrale Funktion in config_loader.php und packt
+        // das Ergebnis in einen <p>-Block für die Addon-Ausgabe (Viewer,
+        // Tabellenrechner, Relegation etc.).
+        return '<p class="lmo-copyright" style="font-size:.68rem;color:#9098a8;'
+             . 'text-align:right;margin:8px 0 0;padding:0;opacity:.65">'
+             . \renderCopyrightNotice($addon) . '</p>';
     }
 }

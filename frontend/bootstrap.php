@@ -2,7 +2,7 @@
 /**
  * Project: LMOnext
  * Filename: bootstrap.php
- * Fileversion: 1.7.0
+ * Fileversion: 1.10.0
  *
  * PHP version 8.2
  *
@@ -25,6 +25,9 @@ declare(strict_types = 1);
 // display_errors auf dem jeweiligen Hosting konfiguriert ist.
 set_exception_handler(static function (Throwable $e) : void {
     error_log('LMOnext (frontend) uncaught: ' . $e->getMessage() . ' in ' . $e->getFile() . ':' . $e->getLine());
+    if (function_exists('logPhpIssue')) {
+        logPhpIssue('FATAL', $e->getMessage(), $e->getFile(), $e->getLine());
+    }
     if (!headers_sent()) {
         http_response_code(500);
     }
@@ -34,6 +37,23 @@ set_exception_handler(static function (Throwable $e) : void {
        . '<p>Bitte versuche es später erneut.</p>'
        . '</body></html>';
 });
+
+// Nicht-fatale Warnungen/Notices/Deprecated-Meldungen fangen wie im
+// Adminbereich (siehe admin/bootstrap.php) über einen eigenen
+// set_error_handler() - gibt bewusst false zurück, damit PHPs reguläre
+// Fehlerbehandlung zusätzlich weiterläuft.
+set_error_handler(static function (int $errno, string $errstr, string $errfile = '', int $errline = 0) : bool {
+    if (function_exists('logPhpIssue')) {
+        $level = match ($errno) {
+            E_WARNING, E_USER_WARNING       => 'WARNING',
+            E_NOTICE, E_USER_NOTICE         => 'NOTICE',
+            E_DEPRECATED, E_USER_DEPRECATED => 'DEPRECATED',
+            default                         => 'ERROR',
+        };
+        logPhpIssue($level, $errstr, $errfile, $errline);
+    }
+    return false;
+}, E_WARNING | E_NOTICE | E_DEPRECATED | E_USER_WARNING | E_USER_NOTICE | E_USER_DEPRECATED);
 
 // ── Session ────────────────────────────────────────────────────────────────
 // Cookie-Parameter schützen die Besucher-Session zusätzlich gegen
@@ -47,6 +67,55 @@ session_set_cookie_params([
     'samesite' => 'Lax',
 ]);
 session_start();
+
+// ── Security-Header ───────────────────────────────────────────────────────────
+// Schützt die Hauptseiten (liga.php, home.php) vor Clickjacking über fremde
+// iframes. Die eigens zum Einbetten gedachten Addons (viewer, tabellenrechner,
+// relegation, ewige, mini) requiren zwar ebenfalls diese Datei, überschreiben
+// die Header aber direkt danach wieder (siehe dortiger header_remove()-Aufruf),
+// damit ihre iframe-Einbettung auf fremden Websites weiterhin funktioniert.
+if (!headers_sent()) {
+    header('X-Frame-Options: SAMEORIGIN');
+    header('X-Content-Type-Options: nosniff');
+    header("Content-Security-Policy: frame-ancestors 'self'");
+}
+
+// ── CSRF-Schutz (Frontend, z.B. Tippspiel-Formulare) ─────────────────────────
+// Gleiches Vorgehen wie im Adminbereich (siehe admin/bootstrap.php): ein Token
+// pro Session, zentral vor jedem POST geprüft, statt jedes Formular einzeln
+// abzusichern.
+if (!function_exists('csrfToken')) {
+    function csrfToken() : string
+    {
+        if (empty($_SESSION['csrf_token']) || !is_string($_SESSION['csrf_token'])) {
+            $_SESSION['csrf_token'] = bin2hex(random_bytes(32));
+        }
+        return $_SESSION['csrf_token'];
+    }
+}
+if (!function_exists('csrfField')) {
+    function csrfField() : string
+    {
+        return '<input type="hidden" name="csrf_token" value="' . h(csrfToken()) . '">';
+    }
+}
+if (!function_exists('requireCsrf')) {
+    function requireCsrf() : void
+    {
+        if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+            return;
+        }
+        $sent  = $_POST['csrf_token'] ?? '';
+        $known = $_SESSION['csrf_token'] ?? '';
+        if (!is_string($sent) || !is_string($known) || $known === '' || !hash_equals($known, $sent)) {
+            http_response_code(403);
+            header('Content-Type: text/plain; charset=utf-8');
+            echo "403 Forbidden: Ungültiges oder fehlendes CSRF-Token. Bitte die Seite neu laden und erneut versuchen.";
+            exit;
+        }
+    }
+}
+requireCsrf();
 
 // ── Mehrsprachigkeit (Besucherbereich, unabhängig vom Adminbereich) ──────────
 // Die eigentliche Sprachauflösung (inkl. der in den Admin-Einstellungen

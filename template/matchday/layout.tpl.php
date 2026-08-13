@@ -2,7 +2,7 @@
 <html lang="<!--HtmlLang-->">
 <head>
 <!--
-  Template: matchday | Filename: layout.tpl.php | Fileversion: 1.2.5
+  Template: matchday | Filename: layout.tpl.php | Fileversion: 1.2.6
 -->
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -403,6 +403,12 @@ table.ligastat-overall td{padding:8px 10px;border-top:1px solid var(--line)}
 .ligastat-remaining-eval{margin-top:16px}
 
 footer.site{text-align:center;color:var(--muted);font-size:.8rem;padding:28px 20px;border-top:1px solid var(--line);margin-top:12px}
+.tipp-site-link{display:inline-flex;align-items:center;gap:6px;text-decoration:none;font-weight:600}
+.tipp-site-link-icon{height:20px;width:auto;display:inline-block;vertical-align:middle}
+.tipp-section-heading{display:flex;align-items:center;gap:12px;margin-bottom:16px}
+.tipp-section-heading-logo{height:44px;width:auto;display:block}
+.tipp-section-heading h1{margin:0;font-size:1.3rem}
+
 footer.site .lang-switch-wrap{margin-bottom:14px}
 footer.site .template-switch{display:inline-block}
 footer.site .template-switch select{background:transparent;border:none;color:var(--muted);

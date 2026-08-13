@@ -2,7 +2,7 @@
 /**
  * Project: LMOnext
  * Filename: view_reset_password.php
- * Fileversion: 1.0.0
+ * Fileversion: 1.0.1
  *
  * PHP version 8.2
  *
@@ -47,7 +47,7 @@ if ($token !== '') {
         <input type="password" name="new_password2" required autocomplete="new-password">
       </div>
       <button type="submit" class="btn btn-primary" style="width:100%;justify-content:center;margin-top:4px"><?= h(t('reset_pw_submit')) ?></button>
-    </form>
+    <?= csrfField() ?></form>
 <?php } else { ?>
     <p><?= h(t('reset_pw_invalid')) ?></p>
 <?php } ?>

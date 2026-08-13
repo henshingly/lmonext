@@ -2,7 +2,7 @@
 /**
  * Project: LMOnext
  * Filename: html_layout.php
- * Fileversion: 1.5.0
+ * Fileversion: 1.6.0
  *
  * PHP version 8.2
  *
@@ -29,7 +29,7 @@
   </ul>
   <div class="sidebar-footer">
     <span style="font-size:.82rem;color:var(--muted)"><?= h($_SESSION['admin_user'] ?? '') ?></span>
-    <div style="font-size:.7rem;color:var(--muted);margin-top:4px">LMOnext <?= h(getAppVersion()) ?></div>
+    <div style="font-size:.7rem;color:var(--muted);margin-top:4px"><?= renderCopyrightNotice() ?></div>
   </div>
 </nav>
 

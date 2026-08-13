@@ -2,7 +2,7 @@
 /**
  * Project: LMOnext
  * Filename: view_login.php
- * Fileversion: 1.4.0
+ * Fileversion: 1.4.1
  *
  * PHP version 8.2
  *
@@ -33,7 +33,7 @@
         <input type="password" name="password" autocomplete="current-password">
       </div>
       <button type="submit" class="btn btn-primary" style="width:100%;justify-content:center;margin-top:4px"><?= h(t('login_submit')) ?></button>
-    </form>
+    <?= csrfField() ?></form>
     <div style="text-align:center;margin-top:12px">
       <a href="#" onclick="document.getElementById('forgot-modal').style.display='flex';return false;"
          style="color:var(--muted);font-size:.85rem;text-decoration:none"><?= h(t('login_forgot_link')) ?></a>
@@ -59,6 +59,6 @@
         <button type="submit" class="btn btn-primary" style="flex:1;justify-content:center"><?= h(t('reset_modal_submit')) ?></button>
         <button type="button" class="btn btn-muted" onclick="document.getElementById('forgot-modal').style.display='none'"><?= h(t('reset_modal_cancel')) ?></button>
       </div>
-    </form>
+    <?= csrfField() ?></form>
   </div>
 </div>

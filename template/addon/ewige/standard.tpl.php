@@ -69,4 +69,5 @@
 </table>
 <div class="lmo-eternal-foot"><!--Fusszeile--></div>
 <!--Fussnoten-->
+<div class="lmo-eternal-foot"><!--Copyright--></div>
 </div>

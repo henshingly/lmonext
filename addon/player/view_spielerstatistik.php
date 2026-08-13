@@ -2,7 +2,7 @@
 /**
  * Project: LMOnext
  * Filename: addon/player/view_spielerstatistik.php
- * Fileversion: 1.3.0
+ * Fileversion: 1.3.1
  *
  * PHP version 8.2
  *
@@ -69,7 +69,7 @@ $isTeamColumn = static fn(string $name): bool => in_array(strtolower(trim($name)
                           border-radius:var(--radius);padding:7px 10px;font-size:.85rem;width:220px">
           </div>
           <button type="submit" class="btn btn-primary btn-sm"><?= h(t('spst_btn_add_column')) ?></button>
-        </form>
+        <?= csrfField() ?></form>
       </div>
 
       <!-- Spieler hinzufügen -->
@@ -81,7 +81,7 @@ $isTeamColumn = static fn(string $name): bool => in_array(strtolower(trim($name)
                  style="background:var(--bg);border:1px solid var(--border);color:var(--text);
                         border-radius:var(--radius);padding:7px 10px;font-size:.85rem">
           <button type="submit" class="btn btn-primary btn-sm"><?= h(t('spst_btn_add_player')) ?></button>
-        </form>
+        <?= csrfField() ?></form>
       </div>
 
 <?php if (!empty($spalten) && !empty($spieler)) { ?>
@@ -128,14 +128,14 @@ $isTeamColumn = static fn(string $name): bool => in_array(strtolower(trim($name)
                       <input type="hidden" name="global_player_id" value="<?= (int)($p['global_player_id'] ?? 0) ?>">
                       <input id="photo-input-<?= (int)$p['id'] ?>" type="file" name="photo" accept=".jpg,.jpeg,.png,.gif,.svg"
                              onchange="document.getElementById('photo-form-<?= (int)$p['id'] ?>').submit()">
-                    </form>
+                    <?= csrfField() ?></form>
 <?php if ($photo !== null) { ?>
                     <form method="post" action="?action=spst_upload_photo" style="display:inline">
                       <input type="hidden" name="liga_id" value="<?= $lid ?>">
                       <input type="hidden" name="global_player_id" value="<?= (int)($p['global_player_id'] ?? 0) ?>">
                       <input type="hidden" name="remove_photo" value="1">
                       <button type="submit" class="btn btn-danger btn-sm" style="font-size:.68rem;padding:2px 5px"><?= h(t('spst_btn_photo_remove')) ?></button>
-                    </form>
+                    <?= csrfField() ?></form>
 <?php } ?>
                   </div>
                 </td>
@@ -183,20 +183,20 @@ $isTeamColumn = static fn(string $name): bool => in_array(strtolower(trim($name)
           <div style="padding:12px 16px">
             <button type="submit" class="btn btn-success btn-sm"><?= h(t('spst_btn_save_values')) ?></button>
           </div>
-        </form>
+        <?= csrfField() ?></form>
       </div>
 <?php
       foreach ($spieler as $p) { ?>
       <form id="delplayer-<?= (int)$p['id'] ?>" method="post" action="?action=spst_delplayer" style="display:none">
         <input type="hidden" name="liga_id" value="<?= $lid ?>">
         <input type="hidden" name="spieler_id" value="<?= (int)$p['id'] ?>">
-      </form>
+      <?= csrfField() ?></form>
 <?php }
       foreach ($spalten as $sp) { ?>
       <form id="delcolumn-<?= (int)$sp['id'] ?>" method="post" action="?action=spst_delcolumn" style="display:none">
         <input type="hidden" name="liga_id" value="<?= $lid ?>">
         <input type="hidden" name="spalten_id" value="<?= (int)$sp['id'] ?>">
-      </form>
+      <?= csrfField() ?></form>
 <?php }
 } else { ?>
       <div class="card" style="margin-bottom:16px;color:var(--muted);font-size:.88rem">
@@ -251,7 +251,7 @@ $isTeamColumn = static fn(string $name): bool => in_array(strtolower(trim($name)
             <?= h(t('spst_cfg_show_extra_sort')) ?>
           </label>
           <button type="submit" class="btn btn-success btn-sm"><?= h(t('spst_btn_save_config')) ?></button>
-        </form>
+        <?= csrfField() ?></form>
       </div>
 
 <?php if (empty($spalten)) { ?>
@@ -274,6 +274,6 @@ $isTeamColumn = static fn(string $name): bool => in_array(strtolower(trim($name)
             <input type="file" name="cfgfile" accept=".cfg">
           </div>
           <button type="submit" class="btn btn-muted btn-sm"><?= h(t('spst_btn_import')) ?></button>
-        </form>
+        <?= csrfField() ?></form>
       </div>
 <?php } ?>

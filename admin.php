@@ -2,7 +2,7 @@
 /**
  * Project: LMOnext
  * Filename: admin.php
- * Fileversion: 1.5.3
+ * Fileversion: 1.5.4
  *
  * PHP version 8.2
  *
@@ -24,6 +24,12 @@ require_once ADMIN_INC . '/league-key_data.php';
 
 // ── Aktion ────────────────────────────────────────────────────────────────────
 $action = $_GET['action'] ?? $_POST['action'] ?? 'dashboard';
+
+// ── CSRF-Schutz: zentral für JEDEN POST-Request, bevor irgendein Handler läuft.
+// Schützt alle 30+ POST-Aktionen auf einen Schlag (Liga speichern, Ergebnisse,
+// Backup, Import, Wartungsmodus etc.), ohne dass jede einzeln abgesichert werden
+// muss. Bricht bei fehlendem/falschem Token sofort mit 403 ab.
+requireCsrf();
 
 // ── POST-Handler (laufen vor HTML-Ausgabe) ────────────────────────────────────
 require_once ADMIN_INC . '/handler_user.php';

@@ -2,7 +2,7 @@
 <html lang="<!--HtmlLang-->">
 <head>
 <!--
-  Template: default | Filename: layout.tpl.php | Fileversion: 1.17.5
+  Template: default | Filename: layout.tpl.php | Fileversion: 1.17.6
   HTML-Grundgerüst der ganzen Seite. Enthält AUSSCHLIESSLICH Markup und
   Platzhalter der Form <comment>Name</comment> (als HTML-Kommentar), kein PHP. Alle Werte
   werden von den Root-Controllern (home.php, liga.php) über
@@ -49,6 +49,12 @@ header.site{background:var(--surface);border-bottom:1px solid var(--border);
   padding:14px 28px;display:flex;align-items:center;gap:16px}
 header.site .logo{font-weight:700;font-size:1.15rem;color:var(--accent);text-decoration:none}
 header.site .logo span{color:var(--text);font-weight:400}
+.tipp-site-link{display:inline-flex;align-items:center;gap:6px;text-decoration:none;font-weight:600}
+.tipp-site-link-icon{height:20px;width:auto;display:inline-block;vertical-align:middle}
+.tipp-section-heading{display:flex;align-items:center;gap:12px;margin-bottom:16px}
+.tipp-section-heading-logo{height:44px;width:auto;display:block}
+.tipp-section-heading h1{margin:0;font-size:1.3rem}
+
 .lang-switch-wrap{margin-left:auto}
 .lang-switch select,.template-switch select{background:var(--bg);border:1px solid var(--border);border-radius:var(--radius);
   padding:6px 10px;font-size:.85rem;color:var(--text);font-family:var(--font);cursor:pointer}

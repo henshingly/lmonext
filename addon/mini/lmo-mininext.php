@@ -2,7 +2,7 @@
 /**
  * Project: LMOnext
  * Filename: addon/mini/lmo-mininext.php
- * Fileversion: 1.0.2
+ * Fileversion: 1.0.3
  *
  * PHP version 8.2
  *
@@ -42,6 +42,15 @@ declare(strict_types=1);
 $miniIsDirectCall = basename($_SERVER['SCRIPT_NAME'] ?? '') === 'lmo-mininext.php';
 
 require_once __DIR__ . '/../../frontend/bootstrap.php';
+
+// Dieses Addon ist bewusst zum Einbetten via iframe auf fremden Websites
+// gedacht (siehe Docblock oben) - die von frontend/bootstrap.php gesetzten
+// Frame-Schutz-Header (X-Frame-Options/CSP frame-ancestors) werden hier
+// deshalb wieder entfernt, sonst würde jede Einbettung blockiert.
+if (!headers_sent()) {
+    header_remove('X-Frame-Options');
+    header_remove('Content-Security-Policy');
+}
 
 /**
  * Berechnet das URL-Präfix zum Projekt-Root, egal ob diese Datei direkt

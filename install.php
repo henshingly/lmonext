@@ -2,7 +2,7 @@
 /**
  * Project: LMOnext
  * Filename: install.php
- * Fileversion: 2.3.0
+ * Fileversion: 2.5.0
  *
  * PHP version 8.2
  *
@@ -287,6 +287,37 @@ function setupDatabase(array $cfg): array {
                 `created_at` DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP,
                 UNIQUE KEY `token` (`token`),
                 KEY `user_id` (`user_id`)
+            ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci",
+
+            // Login-Rate-Limiting: pro fehlgeschlagenem Versuch eine Zeile,
+            // nach erfolgreichem Login für den Benutzernamen gelöscht (siehe
+            // admin/handler_user.php). Sowohl Benutzername als auch IP werden
+            // erfasst, damit sowohl "viele Versuche auf einen Benutzernamen"
+            // als auch "viele Versuche von einer IP über verschiedene
+            // Benutzernamen" erkannt werden.
+            "CREATE TABLE IF NOT EXISTS `{$p}login_attempts` (
+                `id`           INT AUTO_INCREMENT PRIMARY KEY,
+                `username`     VARCHAR(80)  NOT NULL,
+                `ip`           VARCHAR(45)  NOT NULL,
+                `attempted_at` DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP,
+                KEY `username` (`username`),
+                KEY `ip` (`ip`),
+                KEY `attempted_at` (`attempted_at`)
+            ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci",
+
+            // Audit-Log für sicherheitsrelevante Admin-Aktionen (Login, Liga
+            // löschen, Backup wiederherstellen, Benutzer-CRUD, Einstellungen,
+            // Import), siehe logAdminAction() in admin/bootstrap.php und die
+            // Anzeige unter Administrator → Log (admin/view_users.php).
+            "CREATE TABLE IF NOT EXISTS `{$p}admin_audit_log` (
+                `id`         INT AUTO_INCREMENT PRIMARY KEY,
+                `username`   VARCHAR(80)   NOT NULL,
+                `action`     VARCHAR(60)   NOT NULL,
+                `details`    VARCHAR(500)  NULL DEFAULT NULL,
+                `ip`         VARCHAR(45)   NOT NULL,
+                `created_at` DATETIME      NOT NULL DEFAULT CURRENT_TIMESTAMP,
+                KEY `created_at` (`created_at`),
+                KEY `username` (`username`)
             ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci",
 
             // Gleiches Schema wie die Lazy-Erstellung in admin/bootstrap.php

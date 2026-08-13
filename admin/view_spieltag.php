@@ -2,7 +2,7 @@
 /**
  * Project: LMOnext
  * Filename: view_spieltag.php
- * Fileversion: 1.4.0
+ * Fileversion: 1.4.1
  *
  * PHP version 8.2
  *
@@ -256,7 +256,7 @@ function dtInput(string $hiddenName, string $atVal, string $extraStyle = ''): st
             <button type="submit" class="btn btn-success"><?= h(t('sp_btn_save_round')) ?></button>
             <?php if ($next !== null) { ?><a href="?action=spieltag&liga_id=<?= $lid ?>&nr=<?= $next ?>" class="btn btn-muted"><?= h(t('sp_next_round', ['n' => $next])) ?></a><?php } ?>
           </div>
-        </form>
+        <?= csrfField() ?></form>
 
 <?php
 $tickerAktiv = $spieltagData['ticker']     ?? false;
@@ -299,7 +299,7 @@ $tickerText  = $spieltagData['tickertext'] ?? '';
             <div style="padding:6px 10px 0 202px">
               <button type="submit" class="btn btn-muted btn-sm"><?= h(t('sp_btn_save_ticker')) ?></button>
             </div>
-          </form>
+          <?= csrfField() ?></form>
         </div>
 
         <script>
@@ -685,7 +685,7 @@ document.querySelectorAll('.btn-satz-add').forEach(function (btn) {
           <button type="submit" class="btn btn-success"><?= h(t('sp_btn_save_all')) ?></button>
           <?php if ($next !== null) { ?><a href="?action=spieltag&liga_id=<?= $lid ?>&nr=<?= $next ?>" class="btn btn-muted"><?= h(t('sp_next_matchday', ['n' => $next])) ?></a><?php } ?>
         </div>
-        </form>
+        <?= csrfField() ?></form>
 <?php
         } ?>
       </div>

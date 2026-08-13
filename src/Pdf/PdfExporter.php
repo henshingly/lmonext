@@ -9,7 +9,7 @@ final class PdfExporter
 /**
  * Project: LMOnext
  * Filename: frontend/pdf_export.php
- * Fileversion: 1.9.0
+ * Fileversion: 1.9.1
  *
  * PHP version 8.2
  *
@@ -215,7 +215,7 @@ public static function pdfLoadLogoData() : ?array
     }
 
     return [
-        'widthPx'   => 320,
+        'widthPx'   => 353,
         'heightPx'  => 78,
         'rgbZlib'   => $rgb,
         'alphaZlib' => $alpha,

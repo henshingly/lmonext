@@ -2,7 +2,7 @@
 /**
  * Project: LMOnext
  * Filename: view_wizard.php
- * Fileversion: 1.4.0
+ * Fileversion: 1.4.1
  *
  * PHP version 8.2
  *
@@ -98,7 +98,7 @@ $stepLabels = [t('wiz_step_label_1'), t('wiz_step_label_2'), t('wiz_step_label_3
               <input type="hidden" name="round_count" id="inp_round_count" value="4">
             </div>
             <button type="submit" class="btn btn-primary"><?= h(t('common_next')) ?></button>
-          </form>
+          <?= csrfField() ?></form>
         </div>
         <script>
         const koRoundNames = {
@@ -183,7 +183,7 @@ $stepLabels = [t('wiz_step_label_1'), t('wiz_step_label_2'), t('wiz_step_label_3
               <a href="?action=create_liga&step=1" class="btn btn-muted"><?= h(t('wiz_back_other_template')) ?></a>
               <button type="submit" class="btn btn-primary"><?= h(t('wiz_next_edit_teams')) ?></button>
             </div>
-          </form>
+          <?= csrfField() ?></form>
         </div>
 
 <?php
@@ -212,7 +212,7 @@ $stepLabels = [t('wiz_step_label_1'), t('wiz_step_label_2'), t('wiz_step_label_3
               <a href="?action=create_liga&step=1" class="btn btn-muted"><?= h(t('common_back')) ?></a>
               <button type="submit" class="btn btn-primary"><?= h(t('common_next')) ?></button>
             </div>
-          </form>
+          <?= csrfField() ?></form>
         </div>
 
 <?php
@@ -240,7 +240,7 @@ $stepLabels = [t('wiz_step_label_1'), t('wiz_step_label_2'), t('wiz_step_label_3
               </label>
             </div>
             <button type="submit" class="btn btn-muted btn-sm"><?= h(t('wiz_schedule_mode_apply')) ?></button>
-          </form>
+          <?= csrfField() ?></form>
         </div>
         <div class="card">
           <h2><?= h(t('wiz_step3_liga_heading')) ?></h2>
@@ -277,7 +277,7 @@ $stepLabels = [t('wiz_step_label_1'), t('wiz_step_label_2'), t('wiz_step_label_3
         <form method="post" action="?action=create_liga&step=4" style="display:flex;gap:10px">
           <a href="?action=create_liga&step=2" class="btn btn-muted"><?= h(t('wiz_back_edit_teams')) ?></a>
           <button type="submit" class="btn btn-success"><?= h(t('common_save_liga')) ?></button>
-        </form>
+        <?= csrfField() ?></form>
 
 <?php
         } elseif ($wizStepInt === 3 && $wiz && $wiz['type'] === 1) {
@@ -359,7 +359,7 @@ $stepLabels = [t('wiz_step_label_1'), t('wiz_step_label_2'), t('wiz_step_label_3
               <a href="?action=create_liga&step=2" class="btn btn-muted"><?= h(t('wiz_back_edit_teams')) ?></a>
               <button type="submit" class="btn btn-success"><?= h(t('common_save_liga')) ?></button>
             </div>
-          </form>
+          <?= csrfField() ?></form>
         </div>
 
 <?php

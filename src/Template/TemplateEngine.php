@@ -9,7 +9,7 @@ final class TemplateEngine
 /**
  * Project: LMOnext
  * Filename: template_engine.php
- * Fileversion: 2.6.0
+ * Fileversion: 2.7.0
  *
  * PHP version 8.2
  *
@@ -229,6 +229,7 @@ public static function renderTemplate(string $activeTemplate, string $page, arra
         'HtmlLang'      => h(getCurrentLanguage('frontend')),
         'Sprachauswahl' => getAdminSetting('show_language_switcher', '1') === '1' ? renderLanguageSwitcher('frontend') : '',
         'Version'       => h(getAppVersion()),
+        'CopyrightNotice' => \renderCopyrightNotice(),
         'TemplateZeile' => $templateZeile,
         'TippspielLink' => tippRenderSiteLink(),
     ];

@@ -2,7 +2,7 @@
 /**
  * Project: LMOnext
  * Filename: addon/tipp/tipp_lib.php
- * Fileversion: 1.0.0
+ * Fileversion: 1.1.0
  *
  * PHP version 8.2
  *
@@ -223,6 +223,7 @@ function tippRenderSiteLink() : string
         return '';
     }
     return '<a class="tipp-site-link" href="' . htmlspecialchars(tippZielUrlOhneLogin(), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') . '">'
+         . '<img src="assets/img/tippspiel-icon.png" alt="" class="tipp-site-link-icon">'
          . htmlspecialchars(tf('tf_tipp_header_link'), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') . '</a>';
 }
 

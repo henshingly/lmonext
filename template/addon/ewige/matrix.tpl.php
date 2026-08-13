@@ -47,4 +47,5 @@
 </table>
 </div>
 <div class="lmo-eternal-foot"><!--Fusszeile--></div>
+<div class="lmo-eternal-foot"><!--Copyright--></div>
 </div>

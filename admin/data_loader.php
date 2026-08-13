@@ -2,7 +2,7 @@
 /**
  * Project: LMOnext
  * Filename: data_loader.php
- * Fileversion: 1.7.10
+ * Fileversion: 1.7.11
  *
  * PHP version 8.2
  *
@@ -36,6 +36,18 @@ if (isLoggedIn()) {
         if ($action === 'users') {
             ensurePasswordResetSchema(); // stellt sicher, dass admin_users.email existiert
             $users = $db->query('SELECT id,username,email,last_login FROM '.tbl('admin_users').' ORDER BY username')->fetchAll();
+            if (($_GET['tab'] ?? 'userverwaltung') === 'log') {
+                ensureAuditLogTable();
+                $logPage    = max(1, (int)($_GET['logpage'] ?? 1));
+                $logPerPage = 50;
+                $logTotal   = (int)$db->query('SELECT COUNT(*) FROM '.tbl('admin_audit_log'))->fetchColumn();
+                $sLog = $db->prepare('SELECT username,action,details,ip,created_at FROM '.tbl('admin_audit_log').'
+                                       ORDER BY created_at DESC, id DESC LIMIT ? OFFSET ?');
+                $sLog->bindValue(1, $logPerPage, PDO::PARAM_INT);
+                $sLog->bindValue(2, ($logPage - 1) * $logPerPage, PDO::PARAM_INT);
+                $sLog->execute();
+                $auditLog = $sLog->fetchAll();
+            }
         }
         if ($action === 'liga_detail' && isset($_GET['id'])) {
             $lid = (int)$_GET['id'];

@@ -2,7 +2,7 @@
 /**
  * Project: LMOnext
  * Filename: view_liga_list.php
- * Fileversion: 1.3.1
+ * Fileversion: 1.3.2
  *
  * PHP version 8.2
  *
@@ -99,7 +99,7 @@ if (!empty($ligen)) {
               <div id="bulk-ids"></div>
               <button type="submit" class="btn btn-muted btn-sm"
                       onclick="return validateBulk()"><?= h(t('dash_btn_archive')) ?></button>
-            </form>
+            <?= csrfField() ?></form>
             <button class="btn btn-muted btn-sm" onclick="clearSelection()"><?= h(t('dash_btn_clear_selection')) ?></button>
           </div>
         </div>
@@ -153,7 +153,7 @@ if (!empty($ligen)) {
                       onsubmit="return confirm('<?= h(addslashes(t('dash_confirm_delete', ['name' => $liga['name']]))) ?>')">
                   <input type="hidden" name="liga_id" value="<?= (int)$liga['id'] ?>">
                   <button type="submit" class="btn btn-danger btn-sm"><?= h(t('dash_btn_delete')) ?></button>
-                </form>
+                <?= csrfField() ?></form>
               </td>
             </tr>
 <?php } ?>

@@ -2,7 +2,7 @@
 <html lang="<!--HtmlLang-->">
 <head>
 <!--
-  Template: colored | Filename: layout.tpl.php | Fileversion: 1.6.5
+  Template: colored | Filename: layout.tpl.php | Fileversion: 1.6.6
   HTML-Grundgerüst der ganzen Seite. Enthält AUSSCHLIESSLICH Markup und
   Platzhalter der Form <comment>Name</comment> (als HTML-Kommentar), kein PHP. Alle Werte
   werden von den Root-Controllern (home.php, liga.php) über
@@ -355,6 +355,12 @@ table.ligastat-overall td{padding:7px 10px;border-top:1px solid var(--border)}
 .ligastat-remaining-eval{margin-top:14px}
 
 footer.site{text-align:center;color:var(--muted);font-size:.8rem;padding:24px 20px}
+.tipp-site-link{display:inline-flex;align-items:center;gap:6px;text-decoration:none;font-weight:600}
+.tipp-site-link-icon{height:20px;width:auto;display:inline-block;vertical-align:middle}
+.tipp-section-heading{display:flex;align-items:center;gap:12px;margin-bottom:16px}
+.tipp-section-heading-logo{height:44px;width:auto;display:block}
+.tipp-section-heading h1{margin:0;font-size:1.3rem}
+
 footer.site .template-switch,footer.site .lang-switch{display:inline-block}
 footer.site .template-switch select,footer.site .lang-switch select{background:transparent;border:none;color:var(--muted);
   font-size:.8rem;font-family:inherit;padding:0;cursor:pointer;text-decoration:underline;text-underline-offset:2px}

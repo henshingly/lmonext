@@ -2,7 +2,7 @@
 /**
  * Project: LMOnext
  * Filename: view_wartung.php
- * Fileversion: 1.2.0
+ * Fileversion: 1.2.1
  *
  * PHP version 8.2
  *
@@ -112,7 +112,7 @@ function wartungFormatSize(int $bytes) : string
           <div style="margin-top:18px;padding-top:14px;border-top:1px solid var(--border)">
             <button type="submit" class="btn btn-success btn-sm"><?= h(t('wartung_btn_submit_backup')) ?></button>
           </div>
-        </form>
+        <?= csrfField() ?></form>
 
         <div style="margin-top:26px;padding-top:18px;border-top:1px solid var(--border)">
           <h3 style="margin-bottom:10px"><?= h(t('wartung_heading_backup_settings')) ?></h3>
@@ -124,7 +124,7 @@ function wartungFormatSize(int $bytes) : string
                             color:var(--text);border-radius:var(--radius);padding:6px 10px;font-size:.87rem">
             </div>
             <button type="submit" class="btn btn-muted btn-sm"><?= h(t('wartung_btn_save_settings')) ?></button>
-          </form>
+          <?= csrfField() ?></form>
           <p style="color:var(--muted);font-size:.78rem;margin-top:8px;margin-bottom:0"><?= h(t('wartung_hint_max_count')) ?></p>
         </div>
 
@@ -172,7 +172,7 @@ function wartungFormatSize(int $bytes) : string
                     class="btn btn-danger btn-sm"
                     onclick="return confirm(<?= json_encode(t('wartung_confirm_delete')) ?>);"><?= h(t('wartung_btn_delete')) ?></button>
           </div>
-        </form>
+        <?= csrfField() ?></form>
         <script>
         document.querySelectorAll('#wartung-restore-form label input[type="radio"]').forEach(rb => {
           const lbl = rb.closest('label');

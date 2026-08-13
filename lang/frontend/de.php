@@ -2,7 +2,7 @@
 /**
  * Project: LMOnext
  * Filename: lang/frontend/de.php
- * Fileversion: 1.43.0
+ * Fileversion: 1.44.0
  *
  * PHP version 8.2
  *
@@ -383,7 +383,8 @@ return [
     'tf_tipp_regeln_haftung_text1' => 'Für etwaige Übertragungsfehler oder sonstige technische Schwierigkeiten wird keine Haftung übernommen.',
     'tf_tipp_regeln_haftung_text2' => 'Mit der Anmeldung zum Tippspiel akzeptierst du diese Bedingungen. Das Spiel dient dem reinen Unterhaltungszweck.',
     'tf_tipp_regeln_haftung_text3' => 'Der Rechtsweg ist ausgeschlossen.',
-    'tf_tipp_header_link'          => '🎯 Tippspiel',
+    'tf_tipp_header_link'          => 'Tippspiel',
+    'tf_tipp_section_titel'        => 'Tippspiel',
     'tf_tipp_home_card_titel'      => 'Tippspiel',
     'tf_tipp_home_card_text'       => 'Tippe die Ergebnisse deiner Lieblingsliga und miss dich mit anderen Tippern in der Rangliste!',
     'tf_tipp_home_card_button'     => 'Jetzt mitmachen',

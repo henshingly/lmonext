@@ -2,7 +2,7 @@
 /**
  * Project: LMOnext
  * Filename: view_settings.php
- * Fileversion: 1.3.4
+ * Fileversion: 1.5.0
  *
  * PHP version 8.2
  *
@@ -44,9 +44,50 @@ $showPdfButtons      = getAdminSetting('show_pdf_buttons', '1') === '1';
 $showLanguageSwitcher = getAdminSetting('show_language_switcher', '1') === '1';
 $showBackLink        = getAdminSetting('show_back_link', '1') === '1';
 
-// ── View: Einstellungen ───────────────────────────────────────────────────────
+// ── View: Einstellungen (zweistufige Tabs: Optionen > Optionen/Anzeigen,
+// Info) ───────────────────────────────────────────────────────────────────
+$mainTab = ($_GET['tab'] ?? 'optionen') === 'info' ? 'info' : 'optionen';
+$subTab  = ($_GET['subtab'] ?? 'optionen') === 'anzeige' ? 'anzeige' : 'optionen';
 ?>
-      <div class="card" style="max-width:480px">
+      <!-- Haupt-Tab-Navigation -->
+      <div style="display:flex;gap:0;margin-bottom:0;flex-wrap:wrap">
+<?php
+$mainTabs = ['optionen' => t('settings_tab_optionen'), 'info' => t('settings_tab_info')];
+foreach ($mainTabs as $key => $label) {
+    $active = $key === $mainTab; ?>
+        <a href="?action=settings&tab=<?= $key ?>"
+           style="padding:8px 16px;font-size:.83rem;text-decoration:none;
+                  border-radius:var(--radius) var(--radius) 0 0;
+                  background:<?= $active ? 'var(--surface)' : 'var(--surface2)' ?>;
+                  border:1px solid var(--border);
+                  border-bottom:<?= $active ? '1px solid var(--surface)' : '1px solid var(--border)' ?>;
+                  color:<?= $active ? 'var(--accent)' : 'var(--muted)' ?>;
+                  font-weight:<?= $active ? '600' : '400' ?>;margin-right:3px"><?= h($label) ?></a>
+<?php } ?>
+      </div>
+      <div style="border:1px solid var(--border);border-top:none;border-radius:0 var(--radius) var(--radius) var(--radius);
+                  background:var(--surface);padding:16px;margin-bottom:16px">
+<?php if ($mainTab === 'optionen') { ?>
+        <!-- Unter-Tab-Navigation -->
+        <div style="display:flex;gap:0;margin-bottom:0;flex-wrap:wrap">
+<?php
+        $subTabs = ['optionen' => t('settings_tab_optionen'), 'anzeige' => t('settings_tab_anzeige')];
+        foreach ($subTabs as $key => $label) {
+            $active = $key === $subTab; ?>
+          <a href="?action=settings&tab=optionen&subtab=<?= $key ?>"
+             style="padding:6px 14px;font-size:.8rem;text-decoration:none;
+                    border-radius:var(--radius) var(--radius) 0 0;
+                    background:<?= $active ? 'var(--bg)' : 'transparent' ?>;
+                    border:1px solid var(--border);
+                    border-bottom:<?= $active ? '1px solid var(--bg)' : '1px solid var(--border)' ?>;
+                    color:<?= $active ? 'var(--accent)' : 'var(--muted)' ?>;
+                    font-weight:<?= $active ? '600' : '400' ?>;margin-right:3px"><?= h($label) ?></a>
+<?php   } ?>
+        </div>
+        <div style="border:1px solid var(--border);border-top:none;border-radius:0 var(--radius) var(--radius) var(--radius);
+                    background:var(--bg);padding:16px">
+<?php if ($subTab === 'optionen') { ?>
+      <div class="card" style="max-width:480px;margin:0">
         <h2><?= h(t('settings_heading_system')) ?></h2>
         <form method="post" action="?action=save_admin_settings">
           <div class="form-group">
@@ -79,9 +120,10 @@ $showBackLink        = getAdminSetting('show_back_link', '1') === '1';
             </div>
           </div>
           <button type="submit" class="btn btn-primary"><?= h(t('common_save')) ?></button>
-        </form>
+        <?= csrfField() ?></form>
       </div>
-      <div class="card" style="max-width:480px">
+<?php } else { ?>
+      <div class="card" style="max-width:480px;margin:0">
         <h2><?= h(t('settings_heading_frontend')) ?></h2>
         <form method="post" action="?action=save_admin_settings">
           <div class="form-group">
@@ -143,22 +185,46 @@ $showBackLink        = getAdminSetting('show_back_link', '1') === '1';
             </div>
           </div>
           <button type="submit" class="btn btn-primary"><?= h(t('common_save')) ?></button>
-        </form>
+        <?= csrfField() ?></form>
       </div>
-      <div class="card" style="max-width:480px">
-        <h2><?= h(t('settings_heading_password')) ?></h2>
-        <form method="post" action="?action=change_password">
-          <div class="form-group"><label><?= h(t('settings_label_current_password')) ?></label><input type="password" name="current_password" autocomplete="current-password"></div>
-          <div class="form-group"><label><?= h(t('usr_label_new_password')) ?></label><input type="password" name="new_password" autocomplete="new-password"></div>
-          <div class="form-group"><label><?= h(t('settings_label_new_password2')) ?></label><input type="password" name="new_password2" autocomplete="new-password"></div>
-          <button type="submit" class="btn btn-primary"><?= h(t('settings_heading_password')) ?></button>
-        </form>
-      </div>
-      <div class="card" style="max-width:480px">
+<?php } ?>
+        </div>
+<?php } else { ?>
+      <div class="card" style="max-width:560px;margin:0">
         <h2><?= h(t('settings_heading_db')) ?></h2>
         <?php
           try { $v = getDB()->query('SELECT VERSION()')->fetchColumn(); echo '<p style="font-size:.88rem;color:var(--green)">✓ '.h(t('settings_db_connected', ['version' => $v])).'</p>'; }
           catch (Throwable $e) { echo '<p style="font-size:.88rem;color:var(--red)">✗ '.h($e->getMessage()).'</p>'; }
         ?>
         <p style="font-size:.8rem;color:var(--muted);margin-top:8px"><?= t('settings_hint_db_config') ?></p>
+      </div>
+      <div class="card" style="max-width:560px;margin:16px 0 0">
+        <h2><?= h(t('settings_heading_php')) ?></h2>
+        <p style="font-size:.88rem;margin:0 0 12px"><?= t('settings_php_version_line', ['version' => '<strong>'.h(PHP_VERSION).'</strong>']) ?></p>
+        <table style="width:100%;border-collapse:collapse;font-size:.85rem">
+          <thead>
+            <tr style="text-align:left;border-bottom:1px solid var(--border)">
+              <th style="padding:4px 8px 4px 0"><?= h(t('settings_col_extension')) ?></th>
+              <th style="padding:4px 8px"><?= h(t('settings_col_status')) ?></th>
+              <th style="padding:4px 0"><?= h(t('settings_col_info')) ?></th>
+            </tr>
+          </thead>
+          <tbody>
+<?php foreach (checkRuntimeExtensions() as $chk) { ?>
+            <tr style="border-bottom:1px solid var(--border)">
+              <td style="padding:6px 8px 6px 0"><?= h($chk['label']) ?><?= $chk['required'] ? ' <span style="color:var(--muted);font-size:.75rem">('.h(t('settings_required')).')</span>' : '' ?></td>
+              <td style="padding:6px 8px">
+                <?php if ($chk['ok']) { ?>
+                <span style="color:var(--green)">✓ <?= h(t('settings_loaded')) ?></span>
+                <?php } else { ?>
+                <span style="color:<?= $chk['required'] ? 'var(--red)' : 'var(--muted)' ?>">✗ <?= h(t('settings_not_loaded')) ?></span>
+                <?php } ?>
+              </td>
+              <td style="padding:6px 0;color:var(--muted)"><?= h($chk['info']) ?></td>
+            </tr>
+<?php } ?>
+          </tbody>
+        </table>
+      </div>
+<?php } ?>
       </div>

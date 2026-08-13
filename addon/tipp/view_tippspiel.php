@@ -2,7 +2,7 @@
 /**
  * Project: LMOnext
  * Filename: addon/tipp/view_tippspiel.php
- * Fileversion: 1.4.0
+ * Fileversion: 1.4.1
  *
  * PHP version 8.2
  *
@@ -136,7 +136,7 @@ if ($tippTab === 'auswertung') { ?>
         </td>
       </tr>
     </table>
-  </form>
+  <?= csrfField() ?></form>
   <script>
     var tippMailVorlagen = {
       alle: { betreff: <?= json_encode(t('tipp_vorlage_newsletter_betreff')) ?>, text: <?= json_encode(t('tipp_vorlage_newsletter_text')) ?> },
@@ -228,7 +228,7 @@ if ($tippTab === 'auswertung') { ?>
       <option value="<?= $n ?>"<?= $n === $ntSpieltagNr ? ' selected' : '' ?>><?= h(t('tipp_spieltag_n', ['n' => $n])) ?></option>
 <?php } ?>
     </select>
-  </form>
+  <?= csrfField() ?></form>
 <?php if (empty($ntPartien)) { ?>
   <p class="empty-msg"><?= h(t('tipp_kein_spieltag')) ?></p>
 <?php } else { ?>
@@ -266,7 +266,7 @@ if ($tippTab === 'auswertung') { ?>
       <button type="submit" class="btn btn-primary"><?= h(t('common_save')) ?></button>
       <a href="?action=tippspiel&tab=userverwaltung" class="btn" style="margin-left:8px"><?= h(t('common_cancel')) ?></a>
     </div>
-  </form>
+  <?= csrfField() ?></form>
 <?php } ?>
 <?php } ?>
 <?php
@@ -385,7 +385,7 @@ if ($tippTab === 'auswertung') { ?>
         </td>
       </tr>
     </table>
-  </form>
+  <?= csrfField() ?></form>
 <?php
         }
     } else {
@@ -525,7 +525,7 @@ if ($tippTab === 'auswertung') { ?>
 
       <tr><td></td><td style="padding:14px 10px 0"><button type="submit" class="btn btn-primary"><?= h(t('common_save')) ?></button></td></tr>
     </table>
-  </form>
+  <?= csrfField() ?></form>
   <script>
     function tippUpdateModusFields() {
       var modus = document.getElementById('tipp-modus-select').value;
@@ -603,7 +603,7 @@ if ($tippTab === 'auswertung') { ?>
       </tr>
       <tr><td></td><td style="padding:14px 10px 0"><button type="submit" class="btn btn-primary"><?= h(t('common_save')) ?></button></td></tr>
     </table>
-  </form>
+  <?= csrfField() ?></form>
 <?php } elseif ($tippSubtab === 'tippabgabe') { ?>
   <form method="post" action="?action=save_tipp_abgabe" id="tipp-abgabe-form" onsubmit="return tippValidateAbgabeForm()">
     <table style="width:100%;border-collapse:collapse">
@@ -635,7 +635,7 @@ if ($tippTab === 'auswertung') { ?>
       </tr>
       <tr><td></td><td style="padding:14px 10px 0"><button type="submit" class="btn btn-primary"><?= h(t('common_save')) ?></button></td></tr>
     </table>
-  </form>
+  <?= csrfField() ?></form>
   <script>
     function tippValidateAbgabeForm() {
       var lw = document.getElementById('tipp-cb-ligenweise').checked;
@@ -680,7 +680,7 @@ if ($tippTab === 'auswertung') { ?>
       </tr>
       <tr><td></td><td style="padding:14px 10px 0"><button type="submit" class="btn btn-primary"><?= h(t('common_save')) ?></button></td></tr>
     </table>
-  </form>
+  <?= csrfField() ?></form>
 <?php } elseif ($tippSubtab === 'punktgleichheit') { ?>
 <?php
   $tippKriterien = [
@@ -712,7 +712,7 @@ if ($tippTab === 'auswertung') { ?>
 <?php } ?>
       <tr><td></td><td style="padding:14px 10px 0"><button type="submit" class="btn btn-primary"><?= h(t('common_save')) ?></button></td></tr>
     </table>
-  </form>
+  <?= csrfField() ?></form>
 
 <?php } elseif ($tippSubtab === 'tippbare_ligen') {
     $tippImmerAlle = $tsc('tippbare_immer_alle', '1');
@@ -741,7 +741,7 @@ if ($tippTab === 'auswertung') { ?>
     </div>
 <?php } ?>
     <div style="padding-top:14px"><button type="submit" class="btn btn-primary"><?= h(t('common_save')) ?></button></div>
-  </form>
+  <?= csrfField() ?></form>
   <script>
     function tippToggleLigenAuswahl() {
       var immerAlle = document.getElementById('tipp-cb-immer-alle').checked;
@@ -783,6 +783,6 @@ if ($tippTab === 'auswertung') { ?>
       </tr>
     </table>
     <div style="padding-top:14px"><button type="submit" class="btn btn-primary"><?= h(t('common_save')) ?></button></div>
-  </form>
+  <?= csrfField() ?></form>
 <?php } ?>
 </div>

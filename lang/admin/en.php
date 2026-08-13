@@ -2,7 +2,7 @@
 /**
  * Project: LMOnext
  * Filename: lang/admin/en.php
- * Fileversion: 1.22.0
+ * Fileversion: 1.28.0
  *
  * PHP version 8.2
  *
@@ -218,7 +218,7 @@ return [
     'reset_pw_invalid'           => 'This link is invalid or has expired. Please request a new one via "Forgot password".',
     'reset_pw_back_to_login'     => '← Back to login',
     'flash_reset_email_not_found'=> 'No administrator account is registered with this email address.',
-    'flash_reset_email_sent'     => 'An email with a reset link has been sent.',
+    'flash_reset_email_sent'     => 'If this email address is associated with an administrator account, an email with a reset link has been sent.',
     'flash_reset_token_invalid'  => 'This link is invalid or has expired. Please request a new one.',
     'flash_reset_password_success' => 'Password changed successfully. You can now log in.',
     'mail_reset_subject'         => '{site}: Reset your password',
@@ -226,6 +226,8 @@ return [
 
     // ── Flash messages (user management / login) ────────────────────────────
     'flash_invalid_credentials'      => 'Invalid credentials.',
+    'flash_login_locked'             => 'Too many failed login attempts. Please try again in {min} minute(s).',
+    'flash_session_expired'          => 'Your session has expired due to inactivity. Please log in again.',
     'flash_db_error'                 => 'Database error: {msg}',
     'flash_password_mismatch'        => 'Passwords do not match.',
     'flash_password_min_length'      => 'At least 8 characters.',
@@ -806,6 +808,29 @@ return [
 
     // ── User management (view_users.php) ─────────────────────────────────────
     'usr_heading_create'        => 'Create new user',
+    'usr_tab_userverwaltung'    => 'User management',
+    'usr_tab_log'               => 'Log',
+    'usr_heading_log'           => 'Activity log',
+    'usr_log_empty'             => 'No logged actions yet.',
+    'usr_log_col_time'          => 'Time',
+    'usr_log_col_user'          => 'User',
+    'usr_log_col_action'        => 'Action',
+    'usr_log_col_details'       => 'Details',
+    'usr_log_col_ip'            => 'IP address',
+    'usr_log_action_login'           => 'Login',
+    'usr_log_action_logout'          => 'Logout',
+    'usr_log_action_liga_deleted'    => 'League deleted',
+    'usr_log_action_backup_created'  => 'Backup created',
+    'usr_log_action_backup_restored' => 'Backup restored',
+    'usr_log_action_backup_deleted'  => 'Backup deleted',
+    'usr_log_action_user_created'    => 'User created',
+    'usr_log_action_user_updated'    => 'User updated',
+    'usr_log_action_user_deleted'    => 'User deleted',
+    'usr_log_action_settings_saved'  => 'Settings changed',
+    'usr_log_action_l98_import'      => '.l98 import',
+    'usr_heading_php_log'       => 'Errors/Warnings',
+    'usr_php_log_empty'         => 'No logged PHP errors/warnings.',
+    'usr_php_log_hint'          => 'Last {n} entries (newest first). File: store/php_issues.log.',
     'usr_label_password_min8'   => 'Password (min. 8 characters)',
     'usr_btn_create'            => 'Create user',
     'usr_heading_existing'      => 'Existing users',
@@ -829,6 +854,17 @@ return [
     'settings_label_current_password' => 'Current password',
     'settings_label_new_password2' => 'Repeat new password',
     'settings_heading_db'          => 'Database connection',
+    'settings_tab_optionen'        => 'Options',
+    'settings_tab_info'            => 'Info',
+    'settings_tab_anzeige'         => 'Display/Appearance',
+    'settings_heading_php'         => 'PHP extensions',
+    'settings_php_version_line'    => 'PHP version: {version}',
+    'settings_col_extension'       => 'Extension',
+    'settings_col_status'          => 'Status',
+    'settings_col_info'            => 'Info',
+    'settings_required'            => 'required',
+    'settings_loaded'              => 'loaded',
+    'settings_not_loaded'          => 'not loaded',
     'settings_db_connected'        => 'Connected · {version}',
     'settings_hint_db_config'      => 'Adjust connection parameters in <code>config.php</code>.',
     'settings_heading_frontend'         => 'Visitor area',

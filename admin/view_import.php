@@ -2,7 +2,7 @@
 /**
  * Project: LMOnext
  * Filename: view_import.php
- * Fileversion: 1.2.1
+ * Fileversion: 1.2.2
  *
  * PHP version 8.2
  *
@@ -51,7 +51,7 @@ $maxUploads = (int)ini_get('max_file_uploads') ?: 20;
             <div id="file-count" style="font-size:.78rem;color:var(--muted);margin-top:6px"></div>
           </div>
           <button type="submit" class="btn btn-primary"><?= h(t('imp_btn_import')) ?></button>
-        </form>
+        <?= csrfField() ?></form>
         <script>
         const i18nImpFileOne   = <?= json_encode(t('imp_js_file_one')) ?>;
         const i18nImpFileMany  = <?= json_encode(t('imp_js_file_many')) ?>;
@@ -79,7 +79,7 @@ $maxUploads = (int)ini_get('max_file_uploads') ?: 20;
                    style="display:block;margin-top:6px">
           </div>
           <button type="submit" class="btn btn-primary"><?= h(t('imp_btn_import_zip')) ?></button>
-        </form>
+        <?= csrfField() ?></form>
       </div>
 
       <script>

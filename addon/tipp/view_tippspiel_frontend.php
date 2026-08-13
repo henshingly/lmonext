@@ -2,7 +2,7 @@
 /**
  * Project: LMOnext
  * Filename: addon/tipp/view_tippspiel_frontend.php
- * Fileversion: 1.19.1
+ * Fileversion: 1.20.2
  *
  * PHP version 8.2
  *
@@ -287,7 +287,7 @@ function renderTippLoginView(array $state) : string
     <label><?= h(tf('tf_tipp_passwort')) ?></label>
     <input type="password" name="password" required>
     <button type="submit" class="btn-primary"><?= h(tf('tf_tipp_einloggen')) ?></button>
-  </form>
+  <?= csrfField() ?></form>
   <p style="margin-top:16px;font-size:.85rem"><?= h(tf('tf_tipp_noch_kein_konto')) ?> <a href="<?= h(tippUrl('register')) ?>"><?= h(tf('tf_tipp_registrieren')) ?></a></p>
   <p style="margin-top:6px;font-size:.85rem"><a href="<?= h(tippUrl('passwort_vergessen')) ?>"><?= h(tf('tf_tipp_passwort_vergessen_link')) ?></a></p>
 <?php if (getTippSetting('anzeige_einsicht_oeffentlich', '0') === '1') { ?>
@@ -378,7 +378,7 @@ function renderTippRegisterView() : string
     <input type="text" name="ort" maxlength="80">
 <?php } ?>
     <button type="submit" class="btn-primary"><?= h(tf('tf_tipp_registrieren')) ?></button>
-  </form>
+  <?= csrfField() ?></form>
   </div>
     <?php }
     return (string)ob_get_clean();
@@ -416,7 +416,7 @@ function renderTippPasswortVergessenView(array $state) : string
     <label><?= h(tf('tf_tipp_email')) ?></label>
     <input type="email" name="email">
     <button type="submit" class="btn-primary"><?= h(tf('tf_tipp_reset_anfordern')) ?></button>
-  </form>
+  <?= csrfField() ?></form>
   <p style="margin-top:16px;font-size:.85rem"><a href="<?= h(tippUrl('login')) ?>"><?= h(tf('tf_tipp_zum_login')) ?></a></p>
   </div>
     <?php
@@ -441,7 +441,7 @@ function renderTippPasswortResetView(array $state) : string
     <label><?= h(tf('tf_tipp_passwort_wdh')) ?></label>
     <input type="password" name="password_wdh" required minlength="6">
     <button type="submit" class="btn-primary"><?= h(tf('tf_tipp_passwort_setzen')) ?></button>
-  </form>
+  <?= csrfField() ?></form>
   </div>
     <?php
     return (string)ob_get_clean();
@@ -520,7 +520,7 @@ function renderTippKontoView(array $state) : string
 <?php } ?>
 
     <button type="submit" class="btn-primary"><?= h(tf('tf_tipp_speichern')) ?></button>
-  </form>
+  <?= csrfField() ?></form>
   </div>
     <?php
     return (string)ob_get_clean();
@@ -651,7 +651,7 @@ function renderTippAbgabeView(array $state) : string
       </tbody>
     </table>
     <button type="submit" class="btn-primary"><?= h(tf('tf_tipp_speichern')) ?></button>
-  </form>
+  <?= csrfField() ?></form>
 <?php }
     ?>
   </div>

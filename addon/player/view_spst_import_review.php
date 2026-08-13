@@ -2,7 +2,7 @@
 /**
  * Project: LMOnext
  * Filename: addon/player/view_spst_import_review.php
- * Fileversion: 1.0.1
+ * Fileversion: 1.0.2
  *
  * PHP version 8.2
  *
@@ -51,5 +51,5 @@ if (empty($ambiguous) || empty($_SESSION['spst_import_pending'])) {
             <button type="submit" class="btn btn-success btn-sm"><?= h(t('imp_review_btn_confirm')) ?></button>
             <a href="?action=spst_import_cancel" class="btn btn-muted btn-sm" style="text-decoration:none"><?= h(t('imp_review_btn_cancel')) ?></a>
           </div>
-        </form>
+        <?= csrfField() ?></form>
       </div>

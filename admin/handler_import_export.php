@@ -2,7 +2,7 @@
 /**
  * Project: LMOnext
  * Filename: handler_import_export.php
- * Fileversion: 1.11.0
+ * Fileversion: 1.12.0
  *
  * PHP version 8.2
  *
@@ -801,6 +801,9 @@ function runL98Import(array $parsedList, array $overridesByFile = [], array $spo
         $overrides = $overridesByFile[$idx] ?? [];
         $sportType = $sportTypeByFile[$idx] ?? null;
         $r = importL98IntoDB($entry['data'], $overrides, $sportType);
+        if ($r['ok']) {
+            logAdminAction('l98_import', basename($entry['fileName']) . ' → ' . ($entry['data']['name'] ?? ''));
+        }
         $msgs[] = ['text' => h(basename($entry['fileName'])).': '.$r['msg'], 'type' => $r['ok'] ? 'success' : 'error'];
         $r['ok'] ? $ok++ : $fail++;
     }

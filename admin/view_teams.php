@@ -2,7 +2,7 @@
 /**
  * Project: LMOnext
  * Filename: view_teams.php
- * Fileversion: 1.7.0
+ * Fileversion: 1.7.1
  *
  * PHP version 8.2
  *
@@ -124,7 +124,7 @@ foreach ($teams as $t) {
                       onsubmit="return confirm('<?= h(addslashes(t('teams_confirm_delete_team', ['name' => $t['name']]))) ?>')">
                   <input type="hidden" name="team_id" value="<?= (int)$t['id'] ?>">
                   <button type="submit" class="btn btn-danger btn-sm">🗑</button>
-                </form>
+                <?= csrfField() ?></form>
                 <?php } ?>
               </td>
             </tr>
@@ -177,7 +177,7 @@ foreach ($teams as $t) {
                   <button type="submit" class="btn btn-success btn-sm"><?= h(t('common_save')) ?></button>
                   <button type="button" class="btn btn-muted btn-sm"
                           onclick="document.getElementById('edit-<?= $t['id'] ?>').style.display='none'">✕</button>
-                </form>
+                <?= csrfField() ?></form>
               </td>
             </tr>
 <?php } ?>
@@ -230,7 +230,7 @@ foreach ($teams as $t) {
                 <?= h(t('teams_merge_submit')) ?>
               </button>
             </div>
-          </form>
+          <?= csrfField() ?></form>
         </div>
       </div>
 
@@ -303,7 +303,7 @@ foreach ($teams as $t) {
                 <?= h(t('teams_links_add')) ?>
               </button>
             </div>
-          </form>
+          <?= csrfField() ?></form>
         </div>
       </div>
 
@@ -540,7 +540,7 @@ function renderExistingLinks(links) {
           <input type="hidden" name="link_id" value="${l.id}">
           <input type="hidden" name="team_id" value="${linkCurrentTeamId}">
           <button type="submit" class="btn btn-danger btn-sm" style="font-size:.7rem;padding:3px 7px">✕</button>
-        </form>
+        <?= csrfField() ?></form>
       </div>
       <div style="margin-top:4px">
         <select onchange="updateLinkDirection(${l.id}, this.value)"

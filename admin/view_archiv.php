@@ -2,7 +2,7 @@
 /**
  * Project: LMOnext
  * Filename: view_archiv.php
- * Fileversion: 1.6.0
+ * Fileversion: 1.6.1
  *
  * PHP version 8.2
  *
@@ -72,7 +72,7 @@ function archivRenderFolder(array $f, array $ligenByFolder, array $folderMap, in
                 onsubmit="return confirm('<?= h(t('arch_confirm_delete_folder')) ?>')">
             <input type="hidden" name="folder_id" value="<?= $fid ?>">
             <button type="submit" class="btn btn-danger btn-sm">🗑</button>
-          </form>
+          <?= csrfField() ?></form>
         </div>
       </summary>
       <!-- Inhalt (Ligen + Unterordner) -->
@@ -100,7 +100,7 @@ function archivRenderFolder(array $f, array $ligenByFolder, array $folderMap, in
             <input type="hidden" name="redirect" value="?action=archiv">
             <input type="hidden" name="folder_id" value="">
             <button type="submit" class="btn btn-muted btn-sm" style="padding:2px 8px;font-size:.75rem"><?= h(t('arch_btn_reactivate')) ?></button>
-          </form>
+          <?= csrfField() ?></form>
           <?php if (count($folderMap) > 1) { ?>
           <form method="post" action="?action=move_liga_archiv" style="display:inline">
             <input type="hidden" name="liga_id" value="<?= (int)$l['id'] ?>">
@@ -114,14 +114,14 @@ function archivRenderFolder(array $f, array $ligenByFolder, array $folderMap, in
               <option value="<?= $foldId ?>"><?= h($fold['name']) ?></option>
               <?php } ?>
             </select>
-          </form>
+          <?= csrfField() ?></form>
           <?php } ?>
           <form method="post" action="?action=delete_liga" style="display:inline"
                 onsubmit="return confirm('<?= h(addslashes(t('dash_confirm_delete', ['name' => $l['name']]))) ?>')">
             <input type="hidden" name="liga_id" value="<?= (int)$l['id'] ?>">
             <input type="hidden" name="redirect" value="?action=archiv">
             <button type="submit" class="btn btn-danger btn-sm" style="padding:2px 8px;font-size:.75rem"><?= h(t('dash_btn_delete')) ?></button>
-          </form>
+          <?= csrfField() ?></form>
         </div>
         <?php } ?>
         <?php foreach ($f['children'] as $child) {
@@ -179,13 +179,13 @@ $tree = archivBuildTree($folders);
         <input type="hidden" name="redirect" value="?action=archiv">
         <input type="hidden" name="folder_id" value="">
         <button type="submit" class="btn btn-muted btn-sm"><?= h(t('arch_btn_reactivate')) ?></button>
-      </form>
+      <?= csrfField() ?></form>
       <form method="post" action="?action=delete_liga" style="display:inline"
             onsubmit="return confirm('<?= h(addslashes(t('dash_confirm_delete', ['name' => $l['name']]))) ?>')">
         <input type="hidden" name="liga_id" value="<?= (int)$l['id'] ?>">
         <input type="hidden" name="redirect" value="?action=archiv">
         <button type="submit" class="btn btn-danger btn-sm"><?= h(t('dash_btn_delete')) ?></button>
-      </form>
+      <?= csrfField() ?></form>
     </div>
     <?php } ?>
   </div>
@@ -237,7 +237,7 @@ $tree = archivBuildTree($folders);
                 onclick="document.getElementById('folder-modal').style.display='none'"><?= h(t('common_cancel')) ?></button>
         <button type="submit" class="btn btn-success btn-sm"><?= h(t('common_save')) ?></button>
       </div>
-    </form>
+    <?= csrfField() ?></form>
   </div>
 </div>
 

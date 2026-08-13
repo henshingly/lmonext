@@ -2,7 +2,7 @@
 /**
  * Project: LMOnext
  * Filename: handler_user.php
- * Fileversion: 1.5.4
+ * Fileversion: 1.8.0
  *
  * PHP version 8.2
  *
@@ -16,10 +16,23 @@
 // ── Benutzer-Handler (Login, Logout, CRUD) ─────────────────────────────────
 if ($action === 'login' && $_SERVER['REQUEST_METHOD'] === 'POST') {
     $user = trim($_POST['username'] ?? ''); $pass = $_POST['password'] ?? '';
+
+    // Rate-Limiting: vor jeder Passwortprüfung erst schauen, ob dieser
+    // Benutzername oder diese IP aktuell gesperrt ist - so werden auch
+    // Brute-Force-Versuche mit wechselnden Benutzernamen von derselben IP
+    // erkannt, nicht nur wiederholte Versuche auf denselben Namen.
+    $lockedSeconds = loginRateLimitSecondsLeft($user);
+    if ($lockedSeconds > 0) {
+        $lockedMin = (int)ceil($lockedSeconds / 60);
+        flash(t('flash_login_locked', ['min' => $lockedMin]), 'error');
+        redirect('?action=login');
+    }
+
     try {
         $stmt = getDB()->prepare('SELECT id,password FROM '.tbl('admin_users').' WHERE username=?');
         $stmt->execute([$user]); $row = $stmt->fetch();
         if ($row && password_verify($pass, $row['password'])) {
+            clearLoginAttempts($user);
             session_regenerate_id(true);
             $_SESSION['admin_logged_in'] = true; $_SESSION['admin_user'] = $user;
             // Letzten Login-Zeitpunkt speichern (Spalte ggf. erst anlegen)
@@ -28,19 +41,39 @@ if ($action === 'login' && $_SERVER['REQUEST_METHOD'] === 'POST') {
                 getDB()->prepare('UPDATE '.tbl('admin_users').' SET last_login=NOW() WHERE id=?')
                        ->execute([$row['id']]);
             } catch (Throwable) {}
+            logAdminAction('login');
             redirect('?action=dashboard');
         }
+        recordFailedLoginAttempt($user);
         flash(t('flash_invalid_credentials'), 'error');
     } catch (Throwable $e) { flash(t('flash_db_error', ['msg' => $e->getMessage()]), 'error'); }
     redirect('?action=login');
 }
 
-if ($action === 'logout') { session_destroy(); redirect('?action=login'); }
+if ($action === 'logout') { logAdminAction('logout'); session_destroy(); redirect('?action=login'); }
 
 // ── Passwort vergessen: E-Mail mit Reset-Link anfordern ───────────────────────
 if ($action === 'request_password_reset' && $_SERVER['REQUEST_METHOD'] === 'POST') {
     ensurePasswordResetSchema();
     $email = trim($_POST['reset_email'] ?? '');
+
+    // Rate-Limiting (Sicherheitsfix): dieselbe Infrastruktur wie beim Login,
+    // mit einer IP-spezifischen Kennung statt des eingegebenen Benutzernamens
+    // - die IP wird bewusst in die Kennung selbst codiert (nicht nur über den
+    // ip-Parameter der Funktionen geprüft), da loginRateLimitSecondsLeft()
+    // sonst "username = ? OR ip = ?" prüft und ein fester, für alle Anfragen
+    // gleicher Platzhalter dazu führen würde, dass 5 Anfragen von IRGENDEINER
+    // IP die Funktion für ALLE Besucher site-weit sperren, statt korrekt nur
+    // pro IP zu begrenzen.
+    $resetRlKey = '__password_reset_request__:' . loginClientIp();
+    $lockedSeconds = loginRateLimitSecondsLeft($resetRlKey);
+    if ($lockedSeconds > 0) {
+        $lockedMin = (int)ceil($lockedSeconds / 60);
+        flash(t('flash_login_locked', ['min' => $lockedMin]), 'error');
+        redirect('?action=login');
+    }
+    recordFailedLoginAttempt($resetRlKey);
+
     try {
         $db = getDB();
         $userId = null;
@@ -50,9 +83,12 @@ if ($action === 'request_password_reset' && $_SERVER['REQUEST_METHOD'] === 'POST
             $found = $s->fetchColumn();
             $userId = $found !== false ? (int)$found : null;
         }
-        if ($userId === null) {
-            flash(t('flash_reset_email_not_found'), 'error');
-        } else {
+        // Sicherheitsfix: IMMER dieselbe Meldung, unabhängig davon, ob die
+        // E-Mail-Adresse zu einem Account gehört - sonst ließe sich über die
+        // unterschiedliche Rückmeldung ermitteln, welche Adressen existieren
+        // (User-Enumeration). Der eigentliche Versand passiert nur, wenn ein
+        // Account gefunden wurde; die Meldung bleibt in beiden Fällen gleich.
+        if ($userId !== null) {
             $token   = bin2hex(random_bytes(32));
             $expires = date('Y-m-d H:i:s', time() + 4 * 3600); // 4 Stunden gültig
             // Vorherige offene Reset-Anfragen desselben Users verwerfen, damit
@@ -62,8 +98,8 @@ if ($action === 'request_password_reset' && $_SERVER['REQUEST_METHOD'] === 'POST
                ->execute([$userId, $token, $expires]);
             $link = getSiteBaseUrl() . '/admin.php?action=reset_password&token=' . $token;
             sendPasswordResetEmail($email, $link);
-            flash(t('flash_reset_email_sent'));
         }
+        flash(t('flash_reset_email_sent'));
     } catch (Throwable $e) { flash(t('flash_error_prefix', ['msg' => $e->getMessage()]), 'error'); }
     redirect('?action=login');
 }
@@ -101,26 +137,6 @@ if ($action === 'do_reset_password' && $_SERVER['REQUEST_METHOD'] === 'POST') {
     redirect('?action=login');
 }
 
-if ($action === 'change_password' && $_SERVER['REQUEST_METHOD'] === 'POST') {
-    requireLogin();
-    $cur = $_POST['current_password'] ?? ''; $new1 = $_POST['new_password'] ?? ''; $new2 = $_POST['new_password2'] ?? '';
-    if ($new1 !== $new2) { flash(t('flash_password_mismatch'), 'error'); }
-    elseif (strlen($new1) < 8) { flash(t('flash_password_min_length'), 'error'); }
-    else {
-        try {
-            $db = getDB();
-            $s  = $db->prepare('SELECT password FROM '.tbl('admin_users').' WHERE username=?');
-            $s->execute([$_SESSION['admin_user']]); $h = $s->fetchColumn();
-            if ($h && password_verify($cur, $h)) {
-                $db->prepare('UPDATE '.tbl('admin_users').' SET `password`=? WHERE username=?')
-                   ->execute([password_hash($new1, PASSWORD_BCRYPT), $_SESSION['admin_user']]);
-                flash(t('flash_password_changed'));
-            } else { flash(t('flash_current_password_wrong'), 'error'); }
-        } catch (Throwable $e) { flash(t('flash_error_prefix', ['msg' => $e->getMessage()]), 'error'); }
-    }
-    redirect('?action=settings');
-}
-
 if ($action === 'create_user' && $_SERVER['REQUEST_METHOD'] === 'POST') {
     requireLogin();
     ensurePasswordResetSchema();
@@ -132,6 +148,7 @@ if ($action === 'create_user' && $_SERVER['REQUEST_METHOD'] === 'POST') {
         try {
             getDB()->prepare('INSERT INTO '.tbl('admin_users').' (username,`password`,email) VALUES (?,?,?)')
                    ->execute([$u, password_hash($p, PASSWORD_BCRYPT), $email !== '' ? $email : null]);
+            logAdminAction('user_created', $u);
             flash(t('flash_user_created', ['user' => $u]));
         } catch (Throwable $e) { flash(t('flash_error_prefix', ['msg' => $e->getMessage()]), 'error'); }
     }
@@ -171,6 +188,7 @@ if ($action === 'edit_user' && $_SERVER['REQUEST_METHOD'] === 'POST') {
         if ($oldName === ($_SESSION['admin_user'] ?? '')) {
             $_SESSION['admin_user'] = $newName;
         }
+        logAdminAction('user_updated', $newName . ($newPass !== '' ? ' (Passwort geändert)' : ''));
         flash(t('flash_user_updated', ['user' => $newName]));
     } catch (Throwable $e) { flash(t('flash_error_prefix', ['msg' => $e->getMessage()]), 'error'); }
     redirect('?action=users');
@@ -187,6 +205,7 @@ if ($action === 'delete_user' && $_SERVER['REQUEST_METHOD'] === 'POST') {
             if ($u === ($_SESSION['admin_user'] ?? '')) { flash(t('flash_own_account_undeletable'), 'error'); }
             else {
                 $db->prepare('DELETE FROM '.tbl('admin_users').' WHERE id=?')->execute([$id]);
+                logAdminAction('user_deleted', $u);
                 flash(t('flash_user_deleted', ['user' => $u]));
             }
         } catch (Throwable $e) { flash(t('flash_error_prefix', ['msg' => $e->getMessage()]), 'error'); }
@@ -244,6 +263,7 @@ if ($action === 'save_admin_settings' && $_SERVER['REQUEST_METHOD'] === 'POST') 
             $s->execute(['show_back_link', $_POST['show_back_link'] === '1' ? '1' : '0']);
         }
 
+        logAdminAction('settings_saved');
         flash(t('flash_settings_saved'));
     } catch (Throwable $e) { flash(t('flash_error_prefix', ['msg' => $e->getMessage()]), 'error'); }
     redirect('?action=settings');

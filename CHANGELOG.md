@@ -13,12 +13,14 @@
 
 ## addon/mini/lmo-mininext.php
 
+- Changelog: 1.0.3 - Wie viewer 3.0.1: Frame-Schutz-Header wieder entfernt für die beabsichtigte iframe-Einbettung.
 - Changelog: 1.0.2 - Bugfix: Team-Logos zeigten ins Leere, da renderTeamLogoImg() Pfade relativ zum Projekt-Root zurückgibt – korrekt für liga.php/home.php (die selbst im Projekt-Root liegen), aber falsch für dieses Addon (liegt unter addon/mini/, zwei Ebenen tiefer, siehe direkter URL-Aufruf in der Fehlermeldung des Nutzers). Neue Funktion miniProjectRootUrlPrefix() berechnet das korrekte URL-Präfix dynamisch über Document-Root-Abgleich (funktioniert bei Direktaufruf UND bei include() aus einer beliebig platzierten Wrapper-Datei), an allen 8 Logo-Stellen verwendet
 - Changelog: 1.0.1 - Bugfix: <!--ligaDatum--> zeigte immer das heutige Tagesdatum statt des tatsächlichen letzten Speicherdatums der Liga. Liest jetzt liga.datum aus der DB, siehe lmo-minitab.php 1.1.0 für Details
 - Changelog: 1.0.0 - Initiale Version: Portierung des alten LMO-Addons "Mininext" (siehe doc/help/addons/mininext.html + template/mini/mininext.tpl.php im alten LMO). Zeigt die nächste (oder, falls die Saison vorbei ist, letzte) Begegnung einer Mannschaft, das direkt vorangegangene Spiel, sowie eine Bilanz aller bisherigen Begegnungen der beiden Teams zum Einbinden auf externen Webseiten – entweder per include() oder direkt als URL/IFrame. Der alte "Archivordner"-Mechanismus (Durchsuchen alter .l98-Dateien nach früheren Begegnungen) entfällt komplett: LMOnext speichert alles in einer Datenbank, daher übernimmt getHeadToHeadMatches() aus data_liga.php (schon für den Teamvergleich in der normalen Besucheransicht verwendet) diese Aufgabe automatisch über ALLE Ligen hinweg, ganz ohne Ordnerkonfiguration.
 
 ## addon/mini/lmo-minitab.php
 
+- Changelog: 1.2.3 - Wie viewer 3.0.1: Frame-Schutz-Header wieder entfernt für die beabsichtigte iframe-Einbettung.
 - Changelog: 1.2.2 - $ligaId an computeStandings() übergeben, damit admin-seitig hinterlegte Strafpunkte/Straftore auch in diesem Mini-Widget korrekt berücksichtigt werden (siehe src/Liga/StandingsTrait.php 1.1.0)
 - Changelog: 1.2.1 - Bugfix: Team-Logo-Bild und der "Zur Tabelle"-Link in der Kopfzeile zeigten ins Leere, da renderTeamLogoImg()/die "liga.php?id=..."-Verlinkung Pfade relativ zum Projekt-Root zurückgeben – korrekt für liga.php/home.php (die selbst im Projekt-Root liegen), aber falsch für dieses Addon (liegt unter addon/mini/, zwei Ebenen tiefer). Neue Funktion miniProjectRootUrlPrefix() berechnet das korrekte URL-Präfix dynamisch über Document-Root-Abgleich (funktioniert bei Direktaufruf UND bei include() aus einer beliebig platzierten Wrapper-Datei, nicht nur bei einer festen Verzeichnistiefe), Fallback auf einfache Heuristik falls nicht ermittelbar
 - Changelog: 1.2.0 - Neuer Platzhalter "Logo" (Team-Logo, siehe Admin → Teams (global)), zwischen Tabellenplatz und Teamname positioniert (siehe standard.tpl.php 1.2.0). Immer angezeigt (unabhängig von der liga-eigenen "Logo anzeigen"-Einstellung, da dieses Widget als eigenständiges, extern eingebundenes Element davon unabhängig sein soll)
@@ -49,6 +51,7 @@
 
 ## addon/player/view_spielerstatistik.php
 
+- Changelog: 1.3.1 - Sicherheitsfix: csrfField() in jedes POST-Formular eingefügt (CSRF-Schutz, siehe admin/bootstrap.php).
 - Changelog: 1.3.0 - Spalten mit dem Namen "Team"/"Mannschaft"/"Verein" (unabhängig von Groß-/Kleinschreibung) bekommen beim Werte-Eintragen jetzt ein Dropdown mit den aktuellen Teams der Liga statt eines Freitextfeldes (siehe data_loader.php 1.7.1 für die Team-Liste). Erleichtert die Zuordnung und vermeidet Tippfehler; der gespeicherte Wert bleibt einfacher Text, kein Fremdschlüssel. Ein bestehender Wert, der zu keinem aktuellen Team passt (z.B. nach Umbenennung), wird als zusätzliche, vorausgewählte Option angezeigt statt beim Speichern unbemerkt verloren zu gehen
 - Changelog: 1.2.0 - Import-Karte für alte .stat/.cfg-Dateien wird jetzt komplett ausgeblendet, sobald mindestens eine Spalte manuell angelegt wurde (statt nur eine Warnung anzuzeigen, wenn schon Spieler existieren) – der Import ist nur für eine noch komplett unkonfigurierte Spielerstatistik gedacht, siehe auch die serverseitige Absicherung in handler_spielerstat.php 1.2.0
 - Changelog: 1.1.0 - Datei nach addon/player/ verschoben. Foto-Upload/-Entfernen je Spielerzeile ergänzt (globale Spieler-ID, siehe savePlayerPhotoUpload()), Hinweis auf Spaltenüberschriften-Grafiken (assets/addon/player/) ergänzt
@@ -56,6 +59,7 @@
 
 ## addon/player/view_spst_import_review.php
 
+- Changelog: 1.0.2 - Sicherheitsfix: csrfField() in jedes POST-Formular eingefügt (CSRF-Schutz, siehe admin/bootstrap.php).
 - Changelog: 1.0.1 - Datei nach addon/player/ verschoben (einheitliche Addon-Ordnerstruktur)
 - Changelog: 1.0.0 - Initiale Version: Team-Abgleichsseite für den Spielerstatistik-Import, strukturell analog zu view_import_review.php (.l98-Ligaimport), aber pro Zeilenindex der importierten .stat-Datei statt pro Team-Nr.
 
@@ -92,6 +96,7 @@
 
 ## addon/tipp/tipp_lib.php
 
+- Changelog: 1.1.0 - tippRenderSiteLink() zeigt jetzt das neue Tippspiel-Icon vor dem Linktext (statt eines Emoji, das dafür aus den Sprachdateien entfernt wurde).
 - Changelog: 1.0.0 - Neue Funktion tippGetLetzterAusgewerteterSpieltag(): höchste Spieltag-Nummer einer Liga mit mindestens einem echten Ergebnis - für den Sprung zum zuletzt ausgewerteten Spieltag beim Klick auf einen Tippernamen in der Tippeinsicht.
 - Changelog: 0.9.0 - Neue Funktion getArchivierteLigenMitTipps(): findet archivierte Ligen, für die tatsächlich Tipps abgegeben wurden - Grundlage für den neuen "Archivierte Tippsaisons"-Link unter Tippeinsicht/Gesamtübersicht.
 - Changelog: 0.8.0 - Neue Funktionen für "Tipps nachtragen": getTipperById(), adminTippGetSpieltage()/adminTippGetSpieltagPartien() (eigenständige, schlanke Kopien der Liga-Funktionen - der Adminbereich bindet frontend/data_liga.php bewusst nicht ein, ein require_once davon würde "Cannot redeclare getDB()" auslösen) sowie adminTippNachtragen() (speichert unabhängig von der sonst geltenden Abgabefrist, live geprüft mit einer Partie aus der Vergangenheit - der reguläre Frontend-Weg lehnt dieselbe Eingabe weiterhin korrekt ab).
@@ -108,6 +113,7 @@
 
 ## addon/tipp/view_tippspiel.php
 
+- Changelog: 1.4.1 - Sicherheitsfix: csrfField() in jedes POST-Formular eingefügt (CSRF-Schutz, siehe admin/bootstrap.php).
 - Changelog: 1.4.0 - Neue Einstellung "Spielregeln-Link anzeigen" im Tab Anzeigen/Darstellung - steuert, ob der neue Spielregeln-Reiter im Frontend erscheint (Standard: aus).
 - Changelog: 1.3.0 - "Tipps nachtragen": die Liga-Auswahl zeigt jetzt nur noch die Ligen, die der jeweilige Tipper tatsächlich abonniert hat (statt aller tippbaren Ligen). Manipulierte/veraltete URLs mit einer nicht abonnierten Liga fallen serverseitig auf die erste tatsächlich abonnierte Liga zurück. Neue Hinweismeldung, falls der Tipper noch gar keine Liga abonniert hat.
 - Changelog: 1.2.0 - Neues Feature "Tipps nachtragen" im Tab Userverwaltung (historisches Feature aus dem alten LMO): der Admin kann Tipps für einen Tipper eintragen, unabhängig von der sonst geltenden Abgabefrist, auch nach Anpfiff/Abpfiff. Gedacht für Tipper, die ihren Tipp rechtzeitig vor Anpfiff per Mail geschickt haben, statt selbst über die Website zu tippen.
@@ -128,6 +134,9 @@
 
 ## addon/tipp/view_tippspiel_frontend.php
 
+- Changelog: 1.20.2 - Sicherheitsfix: csrfField() in jedes POST-Formular eingefügt (CSRF-Schutz, siehe admin/bootstrap.php).
+- Changelog: 1.20.1 - Bugfix: die neue Tippspiel-Bereichsüberschrift aus 1.20.0 erzeugte eine Dopplung mit der bereits bestehenden Seiten-Überschrift (kommt separat über home.php/renderTemplate() als "Titel"). Wieder entfernt - das Logo wird stattdessen direkt im Template vor die bestehende Überschrift gesetzt (siehe tippspiel.tpl.php).
+- Changelog: 1.20.0 - Neue "Tippspiel"-Bereichsüberschrift mit vorangestelltem Logo, wird jetzt über der Tab-Leiste auf jeder Tippspiel-Unterseite angezeigt (renderTippspielTabsBar()). Live getestet: Überschrift samt Logo erscheint korrekt im HTML.
 - Changelog: 1.19.1 - Besser unterscheidbare Farben im "Vergleich mit dem Spieltagssieger"-Diagramm: Blau (eigener Verlauf) und gestricheltes Rot (Spieltagssieger) statt der schwer zu unterscheidenden Grün-/Orangetöne mit überlappender Füllfläche.
 - Changelog: 1.19.0 - Bugfix: "Vergleich mit dem Spieltagssieger" (Statistik-Seite 3) zeigte verzerrte/verschobene Daten - $vsMich/$vsSieger wurden per array_map() aus einem bei 1 (nicht 0) beginnenden Array gebaut, wodurch json_encode() ein JSON-Objekt statt eines Arrays erzeugte ({"1":26,...} statt [26,...]) - Chart.js interpretierte das fehlerhaft. Mit array_values() behoben, live geprüft (Chart-Daten jetzt als sauberes Array). Alle anderen Statistik-Diagramme auf dasselbe Muster geprüft - keine weiteren Fälle gefunden. Außerdem: die Seiten-Navigation (Seite 1/2/3/4) erscheint jetzt zusätzlich unterhalb der Diagramme, nicht mehr nur oben.
 - Changelog: 1.18.0 - Statistik-Seite 4 mit den letzten beiden noch offenen Diagrammen: "Ergebnisse pro Spieltag" (Verlauf der echten Ergebnisse, analog zu Tipps pro Spieltag) und "Punkte (alle Mannschaften)" als vollständige, sortierte Liste statt nur Top-3/Flop-3 (oberes Drittel grün, unteres Drittel rot).
@@ -159,6 +168,7 @@
 
 ## admin.php
 
+- Changelog: 1.5.4 - Sicherheitsfix: requireCsrf() zentral vor allen POST-Handlern aufgerufen, schützt alle 30+ POST-Aktionen (Liga speichern, Ergebnisse, Backup, Import, Wartung etc.) auf einen Schlag.
 - Changelog: 1.5.3 - Bindet addon/tipp/handler_tipp.php ein (neues Tippspiel-Addon, erste Speicher-Aktion für die Punkteverteilung)
 - Changelog: 1.5.2 - Route für die neue Aktion "tippspiel" ergänzt (neues Tippspiel-Addon, siehe addon/tipp/view_tippspiel.php)
 - Changelog: 1.5.1 - Spielerstatistik-Addon nach addon/player/ verschoben (neben addon/mini/, einheitliche Addon-Ordnerstruktur); neue Konstante ADDON_INC
@@ -173,6 +183,17 @@
 
 ## admin/bootstrap.php
 
+- Changelog: 1.22.0 - Neue Datei-basierte Protokollierung für PHP-Fehler/Warnungen: der bestehende globale Exception-Handler schreibt fatale Fehler jetzt zusätzlich in eine dedizierte Log-Datei (store/php_issues.log), neuer set_error_handler() fängt zusätzlich Warnungen/Notices/Deprecated-Meldungen (die zuvor gar nicht protokolliert wurden) ein. Die eigentlichen Lese-/Schreibfunktionen (phpIssueLogFile/logPhpIssue/readPhpIssueLog) wurden nach config_loader.php verschoben, damit sowohl Admin- als auch Frontend-Fehler in derselben Datei landen, ohne die bewusste Trennung der beiden Bootstrap-Dateien aufzuweichen. Live geprüft: ausgelöste Warnung UND fataler Fehler landen beide korrekt in der Datei.
+- Changelog: 1.21.1 - Zusätzlicher Fund beim Nachprüfen: eine verwaiste, doppelte Kopie von ensureLoginAttemptsTable() (ohne Funktionssignatur, wurde beim Laden der Datei als nutzloser Bare-Block sofort ausgeführt statt als aufrufbare Funktion zu existieren) direkt neben der korrekten Definition entfernt. Danach eine systematische Prüfung der gesamten Datei (und aller anderen in den letzten Sitzungen bearbeiteten Dateien) auf ähnliche verwaiste Funktionsköpfe durchgeführt - keine weiteren Fälle gefunden.
+- Changelog: 1.21.0 - Bugfix: die Funktion checkRuntimeExtensions() hatte durch eine frühere Bearbeitung dieser Datei ihre Funktionssignatur verloren (nur der Funktionskörper blieb übrig, derselbe Fehlertyp wie zuvor bei ensureLoginAttemptsTable()) - dadurch zeigte die Info-Seite unter Einstellungen "Call to undefined function" statt der PHP-Erweiterungstabelle. Wiederhergestellt und live bestätigt: Info-Tab zeigt jetzt wieder korrekt PHP-Version und Erweiterungsstatus. Zusätzlich: der globale Fehler-Handler zeigt bei einem unerwarteten Fehler jetzt einen Link zum Aktivitätsprotokoll (Administrator → Log) an - nur sichtbar, wenn eine eingeloggte Admin-Session besteht. Live über echte HTTP-Requests bestätigt: Link erscheint korrekt bei aktiver Session, bleibt bei anonymen Anfragen unsichtbar.
+- Changelog: 1.20.0 - Neues Audit-Log für sicherheitsrelevante Admin-Aktionen: neue admin_audit_log-Tabelle (ensureAuditLogTable()) und zentrale Funktion logAdminAction(). Live getestet: Login, Liga-Löschung und Einstellungen-Speichern erzeugen nachweislich korrekte Log-Einträge mit Benutzername, Aktion, Details und IP.
+- Changelog: 1.19.0 - Bugfix: die Funktion ensureLoginAttemptsTable() war bei einer früheren Bearbeitung dieser Datei versehentlich verlorengegangen (nur der Funktionsaufruf blieb übrig) - dadurch war das Login-Rate-Limiting aus einer vorherigen Session stillschweigend kaputt. Beim Testen des neuen Passwort-Reset-Rate-Limitings entdeckt und wiederhergestellt; beide Rate-Limiting-Funktionen (Login und Passwort-Reset) erneut end-to-end bestätigt.
+- Changelog: 1.18.0 - Neue Funktion checkRuntimeExtensions(): eigenständige PHP-Erweiterungsprüfung für die neue Info-Seite unter Einstellungen, unabhängig von install.php (das sich nach der Installation selbst löscht und danach nicht mehr verfügbar wäre).
+- Changelog: 1.17.0 - Sicherheitsfix: SVG-Uploads werden jetzt aktiv bereinigt (nicht nur oberflächlich geprüft). Neue sanitizeSvgContent()-Funktion (nutzt DOMDocument statt reiner Regex, mit deaktivierter externer Entity-Auflösung gegen XXE): entfernt <script>-Elemente, alle "on*"-Event-Handler-Attribute und "javascript:"-/"data:text/html"-URIs in beliebigen Attributen sowie <foreignObject>. saveTeamLogoUpload() schreibt bei SVG jetzt den bereinigten Inhalt statt die ungefilterten Original-Upload-Bytes zu übernehmen; nicht sauber parsbare SVGs werden komplett abgelehnt. Live mit einer präparierten Angriffsdatei getestet (Script-Tag, onload/onclick, javascript:-URI, foreignObject) - alles korrekt entfernt, legitimer Inhalt (Kreis, Text) bleibt erhalten; eine echte, harmlose SVG-Datei bleibt dabei byte-identisch unverändert.
+- Changelog: 1.16.0 - Sicherheitsfix: automatisches Logout nach Inaktivität eingebaut. Neue checkSessionIdleTimeout()-Funktion, in requireLogin() integriert (läuft auf jeder geschützten Admin-Seite automatisch mit) - nach 30 Minuten ohne Aktivität wird die Session verworfen und zum Login umgeleitet, mit erklärender Meldung. Live geprüft: aktive Session (5 Min. her) bleibt bestehen und aktualisiert den Zeitstempel, inaktive Session (35 Min. her, Limit 30) wird korrekt beendet inkl. passender Flash-Nachricht.
+- Changelog: 1.15.0 - Sicherheitsfix: Security-Header ergänzt (X-Frame-Options: DENY, X-Content-Type-Options: nosniff, Content-Security-Policy: frame-ancestors 'none'). Der Adminbereich hat keinen legitimen Grund, jemals eingebettet zu werden. Live per echtem HTTP-Request bestätigt.
+- Changelog: 1.14.0 - Sicherheitsfix: Login-Rate-Limiting eingebaut. Neue login_attempts-Tabelle + Funktionen loginRateLimitSecondsLeft()/recordFailedLoginAttempt()/clearLoginAttempts(): nach 5 Fehlversuchen (Benutzername ODER IP) 15 Minuten Sperre. IP-Erkennung nutzt bewusst nur REMOTE_ADDR (kein X-Forwarded-For), da dieser Header vom Client frei mitschickbar wäre. Live geprüft: Sperre greift exakt nach dem 5. Versuch, IP-übergreifend über verschiedene Benutzernamen erkannt, Reset nach erfolgreichem Login bestätigt, echter Handler-Aufruf bricht nachweislich vor der Passwortprüfung ab (kein 6. DB-Eintrag).
+- Changelog: 1.13.0 - Sicherheitsfix: CSRF-Schutz eingebaut. Neue Funktionen csrfToken()/csrfField()/requireCsrf() - ein Token pro Session, zentral vor jedem POST geprüft, statt jede der 38 POST-Aktionen einzeln abzusichern. Zusätzlich safeRedirectTarget(): validiert Redirect-Ziele aus dem Request (nur interne "?..."-Query-Strings erlaubt) gegen Open-Redirect-Angriffe. Live geprüft: Angriff ohne Token korrekt mit 403 blockiert, legitimer Request mit Token durchgelassen, kompletter Login-Rundlauf über den echten Handler bestätigt funktionsfähig.
 - Changelog: 1.12.0 - Neue Funktion ensureSportProfileColumns(): zentrale on-demand-Migration für sport_type (liga) und extra_data (liga_partien), analog zu ensureSpielstatusColumns(). Bugfix: diese Absicherung fehlte bisher komplett - admin/data_loader.php las sport_type direkt ohne eigenen Schutz, wodurch nicht nur der .l98-Import, sondern die komplette Liga-Einstellungsseite auf einer nicht neu migrierten Installation abgestürzt wäre. Live geprüft: Spalte gezielt entfernt, echte Admin-Seite darüber geladen - kein Absturz, Spalte automatisch wiederhergestellt.
 - Changelog: 1.11.0 - Nur die Sport-Profile eingebunden (bewusst NICHT die komplette Liga-Trait-Kette wie in Torstens ursprünglichem Vorschlag - das hätte der bewussten Trennung von Admin- und Frontend-Bootstrap widersprochen, siehe "Tipps nachtragen"-Feature). Der einzige tatsächlich benötigte Aufruf (getLigaOptions() beim Sportart-Wechsel) wurde stattdessen als eigenständige Admin-Query gebaut.
 - Changelog: 1.10.3 - Logo-Format-Priorität für die Admin-Vorschau auf SVG-zuerst umgestellt (TEAM_LOGO_ALLOWED_EXT), passend zur Browser-Ausgabe der echten Website - betrifft nur die Vorschau/Löschfunktion, nie den PDF-Export.
@@ -202,6 +223,7 @@
 
 ## admin/data_loader.php
 
+- Changelog: 1.7.11 - Lädt für die neue Log-Ansicht unter Administrator die letzten Audit-Log-Einträge (paginiert, 50 pro Seite).
 - Changelog: 1.7.10 - Ruft die neue ensureSportProfileColumns() auf jedem eingeloggten Admin-Seitenaufruf auf, analog zu den bestehenden ensure*()-Migrationsfunktionen.
 - Changelog: 1.7.9 - Liga-Settings-Abfrage liest jetzt zusätzlich sport_type mit, für die korrekte Vorauswahl im neuen Sportart-Dropdown.
 - Changelog: 1.7.8 - Lädt jetzt die neue "ab Spieltag"-Spalte mit (Beitrag Torsten Hofmann), inkl. Schema-Migration.
@@ -232,6 +254,7 @@
 
 ## admin/handler_backup.php
 
+- Changelog: 1.4.0 - Protokolliert Backup erstellen/wiederherstellen/löschen im neuen Audit-Log - besonders wichtig bei "wiederherstellen", da dabei bestehende Daten überschrieben werden.
 - Changelog: 1.3.0 - Spielerfotos (assets/img/player/, siehe addon/player/spielerstat_lib.php) werden jetzt im selben Logo-ZIP mitgesichert (eigenes Unterverzeichnis "player/" neben "teams/"), inkl. Wiederherstellung. Kein zusätzliches ZIP nötig, kein Verhaltensunterschied für ältere Backups ohne Fotos
 - Changelog: 1.2.0 - Team-Logo-Ordner (assets/img/teams/) wird jetzt mitgesichert: neue Funktionen backupCreateLogosZip()/backupRestoreLogosZip()/ backupLogosZipFilenameFor(). Bei jedem Backup wird (falls ZipArchive verfügbar ist und mindestens ein Logo hochgeladen wurde) ein begleitendes "backup_{Zeitstempel}_logos.zip" im selben /store-Ordner angelegt, mit demselben Zeitstempel wie der SQL-Dump. Wird beim Wiederherstellen automatisch mit zurückgespielt (vorhandene Logos werden vorher entfernt, analog zur "Komplett ersetzen"-Logik der DB-Wiederherstellung), und beim Löschen/automatischen Aufräumen (Max-Anzahl) zusammen mit dem zugehörigen SQL-Backup entfernt. ZipArchive ist optional (wie bzip2) – fehlt die Erweiterung, wird die Logo-Sicherung übersprungen, die Datenbank-Sicherung funktioniert unverändert weiter
 - Changelog: 1.1.1 - .htaccess-Text (Kommentare) für /store auf Englisch umgestellt, sowohl die Datei selbst als auch die Auto-Wiederherstellungs-Logik in backupDir()
@@ -247,6 +270,7 @@
 
 ## admin/handler_import_export.php
 
+- Changelog: 1.12.0 - Protokolliert jeden erfolgreichen .l98-Import zentral in runL98Import() im neuen Audit-Log, inkl. Dateiname und importiertem Liganamen.
 - Changelog: 1.11.0 - createLigaInDB() bekommt einen neuen, optionalen $sportType-Parameter (mit derselben defensiven on-demand-Schema-Prüfung wie an anderer Stelle etabliert, bewusst vor beginTransaction()). Bestehende Aufrufer ohne den Parameter bleiben unverändert (Fußball als DB-Standardwert).
 - Changelog: 1.10.0 - Bugfix: importL98IntoDB() versuchte sport_type zu setzen, ohne vorher zu prüfen, ob die Spalte existiert - schlug mit "Unknown column sport_type" fehl auf jeder Installation, die install.php seit der Sport-Profile-Erweiterung noch nicht erneut ausgeführt hatte. Eigene defensive Prüfung ergänzt (zusätzlich zur zentralen in admin/bootstrap.php, damit die Funktion auch bei einem eigenständigen/programmatischen Aufruf außerhalb der normalen admin.php-Anfrage sicher funktioniert).
 - Changelog: 1.9.0 - Bugfix: Bei importL98IntoDB() liefen alle vier on-demand-Schema-Migrationen (Strafpunkte-Spalten tore_korrektur/minuspunkte_korrektur/ab_spieltag, sowie extra_data für Sätze) innerhalb der Import-Transaktion. ALTER TABLE löst in MySQL/MariaDB ein implizites Commit aus - die Transaktion wurde dadurch unbemerkt mittendrin aufgebrochen (ein späterer rollBack() hätte nur noch den Teil NACH der ersten ALTER TABLE zurückgerollt, nicht den kompletten Import). Alle vier Schema-Prüfungen jetzt konsequent VOR beginTransaction() verschoben, derselbe Fehler wie zuvor schon einmal bei der Spielerstatistik-Erweiterung behoben. Live geprüft: Import auf eine frische Datenbank ohne die vier Spalten läuft fehlerfrei durch, inTransaction() sauber vor und nach dem Import, alle Spalten korrekt migriert, Satzdaten vollständig übernommen (90 Partien mit extra_data).
@@ -277,6 +301,8 @@
 
 ## admin/handler_liga.php
 
+- Changelog: 1.9.0 - Protokolliert Liga-Löschung im neuen Audit-Log, inkl. Liganame (vor dem Löschen ermittelt). Live bestätigt: Log-Eintrag enthält korrekt Benutzername, Aktion "liga_deleted" und den Liganamen als Detail.
+- Changelog: 1.8.0 - Sicherheitsfix: Open-Redirect-Lücke behoben. redirect($_POST['redirect'] ?? ...) an beiden Stellen (Liga löschen, Team-Zuordnung) durch safeRedirectTarget() abgesichert - beliebige externe Ziel-URLs (https://evil.com, //evil.com, javascript:...) werden jetzt auf den sicheren Standardwert zurückgesetzt. Live mit sechs Angriffs-Payloads und zwei legitimen Zielen getestet.
 - Changelog: 1.7.0 - save_partie_teams speichert jetzt zusätzlich die eingegebenen Satzergebnisse als extra_data (mit derselben defensiven on-demand-Spaltenprüfung wie an anderer Stelle etabliert). Leere Satz-Paare werden übersprungen statt als "0:0" gespeichert.
 - Changelog: 1.6.5 - save_team respektiert jetzt ein optionales POST-Feld "redirect" (nur eigene "?action=..."-Ziele erlaubt), damit der neue "Teams"-Tab in den Liga- Einstellungen nach dem Speichern dorthin zurückkehrt statt zur Liga-Detailseite (Standardverhalten bleibt unverändert, falls kein redirect-Feld gesendet wird)
 - Changelog: 1.6.4 - add_team_link übersetzt jetzt die a/b/unbekannt-Richtungswahl in die tatsächliche Team-ID (newer_team_id). Neue Aktion set_team_link_direction zum nachträglichen Ändern bestehender Verknüpfungen, siehe bootstrap.php 1.9.0
@@ -312,6 +338,10 @@
 
 ## admin/handler_user.php
 
+- Changelog: 1.8.0 - Protokolliert jetzt Login, Logout, Benutzer anlegen/bearbeiten/löschen und Einstellungen-Speichern im neuen Audit-Log (siehe admin/bootstrap.php).
+- Changelog: 1.7.0 - Sicherheitsfix: User-Enumeration beim Passwort-Reset behoben (immer dieselbe Meldung, egal ob die E-Mail-Adresse zu einem Konto gehört) sowie Rate-Limiting ergänzt (dieselbe Infrastruktur wie beim Login-Rate-Limiting, mit einer IP-spezifischen Kennung). Bugfix während der Entwicklung: die erste Version nutzte einen für alle Anfragen GLEICHEN Platzhalter-Namen, wodurch loginRateLimitSecondsLeft()s "username = ? OR ip = ?"-Prüfung versehentlich zu einer SITE-WEITEN Sperre nach 5 Anfragen von IRGENDEINER IP geführt hätte, statt korrekt pro IP zu begrenzen - beim Testen selbst gefunden und auf eine IP-codierte Kennung umgestellt. Live geprüft: identische Rückmeldung für existierende/nicht-existierende E-Mail, Token wird nur bei echtem Konto angelegt, Rate-Limit sperrt nur die anfragende IP und lässt andere IPs unberührt.
+- Changelog: 1.6.1 - Verwaisten change_password-Handler entfernt (kein Formular zeigte mehr darauf, nachdem die Karte in admin/view_settings.php entfernt wurde).
+- Changelog: 1.6.0 - Login-Handler prüft jetzt vor jeder Passwortverifikation das Rate-Limit und trägt Fehlversuche ein (siehe admin/bootstrap.php).
 - Changelog: 1.5.4 - save_admin_settings speichert jetzt zusätzlich show_back_link
 - Changelog: 1.5.3 - save_admin_settings speichert jetzt zusätzlich show_language_switcher
 - Changelog: 1.5.2 - save_admin_settings speichert jetzt zusätzlich show_pdf_buttons (neue Einstellung "PDF-Export für Besucher anzeigen?" im Besucherbereich)
@@ -339,6 +369,7 @@
 
 ## admin/html_layout.php
 
+- Changelog: 1.6.0 - Admin-Sidebar zeigt jetzt den vollständigen Copyright-/Spenden-Hinweis statt nur der schlichten Versionsnummer (Beitrag: Torsten Hofmann).
 - Changelog: 1.5.0 - Link zur Benutzeransicht (home.php) in der Topbar ergänzt, zwischen Benutzername und Logout-Button, öffnet in neuem Tab (target=_blank)
 - Changelog: 1.4.0 - Versionsnummer (aus composer.json) im Sidebar-Footer ergänzt
 - Changelog: 1.3.1 - Projektname auf "LMOnext" umgestellt (vorher "Online-Liga-Verwaltung Board" / "OLVBoard")
@@ -366,6 +397,7 @@
 
 ## admin/view_archiv.php
 
+- Changelog: 1.6.1 - Sicherheitsfix: csrfField() in jedes POST-Formular eingefügt (CSRF-Schutz, siehe admin/bootstrap.php).
 - Changelog: 1.6.0 - Bugfix: der "Reaktivieren"-Link im Archiv war funktionslos - er war die bereits vorausgewählte erste Option in einem <select onchange="this.form.submit()">-Dropdown, wodurch Browser beim Anklicken kein change-Ereignis auslösten (der Wert ändert sich ja nicht). Reaktivieren ist jetzt ein eigenständiger Button, das Dropdown daneben dient nur noch zum gezielten Verschieben in einen anderen Ordner.
 - Changelog: 1.5.1 - Liga-ID (#123) wird jetzt auch in den Archiv-Zeilen angezeigt (sowohl innerhalb von Ordnern als auch bei Ligen ohne Ordner), analog zur ID-Spalte in der Ligen-Übersicht
 - Changelog: 1.5.0 - Löschen-Button pro Liga ergänzt (in Ordnern gruppiert + ohne Ordner), nutzt den bestehenden "delete_liga"-Handler mit redirect=?action=archiv (siehe handler_liga.php 1.6.0 für das zugehörige kaskadierende Löschen)
@@ -376,6 +408,7 @@
 
 ## admin/view_import.php
 
+- Changelog: 1.2.2 - Sicherheitsfix: csrfField() in jedes POST-Formular eingefügt (CSRF-Schutz, siehe admin/bootstrap.php).
 - Changelog: 1.2.1 - Projektname auf "LMOnext" umgestellt (vorher "Online-Liga-Verwaltung Board" / "OLVBoard")
 - Changelog: 1.2.0 - Alle Texte (PHP + JS) über t() übersetzt
 - Changelog: 1.1.2 - ZIP-Upload Option für Massenimport (umgeht max_file_uploads=20)
@@ -383,12 +416,14 @@
 
 ## admin/view_import_review.php
 
+- Changelog: 1.2.1 - Sicherheitsfix: csrfField() in jedes POST-Formular eingefügt (CSRF-Schutz, siehe admin/bootstrap.php).
 - Changelog: 1.2.0 - Neue Sportart-Auswahl pro Datei auf der Import-Bestätigungsseite, mit der automatisch erkannten Sportart vorausgewählt (als "erkannt" markiert) - der Admin kann sie bei Bedarf übersteuern. Die Seite erscheint jetzt auch dann, wenn keine unklaren Teamnamen vorliegen, aber eine Nicht-Fußball-Sportart erkannt wurde, damit die Erkennung nicht unbemerkt im Hintergrund passiert.
 - Changelog: 1.1.0 - Zeigt jetzt ALLE ähnlichen vorhandenen Teams als Dropdown-Auswahl an (statt nur den einen besten Treffer per Ja/Nein-Checkbox), z.B. wenn Haupt- und Reserve-Team beide ähnlich zum importierten Namen sind. Zusätzliche Option "Kein passendes Team – neues Team anlegen"
 - Changelog: 1.0.0 - Initiale Version: Abgleichsseite zwischen Upload und tatsächlichem Import. Wird nur angezeigt, wenn detectFuzzyTeamMatchesForImport() ungefähre (nicht exakte) Namenstreffer mit bereits vorhandenen Teams gefunden hat – der Admin entscheidet hier pro Team, ob der Name aus der DB übernommen werden soll, bevor der eigentliche Import (?action=import_confirm) läuft.
 
 ## admin/view_liga_detail.php
 
+- Changelog: 1.9.1 - Sicherheitsfix: csrfField() in jedes POST-Formular eingefügt (CSRF-Schutz, siehe admin/bootstrap.php).
 - Changelog: 1.9.0 - Team-Verwaltung (Karte + kompletter Editor) nach admin/view_liga_settings.php verschoben (neuer Tab "Teams", siehe dortiger Changelog 1.5.0) - liegt jetzt zusammen mit den übrigen Liga-Einstellungen. Neuer Schnellzugriffs-Button "Teams" oben auf dieser Seite ergänzt, verlinkt direkt auf den neuen Tab
 - Changelog: 1.8.0 - Neuer Button "Spielerstatistik" verlinkt auf die neue Verwaltungsseite des gleichnamigen Addons (siehe admin/view_spielerstatistik.php)
 - Changelog: 1.7.0 - Team-Editor: neue direkte Team-ID-Eingabe (Alternative zur Namenssuche) – Team-ID eintippen + "Übernehmen", schlägt per neuem team_by_id-AJAX- Endpunkt nach und übernimmt den Treffer wie ein Suchergebnis (selectDbTeam()); Fehlermeldung, falls die ID nicht existiert
@@ -401,6 +436,7 @@
 
 ## admin/view_liga_list.php
 
+- Changelog: 1.3.2 - Sicherheitsfix: csrfField() in jedes POST-Formular eingefügt (CSRF-Schutz, siehe admin/bootstrap.php).
 - Changelog: 1.3.1 - Projektname auf "LMOnext" umgestellt (vorher "Online-Liga-Verwaltung Board" / "OLVBoard")
 - Changelog: 1.3.0 - Alle Texte (PHP + JS) über t() übersetzt
 - Changelog: 1.2.3 - Offene Ergebnisse pro Liga; Filter nach fehlenden Ergebnissen
@@ -409,6 +445,7 @@
 
 ## admin/view_liga_settings.php
 
+- Changelog: 1.7.1 - Sicherheitsfix: csrfField() in jedes POST-Formular eingefügt (CSRF-Schutz, siehe admin/bootstrap.php).
 - Changelog: 1.7.0 - Sportart-Dropdown im Tab Grundwerte ergänzt (Beitrag: Torsten Hofmann, Bugfix bei der Übernahme: doppeltes name="sport_type"-Feld - verstecktes Input UND Dropdown gleichzeitig im selben Formular - auf ein einziges Feld bereinigt), abschaltbar über die Admin-Einstellung show_sport_type.
 - Changelog: 1.6.0 - Neue Spalte "ab Spieltag" im Strafen-Tab (Beitrag Torsten Hofmann, siehe src/Liga/StandingsTrait.php).
 - Changelog: 1.5.3 - Spaltenreihenfolge im Tab "Strafen" geändert: Punkte, Minuspunkte, Erzielte Tore, Gegentore - reine Anzeigeänderung, die Felder werden weiterhin über ihren Namen ausgewertet, nicht die Position
@@ -430,6 +467,7 @@
 
 ## admin/view_login.php
 
+- Changelog: 1.4.1 - Sicherheitsfix: csrfField() in jedes POST-Formular eingefügt (CSRF-Schutz, siehe admin/bootstrap.php).
 - Changelog: 1.4.0 - "Passwort vergessen?"-Link samt Modal ergänzt (E-Mail eingeben, POST an ?action=request_password_reset). Backend/Reset-Landingpage/E-Mail-Versand existierten bereits (handler_user.php, view_reset_password.php, bootstrap.php), aber ohne diesen Einstiegspunkt auf der Login-Seite war die Funktion für Besucher gar nicht erreichbar
 - Changelog: 1.3.3 - Link "Zum Besucherbereich" unterhalb des Formulars ergänzt (wie im alten LMO, das dort "Wechsel in den User-Bereich" hatte)
 - Changelog: 1.3.2 - Weiße Karte hinter dem Logo (dunkles Navy hatte auf dem sehr dunklen Login-Hintergrund zu wenig Kontrast)
@@ -439,10 +477,14 @@
 
 ## admin/view_reset_password.php
 
+- Changelog: 1.0.1 - Sicherheitsfix: csrfField() in jedes POST-Formular eingefügt (CSRF-Schutz, siehe admin/bootstrap.php).
 - Changelog: 1.0.0 - Initiale Version: Landingpage für den "Passwort vergessen"-Link aus der E-Mail. Prüft den Token (vorhanden + noch nicht abgelaufen) und zeigt bei Gültigkeit ein Formular für das neue Passwort (2x Eingabe), sonst eine Fehlermeldung mit Link zurück zum Login.
 
 ## admin/view_settings.php
 
+- Changelog: 1.5.0 - Komplett umgebaut auf zweistufige Tab-Navigation: Haupt-Tabs "Optionen" und "Info" (analog zum bestehenden Tab-Muster der Wartung-Seite). "Optionen" hat zwei Unter-Tabs ("Optionen" mit Sprache/Zeitzone, "Anzeigen/Darstellung" mit Template/PDF/Sprachauswahl-Einstellungen). "Info" enthält die bisherige Datenbankverbindung-Karte plus neu: PHP-Version und eine Tabelle aller für den Betrieb relevanten PHP-Erweiterungen (geladen/nicht geladen, erforderlich/optional). Live alle drei Tab-Kombinationen geprüft, CSRF-Schutz aus der vorherigen Session blieb intakt.
+- Changelog: 1.4.0 - Passwort-ändern-Karte entfernt - war doppelt zur bereits vorhandenen Passwortänderung unter Administrator/Benutzerverwaltung (die auch für den eigenen Account funktioniert). Live geprüft: Karte weg, die anderen drei Karten (Systemeinstellungen, Besucherbereich, Datenbankverbindung) unverändert vorhanden.
+- Changelog: 1.3.5 - Sicherheitsfix: csrfField() in jedes POST-Formular eingefügt (CSRF-Schutz, siehe admin/bootstrap.php).
 - Changelog: 1.3.4 - Neue Einstellung "Übersicht-Link anzeigen?" in der Karte Besucherbereich, entspricht "Ligaauswahl" im alten LMO
 - Changelog: 1.3.3 - Neue globale Einstellung "Sprachauswahl anzeigen?" in der Karte Besucherbereich – blendet die Sprachauswahl für Besucher auf allen Seiten aus, wenn deaktiviert
 - Changelog: 1.3.2 - Neue globale Einstellung "PDF-Export für Besucher anzeigen?" in der Karte Besucherbereich – blendet den PDF-Button in Ergebnisse/Tabelle/ Spielplänen/Teamvergleich für alle Liga-Typen und alle Seiten aus, wenn deaktiviert
@@ -456,6 +498,7 @@
 
 ## admin/view_spieltag.php
 
+- Changelog: 1.4.1 - Sicherheitsfix: csrfField() in jedes POST-Formular eingefügt (CSRF-Schutz, siehe admin/bootstrap.php).
 - Changelog: 1.4.0 - Neue Satz-Eingabe für Sportarten mit eigenen Ergebnisfeldern (aktuell Volleyball): unter jeder Partie erscheint jetzt eine "Sätze"-Zeile mit nummerierten Eingabepaaren und einem "+"-Button für weitere Sätze (Vorbild: Torstens Screenshot). Nutzt das bereits vorhandene, aber bisher nirgends angebundene SportProfile::getResultFormFields()-Interface. Bugfix während der Entwicklung: erste Version prüfte nur, ob getResultFormFields() überhaupt Einträge hat - Fußball deklariert dort aber selbst ein Feld (Halbzeit, Typ "score-pair"), wodurch die Satz-Zeile fälschlich auch bei Fußball erschienen wäre. Jetzt gezielt nach Feldtyp "dynamic-score-list" gefiltert. Live geprüft: Fußball zeigt keine Satz-Zeile, Volleyball zeigt sie korrekt, Speichern und erneutes Laden der eingegebenen Sätze bestätigt fehlerfrei.
 - Changelog: 1.3.3 - Hinweistext über dem Team-Dropdown unterscheidet jetzt, ob nur Sieger ("Nur Sieger aus Runde X") oder Sieger+Verlierer angeboten werden (in der letzten Runde bei Finale + Spiel um Platz 3, siehe data_loader.php 1.6.4)
 - Changelog: 1.3.2 - Projektname auf "LMOnext" umgestellt (vorher "Online-Liga-Verwaltung Board" / "OLVBoard")
@@ -475,6 +518,7 @@
 
 ## admin/view_teams.php
 
+- Changelog: 1.7.1 - Sicherheitsfix: csrfField() in jedes POST-Formular eingefügt (CSRF-Schutz, siehe admin/bootstrap.php).
 - Changelog: 1.7.0 - Bugfix: Team-Verknüpfungen-Modal bietet jetzt eine explizite Richtungswahl ("Wer ist der heutige/aktuelle Name?") beim Anlegen einer Verknüpfung, plus ein Dropdown zum nachträglichen Ändern bei bestehenden Verknüpfungen – behebt, dass die "(heute...)"-Kennzeichnung im Teamvergleich vom Aufrufkontext abhing statt fest zu sein
 - Changelog: 1.6.1 - Der 🔗-Button zeigt jetzt eine kleine Zahlen-Markierung, wenn das Team bereits Verknüpfungen hat (siehe data_loader.php 1.7.2) – auf einen Blick erkennbar, ohne jedes Team einzeln öffnen zu müssen
 - Changelog: 1.6.0 - Neues Modal "Team-Verknüpfungen" (🔗-Button je Team), nicht-destruktive Alternative zum Merge: verknüpft zwei eigenständige Teams mit Typ (Umbenennung/Fusion/Abspaltung/Sonstige) + Freitext-Notiz. Nutzt dieselbe Fuzzy-Suche (mergeAllTeams/fuzzyMatch) wie das Merge-Modal
@@ -485,6 +529,9 @@
 
 ## admin/view_users.php
 
+- Changelog: 1.5.0 - Neuer zweiter Block "Fehler/Warnungen" unterhalb des Aktivitätsprotokolls im Log-Tab, zeigt die letzten 100 Einträge aus der neuen Datei-basierten Fehlerprotokollierung (neueste zuerst, farblich nach Schweregrad markiert). Live geprüft: echte Log-Einträge (Fatal-Fehler und Warnung) erscheinen korrekt sortiert und formatiert.
+- Changelog: 1.4.0 - Administrator-Seite auf zweistufige Tab-Navigation umgebaut: "Userverwaltung" (bisheriger Inhalt) und "Log" (neue Audit-Log-Anzeige mit Zeitpunkt/Benutzer/Aktion/Details/IP, paginiert). Live geprüft: beide Tabs rendern korrekt, echte Log-Einträge erscheinen mit übersetzten Aktionsnamen in der richtigen Reihenfolge.
+- Changelog: 1.3.1 - Sicherheitsfix: csrfField() in jedes POST-Formular eingefügt (CSRF-Schutz, siehe admin/bootstrap.php).
 - Changelog: 1.3.0 - E-Mail-Adresse (für "Passwort vergessen") jetzt auch nachträglich editierbar: neues Feld im "Benutzer anlegen"-Formular, neue Spalte in der Tabelle, neues Feld im Inline-Bearbeiten-Formular
 - Changelog: 1.2.1 - Projektname auf "LMOnext" umgestellt (vorher "Online-Liga-Verwaltung Board" / "OLVBoard")
 - Changelog: 1.2.0 - Alle Texte (PHP + JS-Bestätigung) über t() übersetzt
@@ -492,12 +539,14 @@
 
 ## admin/view_wartung.php
 
+- Changelog: 1.2.1 - Sicherheitsfix: csrfField() in jedes POST-Formular eingefügt (CSRF-Schutz, siehe admin/bootstrap.php).
 - Changelog: 1.2.0 - Hinweis auf der Backup-Karte, ob Team-Logos mitgesichert werden (bzw. Warnung, wenn ZipArchive fehlt). Backup-Liste in der Wiederherstellen- Karte zeigt jetzt pro Eintrag ein kleines Symbol, wenn dieses Backup auch Team-Logos enthält, siehe handler_backup.php 1.2.0
 - Changelog: 1.1.0 - Bugfix: native <select multiple>/<select size> hatten browserübergreifend sehr schlechten Kontrast bei markierten Zeilen im Dark-Theme (kaum lesbar). Tabellen-Auswahl und Backup-Auswahl durch selbst gestylte Checkbox-/Radio-Listen ersetzt (volle Farbkontrolle, gleiches Verhalten/POST-Format wie zuvor, kein Backend-Änderung nötig)
 - Changelog: 1.0.0 - Initiale Version: "Wartung"-Seite mit zwei Karteikartenreitern (Backup / Wiederherstellung), Layout an die phpBB-Referenz-Screenshots angelehnt. Backup-Tab zusätzlich mit einstellbarer maximaler Backup-Anzahl (ältestes Backup wird beim Überschreiten automatisch gelöscht, siehe handler_backup.php backupEnforceMaxCount())
 
 ## admin/view_wizard.php
 
+- Changelog: 1.4.1 - Sicherheitsfix: csrfField() in jedes POST-Formular eingefügt (CSRF-Schutz, siehe admin/bootstrap.php).
 - Changelog: 1.4.0 - Neues Sportart-Dropdown in Schritt 1 (Ligagrundlagen), direkt nach dem Liganamen, abschaltbar über dieselbe show_sport_type-Einstellung wie in den Liga-Einstellungen. Live geprüft: Sportart wird korrekt bis zur fertigen Liga durchgereicht (createLigaInDB() end-to-end getestet), Standardverhalten ohne Parameter (Fußball) bleibt unverändert.
 - Changelog: 1.3.5 - Umbenennung auf Nutzerwunsch: interne Bezeichnungen jetzt durchgehend auf Englisch ("League Key" statt der vorherigen deutschen Bezeichnung) – Variablenname, Funktionsname, interner Modus-Wert und Lang-Schlüssel entsprechend angepasst (siehe bootstrap.php/league-key_data.php). Der sichtbare UI-Text hieß schon vorher "Schlüsselplan" (siehe Changelog 1.3.2) und ist unverändert
 - Changelog: 1.3.4 - Vorschautabelle zeigt bei "kein Spielplan" jetzt korrekt "___" für die Leerteam-Platzhalter (-1) statt eines PHP-Fehlers/leerer Zelle, siehe bootstrap.php 1.7.1
@@ -512,10 +561,17 @@
 
 ## config_loader.php
 
+- Changelog: 1.4.0 - Neue zentrale Funktionen phpIssueLogFile()/logPhpIssue()/readPhpIssueLog() für die Datei-basierte Fehler/Warnungen-Protokollierung (Datei statt DB-Tabelle, damit das Log auch bei einem Datenbankproblem noch funktioniert), mit automatischer Größenbegrenzung/Rotation.
+- Changelog: 1.3.0 - Sicherheitsfix: aktive HTTP→HTTPS-Weiterleitung (301) ergänzt, unabhängig vom vorherigen Cookie-Secure-Flag-Verhalten. Erkennt sowohl direktes HTTPS als auch X-Forwarded-Proto (für Hosts, die TLS auf einem vorgelagerten Proxy terminieren). Nur im Web-Kontext aktiv, nicht bei CLI-Aufrufen. Live über einen echten HTTP-Request bestätigt: 301 mit korrekt erhaltenem Pfad/Query-String, kein Redirect bei bereits aktivem HTTPS oder korrektem X-Forwarded-Proto-Header.
+- Changelog: 1.2.0 - Sicherheitsfix: PHP-Fehleranzeige (display_errors) wird jetzt unabhängig von der Hosting-Konfiguration explizit abgeschaltet, Fehler werden stattdessen weiterhin protokolliert (log_errors). Verhindert, dass interne Pfade/Details bei einem PHP-Fehler öffentlich sichtbar würden, falls das Hosting display_errors=On gesetzt hat. Live über einen echten HTTP-Request mit absichtlich ausgelöstem PHP-Warning bestätigt: Seiteninhalt bleibt sauber, keine Fehlerdetails sichtbar.
+- Changelog: 1.1.0 - Neue globale Funktion renderCopyrightNotice() (Beitrag: Torsten Hofmann): zentral verfügbarer "© LMOnext <Version> <Jahr>"-Hinweis mit Spenden-Link, nutzbar von jedem Addon/Frontend/Admin. Live getestet.
 - Changelog: 1.0.0 - Initiale Version: gemeinsame Konfigurations-Ladedatei für frontend/bootstrap.php und admin/bootstrap.php. Unterstützt zwei gleichwertige Betriebsarten, die install.php je nach Server-Fähigkeiten wählt (siehe dort): 1. Composer/.env-Variante (falls beim Installieren composer.phar erfolgreich lief): lädt vendor/autoload.php + .env über LMOnext\Core\Env 2. Klassische config.php-Variante (Standard-Fallback, funktioniert auf jedem Shared-Hosting ohne Shell-Zugriff) In BEIDEN Fällen werden am Ende dieselben Konstanten definiert (DB_HOST/DB_PORT/DB_NAME/DB_USER/DB_PASS/DB_CHARSET/DB_PREFIX) - der gesamte übrige Code (getDB(), tbl(), alle Traits unter src/Liga+Home, Addons) muss dadurch NICHT wissen, welche Variante gerade aktiv ist und bleibt komplett unverändert.
 
 ## frontend/bootstrap.php
 
+- Changelog: 1.10.0 - Frontend-Fehler landen jetzt ebenfalls in der zentralen Fehler/Warnungen-Log-Datei: globaler Exception-Handler erweitert, neuer set_error_handler() für nicht-fatale Meldungen ergänzt (analog zum Adminbereich).
+- Changelog: 1.9.0 - Sicherheitsfix: Security-Header ergänzt (X-Frame-Options: SAMEORIGIN, X-Content-Type-Options: nosniff, Content-Security-Policy: frame-ancestors 'self'). Schützt die Hauptseiten (liga.php, home.php) vor Clickjacking über fremde iframes. Live per echtem HTTP-Request bestätigt.
+- Changelog: 1.8.0 - Sicherheitsfix: CSRF-Schutz auch im Frontend (Tippspiel-Formulare) - gleiche csrfToken()/csrfField()/requireCsrf()-Funktionen wie im Adminbereich, zentral nach session_start() geprüft.
 - Changelog: 1.7.0 - Sport-Profile eingebunden (require_once vor data_liga.php, da StandingsTrait/RenderViewsTrait SportRegistry referenzieren).
 - Changelog: 1.6.1 - addon/tipp/tipp_lib.php zentral eingebunden (analog zu addon/player/frontend_spielerstat.php), damit tippIstAktiv()/ tippRenderSiteLink()/tippRenderHomeCard() auf jeder Besucherseite verfügbar sind - Tippspiel-Link in Header/Footer und Startseiten-Karte
 - Changelog: 1.6.0 - Performance-/Robustheitsverbesserungen: getAdminSetting() liest alle Einstellungen jetzt in EINER Abfrage pro Request statt einer eigenen Abfrage pro Schlüssel. pdf_export.php wird nicht mehr pauschal für jeden Seitenaufruf eingebunden (belastete auch home.php/die Mini-Addons, die es nie brauchen), sondern nur noch direkt in liga.php, dem einzigen tatsächlichen Verwender. Session-Cookie jetzt mit HttpOnly, SameSite=Lax und (bei HTTPS) Secure. Globaler Exception-Handler: unerwartete Fehler landen im Server-Log, Besucher sehen nur eine schlichte, technikfreie Meldung statt Stacktrace/Dateipfaden
@@ -669,6 +725,8 @@
 
 ## install.php
 
+- Changelog: 2.5.0 - Neue admin_audit_log-Tabelle für frische Installationen ergänzt.
+- Changelog: 2.4.0 - Neue login_attempts-Tabelle für das Login-Rate-Limiting ergänzt.
 - Changelog: 2.3.0 - Vervollständigt: install.php erstellte bisher nur sport_type/extra_data (Volleyball-Erweiterung) vollständig, aber nicht die Strafpunkte-Spalten (tore_korrektur/minuspunkte_korrektur/ab_spieltag, benötigt vom "ab Spieltag"-Feature UND vom .l98-Import mit Strafpunkten) sowie status/bericht_url - diese entstanden bisher nur über verstreute Laufzeit-Migrationen. Jetzt in CREATE TABLE und Migrationsblock ergänzt, damit ein einzelner install.php-Lauf die komplette aktuelle Datenbankstruktur abdeckt. Live über die echte install.php-Webroute mit den tatsächlichen Zugangsdaten getestet (Spalten vorher gezielt entfernt, danach korrekt wiederhergestellt, keine bestehenden Daten verloren) - dabei bestätigt, dass sich install.php nach erfolgreichem Lauf wie vorgesehen selbst löscht (Sicherheitsfeature, kein Bug).
 - Changelog: 2.2.0 - Sport-Profile-Migration (Beitrag: Torsten Hofmann, gegen meinen aktuellen Stand nachgezogen statt Torstens älterer Version übernommen): sport_type-Spalte auf liga, extra_data (JSON) auf liga_partien, h_tore/g_tore von TINYINT auf SMALLINT erweitert (Basketball-Ergebnisse über 127). Zwei unabhängige, nicht mit dem Sport-Feature zusammenhängende Spaltenänderungen (key_value/option_value DEFAULT '' entfernt) bewusst NICHT übernommen - technisch nicht nötig auf dieser MariaDB/MySQL-Umgebung (live geprüft) und ein leichtes Rückschritts-Risiko.
 - Changelog: 2.1.1 - Neue Tabelle liga_strafpunkte ergänzt (Strafpunkte/Straftore je Team und Liga, siehe src/Liga/StandingsTrait.php 1.1.0). Auf Bestandsinstallationen wird sie zusätzlich automatisch bei Bedarf nachgezogen (ensureStrafpunkteSchema()), install.php muss dafür nicht erneut laufen
@@ -691,6 +749,12 @@
 
 ## lang/admin/de.php
 
+- Changelog: 1.29.0 - Neue Sprachschlüssel für den Fehler/Warnungen-Block.
+- Changelog: 1.28.0 - Neue Sprachschlüssel für die Administrator-Tabs und das Audit-Log.
+- Changelog: 1.27.0 - Reset-Erfolgsmeldung auf die Standard-Anti-Enumeration-Formulierung umgestellt ("falls diese E-Mail-Adresse... zugeordnet ist" statt einer definitiven Aussage).
+- Changelog: 1.26.0 - Neue Sprachschlüssel für die Einstellungen-Tabs und die PHP-Erweiterungsanzeige.
+- Changelog: 1.25.0 - Neuer Sprachschlüssel für die abgelaufene Sitzung.
+- Changelog: 1.24.0 - Neuer Sprachschlüssel für die Login-Sperre.
 - Changelog: 1.23.0 - Neue Sprachschlüssel für die Satz-Eingabe.
 - Changelog: 1.22.0 - Neue Sprachschlüssel für die Sportart-Auswahl auf der Import-Bestätigungsseite.
 - Changelog: 1.21.0 - Neue Sprachschlüssel für die Sportart-Auswahl.
@@ -774,6 +838,12 @@
 
 ## lang/admin/en.php
 
+- Changelog: 1.28.0 - Added language keys for the errors/warnings block.
+- Changelog: 1.27.0 - Added language keys for the Administrator tabs and the audit log.
+- Changelog: 1.26.0 - Updated the reset-success message to the standard anti-enumeration phrasing.
+- Changelog: 1.25.0 - Added language keys for the settings tabs and the PHP extension display.
+- Changelog: 1.24.0 - Added language key for the expired session message.
+- Changelog: 1.23.0 - Added language key for the login lockout message.
 - Changelog: 1.22.0 - Added language keys for the set-score entry.
 - Changelog: 1.21.0 - Added language keys for the sport selection on the import review page.
 - Changelog: 1.20.0 - Added language keys for the sport selection.
@@ -856,6 +926,7 @@
 
 ## lang/frontend/de.php
 
+- Changelog: 1.44.0 - Emoji aus tf_tipp_header_link entfernt (durch echtes Icon-Bild ersetzt), neuer Sprachschlüssel tf_tipp_section_titel für die neue Bereichsüberschrift.
 - Changelog: 1.43.0 - Neue Sprachschlüssel für die Volleyball-Tabellenspalten.
 - Changelog: 1.42.0 - Neuer Sprachschlüssel für die Tabellendarstellungs-Umschaltung.
 - Changelog: 1.41.0 - Neue Sprachschlüssel für Statistik-Seite 4.
@@ -924,6 +995,7 @@
 
 ## lang/frontend/en.php
 
+- Changelog: 1.44.0 - Removed emoji from tf_tipp_header_link (replaced by a real icon image), added new tf_tipp_section_titel language key for the new section heading.
 - Changelog: 1.43.0 - Added language keys for the volleyball table columns.
 - Changelog: 1.42.0 - Added language key for the table view toggle.
 - Changelog: 1.41.0 - Added language keys for statistics page 4.
@@ -1077,6 +1149,7 @@
 
 ## src/Liga/RenderViewsTrait.php
 
+- Changelog: 1.11.0 - Neue Wrapper-Methode LigaService::renderCopyrightNotice() für Addon-Ausgaben (Beitrag: Torsten Hofmann), delegiert an die neue globale Funktion in config_loader.php und packt sie in einen <p>-Block.
 - Changelog: 1.10.0 - Team-Auswahl in der Spielplan-Ansicht sportartabhängig gemacht: Volleyball-Ligen zeigen jetzt ein kompaktes Dropdown-Menü statt der Team-Sidebar (Vorbild: Torstens Vorschlag, an mein Kartenlayout angepasst), alle anderen Sportarten (inkl. Fußball) behalten unverändert die bestehende Sidebar-Liste mit Logos. Live geprüft: Fußball rendert weiterhin die echte Sidebar, Volleyball das echte Dropdown, keine Vermischung.
 - Changelog: 1.9.1 - Die diagonalen Spaltenüberschriften gelten jetzt nur noch für die "vollständig"-Ansicht - "kurz" und "mittel" zeigen die Spaltennamen wie gewünscht wieder normal waagerecht.
 - Changelog: 1.9.0 - Spaltenköpfe der dynamischen Sport-Tabelle (Volleyball "vollständig" etc.) werden jetzt diagonal dargestellt (Vorbild volleyball-bundesliga.de), damit auch ausgeschriebene Beschriftungen wie "Ballquotient" auf schmalem Bildschirm Platz finden. Fußball bleibt unberührt (normale waagerechte Kopfzeile, keine st-diag-Klasse).
@@ -1131,6 +1204,7 @@
 
 ## template/addon/ewige/standard.tpl.php
 
+- Changelog: 1.2.0 - Copyright-Platzhalter ergänzt (Beitrag: Torsten Hofmann).
 - Changelog: 1.0.1 - Die drei Punkte-Spalten waren alle nur mit "Pkt" beschriftet, nicht unterscheidbar - jetzt "Pkt (hist.)"/"Pkt (2er)"/"Pkt (3er)" mit erklärendem title-Tooltip Ewige Tabelle (aufsummierte Stände über mehrere Ligen), gleiche Optik wie template/addon/mini/standard.tpl.php (LMOnext-Look: #153A8C, Rahmen #e3e7ee).
 
 ## template/addon/mini/mininext.tpl.php
@@ -1300,6 +1374,7 @@
 
 ## template/default/tippspiel.tpl.php
 
+- Changelog: 1.2.0 - Tippspiel-Logo direkt vor die bestehende Seiten-Überschrift gesetzt (behebt die Dopplung aus view_tippspiel_frontend.php 1.20.0). Live geprüft: nur noch eine "Tippspiel"-Überschrift auf der Seite.
 - Changelog: 1.1.0 - Neuer Platzhalter "ZurueckLinkBlock" ergänzt (Link zur Liga-Übersicht, fehlte bisher komplett - siehe home.php 2.3.1)
 - Changelog: 1.0.0 - Initiale Version: Tippspiel läuft jetzt als eigene Seite innerhalb des Templates (?view=tippspiel auf home.php), analog zu liga.tpl.php. Anders als bei liga.tpl.php gibt es hier KEINEN separaten "TabsBar"-Platzhalter - die Tab-Leiste ist bereits Teil von "ViewInhalt" (siehe renderTippspielUserBar()/renderTippspielTabsBar() in addon/tipp/view_tippspiel_frontend.php), da sie nur bei den drei eingeloggt-erforderlichen Ansichten erscheint, nicht bei Login/Registrierung. Inhalt der Tippspiel-Seite. Reines Markup + Platzhalter, kein PHP. Werte kommen vom Root-Controller home.php über renderTippspielView(). "ZurueckLinkBlock" kommt von renderBackLinkBlock() (dieselbe Funktion wie bei liga.tpl.php), respektiert die globale Einstellung "Übersicht-Link anzeigen?".
 
@@ -1331,11 +1406,13 @@
 
 ## template/matchday/tippspiel.tpl.php
 
+- Changelog: 1.2.0 - Wie template/default/tippspiel.tpl.php 1.2.0. Live geprüft (exakt das vom Nutzer gemeldete Template): nur noch eine "Tippspiel"-Überschrift auf der Seite.
 - Changelog: 1.1.0 - Neuer Platzhalter "ZurueckLinkBlock" ergänzt (siehe home.php 2.3.1)
 - Changelog: 1.0.0 - Initiale Version (eigenständiges Template, siehe layout.tpl.php). Tippspiel läuft jetzt als eigene Seite innerhalb des Templates (?view=tippspiel auf home.php), analog zu liga.tpl.php. Kein separater "TabsBar"-Platzhalter - siehe default/tippspiel.tpl.php für die Begründung. Inhalt der Tippspiel-Seite. Reines Markup + Platzhalter, kein PHP. Werte kommen vom Root-Controller home.php über renderTippspielView(). "ZurueckLinkBlock" kommt von renderBackLinkBlock() (dieselbe Funktion wie bei liga.tpl.php).
 
 ## template/default/layout.tpl.php
 
+- Changelog: 1.17.6 - CSS für das neue Tippspiel-Link-Icon und die neue Tippspiel-Bereichsüberschrift ergänzt.
 - Changelog: 1.17.5 - CSS für das neue Dropdown-Team-Auswahl (nur Volleyball) ergänzt.
 - Changelog: 1.17.4 - CSS für diagonale Spaltenüberschriften ergänzt.
 - Changelog: 1.17.3 - CSS-Klasse für die höhere Diagramm-Box der vollständigen Mannschafts-Punkteliste ergänzt.
@@ -1352,6 +1429,7 @@
 
 ## template/colored/layout.tpl.php
 
+- Changelog: 1.6.6 - CSS wie default 1.17.6 ergänzt.
 - Changelog: 1.6.5 - CSS wie default 1.17.5 ergänzt.
 - Changelog: 1.6.4 - CSS wie default 1.17.4 ergänzt.
 - Changelog: 1.6.3 - CSS wie default 1.17.3 ergänzt.
@@ -1368,6 +1446,7 @@
 
 ## template/dark/layout.tpl.php
 
+- Changelog: 1.5.6 - CSS wie default 1.17.6 ergänzt.
 - Changelog: 1.5.5 - CSS wie default 1.17.5 ergänzt.
 - Changelog: 1.5.4 - CSS wie default 1.17.4 ergänzt.
 - Changelog: 1.5.3 - CSS wie default 1.17.3 ergänzt.
@@ -1384,6 +1463,7 @@
 
 ## template/light/layout.tpl.php
 
+- Changelog: 1.5.6 - CSS wie default 1.17.6 ergänzt.
 - Changelog: 1.5.5 - CSS wie default 1.17.5 ergänzt.
 - Changelog: 1.5.4 - CSS wie default 1.17.4 ergänzt.
 - Changelog: 1.5.3 - CSS wie default 1.17.3 ergänzt.
@@ -1400,6 +1480,7 @@
 
 ## template/matchday/layout.tpl.php
 
+- Changelog: 1.2.6 - CSS wie default 1.17.6 ergänzt.
 - Changelog: 1.2.5 - CSS wie default 1.17.5 ergänzt.
 - Changelog: 1.2.4 - CSS wie default 1.17.4 ergänzt.
 - Changelog: 1.2.3 - CSS wie default 1.17.3 ergänzt.
@@ -1425,10 +1506,12 @@
 
 ## src/Template/TemplateEngine.php
 
+- Changelog: 2.7.0 - Neues CopyrightNotice-Platzhalter für alle Frontend-Seiten-Templates (Beitrag: Torsten Hofmann).
 - Changelog: 1.0.0 - Neu (Beitrag Torsten Hofmann): enthält die tatsächliche Implementierung, vorher direkt in frontend/template_engine.php. 1:1 identisches Verhalten geprüft.
 
 ## src/Pdf/PdfExporter.php
 
+- Changelog: 1.9.1 - Feste Logo-Maße in pdfLoadLogoData() an die neuen Rohpixel-Daten angepasst (353×78 statt 320×78).
 - Changelog: 1.9.0 - Ergebnis-PDF-Export (exportErgebnissePdf()) sport-profil-abhängig gemacht (Beitrag: Torsten Hofmann, an mein Format angepasst). Live geprüft: beide PDFs (Fußball/Volleyball) korrekt erzeugt, Volleyball zeigt die volle Satz-Formatierung im PDF.
 - Changelog: 1.8.2 - KRITISCHER BUGFIX: "Class LMOnext\\Pdf\\Imagick not found" - beim Umbau von frontend/pdf_export.php in diese Klasse wurden mehrere bare globale Klassennamen (Imagick, ImagickPixel, DateTime) sowie ALLE vier "catch (Throwable)"-Blöcke nicht mit einem führenden Backslash versehen. Innerhalb des Namespace LMOnext\\Pdf wurden diese fälschlich als LMOnext\\Pdf\\Imagick usw. aufgelöst statt als globale PHP-Klassen - dadurch stürzte der PDF-Export mit einem unabgefangenen Fatal Error ab, sobald ein SVG-Logo über den Imagick-Rasterungsweg verarbeitet werden sollte (die catch-Blöcke konnten den Fehler nicht abfangen, da auch "Throwable" bare war). Alle Vorkommen auf \\Imagick/\\ImagickPixel/\\DateTime/\\Throwable korrigiert und mit einem SVG-Logo end-to-end verifiziert (kein Absturz mehr, PDF wird korrekt erzeugt). Alle anderen seit dieser Session neu in Namespaces verschobenen Dateien auf denselben Fehler geprüft - keine weiteren Fälle gefunden.
 - Changelog: 1.8.1 - BUGFIX (unabhängig vom Logo-Prioritäts-Thema, aber dabei aufgefallen): pdfLoadLogoData() und pdfLoadTeamLogoImage() nutzten noch "dirname(__DIR__)" von der Zeit, als dieser Code direkt in frontend/pdf_export.php lag (eine Ebene unter dem Projekt-Root). Nach dem Umbau in diese Klasse unter src/Pdf/ (zwei Ebenen unter dem Root) zeigte der Pfad fälschlich auf src/assets/... statt auf das echte assets/-Verzeichnis - dadurch wurden das LMOnext-Logo im PDF-Kopf UND alle Team-Logos (PNG/JPEG/GIF/SVG gleichermaßen) seit diesem Umbau nie mehr gefunden. Beide Stellen auf dirname(__DIR__, 2) korrigiert. Zusätzlich: findTeamLogoPathFrontend()-Aufruf für Team-Logos übergibt jetzt explizit "false" (PDF-Modus, Rasterformate zuerst).
@@ -1466,3 +1549,47 @@
 ## src/Sport/BadmintonProfile.php
 
 - Changelog: 1.0.0 - Neu (Beitrag: Torsten Hofmann). Unverändert übernommen.
+
+## assets/logo.svg
+
+- Changelog: (neu) -  - Hauptlogo durch neues Design ersetzt. Originaldatei (1,93 MB, eingebettetes Rasterbild) auf eine optimierte, schlanke Version (172 KB, Anzeigegröße 723×160px) reduziert und im echten Browser (Playwright) bestätigt korrekt dargestellt. Alte Version gesichert.
+
+## assets/pdf/logo_rgb.zz + logo_alpha.zz
+
+- Changelog: (neu) -  - Rohpixel-Daten für die PDF-Kopfzeile passend zum neuen Logo neu erzeugt (353×78px statt bisher 320×78px), mit derselben Extraktionslogik wie PdfExporter::pdfGdImageToRaw(). Live im echten PDF-Export bestätigt korrekt dargestellt.
+
+## assets/favicon/*
+
+- Changelog: (neu) -  - Komplettes Favicon-Set (26 Dateien: Android-, Apple-Touch-, MS-Tile-Icons in allen Größen sowie favicon.ico) aus dem neuen "LN"-Icon-Design neu generiert.
+
+## assets/img/tippspiel-icon.png
+
+- Changelog: (neu) -  - Neues, optimiertes Icon (40×38px) für den Tippspiel-Link im Header/Footer, aus der app_tippspiel-Vorlage erstellt.
+
+## assets/img/tippspiel-logo.png
+
+- Changelog: (neu) -  - Neues, optimiertes Logo (452×130px) für die Tippspiel-Bereichsüberschrift, aus der tippspiel_logo-Vorlage erstellt.
+
+## addon/ewige/lmo-ewigetab.php
+
+- Changelog: 1.0.2 - Wie viewer 3.0.1: Frame-Schutz-Header wieder entfernt für die beabsichtigte iframe-Einbettung.
+- Changelog: (verschoben) - Von addon/mini/ nach addon/ewige/ verschoben (Beitrag: Torsten Hofmann: "ewige Tabelle ist jetzt ein eigenständiges Addon, mini ist mehr für kleine Ansichten gedacht"), alle Pfad-Referenzen angepasst, Copyright-Hinweis ergänzt. Live getestet (Standard- und Verlaufs-Ansicht).
+
+## template/addon/ewige/matrix.tpl.php
+
+- Changelog: 1.1.0 - Copyright-Platzhalter ergänzt (Beitrag: Torsten Hofmann).
+
+## addon/relegation/lmo-relegation.php
+
+- Changelog: 1.0.1 - Wie viewer 3.0.1: Frame-Schutz-Header wieder entfernt für die beabsichtigte iframe-Einbettung.
+- Changelog: (neu) - Neues eigenständiges Addon (Beitrag: Torsten Hofmann): Relegations-Rechner, zeigt die Mini-Liga zwischen Absteiger der Oberliga und Aufsteiger der Unterliga, ermittelt den relevanten Tabellenrang automatisch aus den Liga-Einstellungen "AB"/"CL". Live getestet mit zwei echten Ligen.
+
+## addon/tabellenrechner/lmo-tabellenrechner.php
+
+- Changelog: 1.0.7 - Wie viewer 3.0.1: Frame-Schutz-Header wieder entfernt für die beabsichtigte iframe-Einbettung.
+- Changelog: (neu) - Neues eigenständiges Addon (Beitrag: Torsten Hofmann): Tabellenrechner für Was-wäre-wenn-Berechnungen zu einem bestimmten Spieltag. Live getestet.
+
+## addon/viewer/lmo-viewer.php
+
+- Changelog: 3.0.1 - Entfernt die von frontend/bootstrap.php gesetzten Frame-Schutz-Header wieder (header_remove()), da dieses Addon bewusst zum Einbetten via iframe auf fremden Websites gedacht ist. Live bestätigt: keine X-Frame-Options/CSP mehr in der Antwort, nosniff bleibt bestehen.
+- Changelog: (neu) - Neues eigenständiges Addon (Beitrag: Torsten Hofmann): Spielplan-Betrachter mit zwei Varianten (Zeitraum-Ansicht und Wochenkacheln-Ansicht). Beide Varianten live getestet.

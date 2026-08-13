@@ -2,7 +2,7 @@
 /**
  * Project: LMOnext
  * Filename: handler_liga.php
- * Fileversion: 1.7.0
+ * Fileversion: 1.9.0
  *
  * PHP version 8.2
  *
@@ -257,6 +257,10 @@ if ($action === 'delete_liga' && $_SERVER['REQUEST_METHOD'] === 'POST') {
     if ($id > 0) {
         $db = getDB();
         try {
+            // Namen vor dem Löschen merken, für einen aussagekräftigen Log-Eintrag.
+            $sName = $db->prepare('SELECT name FROM '.tbl('liga').' WHERE id=?');
+            $sName->execute([$id]);
+            $ligaName = (string)($sName->fetchColumn() ?: ('ID '.$id));
             // Das Schema hat bewusst keine FOREIGN-KEY-Constraints (siehe
             // install.php) – ein reines "DELETE FROM liga" würde also
             // verwaiste Zeilen in liga_options/liga_teams/liga_team_values/
@@ -272,13 +276,14 @@ if ($action === 'delete_liga' && $_SERVER['REQUEST_METHOD'] === 'POST') {
             $db->prepare('DELETE FROM '.tbl('liga_options').' WHERE liga_id=?')->execute([$id]);
             $db->prepare('DELETE FROM '.tbl('liga').' WHERE id=?')->execute([$id]);
             $db->commit();
+            logAdminAction('liga_deleted', $ligaName);
             flash(t('hl_flash_liga_deleted'));
         } catch (Throwable $e) {
             if ($db->inTransaction()) { $db->rollBack(); }
             flash(t('flash_error_prefix', ['msg' => $e->getMessage()]), 'error');
         }
     }
-    redirect($_POST['redirect'] ?? '?action=dashboard');
+    redirect(safeRedirectTarget($_POST['redirect'] ?? null, '?action=dashboard'));
 }
 
 // ── Globales Team bearbeiten ──────────────────────────────────────────────────
@@ -429,7 +434,7 @@ if ($action === 'move_liga_archiv' && $_SERVER['REQUEST_METHOD'] === 'POST') {
             flash($folderId ? t('hl_flash_liga_archived') : t('hl_flash_liga_unarchived'));
         } catch (Throwable $e) { flash(t('flash_error_prefix', ['msg' => $e->getMessage()]), 'error'); }
     }
-    redirect($_POST['redirect'] ?? '?action=archiv');
+    redirect(safeRedirectTarget($_POST['redirect'] ?? null, '?action=archiv'));
 }
 
 // ── Mehrere Ligen ins Archiv verschieben ──────────────────────────────────────

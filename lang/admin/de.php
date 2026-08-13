@@ -2,7 +2,7 @@
 /**
  * Project: LMOnext
  * Filename: lang/admin/de.php
- * Fileversion: 1.23.0
+ * Fileversion: 1.29.0
  *
  * PHP version 8.2
  *
@@ -219,7 +219,7 @@ return [
     'reset_pw_invalid'           => 'Dieser Link ist ungültig oder abgelaufen. Bitte fordere über „Passwort vergessen" einen neuen Link an.',
     'reset_pw_back_to_login'     => '← Zurück zum Login',
     'flash_reset_email_not_found'=> 'Diese E-Mail-Adresse ist keinem Administrator-Konto hinterlegt.',
-    'flash_reset_email_sent'     => 'E-Mail mit Link zum Zurücksetzen wurde verschickt.',
+    'flash_reset_email_sent'     => 'Falls diese E-Mail-Adresse einem Administrator-Konto zugeordnet ist, wurde eine E-Mail mit einem Link zum Zurücksetzen verschickt.',
     'flash_reset_token_invalid'  => 'Der Link ist ungültig oder abgelaufen. Bitte fordere einen neuen an.',
     'flash_reset_password_success' => 'Passwort erfolgreich geändert. Du kannst dich jetzt anmelden.',
     'mail_reset_subject'         => '{site}: Passwort zurücksetzen',
@@ -227,6 +227,8 @@ return [
 
     // ── Flash-Meldungen (Benutzerverwaltung / Login) ────────────────────────
     'flash_invalid_credentials'      => 'Ungültige Zugangsdaten.',
+    'flash_login_locked'             => 'Zu viele fehlgeschlagene Anmeldeversuche. Bitte in {min} Minute(n) erneut versuchen.',
+    'flash_session_expired'          => 'Deine Sitzung ist wegen Inaktivität abgelaufen. Bitte melde dich erneut an.',
     'flash_db_error'                 => 'DB-Fehler: {msg}',
     'flash_password_mismatch'        => 'Passwörter stimmen nicht überein.',
     'flash_password_min_length'      => 'Mindestens 8 Zeichen.',
@@ -807,6 +809,29 @@ return [
 
     // ── Benutzerverwaltung (view_users.php) ──────────────────────────────────
     'usr_heading_create'        => 'Neuen Benutzer anlegen',
+    'usr_tab_userverwaltung'    => 'Userverwaltung',
+    'usr_tab_log'               => 'Log',
+    'usr_heading_log'           => 'Aktivitätsprotokoll',
+    'usr_log_empty'             => 'Noch keine protokollierten Aktionen.',
+    'usr_log_col_time'          => 'Zeitpunkt',
+    'usr_log_col_user'          => 'Benutzer',
+    'usr_log_col_action'        => 'Aktion',
+    'usr_log_col_details'       => 'Details',
+    'usr_log_col_ip'            => 'IP-Adresse',
+    'usr_log_action_login'           => 'Login',
+    'usr_log_action_logout'          => 'Logout',
+    'usr_log_action_liga_deleted'    => 'Liga gelöscht',
+    'usr_log_action_backup_created'  => 'Backup erstellt',
+    'usr_log_action_backup_restored' => 'Backup wiederhergestellt',
+    'usr_log_action_backup_deleted'  => 'Backup gelöscht',
+    'usr_log_action_user_created'    => 'Benutzer angelegt',
+    'usr_log_action_user_updated'    => 'Benutzer bearbeitet',
+    'usr_log_action_user_deleted'    => 'Benutzer gelöscht',
+    'usr_log_action_settings_saved'  => 'Einstellungen geändert',
+    'usr_log_action_l98_import'      => '.l98-Import',
+    'usr_heading_php_log'       => 'Fehler/Warnungen',
+    'usr_php_log_empty'         => 'Keine protokollierten PHP-Fehler/Warnungen.',
+    'usr_php_log_hint'          => 'Letzte {n} Einträge (neueste zuerst). Datei: store/php_issues.log.',
     'usr_label_password_min8'   => 'Passwort (min. 8 Zeichen)',
     'usr_btn_create'            => 'Benutzer anlegen',
     'usr_heading_existing'      => 'Vorhandene Benutzer',
@@ -830,6 +855,17 @@ return [
     'settings_label_current_password' => 'Aktuelles Passwort',
     'settings_label_new_password2' => 'Neues Passwort wiederholen',
     'settings_heading_db'          => 'Datenbankverbindung',
+    'settings_tab_optionen'        => 'Optionen',
+    'settings_tab_info'            => 'Info',
+    'settings_tab_anzeige'         => 'Anzeigen/Darstellung',
+    'settings_heading_php'         => 'PHP-Erweiterungen',
+    'settings_php_version_line'    => 'PHP-Version: {version}',
+    'settings_col_extension'       => 'Erweiterung',
+    'settings_col_status'          => 'Status',
+    'settings_col_info'            => 'Info',
+    'settings_required'            => 'erforderlich',
+    'settings_loaded'              => 'geladen',
+    'settings_not_loaded'          => 'nicht geladen',
     'settings_db_connected'        => 'Verbunden · {version}',
     'settings_hint_db_config'      => 'Verbindungsparameter in <code>config.php</code> anpassen.',
     'settings_heading_frontend'         => 'Besucherbereich',

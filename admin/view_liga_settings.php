@@ -2,7 +2,7 @@
 /**
  * Project: LMOnext
  * Filename: view_liga_settings.php
- * Fileversion: 1.7.0
+ * Fileversion: 1.7.1
  *
  * PHP version 8.2
  *
@@ -221,7 +221,7 @@ if ($tab === 'grundwerte') { ?>
                     <button type="submit" class="btn btn-success btn-sm" style="align-self:end">💾</button>
                     <button type="button" class="btn btn-muted btn-sm" style="align-self:end"
                             onclick="closeTeamEditor(<?= (int)$t['id'] ?>)">✕</button>
-                  </form>
+                  <?= csrfField() ?></form>
                 </td>
               </tr>
 <?php } ?>
@@ -722,6 +722,6 @@ if ($tab === 'grundwerte') { ?>
             <button type="submit" class="btn btn-success"><?= h(t('ls_btn_save')) ?></button>
             <a href="?action=liga_detail&id=<?= $lid ?>" class="btn btn-muted" style="margin-left:8px"><?= h(t('common_cancel')) ?></a>
           </div>
-        </form>
+        <?= csrfField() ?></form>
 <?php } ?>
       </div>

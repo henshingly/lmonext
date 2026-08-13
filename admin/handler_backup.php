@@ -2,7 +2,7 @@
 /**
  * Project: LMOnext
  * Filename: handler_backup.php
- * Fileversion: 1.3.0
+ * Fileversion: 1.4.0
  *
  * PHP version 8.2
  *
@@ -560,6 +560,7 @@ if ($action === 'run_backup' && $_SERVER['REQUEST_METHOD'] === 'POST') {
 
     $result = backupCreate($type, $format, $tables);
     if ($result['ok']) {
+        logAdminAction('backup_created', $result['filename'] ?? '');
         $msg = t('wartung_flash_backup_created', ['file' => $result['filename']]);
         if (!empty($result['logosFilename'])) {
             $msg .= ' ' . t('wartung_flash_logos_included');
@@ -576,6 +577,9 @@ if ($action === 'restore_backup' && $_SERVER['REQUEST_METHOD'] === 'POST') {
     $filename = (string)($_POST['filename'] ?? '');
     $result = backupRestore($filename);
     if ($result['ok']) {
+        // Wiederherstellen überschreibt bestehende Daten - besonders
+        // wichtig, dies im Log nachvollziehbar zu machen.
+        logAdminAction('backup_restored', $filename);
         $msg = t('wartung_flash_restored', ['n' => $result['statements'] ?? 0]);
         if (!empty($result['remappedPrefix'])) {
             $msg .= ' ' . t('wartung_flash_prefix_remapped', $result['remappedPrefix']);
@@ -596,6 +600,7 @@ if ($action === 'delete_backup' && $_SERVER['REQUEST_METHOD'] === 'POST') {
     requireLogin();
     $filename = (string)($_POST['filename'] ?? '');
     if (backupDelete($filename)) {
+        logAdminAction('backup_deleted', $filename);
         flash(t('wartung_flash_deleted'));
     } else {
         flash(t('wartung_error_generic'), 'error');
