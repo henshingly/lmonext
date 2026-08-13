@@ -1,5 +1,5 @@
 <!--
-  Template: addon/mini | Filename: mininext.tpl.php | Fileversion: 1.2.0
+  Template: addon/mini | Filename: mininext.tpl.php | Fileversion: 1.2.1
   Reines Markup + Platzhalter, kein PHP.
 -->
 <style>
@@ -67,4 +67,5 @@
   <!-- END previous -->
 
   <div class="lmo-mn-foot"><!--ligaDatum--></div>
+  <div class="lmo-mn-foot"><!--Copyright--></div>
 </div>

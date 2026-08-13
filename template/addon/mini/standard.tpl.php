@@ -1,5 +1,5 @@
 <!--
-  Template: addon/mini | Filename: standard.tpl.php | Fileversion: 1.2.0
+  Template: addon/mini | Filename: standard.tpl.php | Fileversion: 1.2.1
   Reines Markup + Platzhalter (siehe addon/mini/lmo-minitab.php), kein PHP.
 -->
 <style>
@@ -34,4 +34,5 @@
   <!-- END Inhalt -->
 </table>
 <div class="lmo-mini-foot"><!--ligaDatum--></div>
+<div class="lmo-mini-foot"><!--Copyright--></div>
 </div>

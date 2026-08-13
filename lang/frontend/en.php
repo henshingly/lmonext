@@ -2,7 +2,7 @@
 /**
  * Project: LMOnext
  * Filename: lang/frontend/en.php
- * Fileversion: 1.44.0
+ * Fileversion: 1.45.0
  *
  * PHP version 8.2
  *
@@ -424,5 +424,13 @@ return [
     'tf_tipp_mail_reset_betreff'   => 'Reset your password',
     'tf_tipp_mail_reset_text'      => "Hello [nick],\n\nyou (or someone on your behalf) requested to reset your prediction game password. Click the following link to set a new password (valid for 1 hour):",
     'tf_tipp_einsicht_noch_nicht_sichtbar' => 'Tips for this game are not visible yet.',
+
+    // ── Maintenance mode (contribution: Torsten Hofmann) ───────────────────────
+    'maintenance_title'            => 'Maintenance mode',
+    'maintenance_heading'          => 'Maintenance in progress',
+    'maintenance_message'          => 'This instance is currently in maintenance mode.',
+    'maintenance_subtext'          => 'This may take a while. Please try again later.',
+    'maintenance_contact'          => 'For urgent questions, please contact the system administrator.',
+    'maintenance_footer'           => 'LMOnext — Liga-Manager-Online',
 
 ];

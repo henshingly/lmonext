@@ -2,7 +2,7 @@
 /**
  * Project: LMOnext
  * Filename: bootstrap.php
- * Fileversion: 1.22.0
+ * Fileversion: 1.23.0
  *
  * PHP version 8.2
  *
@@ -90,10 +90,26 @@ session_start();
 // Embed-Addons (viewer, tabellenrechner, relegation, ewige, mini), die genau
 // dafür gebaut sind und ihre eigenen, permissiveren Header setzen (siehe
 // dortiger Aufruf von header_remove() nach dem Laden von frontend/bootstrap.php).
+// CSP über frame-ancestors hinaus verschärft (Beitrag: Torsten Hofmann) -
+// script-src/object-src/base-uri schränken ein, WOHER Skripte/Objekte/das
+// <base>-Tag stammen dürfen, als zusätzliche Verteidigungsebene falls
+// irgendwo doch reflektierter/gespeicherter Inhalt in die Ausgabe gerät (die
+// eigentliche Absicherung bleibt konsequentes h()-Escaping, siehe unten -
+// die CSP ist Verteidigung in der Tiefe, kein Ersatz dafür). 'unsafe-inline'
+// bleibt für style-src/script-src nötig, da Admin-Views inline-CSS/JS
+// verwenden (kein Build-Schritt für externe Bundles in diesem Projekt).
 if (!headers_sent()) {
     header('X-Frame-Options: DENY');
     header('X-Content-Type-Options: nosniff');
-    header("Content-Security-Policy: frame-ancestors 'none'");
+    header('Referrer-Policy: strict-origin-when-cross-origin');
+    header("Content-Security-Policy: default-src 'self'; "
+         . "style-src 'self' 'unsafe-inline'; "
+         . "script-src 'self' 'unsafe-inline'; "
+         . "img-src 'self' data: blob:; "
+         . "font-src 'self' data:; "
+         . "object-src 'none'; "
+         . "base-uri 'self'; "
+         . "frame-ancestors 'none'");
 }
 
 // ── Mehrsprachigkeit ─────────────────────────────────────────────────────────
@@ -165,6 +181,13 @@ function checkSessionIdleTimeout() : void
         $_SESSION = [];
         session_destroy();
         session_start();
+        // Neue Session-ID nach dem Neustart erzwingen (Beitrag: Torsten
+        // Hofmann) - ohne dies würde PHP die vom Client weiterhin gesendete
+        // (alte) Session-ID einfach für die neue, leere Session
+        // wiederverwenden. Verhindert Session-Fixation: ein Angreifer, der
+        // vor dem Timeout eine Session-ID "vorgegeben" hat, bekommt nach dem
+        // automatischen Reset keine gültige ID mehr zugewiesen.
+        session_regenerate_id(true);
         flash(t('flash_session_expired'), 'error');
         header('Location: ?action=login');
         exit;

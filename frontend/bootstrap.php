@@ -2,7 +2,7 @@
 /**
  * Project: LMOnext
  * Filename: bootstrap.php
- * Fileversion: 1.10.0
+ * Fileversion: 1.12.0
  *
  * PHP version 8.2
  *
@@ -74,10 +74,41 @@ session_start();
 // relegation, ewige, mini) requiren zwar ebenfalls diese Datei, überschreiben
 // die Header aber direkt danach wieder (siehe dortiger header_remove()-Aufruf),
 // damit ihre iframe-Einbettung auf fremden Websites weiterhin funktioniert.
+// CSP über frame-ancestors hinaus verschärft (Beitrag: Torsten Hofmann) -
+// gleiche zusätzliche Direktiven wie im Adminbereich (siehe
+// admin/bootstrap.php), frame-ancestors bleibt bewusst bei 'self' statt
+// 'none' (unverändert gegenüber vorher - die Haupt-Besucherseiten dürfen
+// weiterhin auf der eigenen Domain eingebettet werden, nur nicht extern).
 if (!headers_sent()) {
     header('X-Frame-Options: SAMEORIGIN');
     header('X-Content-Type-Options: nosniff');
-    header("Content-Security-Policy: frame-ancestors 'self'");
+    header('Referrer-Policy: strict-origin-when-cross-origin');
+    header("Content-Security-Policy: default-src 'self'; "
+         . "style-src 'self' 'unsafe-inline'; "
+         . "script-src 'self' 'unsafe-inline'; "
+         . "img-src 'self' data: blob:; "
+         . "font-src 'self' data:; "
+         . "object-src 'none'; "
+         . "base-uri 'self'; "
+         . "frame-ancestors 'self'");
+}
+
+// ── Session-Timeout für Tippspiel-Logins (Idle-Erkennung) ────────────────────
+// Bisher lief eine einmal angemeldete Tipper-Session unbegrenzt weiter -
+// selbst auf einem gemeinsam genutzten/öffentlichen Rechner blieb ein
+// vergessenes Abmelden also dauerhaft aktiv. 60 Minuten statt der 30 Minuten
+// im Adminbereich (Beitrag: Torsten Hofmann; Tipper sind zwischen zwei
+// Aktionen typischerweise länger inaktiv als ein Admin bei der Datenpflege).
+// Betrifft ausschließlich den Tippspiel-Login (tipp_user_id) - die übrige
+// Besuchersitzung (Sprache, Theme etc.) bleibt unangetastet.
+const FRONTEND_SESSION_IDLE_TIMEOUT = 3600; // 60 Minuten in Sekunden
+if (isset($_SESSION['tipp_user_id'])) {
+    $tippLast = (int)($_SESSION['tipp_last_activity'] ?? time());
+    if (time() - $tippLast > FRONTEND_SESSION_IDLE_TIMEOUT) {
+        unset($_SESSION['tipp_user_id'], $_SESSION['tipp_last_activity']);
+    } else {
+        $_SESSION['tipp_last_activity'] = time();
+    }
 }
 
 // ── CSRF-Schutz (Frontend, z.B. Tippspiel-Formulare) ─────────────────────────
@@ -208,6 +239,67 @@ function getAdminSetting(string $key, string $default = '') : string
 // resolveActiveTemplate() passieren, damit t()/tf() im weiteren Verlauf
 // (inkl. der Datenfunktionen) korrekt auflösen.
 getCurrentLanguage('frontend', getAdminSetting('language', DEFAULT_LANGUAGE));
+
+// ── Wartungsmodus: Frontend sperren, wenn im Admin aktiviert (Beitrag:
+// Torsten Hofmann) - der Adminbereich bleibt dabei immer erreichbar, nur die
+// Besucherseiten (home.php, liga.php, Embed-Addons) werden blockiert und
+// zeigen stattdessen eine gestaltete Wartungsseite (HTTP 503, damit
+// Suchmaschinen/Monitoring den Zustand korrekt als "vorübergehend nicht
+// verfügbar" statt als echten Fehler oder als neuen dauerhaften Seiteninhalt
+// werten). Wird zentral hier geprüft (nicht einzeln in jeder Seite), da
+// sowohl home.php/liga.php als auch alle Embed-Addons frontend/bootstrap.php
+// laden.
+if (getAdminSetting('maintenance_mode', '0') === '1') {
+    $maintTitle   = tf('maintenance_title');
+    $maintHeading = tf('maintenance_heading');
+    $maintMsg     = tf('maintenance_message');
+    $maintSub     = tf('maintenance_subtext');
+    $maintContact = tf('maintenance_contact');
+    $maintFooter  = tf('maintenance_footer');
+    $maintVersion = getAppVersion();
+
+    http_response_code(503);
+    header('Retry-After: 3600');
+    echo '<!DOCTYPE html>'
+       . '<html lang="de"><head>'
+       . '<meta charset="UTF-8">'
+       . '<meta name="viewport" content="width=device-width,initial-scale=1">'
+       . '<meta name="robots" content="noindex,nofollow">'
+       . '<title>' . h($maintTitle) . '</title>'
+       . '<style>'
+       . '*{margin:0;padding:0;box-sizing:border-box}'
+       . 'body{font-family:"Segoe UI",system-ui,-apple-system,sans-serif;'
+       . 'min-height:100vh;display:flex;align-items:center;justify-content:center;'
+       . 'background:linear-gradient(135deg,#153A8C 0%,#0d2862 100%);'
+       . 'color:#1f2430;padding:20px}'
+       . '.maint-card{background:#fff;border-radius:16px;'
+       . 'box-shadow:0 20px 60px rgba(0,0,0,.3);'
+       . 'max-width:520px;width:100%;padding:48px 40px;text-align:center}'
+       . '.maint-icon{width:72px;height:72px;margin:0 auto 24px;'
+       . 'border-radius:50%;background:#f0f2f5;display:flex;'
+       . 'align-items:center;justify-content:center;font-size:32px}'
+       . '.maint-h1{font-size:1.6rem;font-weight:700;color:#153A8C;'
+       . 'margin-bottom:12px}'
+       . '.maint-msg{font-size:1.02rem;color:#4b5261;margin-bottom:8px}'
+       . '.maint-sub{font-size:.88rem;color:#9098a8;margin-bottom:24px}'
+       . '.maint-contact{font-size:.84rem;color:#9098a8;'
+       . 'padding-top:20px;border-top:1px solid #eef0f3}'
+       . '.maint-foot{margin-top:24px;font-size:.72rem;color:#c0c5d0;'
+       . 'letter-spacing:.02em}'
+       . '</style></head><body>'
+       . '<div class="maint-card">'
+       . '<div class="maint-icon">&#9881;&#65039;</div>'
+       . '<h1 class="maint-h1">' . h($maintHeading) . '</h1>'
+       . '<p class="maint-msg">' . h($maintMsg) . '</p>'
+       . '<p class="maint-sub">' . h($maintSub) . '</p>'
+       . '<p class="maint-contact">' . h($maintContact) . '</p>'
+       . '<div class="maint-foot">'
+       . h($maintFooter)
+       . ($maintVersion !== '' ? ' v' . h($maintVersion) : '')
+       . '</div>'
+       . '</div></body></html>';
+    exit;
+}
 
 // ── Template-Engine + aktives Template ermitteln ─────────────────────────────
 require_once __DIR__ . '/template_engine.php';

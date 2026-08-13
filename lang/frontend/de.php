@@ -2,7 +2,7 @@
 /**
  * Project: LMOnext
  * Filename: lang/frontend/de.php
- * Fileversion: 1.44.0
+ * Fileversion: 1.45.0
  *
  * PHP version 8.2
  *
@@ -426,5 +426,13 @@ return [
     'tf_tipp_mail_reset_betreff'   => 'Passwort zurücksetzen',
     'tf_tipp_mail_reset_text'      => "Hallo [nick],\n\ndu hast (oder jemand in deinem Namen) angefordert, dein Tippspiel-Passwort zurückzusetzen. Klicke auf den folgenden Link, um ein neues Passwort zu vergeben (1 Stunde gültig):",
     'tf_tipp_einsicht_noch_nicht_sichtbar' => 'Für dieses Spiel sind die Tipps noch nicht einsehbar.',
+
+    // ── Wartungsmodus (Beitrag: Torsten Hofmann) ───────────────────────────────
+    'maintenance_title'            => 'Wartungsmodus',
+    'maintenance_heading'          => 'Wartungsarbeiten',
+    'maintenance_message'          => 'Diese Instanz befindet sich aktuell im Wartungsmodus.',
+    'maintenance_subtext'          => 'Die Arbeiten können eine Weile dauern. Bitte versuche es später erneut.',
+    'maintenance_contact'          => 'Bei dringenden Fragen wende dich bitte an den Systemadministrator.',
+    'maintenance_footer'           => 'LMOnext — Liga-Manager-Online',
 
 ];

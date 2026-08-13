@@ -2,7 +2,7 @@
 /**
  * Project: LMOnext
  * Filename: addon/mini/lmo-mininext.php
- * Fileversion: 1.0.3
+ * Fileversion: 1.0.4
  *
  * PHP version 8.2
  *
@@ -283,6 +283,7 @@ function renderMininext(int $ligaId, ?int $teamAId, ?int $teamBId, string $templ
         '<!--gameTime-->'   => $zeitTs !== false ? h(date('H:i', $zeitTs)) : '',
         '<!--countDown-->'  => h($countdownText),
         '<!--gameNote-->'   => h((string)($current['notiz'] ?? '')),
+        '<!--Copyright-->'  => \LMOnext\Liga\LigaService::renderCopyrightNotice('mininext'),
         '<!--ligaDatum-->'  => h(tf('liga_stand_datum', ['datum' => $ligaDatumText])),
         '<!--homeName-->'        => h($nameOf($currentHeimId, 'name')),
         '<!--homeNameMiddle-->'  => h($nameOf($currentHeimId, 'mittel')),

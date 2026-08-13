@@ -2,7 +2,7 @@
 /**
  * Project: LMOnext
  * Filename: lang/admin/de.php
- * Fileversion: 1.29.0
+ * Fileversion: 1.30.0
  *
  * PHP version 8.2
  *
@@ -881,6 +881,14 @@ return [
     'settings_hint_show_back_link'         => 'Wenn nein, wird sowohl der "← Zur Übersicht"-Link auf der Liga-Detailseite als auch die komplette Liga-Auswahl auf der Startseite (aktive Ligen + Archiv) für Besucher ausgeblendet. Ligen sind dann nur noch direkt über liga.php?id=LIGA_ID erreichbar – gedacht für Betreiber, die nur eine einzelne, feste Liga per iframe/include auf einer fremden Webseite einbinden möchten (entspricht "Ligaauswahl" im alten LMO).',
 
     // ── Wartung (Datenbank-Backup/Wiederherstellung) ──────────────────────────
+    'wartung_tab_wartung'             => 'Wartung',
+    'wartung_maintenance_intro'       => 'Hier kannst du den Wartungsmodus aktivieren. Ist dieser eingeschaltet, ist das Frontend für Besucher nicht erreichbar und zeigt stattdessen eine Wartungsseite an. Der Adminbereich bleibt weiterhin voll funktionsfähig.',
+    'wartung_maintenance_label'       => 'Wartungsmodus aktivieren',
+    'wartung_maintenance_hint'        => 'Wenn aktiviert, sehen Besucher anstelle der Liga-Seiten eine Wartungsseite. Die Administration ist davon nicht betroffen.',
+    'wartung_maintenance_status_on'   => 'Wartungsmodus ist aktuell AKTIV — das Frontend ist für Besucher gesperrt.',
+    'wartung_maintenance_status_off'  => 'Wartungsmodus ist aktuell INAKTIV — das Frontend ist für Besucher erreichbar.',
+    'wartung_flash_maintenance_on'    => 'Wartungsmodus wurde aktiviert. Das Frontend ist ab sofort gesperrt.',
+    'wartung_flash_maintenance_off'   => 'Wartungsmodus wurde deaktiviert. Das Frontend ist wieder erreichbar.',
     'wartung_tab_backup'             => 'Backup',
     'wartung_tab_restore'            => 'Wiederherstellung',
     'wartung_backup_intro'           => 'Hier kannst du alle Datenbank-Tabellen sichern. Das Archiv wird im Ordner store/ gespeichert.',

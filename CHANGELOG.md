@@ -13,6 +13,7 @@
 
 ## addon/mini/lmo-mininext.php
 
+- Changelog: 1.0.4 - Spenden-Link ergänzt (Beitrag Torsten Hofmann, hier auf die zentrale renderCopyrightNotice()-Funktion abgestimmt): neuer Platzhalter `<!--Copyright-->` im outer-Replacement-Array, siehe mininext.tpl.php 1.2.1 für die zugehörige Template-Position. Dieses Addon zeigte bisher als einziges keinen Copyright-/Spenden-Hinweis (alle anderen Embed-Addons - viewer, tabellenrechner, relegation, ewige, minitab - hatten ihn bereits).
 - Changelog: 1.0.3 - Wie viewer 3.0.1: Frame-Schutz-Header wieder entfernt für die beabsichtigte iframe-Einbettung.
 - Changelog: 1.0.2 - Bugfix: Team-Logos zeigten ins Leere, da renderTeamLogoImg() Pfade relativ zum Projekt-Root zurückgibt – korrekt für liga.php/home.php (die selbst im Projekt-Root liegen), aber falsch für dieses Addon (liegt unter addon/mini/, zwei Ebenen tiefer, siehe direkter URL-Aufruf in der Fehlermeldung des Nutzers). Neue Funktion miniProjectRootUrlPrefix() berechnet das korrekte URL-Präfix dynamisch über Document-Root-Abgleich (funktioniert bei Direktaufruf UND bei include() aus einer beliebig platzierten Wrapper-Datei), an allen 8 Logo-Stellen verwendet
 - Changelog: 1.0.1 - Bugfix: <!--ligaDatum--> zeigte immer das heutige Tagesdatum statt des tatsächlichen letzten Speicherdatums der Liga. Liest jetzt liga.datum aus der DB, siehe lmo-minitab.php 1.1.0 für Details
@@ -20,6 +21,7 @@
 
 ## addon/mini/lmo-minitab.php
 
+- Changelog: 1.2.4 - Spenden-Link ergänzt (Beitrag Torsten Hofmann, hier auf die zentrale renderCopyrightNotice()-Funktion abgestimmt): neuer Platzhalter `<!--Copyright-->` im outer-Replacement-Array, siehe standard.tpl.php 1.2.1 für die zugehörige Template-Position.
 - Changelog: 1.2.3 - Wie viewer 3.0.1: Frame-Schutz-Header wieder entfernt für die beabsichtigte iframe-Einbettung.
 - Changelog: 1.2.2 - $ligaId an computeStandings() übergeben, damit admin-seitig hinterlegte Strafpunkte/Straftore auch in diesem Mini-Widget korrekt berücksichtigt werden (siehe src/Liga/StandingsTrait.php 1.1.0)
 - Changelog: 1.2.1 - Bugfix: Team-Logo-Bild und der "Zur Tabelle"-Link in der Kopfzeile zeigten ins Leere, da renderTeamLogoImg()/die "liga.php?id=..."-Verlinkung Pfade relativ zum Projekt-Root zurückgeben – korrekt für liga.php/home.php (die selbst im Projekt-Root liegen), aber falsch für dieses Addon (liegt unter addon/mini/, zwei Ebenen tiefer). Neue Funktion miniProjectRootUrlPrefix() berechnet das korrekte URL-Präfix dynamisch über Document-Root-Abgleich (funktioniert bei Direktaufruf UND bei include() aus einer beliebig platzierten Wrapper-Datei, nicht nur bei einer festen Verzeichnistiefe), Fallback auf einfache Heuristik falls nicht ermittelbar
@@ -183,6 +185,7 @@
 
 ## admin/bootstrap.php
 
+- Changelog: 1.23.0 - Drei Sicherheits-Verbesserungen aus Torsten Hofmanns parallelem Update übernommen (Review/Vergleich siehe SECURITY_COMPARISON.md): (1) Content-Security-Policy deutlich verschärft - statt nur `frame-ancestors 'none'` jetzt zusätzlich `default-src`/`style-src`/`script-src`/`img-src`/`font-src`/`object-src 'none'`/`base-uri 'self'`, plus neuer `Referrer-Policy: strict-origin-when-cross-origin`-Header; (2) checkSessionIdleTimeout() ruft nach dem Session-Reset jetzt session_regenerate_id(true) auf (verhindert Session-Fixation über die abgelaufene Session-ID hinweg); (3) Torstens eigene Varianten dieser drei Punkte wurden NICHT direkt übernommen, sondern auf unsere bestehende Architektur adaptiert (DB-basiertes Rate-Limiting, DOMDocument-SVG-Sanitizing und die strengere safeRedirectTarget() bleiben unverändert bestehen, da sie im Vergleich robuster sind als Torstens Entsprechungen - siehe Vergleichsdokument).
 - Changelog: 1.22.0 - Neue Datei-basierte Protokollierung für PHP-Fehler/Warnungen: der bestehende globale Exception-Handler schreibt fatale Fehler jetzt zusätzlich in eine dedizierte Log-Datei (store/php_issues.log), neuer set_error_handler() fängt zusätzlich Warnungen/Notices/Deprecated-Meldungen (die zuvor gar nicht protokolliert wurden) ein. Die eigentlichen Lese-/Schreibfunktionen (phpIssueLogFile/logPhpIssue/readPhpIssueLog) wurden nach config_loader.php verschoben, damit sowohl Admin- als auch Frontend-Fehler in derselben Datei landen, ohne die bewusste Trennung der beiden Bootstrap-Dateien aufzuweichen. Live geprüft: ausgelöste Warnung UND fataler Fehler landen beide korrekt in der Datei.
 - Changelog: 1.21.1 - Zusätzlicher Fund beim Nachprüfen: eine verwaiste, doppelte Kopie von ensureLoginAttemptsTable() (ohne Funktionssignatur, wurde beim Laden der Datei als nutzloser Bare-Block sofort ausgeführt statt als aufrufbare Funktion zu existieren) direkt neben der korrekten Definition entfernt. Danach eine systematische Prüfung der gesamten Datei (und aller anderen in den letzten Sitzungen bearbeiteten Dateien) auf ähnliche verwaiste Funktionsköpfe durchgeführt - keine weiteren Fälle gefunden.
 - Changelog: 1.21.0 - Bugfix: die Funktion checkRuntimeExtensions() hatte durch eine frühere Bearbeitung dieser Datei ihre Funktionssignatur verloren (nur der Funktionskörper blieb übrig, derselbe Fehlertyp wie zuvor bei ensureLoginAttemptsTable()) - dadurch zeigte die Info-Seite unter Einstellungen "Call to undefined function" statt der PHP-Erweiterungstabelle. Wiederhergestellt und live bestätigt: Info-Tab zeigt jetzt wieder korrekt PHP-Version und Erweiterungsstatus. Zusätzlich: der globale Fehler-Handler zeigt bei einem unerwarteten Fehler jetzt einen Link zum Aktivitätsprotokoll (Administrator → Log) an - nur sichtbar, wenn eine eingeloggte Admin-Session besteht. Live über echte HTTP-Requests bestätigt: Link erscheint korrekt bei aktiver Session, bleibt bei anonymen Anfragen unsichtbar.
@@ -254,6 +257,7 @@
 
 ## admin/handler_backup.php
 
+- Changelog: 1.5.0 - Neue Aktion save_maintenance_mode (Beitrag: Torsten Hofmann, hier zusätzlich mit Audit-Log-Eintrag über logAdminAction() abgesichert - Torstens Originalversion hatte keine eigene Protokollierung dieser Aktion). Speichert den Wartungsmodus-Schalter als admin_settings-Eintrag, ausgewertet in frontend/bootstrap.php 1.12.0.
 - Changelog: 1.4.0 - Protokolliert Backup erstellen/wiederherstellen/löschen im neuen Audit-Log - besonders wichtig bei "wiederherstellen", da dabei bestehende Daten überschrieben werden.
 - Changelog: 1.3.0 - Spielerfotos (assets/img/player/, siehe addon/player/spielerstat_lib.php) werden jetzt im selben Logo-ZIP mitgesichert (eigenes Unterverzeichnis "player/" neben "teams/"), inkl. Wiederherstellung. Kein zusätzliches ZIP nötig, kein Verhaltensunterschied für ältere Backups ohne Fotos
 - Changelog: 1.2.0 - Team-Logo-Ordner (assets/img/teams/) wird jetzt mitgesichert: neue Funktionen backupCreateLogosZip()/backupRestoreLogosZip()/ backupLogosZipFilenameFor(). Bei jedem Backup wird (falls ZipArchive verfügbar ist und mindestens ein Logo hochgeladen wurde) ein begleitendes "backup_{Zeitstempel}_logos.zip" im selben /store-Ordner angelegt, mit demselben Zeitstempel wie der SQL-Dump. Wird beim Wiederherstellen automatisch mit zurückgespielt (vorhandene Logos werden vorher entfernt, analog zur "Komplett ersetzen"-Logik der DB-Wiederherstellung), und beim Löschen/automatischen Aufräumen (Max-Anzahl) zusammen mit dem zugehörigen SQL-Backup entfernt. ZipArchive ist optional (wie bzip2) – fehlt die Erweiterung, wird die Logo-Sicherung übersprungen, die Datenbank-Sicherung funktioniert unverändert weiter
@@ -539,6 +543,7 @@
 
 ## admin/view_wartung.php
 
+- Changelog: 1.3.0 - Neuer erster Tab "Wartung" mit Wartungsmodus-Schalter, übernommen aus Torsten Hofmanns parallelem Update (siehe frontend/bootstrap.php 1.12.0 und admin/handler_backup.php 1.5.0 für die zugehörige Sperr-Logik/den Speicher-Handler). Checkbox sendet sich per onchange sofort ab (kein extra Speichern-Button), Statuszeile mit farbiger Ampel (rot=aktiv/grün=inaktiv) darunter. $tab-Auflösung von der bisherigen Zwei-Wege-Prüfung auf ein `in_array()` gegen alle drei Tabs umgestellt, Standard-Tab jetzt "wartung" statt "backup".
 - Changelog: 1.2.1 - Sicherheitsfix: csrfField() in jedes POST-Formular eingefügt (CSRF-Schutz, siehe admin/bootstrap.php).
 - Changelog: 1.2.0 - Hinweis auf der Backup-Karte, ob Team-Logos mitgesichert werden (bzw. Warnung, wenn ZipArchive fehlt). Backup-Liste in der Wiederherstellen- Karte zeigt jetzt pro Eintrag ein kleines Symbol, wenn dieses Backup auch Team-Logos enthält, siehe handler_backup.php 1.2.0
 - Changelog: 1.1.0 - Bugfix: native <select multiple>/<select size> hatten browserübergreifend sehr schlechten Kontrast bei markierten Zeilen im Dark-Theme (kaum lesbar). Tabellen-Auswahl und Backup-Auswahl durch selbst gestylte Checkbox-/Radio-Listen ersetzt (volle Farbkontrolle, gleiches Verhalten/POST-Format wie zuvor, kein Backend-Änderung nötig)
@@ -569,6 +574,8 @@
 
 ## frontend/bootstrap.php
 
+- Changelog: 1.12.0 - Wartungsmodus fürs Frontend übernommen (Beitrag: Torsten Hofmann): ist der neue Schalter "Wartungsmodus" (Administrator → Wartung, siehe view_wartung.php 1.3.0/handler_backup.php 1.5.0) aktiv, zeigen alle Besucherseiten (home.php, liga.php sowie sämtliche Embed-Addons, da diese ebenfalls diese Datei laden) statt ihres normalen Inhalts eine gestaltete Wartungsseite (HTTP 503 + Retry-After-Header). Der Adminbereich selbst ist davon unberührt, da admin/bootstrap.php separat lädt. Prüfung zentral direkt nach der Sprachauflösung, vor Template-Engine/Datenfunktionen - kein zusätzlicher DB-Zugriff nötig (nutzt die bereits vorhandene getAdminSetting()-Zwischenspeicherung).
+- Changelog: 1.11.0 - Zwei Sicherheits-Verbesserungen aus Torsten Hofmanns parallelem Update übernommen (siehe admin/bootstrap.php 1.23.0 für den dritten Punkt und SECURITY_COMPARISON.md für den vollständigen Vergleich): (1) gleiche verschärfte CSP + Referrer-Policy-Header wie im Adminbereich, frame-ancestors bleibt bewusst bei 'self' (unverändert - Haupt-Besucherseiten dürfen weiterhin same-origin eingebettet werden); (2) neuer Idle-Timeout (60 Minuten) speziell für Tippspiel-Logins (tipp_user_id) - bisher lief ein einmal angemeldeter Tipper unbegrenzt weiter, jetzt wird die Tipp-Anmeldung nach einer Stunde Inaktivität automatisch aufgehoben (betrifft nur den Tippspiel-Login, nicht die übrige Besuchersitzung).
 - Changelog: 1.10.0 - Frontend-Fehler landen jetzt ebenfalls in der zentralen Fehler/Warnungen-Log-Datei: globaler Exception-Handler erweitert, neuer set_error_handler() für nicht-fatale Meldungen ergänzt (analog zum Adminbereich).
 - Changelog: 1.9.0 - Sicherheitsfix: Security-Header ergänzt (X-Frame-Options: SAMEORIGIN, X-Content-Type-Options: nosniff, Content-Security-Policy: frame-ancestors 'self'). Schützt die Hauptseiten (liga.php, home.php) vor Clickjacking über fremde iframes. Live per echtem HTTP-Request bestätigt.
 - Changelog: 1.8.0 - Sicherheitsfix: CSRF-Schutz auch im Frontend (Tippspiel-Formulare) - gleiche csrfToken()/csrfField()/requireCsrf()-Funktionen wie im Adminbereich, zentral nach session_start() geprüft.
@@ -749,6 +756,7 @@
 
 ## lang/admin/de.php
 
+- Changelog: 1.30.0 - Neue Sprachschlüssel für den Wartungsmodus-Tab (wartung_tab_wartung, wartung_maintenance_*, wartung_flash_maintenance_*), siehe admin/view_wartung.php 1.3.0.
 - Changelog: 1.29.0 - Neue Sprachschlüssel für den Fehler/Warnungen-Block.
 - Changelog: 1.28.0 - Neue Sprachschlüssel für die Administrator-Tabs und das Audit-Log.
 - Changelog: 1.27.0 - Reset-Erfolgsmeldung auf die Standard-Anti-Enumeration-Formulierung umgestellt ("falls diese E-Mail-Adresse... zugeordnet ist" statt einer definitiven Aussage).
@@ -838,6 +846,7 @@
 
 ## lang/admin/en.php
 
+- Changelog: 1.29.0 - Added language keys for the new maintenance mode tab (wartung_tab_wartung, wartung_maintenance_*, wartung_flash_maintenance_*), see admin/view_wartung.php 1.3.0.
 - Changelog: 1.28.0 - Added language keys for the errors/warnings block.
 - Changelog: 1.27.0 - Added language keys for the Administrator tabs and the audit log.
 - Changelog: 1.26.0 - Updated the reset-success message to the standard anti-enumeration phrasing.
@@ -926,6 +935,7 @@
 
 ## lang/frontend/de.php
 
+- Changelog: 1.45.0 - Neue Sprachschlüssel für die Wartungsseite (maintenance_title/heading/message/subtext/contact/footer), angezeigt bei aktivem Wartungsmodus, siehe frontend/bootstrap.php 1.12.0.
 - Changelog: 1.44.0 - Emoji aus tf_tipp_header_link entfernt (durch echtes Icon-Bild ersetzt), neuer Sprachschlüssel tf_tipp_section_titel für die neue Bereichsüberschrift.
 - Changelog: 1.43.0 - Neue Sprachschlüssel für die Volleyball-Tabellenspalten.
 - Changelog: 1.42.0 - Neuer Sprachschlüssel für die Tabellendarstellungs-Umschaltung.
@@ -995,6 +1005,7 @@
 
 ## lang/frontend/en.php
 
+- Changelog: 1.45.0 - Added language keys for the maintenance page (maintenance_title/heading/message/subtext/contact/footer), shown while maintenance mode is active, see frontend/bootstrap.php 1.12.0.
 - Changelog: 1.44.0 - Removed emoji from tf_tipp_header_link (replaced by a real icon image), added new tf_tipp_section_titel language key for the new section heading.
 - Changelog: 1.43.0 - Added language keys for the volleyball table columns.
 - Changelog: 1.42.0 - Added language key for the table view toggle.
@@ -1209,6 +1220,7 @@
 
 ## template/addon/mini/mininext.tpl.php
 
+- Changelog: 1.2.1 - Neuer `<!--Copyright-->`-Platzhalter in der Fußzeile, unter dem bestehenden Datumshinweis (siehe lmo-mininext.php 1.0.4).
 - Changelog: 1.2.0 - Auf Wunsch zurückgebaut: Logo steht wieder über dem Teamnamen (gestapelt) statt daneben – bei langen Namen wie "Bayer 04 Leverkusen" führte die horizontale Anordnung zu abgeschnittenem Text ("Bayer 04 Leve..."). Gleiche Rückänderung im "Vorheriges Spiel"-Block
 - Changelog: 1.1.0 - Team-Anzeige auf Wunsch umgebaut: Logo steht jetzt neben dem Namen statt darüber ("TEAMNAME LOGO -:- LOGO TEAMNAME", Logos "schauen" zum Ergebnis in der Mitte), analog zur Ergebnisse-Ansicht der normalen Besucherseite. CSS-Selektor für die Logo-Größe generisch auf "img im Team-Bereich" gesetzt statt auf die globale .team-logo-inline-Klasse (existiert auf dieser eigenständigen Seite nicht). Gleiche Anpassung im "Vorheriges Spiel"-Block
 - Changelog: 1.0.1 - box-sizing:border-box + display:inline-block ergänzt (gleiche defensive Absicherung wie beim Minitabelle-Template-Fix, siehe standard.tpl.php 1.1.0) gegen abweichende CSS-Regeln auf der Zielseite

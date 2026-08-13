@@ -2,7 +2,7 @@
 /**
  * Project: LMOnext
  * Filename: lang/admin/en.php
- * Fileversion: 1.28.0
+ * Fileversion: 1.29.0
  *
  * PHP version 8.2
  *
@@ -880,6 +880,14 @@ return [
     'settings_hint_show_back_link'         => 'If no, both the "← Back to overview" link on the league detail page AND the entire league selection on the homepage (active leagues + archive) are hidden from visitors. Leagues are then only reachable directly via liga.php?id=LEAGUE_ID – intended for operators who only want to embed a single, fixed league via iframe/include on an external website (equivalent to "Ligaauswahl" in the old LMO).',
 
     // ── Maintenance (database backup/restore) ─────────────────────────────────
+    'wartung_tab_wartung'             => 'Maintenance mode',
+    'wartung_maintenance_intro'       => 'Here you can enable maintenance mode. When switched on, the frontend is unreachable for visitors and shows a maintenance page instead. The admin area remains fully functional.',
+    'wartung_maintenance_label'       => 'Enable maintenance mode',
+    'wartung_maintenance_hint'        => 'When enabled, visitors see a maintenance page instead of the league pages. Administration is not affected.',
+    'wartung_maintenance_status_on'   => 'Maintenance mode is currently ACTIVE — the frontend is locked for visitors.',
+    'wartung_maintenance_status_off'  => 'Maintenance mode is currently INACTIVE — the frontend is reachable for visitors.',
+    'wartung_flash_maintenance_on'    => 'Maintenance mode has been enabled. The frontend is locked from now on.',
+    'wartung_flash_maintenance_off'   => 'Maintenance mode has been disabled. The frontend is reachable again.',
     'wartung_tab_backup'             => 'Backup',
     'wartung_tab_restore'            => 'Restore',
     'wartung_backup_intro'           => 'Here you can back up all database tables. The archive is saved in the store/ folder.',

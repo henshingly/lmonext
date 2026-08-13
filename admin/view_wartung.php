@@ -2,7 +2,7 @@
 /**
  * Project: LMOnext
  * Filename: view_wartung.php
- * Fileversion: 1.2.1
+ * Fileversion: 1.3.0
  *
  * PHP version 8.2
  *
@@ -13,15 +13,21 @@
  *
  */
 
-// ── View: Wartung (Backup/Wiederherstellung) ─────────────────────────────────
-$tab = ($_GET['tab'] ?? 'backup') === 'restore' ? 'restore' : 'backup';
-$tabs = ['backup' => t('wartung_tab_backup'), 'restore' => t('wartung_tab_restore')];
+// ── View: Wartung (Wartungsmodus/Backup/Wiederherstellung) ──────────────────
+$tab = ($_GET['tab'] ?? 'wartung');
+$tab = in_array($tab, ['wartung', 'backup', 'restore'], true) ? $tab : 'wartung';
+$tabs = [
+    'wartung' => t('wartung_tab_wartung'),
+    'backup'  => t('wartung_tab_backup'),
+    'restore' => t('wartung_tab_restore'),
+];
 
 $allTables    = backupAllTableNames();
 $bzip2Ok      = backupBzip2Available();
 $zipOk        = backupZipAvailable();
 $backupMaxN   = (int)getAdminSetting('backup_max_count', '10');
 $backupsList  = $tab === 'restore' ? backupList() : [];
+$maintenanceMode = getAdminSetting('maintenance_mode', '0') === '1';
 
 function wartungFormatSize(int $bytes) : string
 {
@@ -48,7 +54,36 @@ function wartungFormatSize(int $bytes) : string
 
       <div class="card" style="border-radius:0 var(--radius) var(--radius) var(--radius);margin-top:0;max-width:760px">
 
-<?php if ($tab === 'backup') { ?>
+<?php if ($tab === 'wartung') { /* ── TAB: WARTUNGSMODUS ──────────────────── */ ?>
+
+        <p style="color:var(--muted);font-size:.86rem;margin-top:0"><?= h(t('wartung_maintenance_intro')) ?></p>
+
+        <form method="post" action="?action=save_maintenance_mode">
+        <?= csrfField() ?>
+          <div class="form-group">
+            <label style="display:flex;align-items:center;gap:10px;cursor:pointer;font-size:.9rem">
+              <input type="checkbox" name="maintenance_mode" value="1"<?= $maintenanceMode ? ' checked' : '' ?>
+                     style="width:18px;height:18px;accent-color:var(--accent);flex:none"
+                     onchange="this.form.submit()">
+              <span><?= h(t('wartung_maintenance_label')) ?></span>
+            </label>
+          </div>
+          <p style="color:var(--muted);font-size:.78rem;margin-top:4px;margin-bottom:0">
+            <?= h(t('wartung_maintenance_hint')) ?>
+          </p>
+        </form>
+
+        <div style="margin-top:18px;padding-top:14px;border-top:1px solid var(--border)">
+          <div style="display:flex;gap:8px;align-items:center">
+            <span style="display:inline-block;width:10px;height:10px;border-radius:50%;
+                         background:<?= $maintenanceMode ? '#ef4444' : '#22c55e' ?>;flex:none"></span>
+            <span style="font-size:.86rem;color:var(--text)">
+              <?= $maintenanceMode ? h(t('wartung_maintenance_status_on')) : h(t('wartung_maintenance_status_off')) ?>
+            </span>
+          </div>
+        </div>
+
+<?php } elseif ($tab === 'backup') { ?>
 
         <p style="color:var(--muted);font-size:.86rem;margin-top:0"><?= h(t('wartung_backup_intro')) ?></p>
         <p style="color:var(--muted);font-size:.82rem;margin-top:-8px">
@@ -139,7 +174,7 @@ function wartungFormatSize(int $bytes) : string
         });
         </script>
 
-<?php } else { /* ── TAB: WIEDERHERSTELLUNG ──────────────────────────────── */ ?>
+<?php } elseif ($tab === 'restore') { /* ── TAB: WIEDERHERSTELLUNG ──────────────────────── */ ?>
 
         <p style="color:var(--muted);font-size:.86rem;margin-top:0"><?= h(t('wartung_restore_intro')) ?></p>
 

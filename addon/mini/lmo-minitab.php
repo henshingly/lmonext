@@ -2,7 +2,7 @@
 /**
  * Project: LMOnext
  * Filename: addon/mini/lmo-minitab.php
- * Fileversion: 1.2.3
+ * Fileversion: 1.2.4
  *
  * PHP version 8.2
  *
@@ -247,6 +247,7 @@ function renderMinitabelle(int $ligaId, ?int $platz, int $ueber, int $unter, str
         '<!--Link-->'     => h(miniProjectRootUrlPrefix() . 'liga.php?id=' . $ligaId . '&view=tabelle'),
         '<!--Tabelle-->'  => h($ligaRow['name']),
         '<!--ligaDatum-->'=> h(tf('liga_stand_datum', ['datum' => ($ligaTs = strtotime((string)($ligaRow['datum'] ?? ''))) !== false ? date('d.m.Y', $ligaTs) : date('d.m.Y')])),
+        '<!--Copyright-->' => \LMOnext\Liga\LigaService::renderCopyrightNotice('minitab'),
     ];
     $before = strtr($before, $outer);
     $after  = strtr($after, $outer);

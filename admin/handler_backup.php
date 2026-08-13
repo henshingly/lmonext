@@ -2,7 +2,7 @@
 /**
  * Project: LMOnext
  * Filename: handler_backup.php
- * Fileversion: 1.4.0
+ * Fileversion: 1.5.0
  *
  * PHP version 8.2
  *
@@ -622,4 +622,26 @@ if ($action === 'save_backup_settings' && $_SERVER['REQUEST_METHOD'] === 'POST')
         flash(t('flash_error_prefix', ['msg' => $e->getMessage()]), 'error');
     }
     redirect('?action=wartung&tab=backup');
+}
+
+// ── Wartungsmodus speichern (Beitrag: Torsten Hofmann) ───────────────────────
+// Schaltet das Frontend komplett ab (siehe frontend/bootstrap.php), der
+// Adminbereich bleibt davon unberührt. Wie alle anderen admin_settings-Werte
+// per INSERT ... ON DUPLICATE KEY UPDATE gespeichert, kein eigenes Schema
+// nötig (ensureAdminSettings() legt die Tabelle bereits an).
+if ($action === 'save_maintenance_mode' && $_SERVER['REQUEST_METHOD'] === 'POST') {
+    requireLogin();
+    try {
+        $val = isset($_POST['maintenance_mode']) ? '1' : '0';
+        $s = getDB()->prepare('INSERT INTO '.tbl('admin_settings').' (`key`,`value`) VALUES (?,?)
+            ON DUPLICATE KEY UPDATE `value`=VALUES(`value`)');
+        $s->execute(['maintenance_mode', $val]);
+        logAdminAction('maintenance_mode_' . ($val === '1' ? 'enabled' : 'disabled'));
+        flash($val === '1'
+            ? t('wartung_flash_maintenance_on')
+            : t('wartung_flash_maintenance_off'));
+    } catch (Throwable $e) {
+        flash(t('flash_error_prefix', ['msg' => $e->getMessage()]), 'error');
+    }
+    redirect('?action=wartung&tab=wartung');
 }
