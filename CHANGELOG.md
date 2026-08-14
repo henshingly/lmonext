@@ -1577,14 +1577,17 @@
 
 ## assets/favicon/*
 
+- Changelog: (neu) - Komplettes Favicon-Set (24 Icon-Dateien + favicon.ico) aus der neuen Vorlage mit echtem transparentem Hintergrund neu generiert (vorherige Version hatte einen fest eingebrannten dunklen Hintergrund statt echter Transparenz - siehe assets/logo.svg für den Hintergrund dazu). Quelle 803×814px auf ein transparentes Quadrat (814×814) zentriert gepolstert, dann verlustfrei auf alle 24 Zielgrößen herunterskaliert (Android 36–192px, Apple-Touch 57–180px, MS-Tile 70–310px, Standard-Favicons 16/32/96/256px) plus favicon.ico (16/32/48px Multi-Auflösung). manifest.json und browserconfig.xml unverändert, da nur die referenzierten Dateinamen betroffen sind, nicht deren Struktur.
 - Changelog: (neu) -  - Komplettes Favicon-Set (26 Dateien: Android-, Apple-Touch-, MS-Tile-Icons in allen Größen sowie favicon.ico) aus dem neuen "LN"-Icon-Design neu generiert.
 
 ## assets/img/tippspiel-icon.png
 
+- Changelog: (neu) - Gegen neue Vorlage mit echtem transparentem Hintergrund ausgetauscht (39×38px, natives Seitenverhältnis der neuen Vorlage beibehalten statt verzerrt - die CSS-Regel .tipp-site-link-icon setzt ohnehin nur height:20px + width:auto, siehe template/*/layout.tpl.php).
 - Changelog: (neu) -  - Neues, optimiertes Icon (40×38px) für den Tippspiel-Link im Header/Footer, aus der app_tippspiel-Vorlage erstellt.
 
 ## assets/img/tippspiel-logo.png
 
+- Changelog: (neu) - Gegen neue Vorlage mit echtem transparentem Hintergrund ausgetauscht (477×130px, natives Seitenverhältnis der neuen Vorlage beibehalten statt verzerrt - die CSS-Regel .tipp-section-heading-logo setzt ohnehin nur height:44px + width:auto).
 - Changelog: (neu) -  - Neues, optimiertes Logo (452×130px) für die Tippspiel-Bereichsüberschrift, aus der tippspiel_logo-Vorlage erstellt.
 
 ## addon/ewige/lmo-ewigetab.php
