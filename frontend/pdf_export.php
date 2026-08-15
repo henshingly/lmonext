@@ -2,7 +2,7 @@
 /**
  * Project: LMOnext
  * Filename: frontend/pdf_export.php
- * Fileversion: 1.9.0
+ * Fileversion: 1.9.1
  *
  * @author    Dietmar Kersting <webmaster@liga-manager-online.org>
  * @author    Torsten Hofmann <entwickler@bastel-code.de>
@@ -34,9 +34,9 @@ function pdfRasterizeSvgViaImagick(string $absPath) : ?array { return PdfExporte
 function pdfRasterizeSvgViaRsvgConvert(string $absPath) : ?array { return PdfExporter::pdfRasterizeSvgViaRsvgConvert($absPath); }
 function pdfLoadTeamLogos(array $teamIds) : array { return PdfExporter::pdfLoadTeamLogos($teamIds); }
 function buildResultsPdf(string $ligaName, array $sections, string $footerText = '', array $teamLogos = []) : string { return PdfExporter::buildResultsPdf($ligaName, $sections, $footerText, $teamLogos); }
-function buildStandingsPdf(string $ligaName, string $subtitleLabel, array $columnHeaders, array $columnAligns, array $rows, string $footerText = '', ?int $accentColIndex = null, array $rowBorderColors = [], array $teamLogos = [], array $logoCols = [], array $rowTeamIds = [], ?array $vsTitleTeams = null, ?string $noteLine = null, ?array $footnotes = null) : string { return PdfExporter::buildStandingsPdf($ligaName, $subtitleLabel, $columnHeaders, $columnAligns, $rows, $footerText, $accentColIndex, $rowBorderColors, $teamLogos, $logoCols, $rowTeamIds, $vsTitleTeams, $noteLine, $footnotes); }
+function buildStandingsPdf(string $ligaName, string $subtitleLabel, array $columnHeaders, array $columnAligns, array $rows, string $footerText = '', ?int $accentColIndex = null, array $rowBorderColors = [], array $teamLogos = [], array $logoCols = [], array $rowTeamIds = [], ?array $vsTitleTeams = null, ?string $noteLine = null, ?array $footnotes = null, bool $landscape = false) : string { return PdfExporter::buildStandingsPdf($ligaName, $subtitleLabel, $columnHeaders, $columnAligns, $rows, $footerText, $accentColIndex, $rowBorderColors, $teamLogos, $logoCols, $rowTeamIds, $vsTitleTeams, $noteLine, $footnotes, $landscape); }
 function assemblePdfBytes(array $pagesContent, float $pageWidth, float $pageHeight, ?array $logo = null, array $teamLogos = []) : string { return PdfExporter::assemblePdfBytes($pagesContent, $pageWidth, $pageHeight, $logo, $teamLogos); }
 function exportErgebnissePdf(string $ligaName, array $sectionSpecs, bool $showLogos = false) : void { PdfExporter::exportErgebnissePdf($ligaName, $sectionSpecs, $showLogos); }
-function exportTabellePdf(string $ligaName, int $ligaId, array $allSpieltage, bool $showLogos = false, string $tableMode = 'gesamt') : void { PdfExporter::exportTabellePdf($ligaName, $ligaId, $allSpieltage, $showLogos, $tableMode); }
+function exportTabellePdf(string $ligaName, int $ligaId, array $allSpieltage, bool $showLogos = false, string $tableMode = 'gesamt', string $tmode = '') : void { PdfExporter::exportTabellePdf($ligaName, $ligaId, $allSpieltage, $showLogos, $tableMode, $tmode); }
 function exportSpielplanPdf(string $ligaName, int $ligaId, array $allSpieltage, int $selectedTeamId, bool $showLogos = false) : void { PdfExporter::exportSpielplanPdf($ligaName, $ligaId, $allSpieltage, $selectedTeamId, $showLogos); }
 function exportH2hPdf(int $teamAId, int $teamBId, bool $showLogos = false) : void { PdfExporter::exportH2hPdf($teamAId, $teamBId, $showLogos); }

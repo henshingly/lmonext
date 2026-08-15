@@ -6,7 +6,7 @@ namespace LMOnext\Sport;
 /**
  * Projekt: LMOnext
  * Filename: src/Sport/VolleyballProfile.php
- * Fileversion: 1.1.0
+ * Fileversion: 1.2.0
  *
  * PHP version 8.2
  *
@@ -203,6 +203,19 @@ final class VolleyballProfile implements SportProfile
      * Die Beschriftungen kommen über tf() aus lang/frontend/*.php (nicht
      * hartkodiert Deutsch) - die reinen Ergebnis-Notationen (3:0, 2:3, ...)
      * brauchen keine Übersetzung, da Ziffern/Doppelpunkte sprachneutral sind.
+     *
+     * 'diag' => true markiert Spalten, deren Kopfzeile in der Lang-Ansicht
+     * diagonal gestellt wird (siehe RenderViewsTrait::renderDynamicStandingsTable()
+     * und st-diag-CSS in den Templates). Nur für die langen Wortbezeichner
+     * (Spiele/Siege/Niederlagen/Ballquotient/Ballverhältnis/Satzquotient/
+     * Satzverhältnis) gesetzt - NICHT für die kurzen Ergebnis-Spalten (3:0
+     * usw.) oder "Punkte". Vorbild volleyball-bundesliga.de: dort bleiben
+     * genau diese kurzen Spalten horizontal, weil sie ohnehin in ihre
+     * schmale (an den kurzen Datenwert angepasste) Spalte passen - nur die
+     * langen Wörter würden ohne Drehung über die eigene schmale Spalte
+     * hinausragen. Das vermeidet die Text-Überlappung, die bei einer
+     * vorherigen Umsetzung (alle Spalten diagonal, inkl. der kurzen)
+     * aufgetreten war, von vornherein statt sie nachträglich zu kompensieren.
      */
     public function getStandingsColumnsForMode(string $mode = 'short'): array
     {
@@ -220,19 +233,19 @@ final class VolleyballProfile implements SportProfile
         }
         if ($mode === 'long') {
             return [
-                ['key' => 'sp',    'label' => tf('sport_vb_col_sp'),    'class' => 'st-num'],
-                ['key' => 's',     'label' => tf('sport_vb_col_s'),     'class' => 'st-num'],
-                ['key' => 'n',     'label' => tf('sport_vb_col_n'),     'class' => 'st-num'],
+                ['key' => 'sp',    'label' => tf('sport_vb_col_sp'),    'class' => 'st-num', 'diag' => true],
+                ['key' => 's',     'label' => tf('sport_vb_col_s'),     'class' => 'st-num', 'diag' => true],
+                ['key' => 'n',     'label' => tf('sport_vb_col_n'),     'class' => 'st-num', 'diag' => true],
                 ['key' => 'w30',   'label' => '3:0',   'class' => 'st-num'],
                 ['key' => 'w31',   'label' => '3:1',   'class' => 'st-num'],
                 ['key' => 'w32',   'label' => '3:2',   'class' => 'st-num'],
                 ['key' => 'l23',   'label' => '2:3',   'class' => 'st-num'],
                 ['key' => 'l13',   'label' => '1:3',   'class' => 'st-num'],
                 ['key' => 'l03',   'label' => '0:3',   'class' => 'st-num'],
-                ['key' => 'bquot', 'label' => tf('sport_vb_col_bquot'), 'class' => 'st-num'],
-                ['key' => 'bverh', 'label' => tf('sport_vb_col_bverh'), 'class' => 'st-num'],
-                ['key' => 'squot', 'label' => tf('sport_vb_col_squot'), 'class' => 'st-num'],
-                ['key' => 'sverh', 'label' => tf('sport_vb_col_sverh'), 'class' => 'st-num'],
+                ['key' => 'bquot', 'label' => tf('sport_vb_col_bquot'), 'class' => 'st-num', 'diag' => true],
+                ['key' => 'bverh', 'label' => tf('sport_vb_col_bverh'), 'class' => 'st-num', 'diag' => true],
+                ['key' => 'squot', 'label' => tf('sport_vb_col_squot'), 'class' => 'st-num', 'diag' => true],
+                ['key' => 'sverh', 'label' => tf('sport_vb_col_sverh'), 'class' => 'st-num', 'diag' => true],
                 ['key' => 'pkt',   'label' => tf('sport_vb_col_pkt'),   'class' => 'st-pkt'],
             ];
         }

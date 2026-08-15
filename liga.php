@@ -2,7 +2,7 @@
 /**
  * Project: LMOnext
  * Filename: liga.php
- * Fileversion: 3.11.1
+ * Fileversion: 3.11.2
  *
  * PHP version 8.2
  *
@@ -105,15 +105,22 @@ switch ($currentView) {
         $tabelleNr = isset($_GET['nr']) ? (int)$_GET['nr'] : null;
         $activeNr  = ($tabelleNr !== null && $tabelleNr >= 1 && $tabelleNr <= $maxNr) ? $tabelleNr : $maxNr;
         $tableMode = $_GET['table'] ?? 'gesamt';
+        // $tmode (kurz/mittel/vollständig, nur bei Sportarten mit eigenen
+        // Darstellungsmodi wie Volleyball relevant) 1:1 aus der URL an den
+        // PDF-Export durchreichen und im PDF-Button-Link mitführen, damit
+        // das heruntergeladene PDF exakt die Spaltenauswahl zeigt, die der
+        // Besucher gerade vor sich hat - siehe PdfExporter::exportTabellePdf().
+        $tmode = $_GET['tmode'] ?? '';
         if (isset($_GET['pdf']) && $showPdfButtons) {
-            exportTabellePdf($liga['name'], $ligaId, $allSpieltage, $showLogos, $tableMode);
+            exportTabellePdf($liga['name'], $ligaId, $allSpieltage, $showLogos, $tableMode, $tmode);
             exit;
         }
         $tabellePicker = renderSpieltagPicker($allSpieltage, $ligaId, $activeNr, $isKO, $maxNr, 'tabelle');
         $viewInhalt = $tabellePicker . renderStandingsView($ligaId, $allSpieltage, $tabelleNr, $tableMode);
         if ($showPdfButtons) {
             $pdfTableParam = $tableMode !== 'gesamt' ? ('&table=' . $tableMode) : '';
-            $viewInhalt .= '<div class="pdf-export-row"><a class="btn-pdf-export" href="?id=' . $ligaId . '&view=tabelle&pdf=1' . $pdfTableParam . '" title="' . h(tf('liga_pdf_export_button')) . '">'
+            $pdfTmodeParam = $tmode !== '' ? ('&tmode=' . rawurlencode($tmode)) : '';
+            $viewInhalt .= '<div class="pdf-export-row"><a class="btn-pdf-export" href="?id=' . $ligaId . '&view=tabelle&pdf=1' . $pdfTableParam . $pdfTmodeParam . '" title="' . h(tf('liga_pdf_export_button')) . '">'
                 . '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">'
                 . '<rect x="7" y="3" width="13" height="16" rx="2"/><path d="M4 7v13a2 2 0 0 0 2 2h11"/>'
                 . '</svg>'

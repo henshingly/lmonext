@@ -2,7 +2,7 @@
 <html lang="<!--HtmlLang-->">
 <head>
 <!--
-  Template: light | Filename: layout.tpl.php | Fileversion: 1.5.6
+  Template: light | Filename: layout.tpl.php | Fileversion: 1.5.10
 -->
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -222,7 +222,13 @@ table.tipp-matrix .tipp-matrix-leer{color:var(--muted)}
   color:var(--text);border-radius:var(--radius);padding:8px 10px;font-size:.9rem}
 
 .standings-table thead th.st-diag > span{
-  display:inline-block;transform:rotate(-45deg);transform-origin:left bottom;
+  position:absolute;left:2px;bottom:4px;
+  /* Fester Drehpunkt am linken Spaltenrand (kein translateX/left:50% mehr) -
+     siehe template/default/layout.tpl.php fuer die ausfuehrliche Begruendung
+     (zwei Zwischenstaende mit zentrierter Box bzw. zentriertem Drehpunkt
+     wurden getestet, verursachten bei den hier schmalen Spalten aber
+     Textueberlappungen in Nachbarspalten bzw. in der Datenzeile). */
+  transform:rotate(-45deg);transform-origin:left bottom;
   white-space:nowrap;font-size:.72rem;
 }
 
@@ -269,7 +275,7 @@ a.cal-entry{display:inline-block;background:#fff1ec;color:var(--accent);border-r
 
 table.standings-table{width:100%;border-collapse:collapse;font-size:.87rem;background:var(--surface)}
 table.standings-table tbody tr{border-left:4px solid transparent}
-table.standings-table thead th{background:var(--surface2);color:var(--accent);padding:9px 10px;font-weight:600;font-size:.8rem;white-space:nowrap}
+table.standings-table thead th{background:var(--surface2);color:var(--accent);padding:9px 10px;font-weight:600;font-size:.8rem;white-space:nowrap;vertical-align:bottom}
 table.standings-table tbody tr:nth-child(even){background:var(--bg)}
 table.standings-table td{padding:8px 10px;border-top:1px solid var(--border)}
 .st-platz{width:1%;text-align:center;color:var(--muted);font-weight:600}

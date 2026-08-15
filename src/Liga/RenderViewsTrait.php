@@ -2,7 +2,7 @@
 /**
  * Project: LMOnext
  * Filename: src/Liga/RenderViewsTrait.php
- * Fileversion: 1.11.0
+ * Fileversion: 1.11.2
  *
  * PHP version 8.2
  *
@@ -594,7 +594,7 @@ trait RenderViewsTrait
 
         $theadHtml = '<th class="st-platz">' . h(tf('liga_standings_col_platz')) . '</th><th class="st-team">' . h(tf('liga_standings_col_team')) . '</th>';
         foreach ($columns as $col) {
-            if ($tmode === 'long') {
+            if ($tmode === 'long' && !empty($col['diag'])) {
                 $theadHtml .= '<th class="' . h($col['class']) . ' st-diag"><span>' . h($col['label']) . '</span></th>';
             } else {
                 $theadHtml .= '<th class="' . h($col['class']) . '">' . h($col['label']) . '</th>';
@@ -635,8 +635,15 @@ trait RenderViewsTrait
      * Zusatzfeldern abgeleitet; unbekannte Schlüssel geben einen Leerstring
      * zurück statt eines Fehlers, damit ein künftiges Sport-Profil mit
      * anderen Spalten nicht crasht.
+     *
+     * Public (nicht private): wird auch von PdfExporter::exportTabellePdf()
+     * wiederverwendet, damit der PDF-Export exakt dieselben Zellwerte wie
+     * die HTML-Ansicht zeigt, statt die Auflösung ein zweites Mal zu
+     * duplizieren (siehe dort für den Hintergrund: PDF zeigte bislang immer
+     * die feste Fußball-Spaltenauswahl Sp/S/U/N/Tore/Diff/Pkt, unabhängig
+     * von der tatsächlichen Sportart der Liga).
      */
-    private static function resolveStandingsCell(array $r, string $key) : string
+    public static function resolveStandingsCell(array $r, string $key) : string
     {
         return match ($key) {
             'sp'    => (string)$r['sp'],

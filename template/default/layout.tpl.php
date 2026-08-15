@@ -2,7 +2,7 @@
 <html lang="<!--HtmlLang-->">
 <head>
 <!--
-  Template: default | Filename: layout.tpl.php | Fileversion: 1.17.6
+  Template: default | Filename: layout.tpl.php | Fileversion: 1.17.10
   HTML-Grundgerüst der ganzen Seite. Enthält AUSSCHLIESSLICH Markup und
   Platzhalter der Form <comment>Name</comment> (als HTML-Kommentar), kein PHP. Alle Werte
   werden von den Root-Controllern (home.php, liga.php) über
@@ -239,7 +239,29 @@ table.tipp-matrix .tipp-matrix-leer{color:var(--muted)}
   color:var(--text);border-radius:var(--radius);padding:8px 10px;font-size:.9rem}
 
 .standings-table thead th.st-diag > span{
-  display:inline-block;transform:rotate(-45deg);transform-origin:left bottom;
+  position:absolute;left:2px;bottom:4px;
+  /* Kein translateX(-50%)/"left:50%" mehr, Drehpunkt liegt jetzt fest am
+     linken Rand der jeweils eigenen Spalte (left:2px, nur der übliche
+     Zell-Innenabstand). Zwei vorherige Zwischenstände wurden verworfen:
+     "left:50% + translateX(-50%), origin left bottom" (frühere Version)
+     zentrierte die Box zwar vor der Drehung, der Drehpunkt selbst hing
+     dadurch von der Textlänge ab und wanderte bei langen Wörtern wie
+     "Niederlagen" oder "Ballverhältnis" weit in die linke Nachbarspalte
+     hinein (dort sichtbar überlappend). "origin: center bottom" zentrierte
+     den Drehpunkt zwar exakt auf der Spaltenmittellinie, ragte dadurch aber
+     bei den hier sehr schmalen Spalten (Breite richtet sich nur nach dem
+     kurzen Datenwert wie "14", nicht nach der langen Kopfzeile) weit nach
+     rechts in die Datenzeile hinein - im Livesystem beides per Screenshot
+     bestätigt. Die jetzige Variante (fester Drehpunkt am eigenen linken
+     Spaltenrand, unabhängig von der Textlänge) vermeidet beide Probleme:
+     jede Beschriftung beginnt exakt "unter" ihrer eigenen Spalte und wächst
+     von dort nur noch nach oben/rechts, ohne in die vorherige Spalte oder
+     die Datenzeile hineinzuragen. Ergänzend wird seit VolleyballProfile.php
+     1.2.0 ohnehin nur noch bei den tatsächlich langen Wortbezeichnern
+     (Spiele/Siege/Niederlagen/Ballquotient/Ballverhältnis/Satzquotient/
+     Satzverhältnis) überhaupt gedreht, die kurzen Ergebnis-Spalten (3:0 usw.)
+     bleiben horizontal - siehe RenderViewsTrait.php. */
+  transform:rotate(-45deg);transform-origin:left bottom;
   white-space:nowrap;font-size:.72rem;
 }
 
@@ -286,7 +308,7 @@ a.cal-entry{display:inline-block;background:#eaf1ff;color:var(--accent);border-r
 
 table.standings-table{width:100%;border-collapse:collapse;font-size:.87rem;background:var(--surface)}
 table.standings-table tbody tr{border-left:4px solid transparent}
-table.standings-table thead th{background:#252b3a;color:#fff;padding:9px 10px;font-weight:600;font-size:.8rem;white-space:nowrap}
+table.standings-table thead th{background:#252b3a;color:#fff;padding:9px 10px;font-weight:600;font-size:.8rem;white-space:nowrap;vertical-align:bottom}
 table.standings-table tbody tr:nth-child(even){background:var(--bg)}
 table.standings-table td{padding:8px 10px;border-top:1px solid var(--border)}
 .st-platz{width:1%;text-align:center;color:var(--muted);font-weight:600}

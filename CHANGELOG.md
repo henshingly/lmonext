@@ -675,6 +675,7 @@
 
 ## frontend/pdf_export.php
 
+- Changelog: 1.9.1 - Wrapper-Funktionen exportTabellePdf() und buildStandingsPdf() um die neuen Parameter $tmode bzw. $landscape ergänzt, siehe PdfExporter.php 1.10.0.
 - Changelog: 1.9.0 - Architektur-Umbau analog zu template_engine.php: Implementierung liegt jetzt unter src/Pdf/PdfExporter.php. WICHTIG: die Klasse wurde aus dem eigenen, vollständigen Stand neu aufgebaut statt Torstens Version zu übernehmen, da dort das Strafpunkte-Fußnoten-Feature fehlte (Torsten hatte auf einem älteren Zwischenstand aufgesetzt) - mit PDF-Export verifiziert, dass Fußnoten weiterhin korrekt erscheinen.
 - Changelog: 1.8.0 - exportTabellePdf() um Torstens Heim/Auswärts/Hin-Rück-Modus erweitert (identische Logik wie im Web), dabei einen vorhandenen Bugfix nachgezogen: \u{2013} in einem einfach gequoteten String wurde nie interpretiert (PHP wertet \u{}-Escapes nur in Doppelt-Quotes aus) - der PDF-Untertitel zeigte bisher wörtlich "\u{2913}" statt eines Gedankenstrichs. Jetzt echtes UTF-8-Zeichen.
 - Changelog: 1.7.2 - Regressions-Bugfix: das pauschale Entfernen von clip-path-Referenzen (siehe 1.6.x-Changelog, ursprünglich fürs FC-Bayern-Rautenmuster gedacht) hat sich als falsch herausgestellt - beim Eintracht-Braunschweig-Logo nutzt clip-path gerade dazu, Farbverlaufs-Rechtecke in die Wappenform zu beschneiden; ohne Beschneidung wurde daraus ein unkenntlicher Fleck aus großen Farbblöcken. Mit compare -metric AE bestätigt: das Entfernen erzeugte exakt das gemeldete Fehlbild, mit intaktem clip-path rendert das Logo wieder korrekt (Löwe + Rundschrift vollständig sichtbar). clip-path wird jetzt nicht mehr angetastet
@@ -1088,6 +1089,7 @@
 
 ## liga.php
 
+- Changelog: 3.11.2 - $_GET['tmode'] (kurz/mittel/vollständig-Auswahl der Tabellendarstellung, siehe RenderViewsTrait.php) wird jetzt an exportTabellePdf() durchgereicht und im PDF-Export-Button-Link mitgeführt (&tmode=...), damit das heruntergeladene PDF exakt die Spaltenauswahl zeigt, die der Besucher gerade in der HTML-Ansicht vor sich hat, siehe PdfExporter.php 1.10.0.
 - Changelog: 3.11.1 - _liga_id wird jetzt in die für die Ergebnisse-Ansicht geladenen Partien injiziert (getSpieltagPartien() kennt die Liga selbst nicht) - ohne diese Ergänzung blieb die sport-profil-abhängige Anzeige auf der echten Ergebnisse-Seite wirkungslos, obwohl computeStandings() bereits korrekt rechnete (beim Testen selbst gefunden). PDF-Export-Sektionen bekommen ebenfalls die Liga-ID mit.
 - Changelog: 3.10.9 - Liest jetzt zusätzlich ?table= (Gesamt/Heim/Gast/Hin/Rück, Beitrag Torsten Hofmann) und reicht es an renderStandingsView()/exportTabellePdf() durch, bleibt beim Spieltag-Wechsel erhalten.
 - Changelog: 3.10.8 - $activeNr (aktuell angezeigter Spieltag bei Ergebnisse/Tabelle) wird jetzt an renderTabsBar() übergeben, damit ein Wechsel zwischen den beiden Reitern denselben Spieltag beibehält statt auf den letzten zurückzuspringen. Neuer Spieltag-Picker (renderSpieltagPicker(..., 'tabelle')) auch für die Tabellenansicht, analog zu Ergebnisse.
@@ -1165,6 +1167,8 @@
 
 ## src/Liga/RenderViewsTrait.php
 
+- Changelog: 1.11.2 - resolveStandingsCell() von private auf public umgestellt, damit PdfExporter::exportTabellePdf() dieselbe Zellwert-Auflösung wiederverwenden kann statt sie zu duplizieren (siehe PdfExporter.php 1.10.0). Keine Verhaltensänderung der Funktion selbst.
+- Changelog: 1.11.1 - renderDynamicStandingsTable(): st-diag-Klasse (diagonale Kopfzeile) wird in der Lang-Ansicht jetzt nur noch gesetzt, wenn die Spalte explizit 'diag'=>true trägt (siehe VolleyballProfile.php 1.2.0), statt pauschal für alle Spalten. Spalten ohne dieses Flag werden wie in short/medium-Ansicht als normale, horizontale <th> gerendert.
 - Changelog: 1.11.0 - Neue Wrapper-Methode LigaService::renderCopyrightNotice() für Addon-Ausgaben (Beitrag: Torsten Hofmann), delegiert an die neue globale Funktion in config_loader.php und packt sie in einen <p>-Block.
 - Changelog: 1.10.0 - Team-Auswahl in der Spielplan-Ansicht sportartabhängig gemacht: Volleyball-Ligen zeigen jetzt ein kompaktes Dropdown-Menü statt der Team-Sidebar (Vorbild: Torstens Vorschlag, an mein Kartenlayout angepasst), alle anderen Sportarten (inkl. Fußball) behalten unverändert die bestehende Sidebar-Liste mit Logos. Live geprüft: Fußball rendert weiterhin die echte Sidebar, Volleyball das echte Dropdown, keine Vermischung.
 - Changelog: 1.9.1 - Die diagonalen Spaltenüberschriften gelten jetzt nur noch für die "vollständig"-Ansicht - "kurz" und "mittel" zeigen die Spaltennamen wie gewünscht wieder normal waagerecht.
@@ -1429,6 +1433,10 @@
 
 ## template/default/layout.tpl.php
 
+- Changelog: 1.17.10 - Diagonale Spaltenüberschriften nochmal korrigiert: Drehpunkt liegt jetzt fest am linken Rand der jeweils eigenen Spalte (left:2px, kein translateX(-50%)/left:50% mehr), statt von der Textlänge abhängig zu sein. Grund: die vorherige "left:50% + translateX(-50%)"-Zentrierung ließ den tatsächlichen Drehpunkt bei langen Wörtern wie "Niederlagen" spürbar in die linke Nachbarspalte hineinwandern (im Livesystem als Screenshot bestätigt: "Niederlagen" überlappte sichtbar mit "Siege"). Die getestete Alternative "origin: center bottom" (siehe 1.17.7-1.17.8) verursachte stattdessen ein Hineinragen in die Datenzeile. Der jetzt feste Drehpunkt je Spalte vermeidet beides: jede Beschriftung beginnt exakt an ihrer eigenen Spalte, unabhängig von der Wortlänge. Mit Playwright unter realistischen schmalen Spaltenbreiten verifiziert.
+- Changelog: 1.17.9 - table.standings-table thead th: vertical-align:bottom ergänzt, damit auch die (jetzt teils horizontalen, siehe VolleyballProfile.php 1.2.0) Kopfzellen unten in der Zeile sitzen und mit den diagonalen Beschriftungen auf einer Linie bleiben, statt vertikal mittig in der durch die diagonalen Nachbarspalten hohen Kopfzeile zu "schweben". Wirkt sich nur auf Tabellen mit mindestens einer diagonalen Spalte aus (nur dort ist die Kopfzeile überhaupt höher als der reine Zellinhalt) - kurz/mittel-Ansichten unverändert.
+- Changelog: 1.17.8 - Regression aus 1.17.7 zurückgenommen: transform-origin zurück auf "left bottom" gesetzt. "center bottom" zentrierte den Drehpunkt zwar exakt, führte aber bei den tatsächlich sehr schmalen Datenspalten (Breite richtet sich nach dem kurzen Zahlenwert, nicht nach der langen Kopfzeile) zu Textüberlappungen zwischen benachbarten Diagonal-Überschriften und mit der Datenzeile darunter - im echten Livesystem bestätigt (Screenshot). Mit Playwright unter realistischen, schmalen Spaltenbreiten nachgestellt und verifiziert, dass "left bottom" hier weniger überlappt, bevor die Rücknahme übernommen wurde.
+- Changelog: 1.17.7 - Diagonale Spaltenüberschriften der Sport-Tabelle (.st-diag) besser zentriert: transform-origin des rotierten <span> von "left bottom" auf "center bottom" geändert. Ursache des bisherigen Versatzes: transform-origin ist ein fester Punkt in den lokalen (unrotierten) Koordinaten der Beschriftung, unabhängig von der vorherigen translateX(-50%)-Zentrierung - dadurch lag der tatsächliche Drehpunkt sichtbar links der Spaltenmitte (die Beschriftung "wanderte" nach der Rotation zusätzlich um die halbe Textbreite nach links). Mit "center bottom" liegt der Drehpunkt exakt auf der Spaltenmittellinie. Mit Playwright-Screenshot-Vergleich (mehrere transform-origin-Varianten nebeneinander gerendert, Spaltenmittellinie als Hilfslinie eingeblendet) vor der Umsetzung verifiziert.
 - Changelog: 1.17.6 - CSS für das neue Tippspiel-Link-Icon und die neue Tippspiel-Bereichsüberschrift ergänzt.
 - Changelog: 1.17.5 - CSS für das neue Dropdown-Team-Auswahl (nur Volleyball) ergänzt.
 - Changelog: 1.17.4 - CSS für diagonale Spaltenüberschriften ergänzt.
@@ -1446,6 +1454,10 @@
 
 ## template/colored/layout.tpl.php
 
+- Changelog: 1.6.10 - Fester Drehpunkt am linken Spaltenrand wie default 1.17.10.
+- Changelog: 1.6.9 - vertical-align:bottom ergänzt wie default 1.17.9.
+- Changelog: 1.6.8 - Regression aus 1.6.7 zurückgenommen, siehe default 1.17.8.
+- Changelog: 1.6.7 - transform-origin-Korrektur wie default 1.17.7 (bessere Zentrierung der diagonalen Spaltenüberschriften).
 - Changelog: 1.6.6 - CSS wie default 1.17.6 ergänzt.
 - Changelog: 1.6.5 - CSS wie default 1.17.5 ergänzt.
 - Changelog: 1.6.4 - CSS wie default 1.17.4 ergänzt.
@@ -1463,6 +1475,10 @@
 
 ## template/dark/layout.tpl.php
 
+- Changelog: 1.5.10 - Fester Drehpunkt am linken Spaltenrand wie default 1.17.10.
+- Changelog: 1.5.9 - vertical-align:bottom ergänzt wie default 1.17.9.
+- Changelog: 1.5.8 - Regression aus 1.5.7 zurückgenommen, siehe default 1.17.8.
+- Changelog: 1.5.7 - transform-origin-Korrektur wie default 1.17.7 (bessere Zentrierung der diagonalen Spaltenüberschriften).
 - Changelog: 1.5.6 - CSS wie default 1.17.6 ergänzt.
 - Changelog: 1.5.5 - CSS wie default 1.17.5 ergänzt.
 - Changelog: 1.5.4 - CSS wie default 1.17.4 ergänzt.
@@ -1480,6 +1496,10 @@
 
 ## template/light/layout.tpl.php
 
+- Changelog: 1.5.10 - Fester Drehpunkt am linken Spaltenrand wie default 1.17.10.
+- Changelog: 1.5.9 - vertical-align:bottom ergänzt wie default 1.17.9.
+- Changelog: 1.5.8 - Regression aus 1.5.7 zurückgenommen, siehe default 1.17.8.
+- Changelog: 1.5.7 - transform-origin-Korrektur wie default 1.17.7 (bessere Zentrierung der diagonalen Spaltenüberschriften).
 - Changelog: 1.5.6 - CSS wie default 1.17.6 ergänzt.
 - Changelog: 1.5.5 - CSS wie default 1.17.5 ergänzt.
 - Changelog: 1.5.4 - CSS wie default 1.17.4 ergänzt.
@@ -1497,6 +1517,10 @@
 
 ## template/matchday/layout.tpl.php
 
+- Changelog: 1.2.10 - Fester Drehpunkt am linken Spaltenrand wie default 1.17.10.
+- Changelog: 1.2.9 - vertical-align:bottom ergänzt wie default 1.17.9.
+- Changelog: 1.2.8 - Regression aus 1.2.7 zurückgenommen, siehe default 1.17.8.
+- Changelog: 1.2.7 - transform-origin-Korrektur wie default 1.17.7 (bessere Zentrierung der diagonalen Spaltenüberschriften).
 - Changelog: 1.2.6 - CSS wie default 1.17.6 ergänzt.
 - Changelog: 1.2.5 - CSS wie default 1.17.5 ergänzt.
 - Changelog: 1.2.4 - CSS wie default 1.17.4 ergänzt.
@@ -1528,6 +1552,7 @@
 
 ## src/Pdf/PdfExporter.php
 
+- Changelog: 1.10.0 - PDF-Tabellenexport (exportTabellePdf()) ist jetzt sportartabhängig, analog zur HTML-Ansicht (RenderViewsTrait::renderStandingsView()): Sportarten mit eigenen Darstellungsmodi (aktuell nur Volleyball) bekommen im PDF dieselben sportartspezifischen Spalten (3:0/3:1/3:2-Siege, Ballquotient, Ballverhältnis, Satzquotient, Satzverhältnis je nach kurz/mittel/vollständig) statt der zuvor IMMER fest verwendeten Fußball-Spalten Sp/S/U/N/Tore/Diff/Pkt - bei Volleyball ergab "U" (Unentschieden) ohnehin keinen Sinn, und die eigentlich relevanten Spalten fehlten komplett (im Livesystem als PDF-Screenshot bestätigt). Neuer optionaler Parameter $tmode (aus liga.php 1:1 aus der URL übernommen, siehe dort), fällt bei fehlendem/ungültigem Wert auf den ersten Modus der Sportart zurück (Volleyball: "kurz", identisch zum HTML-Standardverhalten ohne ?tmode). Zellwerte werden über die neu public gemachte LigaService::resolveStandingsCell() aufgelöst (siehe RenderViewsTrait.php 1.11.2) statt die Logik ein zweites Mal zu duplizieren. buildStandingsPdf() bekommt einen neuen $landscape-Parameter (Querformat statt Hochformat) und wird automatisch aktiviert, sobald die Tabelle mindestens 12 Spalten hat (betrifft aktuell nur Volleyball "vollständig" mit 16 Spalten) - im Hochformat wäre die Tabelle bei so vielen Spalten über den rechten Seitenrand hinausgelaufen, da buildStandingsPdf() Spaltenbreiten grundsätzlich am tatsächlichen Zellinhalt bemisst statt sie auf die Seitenbreite zu stauchen.
 - Changelog: 1.9.1 - Feste Logo-Maße in pdfLoadLogoData() an die neuen Rohpixel-Daten angepasst (353×78 statt 320×78).
 - Changelog: 1.9.0 - Ergebnis-PDF-Export (exportErgebnissePdf()) sport-profil-abhängig gemacht (Beitrag: Torsten Hofmann, an mein Format angepasst). Live geprüft: beide PDFs (Fußball/Volleyball) korrekt erzeugt, Volleyball zeigt die volle Satz-Formatierung im PDF.
 - Changelog: 1.8.2 - KRITISCHER BUGFIX: "Class LMOnext\\Pdf\\Imagick not found" - beim Umbau von frontend/pdf_export.php in diese Klasse wurden mehrere bare globale Klassennamen (Imagick, ImagickPixel, DateTime) sowie ALLE vier "catch (Throwable)"-Blöcke nicht mit einem führenden Backslash versehen. Innerhalb des Namespace LMOnext\\Pdf wurden diese fälschlich als LMOnext\\Pdf\\Imagick usw. aufgelöst statt als globale PHP-Klassen - dadurch stürzte der PDF-Export mit einem unabgefangenen Fatal Error ab, sobald ein SVG-Logo über den Imagick-Rasterungsweg verarbeitet werden sollte (die catch-Blöcke konnten den Fehler nicht abfangen, da auch "Throwable" bare war). Alle Vorkommen auf \\Imagick/\\ImagickPixel/\\DateTime/\\Throwable korrigiert und mit einem SVG-Logo end-to-end verifiziert (kein Absturz mehr, PDF wird korrekt erzeugt). Alle anderen seit dieser Session neu in Namespaces verschobenen Dateien auf denselben Fehler geprüft - keine weiteren Fälle gefunden.
@@ -1548,6 +1573,7 @@
 
 ## src/Sport/VolleyballProfile.php
 
+- Changelog: 1.2.0 - Diagonale Spaltenüberschriften in der "vollständig"-Ansicht auf die tatsächlich langen Wortbezeichner beschränkt (Spiele/Siege/Niederlagen/Ballquotient/Ballverhältnis/Satzquotient/Satzverhältnis - neues 'diag'=>true je Spalte), die kurzen Ergebnis-Spalten (3:0/3:1/3:2/2:3/1:3/0:3) und "Punkte" bleiben horizontal. Bisher wurden ALLE Spalten der Lang-Ansicht diagonal gestellt (siehe RenderViewsTrait.php 1.11.0 und älter), was bei den schmalen, an den kurzen Datenwert angepassten Spalten zu Textüberlappungen zwischen benachbarten Kopfzeilen und mit der Datenzeile führte (im Livesystem als Screenshot bestätigt). Vorbild: volleyball-bundesliga.de macht es identisch - dort bleiben exakt dieselben kurzen Spalten horizontal.
 - Changelog: 1.1.0 - Spaltenüberschriften der Tabellendarstellung (kurz/mittel/vollständig) sind jetzt sprachabhängig über tf() statt hartkodiert Deutsch ("Sp"/"S"/"N"/"Pkt"/"B-Quot" etc.) - Bugfix bei der Übernahme: die englische Sprachversion hätte trotzdem die deutschen Kürzel gezeigt.
 - Changelog: 1.0.0 - Neu (Beitrag: Torsten Hofmann): Volleyball-Profil mit satzabhängiger Punktevergabe (3:0/3:1 = 3 Punkte, 3:2 = 2/1 Punkte) und Ballpunkte-Statistik. Unverändert übernommen.
 
@@ -1569,6 +1595,7 @@
 
 ## assets/logo.svg
 
+- Changelog: (neu) - Hauptlogo erneut ausgetauscht (echtes Vektor-SVG, 126 KB, 1000×226px Ansicht). Hinweis: Diese Version hat weiterhin KEINEN echt transparenten Hintergrund - nur die vier abgerundeten Ecken sind transparent, die Fläche dahinter (dunkles Blau) bleibt voll deckend, gleiches Verhalten wie die vorherige Version. Auf hellem Grund (z.B. Login-Seite mit hellem Template) ist der dunkle Rahmen entsprechend sichtbar - auf ausdrücklichen Wunsch dennoch übernommen, nach vorheriger Prüfung/Rückmeldung dazu.
 - Changelog: (neu) -  - Hauptlogo durch neues Design ersetzt. Originaldatei (1,93 MB, eingebettetes Rasterbild) auf eine optimierte, schlanke Version (172 KB, Anzeigegröße 723×160px) reduziert und im echten Browser (Playwright) bestätigt korrekt dargestellt. Alte Version gesichert.
 
 ## assets/pdf/logo_rgb.zz + logo_alpha.zz

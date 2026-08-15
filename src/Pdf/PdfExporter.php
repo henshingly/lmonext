@@ -9,7 +9,7 @@ final class PdfExporter
 /**
  * Project: LMOnext
  * Filename: frontend/pdf_export.php
- * Fileversion: 1.9.1
+ * Fileversion: 1.10.0
  *
  * PHP version 8.2
  *
@@ -897,10 +897,18 @@ public static function buildResultsPdf(string $ligaName, array $sections, string
  * @param int|null $accentColIndex Spalte (0-basiert), die fett/in Akzentfarbe
  *        hervorgehoben wird (z.B. die Pkt-Spalte der Tabelle) – null = keine
  */
-public static function buildStandingsPdf(string $ligaName, string $subtitleLabel, array $columnHeaders, array $columnAligns, array $rows, string $footerText = '', ?int $accentColIndex = null, array $rowBorderColors = [], array $teamLogos = [], array $logoCols = [], array $rowTeamIds = [], ?array $vsTitleTeams = null, ?string $noteLine = null, ?array $footnotes = null) : string
+public static function buildStandingsPdf(string $ligaName, string $subtitleLabel, array $columnHeaders, array $columnAligns, array $rows, string $footerText = '', ?int $accentColIndex = null, array $rowBorderColors = [], array $teamLogos = [], array $logoCols = [], array $rowTeamIds = [], ?array $vsTitleTeams = null, ?string $noteLine = null, ?array $footnotes = null, bool $landscape = false) : string
 {
-    $pageWidth    = 595.28;
-    $pageHeight   = 841.89;
+    // Querformat (A4 gedreht) statt Hochformat, wenn der Aufrufer das
+    // anfordert - nötig bei Tabellen mit vielen Spalten (z.B. Volleyball
+    // "vollständig" mit 14 Zusatzspalten), die im Hochformat über den
+    // rechten Seitenrand hinauslaufen würden (siehe exportTabellePdf(),
+    // dort wird anhand der Spaltenzahl entschieden). Simple Vertauschung
+    // von Breite/Höhe genügt, da der gesamte übrige Code in dieser Funktion
+    // ausschließlich über die Variablen $pageWidth/$pageHeight rechnet statt
+    // die A4-Maße erneut hart zu codieren.
+    $pageWidth    = $landscape ? 841.89 : 595.28;
+    $pageHeight   = $landscape ? 595.28 : 841.89;
     $marginX      = 42;
     $marginBottom = 46;
     $lineHeight   = 17;
@@ -1468,7 +1476,7 @@ public static function exportErgebnissePdf(string $ligaName, array $sectionSpecs
  * identische Logik wie renderStandingsView() im Web (siehe
  * src/Liga/RenderViewsTrait.php).
  */
-public static function exportTabellePdf(string $ligaName, int $ligaId, array $allSpieltage, bool $showLogos = false, string $tableMode = 'gesamt') : void
+public static function exportTabellePdf(string $ligaName, int $ligaId, array $allSpieltage, bool $showLogos = false, string $tableMode = 'gesamt', string $tmode = '') : void
 {
     $opts    = getLigaOptions($ligaId);
     $teams   = getLigaTeamsList($ligaId);
@@ -1494,18 +1502,45 @@ public static function exportTabellePdf(string $ligaName, int $ligaId, array $al
 
     $rows = computeStandings($teams, $partienForMode, $opts, $ligaId, $csMode);
 
-    $headers = [
-        tf('liga_standings_col_platz'),
-        tf('liga_standings_col_team'),
-        tf('liga_standings_col_sp'),
-        tf('liga_standings_col_s'),
-        tf('liga_standings_col_u'),
-        tf('liga_standings_col_n'),
-        tf('liga_standings_col_tore'),
-        tf('liga_standings_col_diff'),
-        tf('liga_standings_col_pkt'),
-    ];
-    $aligns = ['center', 'left', 'center', 'center', 'center', 'center', 'center', 'center', 'center'];
+    // Sportartspezifische Tabellenspalten (Beitrag: Torsten Hofmann, Vorbild
+    // volleyball-bundesliga.de) - analog zu RenderViewsTrait::renderStandingsView()
+    // in der HTML-Ansicht. Vorher zeigte der PDF-Export UNABHÄNGIG von der
+    // Sportart immer fest Sp/S/U/N/Tore/Diff/Pkt - für Volleyball fehlten
+    // damit die eigentlich relevanten Spalten (3:0/3:1/3:2-Siege, Ballquotient
+    // etc.) komplett, und "U" (Unentschieden) ergibt bei Volleyball ohnehin
+    // keinen Sinn (dort gibt es keine Unentschieden). $tmode wird 1:1 aus dem
+    // Button-Link übernommen (siehe liga.php), damit das PDF exakt die
+    // Darstellung zeigt, die der Besucher gerade vor sich hatte (kurz/mittel/
+    // vollständig) - fällt bei fehlendem/ungültigem Wert auf den ersten
+    // verfügbaren Modus der Sportart zurück.
+    $sportProfile = \LMOnext\Liga\LigaService::sportProfile($ligaId);
+    $displayModes = $sportProfile->getDisplayModes();
+    $useDynamicColumns = !empty($displayModes);
+    if ($useDynamicColumns) {
+        if (!in_array($tmode, $displayModes, true)) {
+            $tmode = $displayModes[0];
+        }
+        $dynColumns = $sportProfile->getStandingsColumnsForMode($tmode);
+        $headers = [tf('liga_standings_col_platz'), tf('liga_standings_col_team')];
+        $aligns  = ['center', 'left'];
+        foreach ($dynColumns as $col) {
+            $headers[] = $col['label'];
+            $aligns[]  = 'center';
+        }
+    } else {
+        $headers = [
+            tf('liga_standings_col_platz'),
+            tf('liga_standings_col_team'),
+            tf('liga_standings_col_sp'),
+            tf('liga_standings_col_s'),
+            tf('liga_standings_col_u'),
+            tf('liga_standings_col_n'),
+            tf('liga_standings_col_tore'),
+            tf('liga_standings_col_diff'),
+            tf('liga_standings_col_pkt'),
+        ];
+        $aligns = ['center', 'left', 'center', 'center', 'center', 'center', 'center', 'center', 'center'];
+    }
 
     $tableRows = [];
     $rowBorderColors = [];
@@ -1513,22 +1548,30 @@ public static function exportTabellePdf(string $ligaName, int $ligaId, array $al
     $totalTeams = count($rows);
     $footnoteNrs = \LMOnext\Liga\LigaService::assignStrafFootnotes($rows);
     foreach ($rows as $i => $r) {
-        $diff = $r['tore_h'] - $r['tore_g'];
         $teamName = $r['name'];
         if (isset($footnoteNrs[(int)$r['id']])) {
             $teamName .= ' (' . $footnoteNrs[(int)$r['id']] . ')';
         }
-        $tableRows[] = [
-            (string)($i + 1),
-            $teamName,
-            (string)$r['sp'],
-            (string)$r['s'],
-            (string)$r['u'],
-            (string)$r['n'],
-            $r['tore_h'] . ':' . $r['tore_g'],
-            ($diff > 0 ? '+' : '') . $diff,
-            (string)$r['pkt'],
-        ];
+        if ($useDynamicColumns) {
+            $row = [(string)($i + 1), $teamName];
+            foreach ($dynColumns as $col) {
+                $row[] = \LMOnext\Liga\LigaService::resolveStandingsCell($r, $col['key']);
+            }
+            $tableRows[] = $row;
+        } else {
+            $diff = $r['tore_h'] - $r['tore_g'];
+            $tableRows[] = [
+                (string)($i + 1),
+                $teamName,
+                (string)$r['sp'],
+                (string)$r['s'],
+                (string)$r['u'],
+                (string)$r['n'],
+                $r['tore_h'] . ':' . $r['tore_g'],
+                ($diff > 0 ? '+' : '') . $diff,
+                (string)$r['pkt'],
+            ];
+        }
         $rowBorderColors[$i] = computeStandingsMarkerColor($i, $totalTeams, $opts);
         $rowTeamIds[$i] = [1 => (int)$r['id']]; // Spalte 1 = "Team"
     }
@@ -1555,7 +1598,13 @@ public static function exportTabellePdf(string $ligaName, int $ligaId, array $al
     if ($tableMode !== 'gesamt') {
         $subtitle .= ' – ' . tf('liga_standings_nav_' . $tableMode);
     }
-    $pdfBytes = self::buildStandingsPdf($ligaName, $subtitle, $headers, $aligns, $tableRows, $footerText, count($headers) - 1, $rowBorderColors, $teamLogos, $logoCols, $rowTeamIds, null, null, $footnoteLines);
+    // Querformat ab 12 Spalten (Platz+Team mitgezählt) - betrifft aktuell nur
+    // Volleyball im "vollständig"-Modus (16 Spalten), Fußball (9) sowie
+    // Volleyball "kurz"/"mittel" (6/10) bleiben im gewohnten Hochformat.
+    // Siehe buildStandingsPdf() für die Begründung, warum eine einfache
+    // Breiten-/Höhenvertauschung hier ausreicht.
+    $landscape = count($headers) >= 12;
+    $pdfBytes = self::buildStandingsPdf($ligaName, $subtitle, $headers, $aligns, $tableRows, $footerText, count($headers) - 1, $rowBorderColors, $teamLogos, $logoCols, $rowTeamIds, null, null, $footnoteLines, $landscape);
 
     $modeSuffix = $tableMode !== 'gesamt' ? ('_' . ucfirst($tableMode)) : '';
     $filenameBase = preg_replace('/[^A-Za-z0-9_-]+/', '_', $ligaName . '_Tabelle' . $modeSuffix);
