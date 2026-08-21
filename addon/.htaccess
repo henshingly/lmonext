@@ -1,0 +1,42 @@
+# LMOnext – Addon-Verzeichnis Schutz
+# Blockiert direkten URL-Zugriff auf sensitive Addon-Dateien.
+# Standalone-Entry-Points (lmo-*.php) bleiben für iframe/URL-Aufrufe erlaubt.
+
+# Directory listing aus
+Options -Indexes
+
+# ── Dateien die NIEMALS direkt aufgerufen werden dürfen ──────────────────
+# Manifeste, Sprachdateien, Templates, Handler, Views, Hooks, Libs, Import
+
+<FilesMatch "\.(json|tpl\.php)$">
+    Order Allow,Deny
+    Deny from all
+</FilesMatch>
+
+<IfModule mod_authz_core.c>
+    <FilesMatch "\.(json|tpl\.php)$">
+        Require all denied
+    </FilesMatch>
+</IfModule>
+
+# Handler, Views, Hooks, Libs, Import-Skripte (Admin/Frontend-Addons)
+<FilesMatch "^(handler_|view_|hooks_|.*_lib\.php|.*_import\.php)">
+    Order Allow,Deny
+    Deny from all
+</FilesMatch>
+
+<IfModule mod_authz_core.c>
+    <FilesMatch "^(handler_|view_|hooks_|.*_lib\.php|.*_import\.php)">
+        Require all denied
+    </FilesMatch>
+</IfModule>
+
+# ── Unterverzeichnisse komplett blockieren ──────────────────────────────
+# lang/ und templates/ enthalten nur includes, niemals direkte Aufrufe
+
+<IfModule mod_rewrite.c>
+    RewriteEngine On
+    # Block lang/ and templates/ subdirectories everywhere under addon/
+    RewriteRule ^[^/]+/lang/ - [F,L]
+    RewriteRule ^[^/]+/templates/ - [F,L]
+</IfModule>
