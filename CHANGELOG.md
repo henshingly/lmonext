@@ -1,13 +1,5 @@
 # Changelog LMOnext
 
-## Hinweis: Addons als separate Pakete (ab 1.9.0-beta+addons)
-
-Mit der Integration des Addon-Manager-Frameworks (Beitrag Torsten Hofmann, siehe src/Addon/AddonManager.php 1.0.0) wurden die bis dahin fest im Core mitgelieferten Addons **ewige** (ewige-tabelle), **mini** (mini-tabelle), **player**, **relegation**, **tabellenrechner**, **tipp** und **viewer** (spieltag-viewer) aus dem LMOnext-Kernpaket entfernt. Sie werden jetzt als eigenständige, self-contained addon.json-Pakete separat verteilt und vom Administrator bei Bedarf über Administrator → Addons (Upload/GitHub-Update) installiert und aktiviert/deaktiviert - statt fest verdrahtet und immer mitzuinstallieren. Ihre bisherige Entwicklungshistorie bleibt unten unter den jeweiligen addon/{name}/-Abschnitten als Referenz erhalten; neue Änderungen an diesen Addons werden ab sofort im Changelog des jeweiligen Addon-Pakets geführt.
-
-## addon/addon-manager/ (handler_addons.php, view_addons.php, lang/de.php, lang/en.php, addon.json)
-
-- Changelog: 1.0.0 / 2.0.0 - Initiale Version (Beitrag Torsten Hofmann): der Addon-Manager verwaltet sich selbst als "Core-Addon" (type: admin) über dieselbe addon.json-Mechanik wie alle anderen Addons. view_addons.php (Fileversion 2.0.0) zeigt alle entdeckten Addons mit Status/Version/Typ/Autor, Aktivieren/Deaktivieren, GitHub-Update-Check (Token-Verwaltung, Diagnostics-Tab) und ZIP-Upload/-Installation. handler_addons.php verarbeitet die zugehörigen POST-Aktionen (enable/disable, Token speichern/löschen, Update-Check erzwingen, ZIP-Installation). Nav-Eintrag "Addons" (Position 90, siehe admin/data_loader.php 1.8.0).
-
 ## addon/mini/debugTeamCompare.php
 
 - Changelog: 1.0.1 - Review-Korrektur (Dietmar Kersting / Claude): fehlender require_once für src/Liga/Eternal/EternalTableService.php ergänzt (gleicher Fehler wie in lmo-ewigetab.php 1.0.1 - Klasse war nicht auffindbar). Kein Produktivwerkzeug - reines Entwickler-Debug-Skript von Torsten Hofmann zur Verifikation der Ewige-Tabelle-Berechnung (fest auf "Borussia Dortmund" verdrahtet), nicht von irgendeiner Navigation aus verlinkt
@@ -178,7 +170,6 @@ Mit der Integration des Addon-Manager-Frameworks (Beitrag Torsten Hofmann, siehe
 
 ## admin.php
 
-- Changelog: 1.6.0 - Addon-Manager-Framework integriert (Beitrag Torsten Hofmann): AddonManager wird gebootet (bootAdmin() lädt admin_handlers aller aktivierten Addons dynamisch, ersetzt die vorher festen require_once-Zeilen für handler_spielerstat.php/handler_tipp.php); Admin-Views werden zuerst über addonManager()->getAdminView($action) geprüft (ersetzt die festen Routen für "tippspiel", "spielerstatistik", "spst_import_review" - diese Addons registrieren ihre Views jetzt selbst über addon.json); neuer Hook admin.footer am Seitenende.
 - Changelog: 1.5.4 - Sicherheitsfix: requireCsrf() zentral vor allen POST-Handlern aufgerufen, schützt alle 30+ POST-Aktionen (Liga speichern, Ergebnisse, Backup, Import, Wartung etc.) auf einen Schlag.
 - Changelog: 1.5.3 - Bindet addon/tipp/handler_tipp.php ein (neues Tippspiel-Addon, erste Speicher-Aktion für die Punkteverteilung)
 - Changelog: 1.5.2 - Route für die neue Aktion "tippspiel" ergänzt (neues Tippspiel-Addon, siehe addon/tipp/view_tippspiel.php)
@@ -235,7 +226,6 @@ Mit der Integration des Addon-Manager-Frameworks (Beitrag Torsten Hofmann, siehe
 
 ## admin/data_loader.php
 
-- Changelog: 1.8.0 - Addon-Manager-Framework integriert (Beitrag Torsten Hofmann): Nav-Array wird jetzt dynamisch um Addon-Einträge ergänzt (addonManager()->getNavItems(), aus admin_nav in addon.json, sortiert nach position) - fester Eintrag für "tippspiel" entfernt, wird jetzt vom tipp-Addon selbst registriert. Spielerstatistik-Datenladung nur noch aktiv, wenn das "player"-Addon aktiviert ist (addonManager()->isEnabled('player')) statt festem require_once.
 - Changelog: 1.7.11 - Lädt für die neue Log-Ansicht unter Administrator die letzten Audit-Log-Einträge (paginiert, 50 pro Seite).
 - Changelog: 1.7.10 - Ruft die neue ensureSportProfileColumns() auf jedem eingeloggten Admin-Seitenaufruf auf, analog zu den bestehenden ensure*()-Migrationsfunktionen.
 - Changelog: 1.7.9 - Liga-Settings-Abfrage liest jetzt zusätzlich sport_type mit, für die korrekte Vorauswahl im neuen Sportart-Dropdown.
@@ -577,7 +567,6 @@ Mit der Integration des Addon-Manager-Frameworks (Beitrag Torsten Hofmann, siehe
 
 ## config_loader.php
 
-- Changelog: 1.6.0 - Addon-Manager-Framework integriert (Beitrag Torsten Hofmann): neue Konstante LMONEXT_VERSION aus composer.json (version-Feld), wird vom AddonManager benutzt, um min_core_version aus addon.json gegen die tatsächlich laufende LMOnext-Version zu prüfen.
 - Changelog: 1.5.0 - Neue Konstante LMO_FORCE_HTTPS (Standard: true), mit der die automatische HTTP→HTTPS-Weiterleitung für Testinstallationen auf einem Host ohne SSL-Zertifikat abschaltbar ist (setzbar in config.php per define() oder in der .env als LMO_FORCE_HTTPS=0) - ohne diesen Schalter wäre eine solche Installation nach dem Speichern der Konfiguration komplett unerreichbar (jeder Request würde in einen ins Leere laufenden 301-Redirect auf https:// laufen). Dafür musste der "Konfiguration laden"-Block (config.php/.env einlesen) vor den HTTPS-Erzwingung-Block gezogen werden - die Konstante muss bekannt sein, BEVOR die Weiterleitung entschieden wird; alle anderen Blöcke behalten ihre bisherige Reihenfolge. Neue wiederverwendbare Funktion lmoIsHttps() (vorher inline im Redirect-Block) wird jetzt zusätzlich vom neuen Info-Hinweis unter Administrator → Einstellungen (siehe admin/view_settings.php 1.6.0) und vom Installer (siehe install.php 2.6.0) verwendet.
 - Changelog: 1.4.0 - Neue zentrale Funktionen phpIssueLogFile()/logPhpIssue()/readPhpIssueLog() für die Datei-basierte Fehler/Warnungen-Protokollierung (Datei statt DB-Tabelle, damit das Log auch bei einem Datenbankproblem noch funktioniert), mit automatischer Größenbegrenzung/Rotation.
 - Changelog: 1.3.0 - Sicherheitsfix: aktive HTTP→HTTPS-Weiterleitung (301) ergänzt, unabhängig vom vorherigen Cookie-Secure-Flag-Verhalten. Erkennt sowohl direktes HTTPS als auch X-Forwarded-Proto (für Hosts, die TLS auf einem vorgelagerten Proxy terminieren). Nur im Web-Kontext aktiv, nicht bei CLI-Aufrufen. Live über einen echten HTTP-Request bestätigt: 301 mit korrekt erhaltenem Pfad/Query-String, kein Redirect bei bereits aktivem HTTPS oder korrektem X-Forwarded-Proto-Header.
@@ -587,7 +576,6 @@ Mit der Integration des Addon-Manager-Frameworks (Beitrag Torsten Hofmann, siehe
 
 ## frontend/bootstrap.php
 
-- Changelog: 1.13.0 - Addon-Manager-Framework integriert (Beitrag Torsten Hofmann): AddonManager wird gebootet (bootFrontend() lädt frontend_handlers aller aktivierten Addons dynamisch, ersetzt die vorher festen require_once-Zeilen für addon/player/frontend_spielerstat.php und addon/tipp/tipp_lib.php).
 - Changelog: 1.12.0 - Wartungsmodus fürs Frontend übernommen (Beitrag: Torsten Hofmann): ist der neue Schalter "Wartungsmodus" (Administrator → Wartung, siehe view_wartung.php 1.3.0/handler_backup.php 1.5.0) aktiv, zeigen alle Besucherseiten (home.php, liga.php sowie sämtliche Embed-Addons, da diese ebenfalls diese Datei laden) statt ihres normalen Inhalts eine gestaltete Wartungsseite (HTTP 503 + Retry-After-Header). Der Adminbereich selbst ist davon unberührt, da admin/bootstrap.php separat lädt. Prüfung zentral direkt nach der Sprachauflösung, vor Template-Engine/Datenfunktionen - kein zusätzlicher DB-Zugriff nötig (nutzt die bereits vorhandene getAdminSetting()-Zwischenspeicherung).
 - Changelog: 1.11.0 - Zwei Sicherheits-Verbesserungen aus Torsten Hofmanns parallelem Update übernommen (siehe admin/bootstrap.php 1.23.0 für den dritten Punkt und SECURITY_COMPARISON.md für den vollständigen Vergleich): (1) gleiche verschärfte CSP + Referrer-Policy-Header wie im Adminbereich, frame-ancestors bleibt bewusst bei 'self' (unverändert - Haupt-Besucherseiten dürfen weiterhin same-origin eingebettet werden); (2) neuer Idle-Timeout (60 Minuten) speziell für Tippspiel-Logins (tipp_user_id) - bisher lief ein einmal angemeldeter Tipper unbegrenzt weiter, jetzt wird die Tipp-Anmeldung nach einer Stunde Inaktivität automatisch aufgehoben (betrifft nur den Tippspiel-Login, nicht die übrige Besuchersitzung).
 - Changelog: 1.10.0 - Frontend-Fehler landen jetzt ebenfalls in der zentralen Fehler/Warnungen-Log-Datei: globaler Exception-Handler erweitert, neuer set_error_handler() für nicht-fatale Meldungen ergänzt (analog zum Adminbereich).
@@ -737,7 +725,6 @@ Mit der Integration des Addon-Manager-Frameworks (Beitrag Torsten Hofmann, siehe
 
 ## home.php
 
-- Changelog: 2.4.0 - Addon-Manager-Framework integriert (Beitrag Torsten Hofmann): fester "?view=tippspiel"-Branch durch generischen Addon-Frontend-View-Router ersetzt (addonManager()->getFrontendView($feView)) - jedes Addon kann jetzt über frontend_views in addon.json eigene ?view=-Routen registrieren, statt fest verdrahtet zu sein. TippspielCard auf der Startseite kommt jetzt über den neuen Hook frontend.home_cards (das Tipp-Addon registriert sich selbst dafür, siehe addon/tipp/hooks_frontend.php), damit die Karte verschwindet, sobald das Addon deaktiviert wird.
 - Changelog: 2.3.1 - "ZurueckLinkBlock" (Link zur Liga-Übersicht) an die Tippspiel-Route ergänzt - fehlte bisher komplett auf allen Tippspiel-Unterseiten (siehe renderBackLinkBlock() jetzt in frontend/data_liga.php 3.0.1)
 - Changelog: 2.3.0 - Neue Route "?view=tippspiel": bindet das Tippspiel jetzt als View ins Template-System ein (analog zur Spielerstatistik in liga.php), statt als eigenständige Seite mit eigenem HTML/CSS. Läuft komplett getrennt von der normalen Startseite, ruft tippspielHandleRequest() (kann per redirectTo() umleiten) VOR renderTemplate() auf - siehe addon/tipp/view_tippspiel_frontend.php. Ersetzt die bisherige eigenständige addon/tipp/tipp.php
 - Changelog: 2.2.0 - Neuer Platzhalter "TippspielCard": wirbt auf der Startseite fürs Tippspiel (tippRenderHomeCard(), siehe addon/tipp/tipp_lib.php 0.5.0), bleibt leer wenn keine Liga freigegeben ist
@@ -773,8 +760,6 @@ Mit der Integration des Addon-Manager-Frameworks (Beitrag Torsten Hofmann, siehe
 
 ## lang/admin/de.php
 
-- Changelog: 1.33.0 - Tippspiel-Sprachschlüssel (nav_tippspiel + 150× tipp_*) ins tipp-Addon ausgelagert (addon/tipp/lang/de.php), da das Addon jetzt aus dem Core extrahiert ist (siehe src/Addon/AddonManager.php 1.0.0, lang/i18n.php 1.2.0 für die Addon-Übersetzungs-Bridge).
-- Changelog: 1.32.0 - Neuer Sprachschlüssel nav_addons für den neuen Addon-Manager-Menüpunkt (Beitrag Torsten Hofmann).
 - Changelog: 1.31.0 - Neue Sprachschlüssel für die HTTPS-Warnung im Installer (install_check_https, install_https_ok, install_https_missing, install_https_warning_notice) und die neue SSL-Info-Karte im Adminbereich (settings_heading_ssl, settings_ssl_active, settings_ssl_inactive, settings_ssl_warning_text), siehe install.php 2.6.0 und admin/view_settings.php 1.6.0.
 - Changelog: 1.30.0 - Neue Sprachschlüssel für den Wartungsmodus-Tab (wartung_tab_wartung, wartung_maintenance_*, wartung_flash_maintenance_*), siehe admin/view_wartung.php 1.3.0.
 - Changelog: 1.29.0 - Neue Sprachschlüssel für den Fehler/Warnungen-Block.
@@ -866,8 +851,6 @@ Mit der Integration des Addon-Manager-Frameworks (Beitrag Torsten Hofmann, siehe
 
 ## lang/admin/en.php
 
-- Changelog: 1.32.0 - Prediction game language keys (nav_tippspiel + 150× tipp_*) moved into the tipp add-on (addon/tipp/lang/en.php), since the add-on is now extracted from the core (see src/Addon/AddonManager.php 1.0.0, lang/i18n.php 1.2.0 for the add-on translation bridge).
-- Changelog: 1.31.0 - New language key nav_addons for the new addon manager menu item (contribution: Torsten Hofmann).
 - Changelog: 1.30.0 - Added language keys for the installer's HTTPS warning (install_check_https, install_https_ok, install_https_missing, install_https_warning_notice) and the new SSL info card in the admin area (settings_heading_ssl, settings_ssl_active, settings_ssl_inactive, settings_ssl_warning_text), see install.php 2.6.0 and admin/view_settings.php 1.6.0.
 - Changelog: 1.29.0 - Added language keys for the new maintenance mode tab (wartung_tab_wartung, wartung_maintenance_*, wartung_flash_maintenance_*), see admin/view_wartung.php 1.3.0.
 - Changelog: 1.28.0 - Added language keys for the errors/warnings block.
@@ -958,8 +941,6 @@ Mit der Integration des Addon-Manager-Frameworks (Beitrag Torsten Hofmann, siehe
 
 ## lang/frontend/de.php
 
-- Changelog: 1.47.0 - Tippspiel-Sprachschlüssel (193× tf_tipp_*) ins tipp-Addon ausgelagert (addon/tipp/lang/de.php), siehe lang/admin/de.php 1.33.0. Verwaisten Abschnittskommentar "Tippspiel (Tipper-Ansicht, vorläufig)" entfernt.
-- Changelog: 1.46.0 - Verwaiste Sprachschlüssel mini_next_* (10 Stück) entfernt: gehörten zum mini-Addon, das mit der Addon-Manager-Integration aus dem Core extrahiert wurde (siehe src/Addon/AddonManager.php 1.0.0) und seine eigenen Sprachdateien jetzt selbst mitbringt (addon/mini/lang/de.php).
 - Changelog: 1.45.0 - Neue Sprachschlüssel für die Wartungsseite (maintenance_title/heading/message/subtext/contact/footer), angezeigt bei aktivem Wartungsmodus, siehe frontend/bootstrap.php 1.12.0.
 - Changelog: 1.44.0 - Emoji aus tf_tipp_header_link entfernt (durch echtes Icon-Bild ersetzt), neuer Sprachschlüssel tf_tipp_section_titel für die neue Bereichsüberschrift.
 - Changelog: 1.43.0 - Neue Sprachschlüssel für die Volleyball-Tabellenspalten.
@@ -1030,8 +1011,6 @@ Mit der Integration des Addon-Manager-Frameworks (Beitrag Torsten Hofmann, siehe
 
 ## lang/frontend/en.php
 
-- Changelog: 1.47.0 - Prediction game language keys (193× tf_tipp_*) moved into the tipp add-on (addon/tipp/lang/en.php), see lang/admin/en.php 1.32.0. Removed the now-orphaned "Prediction game (tipster view, preliminary)" section comment.
-- Changelog: 1.46.0 - Removed orphaned language keys mini_next_* (10 keys): belonged to the mini add-on, which was extracted from the core with the addon manager integration (see src/Addon/AddonManager.php 1.0.0) and now ships its own language files (addon/mini/lang/en.php).
 - Changelog: 1.45.0 - Added language keys for the maintenance page (maintenance_title/heading/message/subtext/contact/footer), shown while maintenance mode is active, see frontend/bootstrap.php 1.12.0.
 - Changelog: 1.44.0 - Removed emoji from tf_tipp_header_link (replaced by a real icon image), added new tf_tipp_section_titel language key for the new section heading.
 - Changelog: 1.43.0 - Added language keys for the volleyball table columns.
@@ -1102,8 +1081,6 @@ Mit der Integration des Addon-Manager-Frameworks (Beitrag Torsten Hofmann, siehe
 
 ## lang/i18n.php
 
-- Changelog: 1.2.0 - loadTranslations() mischt jetzt Addon-Übersetzungen ein (Beitrag Torsten Hofmann): neue Funktion registerAddonTranslations() nimmt die lang/{de,en}.php-Einträge aktivierter Addons entgegen (aufgerufen aus AddonManager::loadLanguages()), Core-Strings haben bei Namenskollisionen immer Vorrang. Voraussetzung dafür, dass Addons ihre eigenen Sprachdateien mitbringen können, statt Schlüssel im Core zu duplizieren (siehe lang/admin/de.php+en.php und lang/frontend/de.php+en.php 1.32.0/1.47.0: Tippspiel-Sprachschlüssel dorthin ausgelagert).
-
 - Changelog: 1.1.2 - LANG_SESSION_PREFIX von "olv_lang_" auf "lmonext_lang_" umgestellt
 - Changelog: 1.1.1 - Projektname auf "LMOnext" umgestellt (vorher "Online-Liga-Verwaltung Board" / "OLVBoard")
 - Changelog: 1.1.0 - Domain-fähig gemacht (admin/frontend getrennt): eigene Sprachdateien, eigener Session-Key und eigener Cache je Bereich. t() bleibt unverändert und ist fest an die Domain "admin" gebunden -> keine Änderung an bestehenden Aufrufstellen nötig. Neue Funktion tf() für den künftigen Besucherbereich ("frontend"), sobald dieser existiert.
@@ -1112,7 +1089,6 @@ Mit der Integration des Addon-Manager-Frameworks (Beitrag Torsten Hofmann, siehe
 
 ## liga.php
 
-- Changelog: 3.12.0 - Addon-Manager-Framework integriert (Beitrag Torsten Hofmann): viewOrder-Array über den neuen Hook liga.view_order erweiterbar (das player-Addon hängt "spielerstatistik" jetzt selbst an, statt fest im Array zu stehen); fester "spielerstatistik"-Case im View-Switch ersetzt durch generischen default-Fallthrough mit Hook liga.view_render - jedes Addon kann so eigene Liga-Unteransichten registrieren, ohne den Core anzufassen. Fällt auf "ergebnisse" zurück, wenn kein Addon-Hook zuständig ist.
 - Changelog: 3.11.2 - $_GET['tmode'] (kurz/mittel/vollständig-Auswahl der Tabellendarstellung, siehe RenderViewsTrait.php) wird jetzt an exportTabellePdf() durchgereicht und im PDF-Export-Button-Link mitgeführt (&tmode=...), damit das heruntergeladene PDF exakt die Spaltenauswahl zeigt, die der Besucher gerade in der HTML-Ansicht vor sich hat, siehe PdfExporter.php 1.10.0.
 - Changelog: 3.11.1 - _liga_id wird jetzt in die für die Ergebnisse-Ansicht geladenen Partien injiziert (getSpieltagPartien() kennt die Liga selbst nicht) - ohne diese Ergänzung blieb die sport-profil-abhängige Anzeige auf der echten Ergebnisse-Seite wirkungslos, obwohl computeStandings() bereits korrekt rechnete (beim Testen selbst gefunden). PDF-Export-Sektionen bekommen ebenfalls die Liga-ID mit.
 - Changelog: 3.10.9 - Liest jetzt zusätzlich ?table= (Gesamt/Heim/Gast/Hin/Rück, Beitrag Torsten Hofmann) und reicht es an renderStandingsView()/exportTabellePdf() durch, bleibt beim Spieltag-Wechsel erhalten.
@@ -1157,10 +1133,6 @@ Mit der Integration des Addon-Manager-Frameworks (Beitrag Torsten Hofmann, siehe
 - Changelog: 1.2.0 - Umbau auf Tabellen-Ansicht wie alte LMO-Ergebnisseite
 - Changelog: 1.1.0 - Auswahl/Navigation zwischen allen Spieltagen/Runden (?nr=N)
 - Changelog: 1.0.0 - Initiale Version: zeigt die letzten Ergebnisse einer Liga
-
-## src/Addon/AddonManager.php
-
-- Changelog: 1.0.0 - Initiale Version (Beitrag Torsten Hofmann): zentrale Addon- und Event-System-Komponente. Discovery (addon/{name}/addon.json scannen), Lifecycle (enable/disable über DB-Tabelle addon_registry), Boot (lädt admin_handlers/frontend_handlers aktivierter Addons automatisch statt fester require_once-Zeilen im Core), Navigation (admin_nav aus Manifesten mergen), Sprachen (Addon-eigene lang/-Dateien), Templates (Addon-eigene templates_dir registrieren), Hooks (registerHook()/doHook() für Event-basierte Core-Addon-Interaktion, z.B. liga.view_order, liga.view_render, frontend.home_cards, admin.footer). Framework-frei (kein Composer/Laravel), Addons werden weiterhin per require_once geladen, nur dynamisch statt fest verdrahtet. Zusätzlich: ZIP-Installation (installFromZip()), GitHub-Update-Check (checkGithubUpdates()/installUpdate()), Export als ZIP.
 
 ## src/Home/HomeRenderer.php
 
