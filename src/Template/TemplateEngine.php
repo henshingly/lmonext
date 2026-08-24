@@ -231,7 +231,7 @@ public static function renderTemplate(string $activeTemplate, string $page, arra
         'Version'       => h(getAppVersion()),
         'CopyrightNotice' => \renderCopyrightNotice(),
         'TemplateZeile' => $templateZeile,
-        'TippspielLink' => tippRenderSiteLink(),
+        'TippspielLink' => function_exists('tippRenderSiteLink') ? tippRenderSiteLink() : '',
     ];
     $pageHtml          = self::loadTemplateFile($page . '.tpl.php', $vars);
     $vars['Hauptteil'] = $pageHtml;
