@@ -1580,6 +1580,7 @@ Mit der Integration des Addon-Manager-Frameworks (Beitrag Torsten Hofmann, siehe
 
 ## src/Template/TemplateEngine.php
 
+- Changelog: 2.7.1 - KRITISCHER Bugfix: renderTemplate() (läuft bei JEDEM Frontend-Seitenaufruf, nicht nur Tippspiel-bezogenen) rief tippRenderSiteLink() unbedingt auf, ohne zu prüfen ob die Funktion überhaupt existiert. Bei deaktiviertem/nicht installiertem tipp-Addon (die Funktion wird nur von addon/tipp/tipp_lib.php bereitgestellt, siehe AddonManager::bootFrontend()) führte das zu einem fatalen "Call to undefined function" auf JEDER Seite, inkl. home.php - Übersehen bei der ursprünglichen Extraktion des Tippspiel-Addons aus dem Core (der analoge Fall in home.php wurde damals über den Hook frontend.home_cards korrekt behoben, dieser zweite Aufrufort hier nicht). Jetzt mit function_exists()-Absicherung, Fallback auf leeren String (identisch zu tippRenderSiteLink()'s eigenem Verhalten bei deaktiviertem Tippspiel).
 - Changelog: 2.7.0 - Neues CopyrightNotice-Platzhalter für alle Frontend-Seiten-Templates (Beitrag: Torsten Hofmann).
 - Changelog: 1.0.0 - Neu (Beitrag Torsten Hofmann): enthält die tatsächliche Implementierung, vorher direkt in frontend/template_engine.php. 1:1 identisches Verhalten geprüft.
 
