@@ -9,7 +9,7 @@ final class TemplateEngine
 /**
  * Project: LMOnext
  * Filename: template_engine.php
- * Fileversion: 2.7.0
+ * Fileversion: 2.7.1
  *
  * PHP version 8.2
  *
