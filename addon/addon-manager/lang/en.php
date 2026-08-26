@@ -55,6 +55,12 @@ return [
     'addons_err_not_found'    => 'Addon not found.',
     'addons_err_dep_missing'   => 'Missing dependencies: {deps}',
     'addons_err_core_version'  => 'Core version too low. Required: {need}, current: {have}',
+    'addons_install_err_unsafe_path'         => 'Security check failed: the ZIP contains a disallowed file path (path traversal). Installation rejected.',
+    'addons_install_err_disallowed_filetype' => 'Security check failed: the ZIP contains a disallowed file type. Allowed: php, json, md, txt, png, jpg, jpeg, gif, svg, ico, webp, css, js.',
+    'addons_install_err_lint_failed'         => 'Security check failed: the file "{file}" is not valid PHP code. Installation rejected.',
+    'addons_install_err_dangerous_pattern'   => 'Security check failed: the file "{file}" contains a suspicious function call (e.g. shell execution or dynamic code execution). Installation rejected. If this is a false positive for a legitimate add-on, contact the add-on author.',
+    'addons_demo_mode_blocked' => 'This action is disabled on this demo instance. Enabling/disabling already installed add-ons still works normally.',
+    'addons_demo_mode_notice'  => 'On this demo instance, installing/updating add-on code is disabled. Enabling/disabling already installed add-ons is still possible.',
     'addons_err_depended_on'   => 'Cannot disable addon "{addon}" because enabled addon "{by}" depends on it.',
 
     // ── Empty state ─────────────────────────────────────────────────────────────
@@ -112,7 +118,7 @@ return [
     'addons_install_desc'         => 'Upload a ZIP file containing an addon.json. The addon will be automatically installed to addon/. If it already exists, a backup is created.',
     'addons_install_choose'       => 'Choose ZIP file',
     'addons_install_btn'          => 'Install',
-    'addons_install_hint'         => 'The ZIP can contain addon.json in the root or in a subdirectory (like GitHub archives). Max 50 MB.',
+    'addons_install_hint'         => 'The ZIP can contain addon.json in the root or in a subdirectory (like GitHub archives). Max 7 MB.',
     'addons_install_success'      => 'Addon "{name}" v{version} installed successfully.',
     'addons_install_backup_created' => '(A backup of the previous addon was created)',
     'addons_install_not_zip'     => 'Please upload a .zip file.',

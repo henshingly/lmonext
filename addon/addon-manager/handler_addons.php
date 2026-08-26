@@ -2,7 +2,7 @@
 /**
  * Project: LMOnext
  * Filename: handler_addons.php
- * Fileversion: 1.0.0
+ * Fileversion: 1.2.0
  *
  * PHP version 8.2
  *
@@ -30,6 +30,21 @@ $addonName  = $_POST['addon_name'] ?? '';
 if (!in_array($addonAction, ['enable', 'disable', 'check_updates', 'save_token', 'delete_token', 'install_update', 'install_zip'], true)) {
     flash(t('addons_err_invalid_action'), 'error');
     redirect('?action=addons');
+}
+
+// ── Demo-Modus: Installation neuer/fremder Addon-Codes komplett sperren ──────
+// (Beitrag: Sicherheitsüberarbeitung). Auf Installationen, bei denen die
+// Konstante DEMO_MODE in config.php auf true gesetzt ist (z.B. eine öffentlich
+// zugängliche Vorstellungs-/Demo-Instanz), werden sowohl der ZIP-Upload als
+// auch der Ein-Klick-Update-Weg über GitHub blockiert - beides würde sonst
+// fremden Code in den Webroot schreiben. Aktivieren/Deaktivieren bereits
+// installierter Addons bleibt uneingeschränkt möglich, damit die Demo weiterhin
+// vollständig vorführbar ist. EINE Codebasis für beide Einsatzzwecke: der
+// Schalter lebt in config.php (nicht Teil der verteilten ZIP), nicht im Code.
+if (in_array($addonAction, ['install_zip', 'install_update'], true)
+    && defined('DEMO_MODE') && DEMO_MODE === true) {
+    flash(t('addons_demo_mode_blocked'), 'error');
+    redirect('?action=addons&tab=settings');
 }
 
 // save_token / delete_token brauchen keinen addon_name
@@ -83,10 +98,13 @@ if ($addonAction === 'install_zip') {
         redirect('?action=addons&tab=settings');
     }
 
-    // Größenlimit: 50 MB
-    $maxSize = 50 * 1024 * 1024;
+    // Größenlimit: 7 MB (Beitrag: Sicherheitsüberarbeitung, war vorher 50 MB -
+    // deutlich zu großzügig für ein reines PHP-/Sprach-/Template-Paket ohne
+    // große Mediendateien; kleineres Limit reduziert die mögliche Nutzlast
+    // eines missbräuchlichen Uploads, ersetzt aber KEINE Inhaltsprüfung).
+    $maxSize = 7 * 1024 * 1024;
     if ($_FILES['addon_zip']['size'] > $maxSize) {
-        flash(t('addons_install_too_big', ['max' => '50 MB']), 'error');
+        flash(t('addons_install_too_big', ['max' => '7 MB']), 'error');
         redirect('?action=addons&tab=settings');
     }
 
@@ -109,18 +127,23 @@ if ($addonAction === 'install_zip') {
     } else {
         $errCode = $result['error'] ?? 'unknown';
         $errMsgKeys = [
-            'zip_extension_missing' => 'addons_update_err_zip_missing',
-            'file_not_found'        => 'addons_install_err_no_file',
-            'zip_open_failed'       => 'addons_update_err_zip_failed',
-            'no_manifest_in_zip'    => 'addons_update_err_no_manifest',
-            'invalid_manifest'      => 'addons_install_err_invalid_manifest',
-            'invalid_name'          => 'addons_install_err_invalid_name',
-            'core_version'          => 'addons_err_core_version',
+            'zip_extension_missing'   => 'addons_update_err_zip_missing',
+            'file_not_found'          => 'addons_install_err_no_file',
+            'zip_open_failed'         => 'addons_update_err_zip_failed',
+            'no_manifest_in_zip'      => 'addons_update_err_no_manifest',
+            'invalid_manifest'        => 'addons_install_err_invalid_manifest',
+            'invalid_name'            => 'addons_install_err_invalid_name',
+            'core_version'            => 'addons_err_core_version',
+            'zip_unsafe_path'         => 'addons_install_err_unsafe_path',
+            'zip_disallowed_filetype' => 'addons_install_err_disallowed_filetype',
+            'php_lint_failed'         => 'addons_install_err_lint_failed',
+            'dangerous_pattern_found' => 'addons_install_err_dangerous_pattern',
         ];
         $msgKey = $errMsgKeys[$errCode] ?? '';
         if ($msgKey !== '') {
             $params = ['name' => $result['name'] ?? '', 'error' => $errCode,
-                       'need' => $result['need'] ?? '', 'have' => $result['have'] ?? ''];
+                       'need' => $result['need'] ?? '', 'have' => $result['have'] ?? '',
+                       'file' => $result['file'] ?? ''];
             flash(t($msgKey, $params), 'error');
         } else {
             flash(t('addons_install_err_generic', ['error' => $errCode]), 'error');
@@ -276,10 +299,14 @@ if ($addonAction === 'install_update') {
             'unexpected_zip_structure' => 'addons_update_err_zip_structure',
             'no_manifest_in_release'   => 'addons_update_err_no_manifest',
             'manifest_name_mismatch'   => 'addons_update_err_name_mismatch',
+            'zip_unsafe_path'          => 'addons_install_err_unsafe_path',
+            'zip_disallowed_filetype'  => 'addons_install_err_disallowed_filetype',
+            'php_lint_failed'          => 'addons_install_err_lint_failed',
+            'dangerous_pattern_found'  => 'addons_install_err_dangerous_pattern',
         ];
         $msgKey = $errMsgKeys[$errCode] ?? '';
         if ($msgKey !== '') {
-            flash(t($msgKey, ['name' => $addonName, 'error' => $errCode]), 'error');
+            flash(t($msgKey, ['name' => $addonName, 'error' => $errCode, 'file' => $result['file'] ?? '']), 'error');
         } else {
             flash(t('addons_update_err_generic', ['error' => $errCode]), 'error');
         }

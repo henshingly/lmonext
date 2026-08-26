@@ -2,7 +2,7 @@
 /**
  * Project: LMOnext
  * Filename: view_addons.php
- * Fileversion: 2.0.0
+ * Fileversion: 2.1.0
  *
  * PHP version 8.2
  *
@@ -196,6 +196,16 @@ usort($displayAddons, function ($a, $b) {
     </div>
 
     <!-- ── Addon per ZIP installieren ──────────────────────────────────── -->
+<?php if (defined('DEMO_MODE') && DEMO_MODE === true) { ?>
+    <div class="card" style="margin:0 0 20px;padding:24px;border:1px solid var(--warning, #b45309)">
+      <h3 style="margin:0 0 4px;font-size:1.05rem;display:flex;align-items:center;gap:8px">
+        🔒 <?= h(t('addons_install_title')) ?>
+      </h3>
+      <p style="margin:0;font-size:.85rem;color:var(--muted);max-width:560px">
+        <?= h(t('addons_demo_mode_notice')) ?>
+      </p>
+    </div>
+<?php } else { ?>
     <div class="card" style="margin:0 0 20px;padding:24px">
       <h3 style="margin:0 0 4px;font-size:1.05rem;display:flex;align-items:center;gap:8px">
         📦 <?= h(t('addons_install_title')) ?>
@@ -210,7 +220,7 @@ usort($displayAddons, function ($a, $b) {
             onsubmit="return this['addon_zip'].files.length > 0">
         <?= csrfField() ?>
         <input type="hidden" name="addon_action" value="install_zip">
-        <input type="hidden" name="MAX_FILE_SIZE" value="52428800">
+        <input type="hidden" name="MAX_FILE_SIZE" value="7340032">
         <div style="flex:1;min-width:280px">
           <label style="display:block;font-size:.75rem;color:var(--muted);margin-bottom:4px;font-weight:600">
             <?= h(t('addons_install_choose')) ?>
@@ -230,6 +240,7 @@ usort($displayAddons, function ($a, $b) {
         💡 <?= h(t('addons_install_hint')) ?>
       </div>
     </div>
+<?php } ?>
 
     <!-- ── Diagnostics ──────────────────────────────────────────────────── -->
     <div class="card" style="margin:0 0 20px;padding:24px">
@@ -532,6 +543,9 @@ usort($displayAddons, function ($a, $b) {
                               border:1px solid var(--yellow)44;margin-right:4px">
                     ⬆ v<?= $latest ?>
                   </span>
+<?php if (defined('DEMO_MODE') && DEMO_MODE === true) { ?>
+                  <span style="font-size:.7rem;color:var(--muted)" title="<?= h(t('addons_demo_mode_notice')) ?>">🔒</span>
+<?php } else { ?>
                   <form method="post" action="?action=addons" style="display:inline-block">
                     <?= csrfField() ?>
                     <input type="hidden" name="addon_action" value="install_update">
@@ -542,6 +556,7 @@ usort($displayAddons, function ($a, $b) {
                       <?= h(t('addons_update_btn')) ?>
                     </button>
                   </form>
+<?php } ?>
                 </div>
               <?php
               elseif ($uInfo && ($uInfo['error'] ?? '') === 'no_github'):

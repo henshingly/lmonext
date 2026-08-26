@@ -2,7 +2,7 @@
 /**
  * Project: LMOnext
  * Filename: src/Addon/AddonManager.php
- * Fileversion: 1.0.0
+ * Fileversion: 1.1.0
  *
  * PHP version 8.2
  *
@@ -1234,9 +1234,31 @@ class AddonManager
             $this->rrmdir($tmpExtract);
             return ['success' => false, 'error' => 'zip_open_failed'];
         }
+
+        // ── Inhaltsprüfung 1: ZIP-Einträge selbst, VOR dem Entpacken (siehe
+        // installFromZip() für den ausführlichen Hintergrund - dieselbe
+        // Prüfung gilt hier genauso, da ein kompromittiertes GitHub-Repo
+        // (gekaperter Account, unbeaufsichtigter Fork o.ä.) denselben
+        // Angriffsweg wie ein bösartiger ZIP-Upload eröffnen würde). ──────────
+        $zipError = $this->validateZipEntries($zip);
+        if ($zipError !== null) {
+            $zip->close();
+            @unlink($tmpZip);
+            $this->rrmdir($tmpExtract);
+            return ['success' => false, 'error' => $zipError];
+        }
+
         $zip->extractTo($tmpExtract);
         $zip->close();
         @unlink($tmpZip);
+
+        // ── Inhaltsprüfung 2: entpackte Dateien, VOR dem Kopieren in den
+        // öffentlich erreichbaren addon/-Ordner ──────────────────────────────
+        [$scanError, $scanFile] = $this->scanExtractedFiles($tmpExtract);
+        if ($scanError !== null) {
+            $this->rrmdir($tmpExtract);
+            return ['success' => false, 'error' => $scanError, 'file' => $scanFile];
+        }
 
         // ── 4. addon.json im Release finden ───────────────────────────────────
         // GitHub-Archive haben ein Root-Verzeichnis (z.B. "owner-repo-abc1234/").
@@ -1409,6 +1431,124 @@ Require all denied
      * @param string $zipPath Pfad zur hochgeladenen ZIP-Datei
      * @return array{success:bool, name?:string, version?:string, error?:string, backup?:string}
      */
+    /**
+     * Prüft die Einträge einer geöffneten ZIP-Datei GEGEN eine Whitelist,
+     * BEVOR überhaupt etwas entpackt wird - Sicherheitsmaßnahme gegen über
+     * den Addon-Manager hochgeladene bösartige Inhalte (Beitrag:
+     * Sicherheitsüberarbeitung). Zwei unabhängige Prüfungen je Eintrag:
+     *
+     * 1) Zip-Slip-Schutz: ein Eintragsname wie "../../etc/passwd" oder ein
+     *    absoluter Pfad könnte beim Entpacken Dateien AUSSERHALB des
+     *    vorgesehenen Zielverzeichnisses schreiben. ZipArchive::extractTo()
+     *    bietet in aktuellen PHP-Versionen zwar bereits einen gewissen
+     *    eingebauten Schutz, diese explizite Prüfung verlässt sich aber
+     *    nicht darauf.
+     * 2) Dateiendungs-Whitelist: nur Dateitypen, die ein LMOnext-Addon
+     *    plausibel benötigt (Code, Text, gängige Bildformate) - alles
+     *    andere (z.B. .exe, .sh, .phar, doppelte Endungen wie .php.jpg)
+     *    führt zur sofortigen Ablehnung der GESAMTEN ZIP.
+     *
+     * @return string|null Fehlercode oder null, wenn alles unauffällig ist.
+     */
+    private function validateZipEntries(\ZipArchive $zip): ?string
+    {
+        $allowedExt = ['php', 'json', 'md', 'txt', 'png', 'jpg', 'jpeg', 'gif', 'svg', 'ico', 'webp', 'css', 'js'];
+
+        for ($i = 0; $i < $zip->numFiles; $i++) {
+            $name = $zip->getNameIndex($i);
+            if ($name === false) {
+                continue;
+            }
+            $normalized = str_replace('\\', '/', $name);
+
+            // Zip-Slip: Pfad-Traversal, absoluter Pfad, NUL-Byte, Windows-
+            // Laufwerksbuchstabe.
+            if (str_contains($normalized, '../') || str_contains($normalized, "\0")
+                || str_starts_with($normalized, '/') || preg_match('#^[A-Za-z]:#', $normalized)) {
+                return 'zip_unsafe_path';
+            }
+
+            // Verzeichniseinträge (enden auf "/") haben keine Dateiendung
+            // zu prüfen.
+            if (str_ends_with($normalized, '/')) {
+                continue;
+            }
+
+            $ext = strtolower(pathinfo($normalized, PATHINFO_EXTENSION));
+            if (!in_array($ext, $allowedExt, true)) {
+                return 'zip_disallowed_filetype';
+            }
+        }
+        return null;
+    }
+
+    /**
+     * Prüft bereits ENTPACKTE Dateien auf offensichtliche Auffälligkeiten,
+     * BEVOR sie in das öffentlich erreichbare addon/-Verzeichnis kopiert
+     * werden (Beitrag: Sicherheitsüberarbeitung). Zwei Prüfungen je
+     * .php-Datei:
+     *
+     * 1) Syntax-Check per "php -l" (Lint, KEINE Ausführung) - lehnt grob
+     *    fehlerhafte/verschleierte Dateien ab, die keine gültige PHP-Datei
+     *    sind (z.B. ein als .php getarntes Binary).
+     * 2) Grobe Muster-Suche nach typischen Funktionsaufrufen, die in
+     *    einem normalen LMOnext-Addon nichts verloren haben (Shell-
+     *    Ausführung, dynamische Codeausführung, Ein-Zeilen-Obfuscation).
+     *    Dies ist eine HEURISTIK, kein vollständiger Malware-Scanner -
+     *    sie hebt die Hürde für unraffinierte automatisierte Angriffe
+     *    deutlich an, garantiert aber keine Erkennung von gezielt
+     *    verschleiertem Code.
+     *
+     * @return array{0:string|null,1:string} [Fehlercode oder null, betroffene relative Datei]
+     */
+    private function scanExtractedFiles(string $dir): array
+    {
+        $dangerousPatterns = [
+            '/\bsystem\s*\(/i', '/\bexec\s*\(/i', '/\bshell_exec\s*\(/i',
+            '/\bpassthru\s*\(/i', '/\bproc_open\s*\(/i', '/\bpopen\s*\(/i',
+            '/\bpcntl_exec\s*\(/i', '/`[^`]+`/', // Backtick-Shell-Ausführung
+            '/\beval\s*\(/i', '/\bassert\s*\(\s*[\'"$]/i', '/\bcreate_function\s*\(/i',
+            '/\bbase64_decode\s*\(\s*[\'"$][^)]*\)\s*\)?\s*;?\s*$/im', // Verdacht: base64_decode am Zeilenende ohne weitere Verarbeitung
+            '/\$\{\s*[\'"]\w+[\'"]\s*\}\s*\(/', // ${'x'}(...) dynamische Funktionsaufruf-Verschleierung
+        ];
+        $phpBinary = PHP_BINARY !== '' ? PHP_BINARY : 'php';
+
+        $it = new \RecursiveIteratorIterator(new \RecursiveDirectoryIterator($dir, \FilesystemIterator::SKIP_DOTS));
+        foreach ($it as $file) {
+            if (!$file->isFile() || strtolower($file->getExtension()) !== 'php') {
+                continue;
+            }
+            $relPath = substr((string)$file->getPathname(), strlen($dir) + 1);
+
+            // php -l: nur verfügbar, wenn exec() nicht per php.ini
+            // (disable_functions, auf Shared-Hosting oft der Fall) oder
+            // Namensraum deaktiviert ist - wird dann übersprungen statt den
+            // Upload hart abzulehnen (function_exists() allein erkennt eine
+            // per disable_functions gesperrte Funktion NICHT zuverlässig).
+            static $execDisabled = null;
+            if ($execDisabled === null) {
+                $disabled = array_map('trim', explode(',', (string)ini_get('disable_functions')));
+                $execDisabled = !function_exists('exec') || in_array('exec', $disabled, true);
+            }
+            if (!$execDisabled) {
+                $out = [];
+                $ret = 0;
+                @exec(escapeshellarg($phpBinary) . ' -l ' . escapeshellarg((string)$file->getPathname()) . ' 2>&1', $out, $ret);
+                if ($ret !== 0) {
+                    return ['php_lint_failed', $relPath];
+                }
+            }
+
+            $content = (string)file_get_contents((string)$file->getPathname());
+            foreach ($dangerousPatterns as $pattern) {
+                if (preg_match($pattern, $content)) {
+                    return ['dangerous_pattern_found', $relPath];
+                }
+            }
+        }
+        return [null, ''];
+    }
+
     public function installFromZip(string $zipPath): array
     {
         if (!class_exists('ZipArchive')) {
@@ -1423,12 +1563,27 @@ Require all denied
             return ['success' => false, 'error' => 'zip_open_failed'];
         }
 
+        // ── Inhaltsprüfung 1: ZIP-Einträge selbst, VOR dem Entpacken ─────────
+        $zipError = $this->validateZipEntries($zip);
+        if ($zipError !== null) {
+            $zip->close();
+            return ['success' => false, 'error' => $zipError];
+        }
+
         // Temporäres Entpack-Verzeichnis
         $tmpExtract = sys_get_temp_dir() . '/lmo_install_' . bin2hex(random_bytes(6));
         mkdir($tmpExtract, 0755, true);
 
         $zip->extractTo($tmpExtract);
         $zip->close();
+
+        // ── Inhaltsprüfung 2: entpackte Dateien, VOR dem Kopieren in den
+        // öffentlich erreichbaren addon/-Ordner ──────────────────────────────
+        [$scanError, $scanFile] = $this->scanExtractedFiles($tmpExtract);
+        if ($scanError !== null) {
+            $this->rrmdir($tmpExtract);
+            return ['success' => false, 'error' => $scanError, 'file' => $scanFile];
+        }
 
         // ── addon.json suchen (rekursiv, wie bei installUpdate) ──────────────
         $manifests = $this->findFiles($tmpExtract, 'addon.json');

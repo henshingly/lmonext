@@ -55,6 +55,12 @@ return [
     'addons_err_not_found'    => 'Addon nicht gefunden.',
     'addons_err_dep_missing'   => 'Abhängigkeiten fehlen: {deps}',
     'addons_err_core_version'  => 'Core-Version zu niedrig. Benötigt: {need}, vorhanden: {have}',
+    'addons_install_err_unsafe_path'         => 'Sicherheitsprüfung fehlgeschlagen: die ZIP enthält einen unzulässigen Dateipfad (Pfad-Traversal). Installation abgelehnt.',
+    'addons_install_err_disallowed_filetype' => 'Sicherheitsprüfung fehlgeschlagen: die ZIP enthält einen nicht erlaubten Dateityp. Erlaubt sind nur: php, json, md, txt, png, jpg, jpeg, gif, svg, ico, webp, css, js.',
+    'addons_install_err_lint_failed'         => 'Sicherheitsprüfung fehlgeschlagen: die Datei "{file}" enthält keinen gültigen PHP-Code. Installation abgelehnt.',
+    'addons_install_err_dangerous_pattern'   => 'Sicherheitsprüfung fehlgeschlagen: die Datei "{file}" enthält einen verdächtigen Funktionsaufruf (z.B. Shell-Ausführung oder dynamische Codeausführung). Installation abgelehnt. Falls dies ein Fehlalarm bei einem legitimen Addon ist, wende dich an den Addon-Autor.',
+    'addons_demo_mode_blocked' => 'Diese Aktion ist auf dieser Demo-Instanz deaktiviert. Aktivieren/Deaktivieren bereits installierter Addons funktioniert weiterhin normal.',
+    'addons_demo_mode_notice'  => 'Auf dieser Demo-Instanz ist die Installation/Aktualisierung von Addon-Code deaktiviert. Aktivieren/Deaktivieren bereits installierter Addons ist weiterhin möglich.',
     'addons_err_depended_on'   => 'Addon "{addon}" kann nicht deaktiviert werden, da das aktivierte Addon "{by}" davon abhängt.',
 
     // ── Leer-Status ─────────────────────────────────────────────────────────────
@@ -112,7 +118,7 @@ return [
     'addons_install_desc'         => 'Lade eine ZIP-Datei hoch, die eine addon.json enthält. Das Addon wird automatisch nach addon/ installiert. Wenn es bereits existiert, wird ein Backup angelegt.',
     'addons_install_choose'       => 'ZIP-Datei wählen',
     'addons_install_btn'          => 'Installieren',
-    'addons_install_hint'         => 'Die ZIP-Datei kann die addon.json direkt im Root oder in einem Unterverzeichnis enthalten (wie bei GitHub-Archiven). Max. 50 MB.',
+    'addons_install_hint'         => 'Die ZIP-Datei kann die addon.json direkt im Root oder in einem Unterverzeichnis enthalten (wie bei GitHub-Archiven). Max. 7 MB.',
     'addons_install_success'      => 'Addon „{name}" v{version} erfolgreich installiert.',
     'addons_install_backup_created' => '(Backup des vorherigen Addons wurde angelegt)',
     'addons_install_not_zip'     => 'Bitte eine .zip-Datei hochladen.',
