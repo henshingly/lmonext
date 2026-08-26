@@ -6,6 +6,7 @@ Mit der Integration des Addon-Manager-Frameworks (Beitrag Torsten Hofmann, siehe
 
 ## addon/addon-manager/ (handler_addons.php, view_addons.php, lang/de.php, lang/en.php, addon.json)
 
+- Changelog: addon.json 1.0.1 - min_core_version von "1.4.0" auf "1.9.0" korrigiert (derselbe Copy-Paste-Rest wie bei den anderen 7 Addons, siehe deren jeweilige CHANGELOG.md-Einträge - "1.9.0" ist die tatsächliche LMOnext-Core-Version, ab der der Addon-Manager überhaupt existiert). Nur Metadaten-Korrektur, keine Verhaltensänderung.
 - Changelog: 1.0.0 / 2.0.0 - Initiale Version (Beitrag Torsten Hofmann): der Addon-Manager verwaltet sich selbst als "Core-Addon" (type: admin) über dieselbe addon.json-Mechanik wie alle anderen Addons. view_addons.php (Fileversion 2.0.0) zeigt alle entdeckten Addons mit Status/Version/Typ/Autor, Aktivieren/Deaktivieren, GitHub-Update-Check (Token-Verwaltung, Diagnostics-Tab) und ZIP-Upload/-Installation. handler_addons.php verarbeitet die zugehörigen POST-Aktionen (enable/disable, Token speichern/löschen, Update-Check erzwingen, ZIP-Installation). Nav-Eintrag "Addons" (Position 90, siehe admin/data_loader.php 1.8.0).
 
 ## addon/mini/debugTeamCompare.php
@@ -336,6 +337,7 @@ Mit der Integration des Addon-Manager-Frameworks (Beitrag Torsten Hofmann, siehe
 
 ## admin/handler_settings.php
 
+- Changelog: 1.6.0 - "stats"-Checkbox (Spielerstatistik-Anzeige, Tab Anzeigen/Darstellung) wird nur noch gespeichert, wenn das player-Addon installiert/aktiviert ist - die Checkbox ist sonst in view_liga_settings.php ausgeblendet (siehe dortiger Changelog-Eintrag 1.8.0) und wurde hier vorher bei JEDEM Speichern dieses Tabs unbemerkt auf '0' zurückgesetzt, selbst wenn ein per .l98-Import mitgebrachter Wert '1' erhalten bleiben sollte.
 - Changelog: 1.5.0 - Speichert die gewählte Sportart in der liga-Tabelle und übernimmt beim erstmaligen Sportartwechsel die sport-spezifische Standard-Punktekonfiguration (nur falls noch keine eigene Konfiguration existiert). Eigenständige Admin-Query statt LigaService::getLigaOptions() (siehe admin/bootstrap.php).
 - Changelog: 1.4.0 - Speichert jetzt die neue "ab Spieltag"-Spalte mit (Beitrag Torsten Hofmann), inkl. Schema-Migration.
 - Changelog: 1.3.9 - Vorzeichen-Eingabe im Tab "Strafen" auf Dropdown (+/−) + Betragsfeld umgestellt (Minuszeichen auf Mobilgeräten oft nicht per Zifferntastatur erreichbar). Vierter Korrekturwert "Minuspunkte" ergänzt
@@ -460,6 +462,7 @@ Mit der Integration des Addon-Manager-Frameworks (Beitrag Torsten Hofmann, siehe
 
 ## admin/view_liga_settings.php
 
+- Changelog: 1.8.0 - Bugfix: die "Spielerstatistik"-Checkbox (Tab Anzeigen/Darstellung) erschien bisher unbedingt, auch wenn das zugehörige player-Addon gar nicht installiert war - dort angehakt hatte dann keinerlei sichtbare Wirkung, was verwirrend war (Übersehen bei der ursprünglichen Extraktion des Player-Addons aus dem Core, analog zum "Spielerstatistik"-Button in admin/view_liga_detail.php 1.10.0). Checkbox erscheint jetzt nur noch bei aktiviertem player-Addon (addonManager()->isEnabled('player')), in beiden betroffenen Tab-Varianten (K.o.- und Rundenliga-Modus).
 - Changelog: 1.7.1 - Sicherheitsfix: csrfField() in jedes POST-Formular eingefügt (CSRF-Schutz, siehe admin/bootstrap.php).
 - Changelog: 1.7.0 - Sportart-Dropdown im Tab Grundwerte ergänzt (Beitrag: Torsten Hofmann, Bugfix bei der Übernahme: doppeltes name="sport_type"-Feld - verstecktes Input UND Dropdown gleichzeitig im selben Formular - auf ein einziges Feld bereinigt), abschaltbar über die Admin-Einstellung show_sport_type.
 - Changelog: 1.6.0 - Neue Spalte "ab Spieltag" im Strafen-Tab (Beitrag Torsten Hofmann, siehe src/Liga/StandingsTrait.php).
