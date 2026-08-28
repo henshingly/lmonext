@@ -2,7 +2,7 @@
 /**
  * Project: LMOnext
  * Filename: handler_addons.php
- * Fileversion: 1.2.0
+ * Fileversion: 1.3.0
  *
  * PHP version 8.2
  *
@@ -27,7 +27,7 @@ $addonAction = $_POST['addon_action'] ?? '';
 $addonName  = $_POST['addon_name'] ?? '';
 
 // ── Validierung ──────────────────────────────────────────────────────────────
-if (!in_array($addonAction, ['enable', 'disable', 'check_updates', 'save_token', 'delete_token', 'install_update', 'install_zip'], true)) {
+if (!in_array($addonAction, ['enable', 'disable', 'check_updates', 'save_token', 'delete_token', 'install_update', 'install_zip', 'purge_data'], true)) {
     flash(t('addons_err_invalid_action'), 'error');
     redirect('?action=addons');
 }
@@ -41,7 +41,7 @@ if (!in_array($addonAction, ['enable', 'disable', 'check_updates', 'save_token',
 // installierter Addons bleibt uneingeschränkt möglich, damit die Demo weiterhin
 // vollständig vorführbar ist. EINE Codebasis für beide Einsatzzwecke: der
 // Schalter lebt in config.php (nicht Teil der verteilten ZIP), nicht im Code.
-if (in_array($addonAction, ['install_zip', 'install_update'], true)
+if (in_array($addonAction, ['install_zip', 'install_update', 'purge_data'], true)
     && defined('DEMO_MODE') && DEMO_MODE === true) {
     flash(t('addons_demo_mode_blocked'), 'error');
     redirect('?action=addons&tab=settings');
@@ -263,6 +263,36 @@ if ($addonAction === 'disable') {
     }
     redirect('?action=addons');
 }
+
+// ── Eigene Daten eines deaktivierten Addons löschen ("Purge", Beitrag:
+// Nutzerwunsch, analog zu phpBB's "purge extension data") ────────────────────
+// Löscht unwiderruflich die in addon.json (Feld "db_tables") deklarierten
+// Datenbank-Tabellen. NUR für bereits DEAKTIVIERTE Addons erlaubt (doppelte
+// serverseitige Prüfung: Registry-Status + $found['enabled'] direkt aus dem
+// zuvor neu ermittelten Addon-Stand) - verhindert einen versehentlichen
+// Datenverlust bei einem noch aktiv genutzten Addon, selbst wenn die
+// UI-Sperre (Button nur bei deaktivierten Addons sichtbar) umgangen würde.
+if ($addonAction === 'purge_data') {
+    if ($addonManager->isEnabled($addonName)) {
+        flash(t('addons_purge_err_still_enabled', ['name' => $addonName]), 'error');
+        redirect('?action=addons');
+    }
+
+    $tables = $addonManager->getDbTables($addonName);
+    if (empty($tables)) {
+        flash(t('addons_purge_err_no_tables', ['name' => $addonName]), 'error');
+        redirect('?action=addons');
+    }
+
+    $result = $addonManager->purgeData($addonName);
+    if ($result['success']) {
+        flash(t('addons_purge_flash_success', ['name' => $addonName, 'n' => count($result['dropped']), 'tables' => implode(', ', $result['dropped'])]), 'success');
+    } else {
+        flash(t('addons_purge_flash_error', ['name' => $addonName]), 'error');
+    }
+    redirect('?action=addons');
+}
+
 
 // ── Auto-Update installieren ─────────────────────────────────────────────────
 // Lädt das neueste GitHub-Release herunter, entpackt es und ersetzt die

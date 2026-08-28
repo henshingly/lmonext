@@ -61,6 +61,13 @@ return [
     'addons_install_err_dangerous_pattern'   => 'Security check failed: the file "{file}" contains a suspicious function call (e.g. shell execution or dynamic code execution). Installation rejected. If this is a false positive for a legitimate add-on, contact the add-on author.',
     'addons_demo_mode_blocked' => 'This action is disabled on this demo instance. Enabling/disabling already installed add-ons still works normally.',
     'addons_demo_mode_notice'  => 'On this demo instance, installing/updating add-on code is disabled. Enabling/disabling already installed add-ons is still possible.',
+    'addons_purge_btn'           => '🗑️ Delete data',
+    'addons_purge_confirm'       => 'WARNING: All data of the add-on "{name}" will be PERMANENTLY deleted from the database (tables: {tables}). The add-on code itself stays intact and can be re-enabled at any time - but then with empty tables. Really continue?',
+    'addons_purge_hint'          => 'Permanently deletes this disabled add-on\'s own database tables. The add-on code itself stays intact.',
+    'addons_purge_err_still_enabled' => 'Add-on "{name}" is still enabled - please disable it first before deleting its data.',
+    'addons_purge_err_no_tables'     => 'Add-on "{name}" has no own database tables declared - nothing to delete.',
+    'addons_purge_flash_success'     => 'Data of "{name}" deleted ({n} table(s): {tables}).',
+    'addons_purge_flash_error'       => 'Deleting the data of "{name}" failed.',
     'addons_err_depended_on'   => 'Cannot disable addon "{addon}" because enabled addon "{by}" depends on it.',
 
     // ── Empty state ─────────────────────────────────────────────────────────────

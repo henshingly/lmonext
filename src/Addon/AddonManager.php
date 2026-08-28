@@ -2,7 +2,7 @@
 /**
  * Project: LMOnext
  * Filename: src/Addon/AddonManager.php
- * Fileversion: 1.3.0
+ * Fileversion: 1.4.0
  *
  * PHP version 8.2
  *
@@ -867,6 +867,59 @@ class AddonManager
         return is_array($tables) ? array_map('strval', $tables) : [];
     }
 
+    /**
+     * Löscht die eigenen Datenbank-Tabellen eines Addons unwiderruflich.
+     * Nur die im Manifest EXPLIZIT deklarierten Tabellen (Feld "db_tables")
+     * werden angefasst - bewusst KEINE addon_settings-Einträge, da diese
+     * Tabelle global (schlüsselbasiert, ohne Addon-Zuordnung) ist und ein
+     * automatisches Löschen dort versehentlich fremde Einstellungen treffen
+     * könnte.
+     *
+     * SICHERHEIT: der Aufrufer (siehe handler_addons.php) MUSS selbst
+     * sicherstellen, dass das Addon aktuell DEAKTIVIERT ist, bevor diese
+     * Methode aufgerufen wird - diese Methode selbst prüft das nicht
+     * erneut, um sie unabhängig von der DB-Registry testbar zu halten.
+     *
+     * @param string $name Addon-Name
+     * @return array{success:bool,dropped:array<string>,error:string}
+     */
+    public function purgeData(string $name): array
+    {
+        if ($this->db === null) {
+            return ['success' => false, 'dropped' => [], 'error' => 'no_db'];
+        }
+        $tables = $this->getDbTables($name);
+        if (empty($tables)) {
+            return ['success' => false, 'dropped' => [], 'error' => 'no_tables_declared'];
+        }
+
+        $dropped = [];
+        foreach ($tables as $rawTable) {
+            // Tabellennamen strikt auf ein sicheres Zeichenmuster begrenzen,
+            // BEVOR er in ein rohes SQL-Statement eingesetzt wird (DROP
+            // TABLE unterstützt keine Prepared-Statement-Platzhalter für
+            // Bezeichner) - verhindert SQL-Injection über ein manipuliertes
+            // Manifest. db_tables enthält BASIS-Namen OHNE DB-Präfix (analog
+            // zu allen tbl()-Aufrufen im übrigen Code) - der tatsächlich
+            // konfigurierte Präfix (pro Installation unterschiedlich, nicht
+            // zwingend "lmo_") wird hier zur Laufzeit über $this->tablePrefix
+            // angewendet, exakt wie beim ursprünglichen CREATE TABLE.
+            if (!preg_match('/^[A-Za-z0-9_]+$/', $rawTable)) {
+                continue;
+            }
+            $fullTable = $this->tablePrefix . $rawTable;
+            try {
+                $this->db->exec('DROP TABLE IF EXISTS `' . $fullTable . '`');
+                $dropped[] = $fullTable;
+            } catch (\Throwable) {
+                // Einzelne Tabelle konnte nicht gelöscht werden (z.B. fehlende
+                // Berechtigung) - restliche Tabellen trotzdem weiter versuchen.
+            }
+        }
+
+        return ['success' => !empty($dropped), 'dropped' => $dropped, 'error' => empty($dropped) ? 'drop_failed' : ''];
+    }
+
     // ═══════════════════════════════════════════════════════════════════════════
     //  GitHub Version Check
     //  Prüft Addon-Homepage (github.com/owner/repo) auf neuere Releases.
@@ -1542,7 +1595,8 @@ Require all denied
             /* Kommentare vor der Muster-Suche entfernen (nicht String- Literale - dort könnte verschleierter Code stecken, der
                weiterhin erkannt werden soll). Verhindert Fehlalarme, wenn ein Funktionsname wie "eval(" nur in einem KOMMENTAR auftaucht
                (z.B. "// kein eval()! Sicherer Ersatz für ...") - beobachtet beim player-Addon, das explizit dokumentiert, eval()
-               NICHT zu verwenden (siehe CHANGELOG.md). */
+               NICHT zu verwenden (siehe CHANGELOG.md).
+             */
             $content = (string)file_get_contents((string)$file->getPathname());
             $codeOnly = $this->stripPhpComments($content);
             foreach ($dangerousPatterns as $pattern) {

@@ -2,7 +2,7 @@
 /**
  * Project: LMOnext
  * Filename: view_addons.php
- * Fileversion: 2.1.0
+ * Fileversion: 2.2.0
  *
  * PHP version 8.2
  *
@@ -631,6 +631,22 @@ usort($displayAddons, function ($a, $b) {
                     ✓ <?= h(t('addons_btn_enable')) ?>
                   </button>
                 </form>
+<?php
+    $ownTables = $addonManager->getDbTables($name);
+    if (!empty($ownTables)):
+?>
+                <form method="post" action="?action=addons" style="display:inline;margin-left:6px">
+                  <?= csrfField() ?>
+                  <input type="hidden" name="addon_action" value="purge_data">
+                  <input type="hidden" name="addon_name" value="<?= h($name) ?>">
+                  <button type="submit" class="btn btn-muted btn-sm"
+                          style="text-decoration:none;color:var(--red, #c0392b)"
+                          title="<?= h(t('addons_purge_hint')) ?>"
+                          onclick="return confirm('<?= h(t('addons_purge_confirm', ['name' => $name, 'tables' => implode(', ', $ownTables)])) ?>')">
+                    <?= h(t('addons_purge_btn')) ?>
+                  </button>
+                </form>
+<?php endif; ?>
               <?php endif; ?>
             </td>
           </tr>

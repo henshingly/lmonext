@@ -61,6 +61,13 @@ return [
     'addons_install_err_dangerous_pattern'   => 'Sicherheitsprüfung fehlgeschlagen: die Datei "{file}" enthält einen verdächtigen Funktionsaufruf (z.B. Shell-Ausführung oder dynamische Codeausführung). Installation abgelehnt. Falls dies ein Fehlalarm bei einem legitimen Addon ist, wende dich an den Addon-Autor.',
     'addons_demo_mode_blocked' => 'Diese Aktion ist auf dieser Demo-Instanz deaktiviert. Aktivieren/Deaktivieren bereits installierter Addons funktioniert weiterhin normal.',
     'addons_demo_mode_notice'  => 'Auf dieser Demo-Instanz ist die Installation/Aktualisierung von Addon-Code deaktiviert. Aktivieren/Deaktivieren bereits installierter Addons ist weiterhin möglich.',
+    'addons_purge_btn'           => '🗑️ Daten löschen',
+    'addons_purge_confirm'       => 'ACHTUNG: Alle Daten des Addons "{name}" werden UNWIDERRUFLICH aus der Datenbank gelöscht (Tabellen: {tables}). Der Addon-Code selbst bleibt erhalten und kann jederzeit erneut aktiviert werden - dann aber mit leeren Tabellen. Wirklich fortfahren?',
+    'addons_purge_hint'          => 'Löscht die eigenen Datenbank-Tabellen dieses deaktivierten Addons unwiderruflich. Der Addon-Code selbst bleibt erhalten.',
+    'addons_purge_err_still_enabled' => 'Addon "{name}" ist noch aktiviert - zum Löschen der Daten bitte zuerst deaktivieren.',
+    'addons_purge_err_no_tables'     => 'Addon "{name}" hat keine eigenen Datenbank-Tabellen deklariert - nichts zu löschen.',
+    'addons_purge_flash_success'     => 'Daten von "{name}" gelöscht ({n} Tabelle(n): {tables}).',
+    'addons_purge_flash_error'       => 'Löschen der Daten von "{name}" fehlgeschlagen.',
     'addons_err_depended_on'   => 'Addon "{addon}" kann nicht deaktiviert werden, da das aktivierte Addon "{by}" davon abhängt.',
 
     // ── Leer-Status ─────────────────────────────────────────────────────────────
