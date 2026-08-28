@@ -2,7 +2,7 @@
 /**
  * Project: LMOnext
  * Filename: src/Addon/AddonManager.php
- * Fileversion: 1.1.0
+ * Fileversion: 1.3.0
  *
  * PHP version 8.2
  *
@@ -1503,16 +1503,22 @@ Require all denied
      */
     private function scanExtractedFiles(string $dir): array
     {
+        /**
+         * WICHTIG: negativer Lookbehind (?<!->)(?<!::) vor jedem Funktionsnamen - verhindert Fehlalarme bei harmlosen METHODENAUFRUFEN gleichen
+         * Namens (z.B. PDO::exec() für SQL-Statements, $db->exec(...) - eine er in diesem Projekt allgegenwärtigsten Methoden, siehe
+         * src/Addon/AddonManager.php selbst). Nur der GLOBALE Funktionsaufruf (kein "->"/"::" davor) gilt als Treffer. Das Backtick-Muster für
+         * PHP-Shell-Ausführung wurde ENTFERNT (siehe CHANGELOG.md): SQL mit Backtick-quotierten Spaltennamen (z.B. "CREATE TABLE ... `id` INT ...")
+         * ist der projektweite Standardstil (siehe tbl()-Helper) und hätte praktisch JEDES SQL-schreibende Addon fälschlich blockiert -
+         * die verbleibenden expliziten Funktionsmuster unten (shell_exec, system, exec, ...) decken den eigentlichen Bedrohungsfall bereits ab.
+         */
         $dangerousPatterns = [
-            '/\bsystem\s*\(/i', '/\bexec\s*\(/i', '/\bshell_exec\s*\(/i',
-            '/\bpassthru\s*\(/i', '/\bproc_open\s*\(/i', '/\bpopen\s*\(/i',
-            '/\bpcntl_exec\s*\(/i', '/`[^`]+`/', // Backtick-Shell-Ausführung
-            '/\beval\s*\(/i', '/\bassert\s*\(\s*[\'"$]/i', '/\bcreate_function\s*\(/i',
+            '/(?<!->)(?<!::)\bsystem\s*\(/i', '/(?<!->)(?<!::)\bexec\s*\(/i', '/(?<!->)(?<!::)\bshell_exec\s*\(/i',
+            '/(?<!->)(?<!::)\bpassthru\s*\(/i', '/(?<!->)(?<!::)\bproc_open\s*\(/i', '/(?<!->)(?<!::)\bpopen\s*\(/i',
+            '/(?<!->)(?<!::)\bpcntl_exec\s*\(/i',
+            '/(?<!->)(?<!::)\beval\s*\(/i', '/(?<!->)(?<!::)\bassert\s*\(\s*[\'"$]/i', '/(?<!->)(?<!::)\bcreate_function\s*\(/i',
             '/\bbase64_decode\s*\(\s*[\'"$][^)]*\)\s*\)?\s*;?\s*$/im', // Verdacht: base64_decode am Zeilenende ohne weitere Verarbeitung
             '/\$\{\s*[\'"]\w+[\'"]\s*\}\s*\(/', // ${'x'}(...) dynamische Funktionsaufruf-Verschleierung
         ];
-        $phpBinary = PHP_BINARY !== '' ? PHP_BINARY : 'php';
-
         $it = new \RecursiveIteratorIterator(new \RecursiveDirectoryIterator($dir, \FilesystemIterator::SKIP_DOTS));
         foreach ($it as $file) {
             if (!$file->isFile() || strtolower($file->getExtension()) !== 'php') {
@@ -1520,33 +1526,136 @@ Require all denied
             }
             $relPath = substr((string)$file->getPathname(), strlen($dir) + 1);
 
-            // php -l: nur verfügbar, wenn exec() nicht per php.ini
-            // (disable_functions, auf Shared-Hosting oft der Fall) oder
-            // Namensraum deaktiviert ist - wird dann übersprungen statt den
-            // Upload hart abzulehnen (function_exists() allein erkennt eine
-            // per disable_functions gesperrte Funktion NICHT zuverlässig).
-            static $execDisabled = null;
-            if ($execDisabled === null) {
-                $disabled = array_map('trim', explode(',', (string)ini_get('disable_functions')));
-                $execDisabled = !function_exists('exec') || in_array('exec', $disabled, true);
-            }
-            if (!$execDisabled) {
-                $out = [];
-                $ret = 0;
-                @exec(escapeshellarg($phpBinary) . ' -l ' . escapeshellarg((string)$file->getPathname()) . ' 2>&1', $out, $ret);
-                if ($ret !== 0) {
-                    return ['php_lint_failed', $relPath];
-                }
+            /**
+             * php -l-Syntaxcheck, ZWINGEND mit hartem Zeitlimit (siehe
+             * lintPhpFileWithTimeout()): PHP_BINARY zeigt auf vielen Shared-Hosting-Umgebungen mit PHP-FPM NICHT auf einen normal
+             * per exec() aufrufbaren CLI-Interpreter, sondern auf den FPM-Worker-Prozess - ein ungeschützter Aufruf kann dadurch
+             * UNBEGRENZT hängen bleiben (beobachtet: sehr lange Ladezeit, dann Timeout ohne jede Fehlermeldung, siehe CHANGELOG.md).
+             * Kann das Ergebnis nicht innerhalb des Zeitlimits ermittelt werden, wird NICHT blockiert (fail-open) - die übrigen
+             * Prüfungen (Dateityp-Whitelist, Zip-Slip, Muster-Suche unten) bleiben in jedem Fall wirksam.
+             */
+            $lintResult = $this->lintPhpFileWithTimeout((string)$file->getPathname());
+            if ($lintResult === false) {
+                return ['php_lint_failed', $relPath];
             }
 
+            /* Kommentare vor der Muster-Suche entfernen (nicht String- Literale - dort könnte verschleierter Code stecken, der
+               weiterhin erkannt werden soll). Verhindert Fehlalarme, wenn ein Funktionsname wie "eval(" nur in einem KOMMENTAR auftaucht
+               (z.B. "// kein eval()! Sicherer Ersatz für ...") - beobachtet beim player-Addon, das explizit dokumentiert, eval()
+               NICHT zu verwenden (siehe CHANGELOG.md). */
             $content = (string)file_get_contents((string)$file->getPathname());
+            $codeOnly = $this->stripPhpComments($content);
             foreach ($dangerousPatterns as $pattern) {
-                if (preg_match($pattern, $content)) {
+                if (preg_match($pattern, $codeOnly)) {
                     return ['dangerous_pattern_found', $relPath];
                 }
             }
         }
         return [null, ''];
+    }
+
+    /**
+     * Entfernt // - und # -Zeilenkommentare sowie /* -Blockkommentare aus PHP-Quelltext (grobe, zeichenweise Näherung - kein vollständiger
+     * Tokenizer), OHNE String-Literale anzutasten. Wird von scanExtractedFiles() genutzt, damit Erwähnungen sicherheitsrelevanter
+     * Funktionsnamen INNERHALB von Kommentaren (z.B. erläuternde Docblocks) keine Fehlalarme auslösen.
+     */
+    private function stripPhpComments(string $content): string
+    {
+        $out = '';
+        $len = strlen($content);
+        $state = 'code'; // code, sq_string, dq_string, line_comment, block_comment
+        for ($i = 0; $i < $len; $i++) {
+            $ch  = $content[$i];
+            $nxt = $i + 1 < $len ? $content[$i + 1] : '';
+            if ($state === 'code') {
+                if ($ch === "'") {
+                    $state = 'sq_string';
+                    $out .= $ch;
+                } elseif ($ch === '"') {
+                    $state = 'dq_string';
+                    $out .= $ch;
+                } elseif ($ch === '/' && $nxt === '/') {
+                    $state = 'line_comment';
+                    $i++;
+                } elseif ($ch === '#' && $nxt !== '[') { // #[Attribute] nicht als Kommentar behandeln
+                    $state = 'line_comment';
+                } elseif ($ch === '/' && $nxt === '*') {
+                    $state = 'block_comment';
+                    $i++;
+                } else {
+                    $out .= $ch;
+                }
+            } elseif ($state === 'sq_string') {
+                $out .= $ch;
+                if ($ch === '\\') { $out .= $nxt; $i++; }
+                elseif ($ch === "'") { $state = 'code'; }
+            } elseif ($state === 'dq_string') {
+                $out .= $ch;
+                if ($ch === '\\') { $out .= $nxt; $i++; }
+                elseif ($ch === '"') { $state = 'code'; }
+            } elseif ($state === 'line_comment') {
+                if ($ch === "\n") { $state = 'code'; $out .= $ch; }
+            } elseif ($state === 'block_comment') {
+                if ($ch === '*' && $nxt === '/') { $state = 'code'; $i++; }
+            }
+        }
+        return $out;
+    }
+
+    /**
+     * Führt "php -l" (Syntax-Lint, KEINE Ausführung) auf eine einzelne Datei aus, mit hartem Zeitlimit über proc_open()/proc_terminate() statt
+     * eines ungeschützten exec()-Aufrufs (siehe scanExtractedFiles() für den Hintergrund - ein simpler exec()-Aufruf kann auf manchen PHP-FPM-
+     * Umgebungen unbegrenzt haengen, weil PHP_BINARY dort nicht auf einen CLI-tauglichen Interpreter zeigt).
+     *
+     * @return bool|null true = gültige Syntax, false = ungültige Syntax (Upload ablehnen),
+     * null = konnte nicht geprüft werden (z.B. exec/proc_open gesperrt oder Timeout erreicht)
+     * - wird NICHT als Ablehnungsgrund gewertet.
+     */
+    private function lintPhpFileWithTimeout(string $filePath, float $timeoutSeconds = 3.0)
+    {
+        static $usable = null;
+        if ($usable === null) {
+            $disabled = array_map('trim', explode(',', (string)ini_get('disable_functions')));
+            $usable = function_exists('proc_open') && function_exists('proc_terminate')
+                && !in_array('proc_open', $disabled, true);
+        }
+        if (!$usable) {
+            return null;
+        }
+
+        $phpBinary = PHP_BINARY !== '' ? PHP_BINARY : 'php';
+        $descriptors = [0 => ['pipe', 'r'], 1 => ['pipe', 'w'], 2 => ['pipe', 'w']];
+        $process = @proc_open([$phpBinary, '-l', $filePath], $descriptors, $pipes);
+        if (!is_resource($process)) {
+            return null;
+        }
+
+        fclose($pipes[0]);
+        stream_set_blocking($pipes[1], false);
+        stream_set_blocking($pipes[2], false);
+
+        $start = microtime(true);
+        do {
+            $status = proc_get_status($process);
+            if (!$status['running']) {
+                break;
+            }
+            usleep(50000);
+        } while ((microtime(true) - $start) < $timeoutSeconds);
+
+        if ($status['running']) {
+            // Zeitlimit erreicht: Prozess zwangsweise beenden, KEIN Ablehnungsgrund - siehe Docblock oben.
+            @proc_terminate($process, 9);
+            fclose($pipes[1]);
+            fclose($pipes[2]);
+            @proc_close($process);
+            return null;
+        }
+
+        fclose($pipes[1]);
+        fclose($pipes[2]);
+        $exitCode = proc_close($process);
+        return $exitCode === 0;
     }
 
     public function installFromZip(string $zipPath): array
