@@ -2,7 +2,7 @@
 /**
  * Project: LMOnext
  * Filename: src/Addon/AddonManager.php
- * Fileversion: 1.4.0
+ * Fileversion: 1.5.1
  *
  * PHP version 8.2
  *
@@ -151,27 +151,14 @@ class AddonManager
      *
      * @return array<string> Liste der aktivierten Addon-Namen
      */
-    /**
-     * Core-Addons, die bei einer leeren addon_registry-Tabelle (frische
-     * Installation) automatisch als aktiviert gelten. Der addon-manager
-     * ist immer aktiviert (kann nicht deaktiviert werden).
-     */
-    private const CORE_ADDONS = [
-        'addon-manager',
-        'tipp',
-        'player',
-        'ewige',
-        'mini',
-        'viewer',
-        'relegation',
-        'tabellenrechner',
-        'translator',
-    ];
-
     public function loadEnabled(): array
     {
+        // addon-manager ist IMMER aktiviert (Core-Tool, kann nicht
+        // deaktiviert werden) - unabhängig von der DB, damit der Addon-
+        // Manager selbst niemals unerreichbar werden kann (z.B. bei
+        // fehlender DB-Verbindung).
         if ($this->db === null) {
-            return self::CORE_ADDONS;
+            return ['addon-manager'];
         }
 
         try {
@@ -179,25 +166,41 @@ class AddonManager
             $tableName = $this->registryTable();
             $stmt = $this->db->query("SELECT name FROM {$tableName} WHERE enabled = 1");
             if ($stmt === false) {
-                return self::CORE_ADDONS;
+                return ['addon-manager'];
             }
 
             $rows = $stmt->fetchAll(PDO::FETCH_COLUMN);
             $enabled = is_array($rows) ? array_map('strval', $rows) : [];
 
-            // Leere Tabelle = frische Installation: alle Core-Addons aktivieren
-            if (empty($enabled)) {
-                return self::CORE_ADDONS;
-            }
-
-            // addon-manager ist IMMER aktiviert (Core-Tool)
+            // WICHTIG (Bugfix, Beitrag: Nutzerreport - "Addon aktivieren
+            // deaktiviert alle anderen"): es gab früher hier einen
+            // "leere Tabelle = frische Installation, alle Core-Addons
+            // aktivieren"-Fallback (Konstante CORE_ADDONS, u.a. mit
+            // veralteten/nicht mehr existierenden Addon-Namen wie
+            // "translator"). Der Fallback konnte NICHT zwischen einer
+            // echten Erstinstallation (Tabelle hat GAR KEINE Zeilen) und
+            // dem Zustand "Tabelle hat Zeilen, aber zufällig gerade
+            // KEINE mit enabled=1" unterscheiden - beide Fälle lösten
+            // denselben Fallback aus. Solange z.B. tipp/relegation/
+            // tabellenrechner NIE eine echte enabled=1-Zeile hatten,
+            // erschienen sie NUR wegen dieses Fallbacks als aktiv. Sobald
+            // ein ANDERES Addon zum ersten Mal eine echte enabled=1-Zeile
+            // bekam (z.B. durch Aktivieren von ewige-tabelle), war
+            // $enabled nicht mehr leer, der Fallback griff nicht mehr,
+            // und alle Addons ohne echte Zeile erschienen plötzlich als
+            // deaktiviert - und umgekehrt beim erneuten Deaktivieren.
+            // Jetzt: JEDES Addon (außer addon-manager) startet konsistent
+            // als INAKTIV, bis es explizit per enable() aktiviert wurde -
+            // entspricht dem bereits für alle neueren Addons korrekt
+            // beobachteten Verhalten (liga-klassen-rekorde, mini-tabelle,
+            // spieltag-viewer starten ebenfalls inaktiv).
             if (!in_array('addon-manager', $enabled, true)) {
                 $enabled[] = 'addon-manager';
             }
 
             return $enabled;
         } catch (\Throwable) {
-            return self::CORE_ADDONS;
+            return ['addon-manager'];
         }
     }
 
@@ -222,6 +225,42 @@ class AddonManager
         ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci";
 
         $this->db->exec($sql);
+
+        // ── Nachträgliche Migration: UNIQUE-Constraint auf "name" sicherstellen
+        // (Beitrag: Bugfix-Absicherung) ─────────────────────────────────────────
+        // "CREATE TABLE IF NOT EXISTS" ändert an einer BEREITS bestehenden
+        // Tabelle nichts mehr - falls diese Tabelle auf einer Installation vor
+        // dem disable()-Bugfix (siehe dortiger Changelog-Eintrag) angelegt
+        // wurde, könnte das UNIQUE-Constraint fehlen. Ohne es wäre "INSERT ...
+        // ON DUPLICATE KEY UPDATE" (in enable()/disable() genutzt) wirkungslos
+        // und würde bei jedem Aufruf eine ZUSÄTZLICHE Zeile statt eines Updates
+        // erzeugen. Wird bei jedem Request geprüft (günstige SHOW-Abfrage),
+        // aber nur bei Bedarf tatsächlich geändert.
+        try {
+            $idxCheck = $this->db->query(
+                "SHOW INDEX FROM {$tableName} WHERE Column_name = 'name' AND Non_unique = 0"
+            );
+            $hasUnique = $idxCheck !== false && $idxCheck->fetch() !== false;
+            if (!$hasUnique) {
+                // Eventuelle Duplikate zuerst bereinigen (nur die neueste Zeile
+                // pro Addon-Name behalten) - ein UNIQUE-Constraint lässt sich
+                // sonst nicht anlegen, wenn bereits doppelte Werte vorhanden
+                // sind (durch den früheren disable()-Bug bzw. durch enable()-
+                // Aufrufe ohne wirksames ON DUPLICATE KEY UPDATE theoretisch
+                // möglich).
+                $this->db->exec(
+                    "DELETE t1 FROM {$tableName} t1
+                     INNER JOIN {$tableName} t2
+                     ON t1.name = t2.name AND t1.id < t2.id"
+                );
+                $this->db->exec("ALTER TABLE {$tableName} ADD UNIQUE KEY uniq_name (name)");
+            }
+        } catch (\Throwable $e) {
+            // Migration fehlgeschlagen (z.B. fehlende ALTER-Berechtigung) -
+            // kein harter Abbruch, aber geloggt, damit es nicht stillschweigend
+            // untergeht.
+            error_log('[AddonManager] Registry-UNIQUE-Migration fehlgeschlagen: ' . $e->getMessage());
+        }
 
         // addon_settings Tabelle für Core-Einstellungen (z.B. GitHub Token)
         $settingsTable = '`' . $this->tablePrefix . 'addon_settings`';
@@ -346,10 +385,24 @@ class AddonManager
         if ($this->db !== null) {
             $this->ensureRegistryTable();
             $tableName = $this->registryTable();
+            $version   = (string)($this->addons[$name]['manifest']['version'] ?? '1.0.0');
+
+            // WICHTIG (Bugfix): reines UPDATE betrifft 0 Zeilen, wenn für
+            // dieses Addon noch NIE zuvor ein Registry-Eintrag angelegt
+            // wurde (Standardzustand ohne Eintrag ist "aktiv", siehe
+            // isEnabled()/discover()) - die Deaktivierung wäre dadurch
+            // scheinbar erfolgreich (kein Fehler), hätte aber tatsächlich
+            // gar keine Wirkung: der In-Memory-Status im aktuellen Request
+            // zeigt "deaktiviert", der nächste Request liest aus der
+            // (unveränderten) DB wieder "aktiv". Analog zu enable() daher
+            // ebenfalls als INSERT ... ON DUPLICATE KEY UPDATE (Upsert)
+            // statt eines reinen UPDATE.
             $stmt = $this->db->prepare(
-                "UPDATE {$tableName} SET enabled = 0, updated_at = NOW() WHERE name = ?"
+                "INSERT INTO {$tableName} (name, version, enabled)
+                 VALUES (?, ?, 0)
+                 ON DUPLICATE KEY UPDATE enabled = 0, updated_at = NOW()"
             );
-            $stmt->execute([$name]);
+            $stmt->execute([$name, $version]);
         }
 
         $this->addons[$name]['enabled'] = false;
@@ -868,7 +921,8 @@ class AddonManager
     }
 
     /**
-     * Löscht die eigenen Datenbank-Tabellen eines Addons unwiderruflich.
+     * Löscht die eigenen Datenbank-Tabellen eines Addons unwiderruflich
+     * (Beitrag: Nutzerwunsch, analog zu phpBB's "purge extension data").
      * Nur die im Manifest EXPLIZIT deklarierten Tabellen (Feld "db_tables")
      * werden angefasst - bewusst KEINE addon_settings-Einträge, da diese
      * Tabelle global (schlüsselbasiert, ohne Addon-Zuordnung) ist und ein
@@ -1355,10 +1409,13 @@ Require all denied
         $backupZipPath = $backupDir . '/' . $name . '_' . $currentVer . '_' . date('Ymd-His') . '.zip';
         $this->zipDirectory($addonPath, $backupZipPath);
 
-        // ── 6. Alte Dateien raus, neue Dateien rein ───────────────────────────
-        $this->rrmdir($addonPath);
-        mkdir($addonPath, 0755, true);
-        $this->copyDirectory($sourceDir, $addonPath);
+        // ── 6. Alte Dateien raus, neue Dateien rein (ATOMAR, siehe
+        // atomicReplaceAddonDir() für den Hintergrund - wichtig gerade bei
+        // einem Selbst-Update von "addon-manager") ────────────────────────
+        if (!$this->atomicReplaceAddonDir($addonPath, $sourceDir)) {
+            $this->rrmdir($tmpExtract);
+            return ['success' => false, 'error' => 'copy_failed'];
+        }
 
         // ── 7. Aufräumen + Caches invalidieren ────────────────────────────────
         $this->rrmdir($tmpExtract);
@@ -1396,22 +1453,88 @@ Require all denied
 
     /**
      * Rekursiv Dateien von $src nach $dst kopieren (überschreibt Ziel).
+     *
+     * @return bool true, wenn ALLE Dateien erfolgreich kopiert wurden.
      */
-    private function copyDirectory(string $src, string $dst): void
+    private function copyDirectory(string $src, string $dst): bool
     {
-        if (!is_dir($dst)) {
-            mkdir($dst, 0755, true);
+        if (!is_dir($dst) && !@mkdir($dst, 0755, true) && !is_dir($dst)) {
+            return false;
         }
+        $ok = true;
         $items = array_diff((array)@scandir($src), ['.', '..']);
         foreach ($items as $item) {
             $s = $src . '/' . $item;
             $d = $dst . '/' . $item;
             if (is_dir($s)) {
-                $this->copyDirectory($s, $d);
+                $ok = $this->copyDirectory($s, $d) && $ok;
             } else {
-                copy($s, $d);
+                $ok = @copy($s, $d) && $ok;
             }
         }
+        return $ok;
+    }
+
+    /**
+     * Ersetzt ein Addon-Verzeichnis ATOMAR durch neue Dateien (Beitrag:
+     * Bugfix - "Update von addon-manager meldet Erfolg, Version bleibt
+     * unverändert"). Die vorherige Lösung (rrmdir() des Zielordners, dann
+     * copyDirectory() der neuen Dateien hinein) hat ein grundsätzliches
+     * Problem bei einem SELBST-Update des addon-manager-Addons: die gerade
+     * ausführende Datei (handler_addons.php, die diesen Update-Vorgang
+     * selbst durchführt) versucht sich dabei SELBST zu überschreiben.
+     * Auf manchen Server-Konfigurationen ist eine gerade ausgeführte PHP-
+     * Datei gesperrt - copy() schlägt für genau diese eine Datei (und
+     * ggf. addon.json selbst) STILL fehl (kein Fehler, kein Abbruch, da
+     * der Rückgabewert vorher nicht geprüft wurde), während alle anderen
+     * Dateien erfolgreich aktualisiert werden - der Vorgang meldete
+     * trotzdem "success", die installierte Version blieb aber unverändert.
+     *
+     * Fix: Standard-Muster für Selbst-Updates - neue Dateien zuerst in ein
+     * FRISCHES, noch unbenutztes Verzeichnis kopieren (dort kollidiert
+     * nichts mit offenen Datei-Handles), dann per rename() (auf den
+     * meisten Dateisystemen eine atomare Operation, die nur den
+     * Verzeichniseintrag ändert, nicht den Dateiinhalt selbst antastet -
+     * funktioniert daher auch bei offen gehaltenen Dateien problemlos) das
+     * alte Verzeichnis beiseiteschieben und das neue an dessen Stelle
+     * setzen. Das alte Verzeichnis wird erst NACH dem Umbenennen entfernt.
+     *
+     * @return bool true bei vollständigem Erfolg
+     */
+    private function atomicReplaceAddonDir(string $addonPath, string $sourceDir): bool
+    {
+        $tmpNew = $addonPath . '_new_' . bin2hex(random_bytes(4));
+        if (!$this->copyDirectory($sourceDir, $tmpNew)) {
+            $this->rrmdir($tmpNew);
+            return false;
+        }
+
+        if (is_dir($addonPath)) {
+            $tmpOld = $addonPath . '_old_' . bin2hex(random_bytes(4));
+            if (!@rename($addonPath, $tmpOld)) {
+                // Altes Verzeichnis konnte nicht beiseitegeschoben werden -
+                // kein Update, aufräumen und ehrlich Fehler melden statt
+                // stillschweigend nichts zu tun.
+                $this->rrmdir($tmpNew);
+                return false;
+            }
+            if (!@rename($tmpNew, $addonPath)) {
+                // Neues Verzeichnis konnte nicht an die Zielposition
+                // verschoben werden - altes Verzeichnis zurückholen, damit
+                // das Addon nicht in einem kaputten Zwischenzustand bleibt.
+                @rename($tmpOld, $addonPath);
+                $this->rrmdir($tmpNew);
+                return false;
+            }
+            $this->rrmdir($tmpOld);
+        } else {
+            if (!@rename($tmpNew, $addonPath)) {
+                $this->rrmdir($tmpNew);
+                return false;
+            }
+        }
+
+        return true;
     }
 
     /**
@@ -1556,14 +1679,18 @@ Require all denied
      */
     private function scanExtractedFiles(string $dir): array
     {
-        /**
-         * WICHTIG: negativer Lookbehind (?<!->)(?<!::) vor jedem Funktionsnamen - verhindert Fehlalarme bei harmlosen METHODENAUFRUFEN gleichen
-         * Namens (z.B. PDO::exec() für SQL-Statements, $db->exec(...) - eine er in diesem Projekt allgegenwärtigsten Methoden, siehe
-         * src/Addon/AddonManager.php selbst). Nur der GLOBALE Funktionsaufruf (kein "->"/"::" davor) gilt als Treffer. Das Backtick-Muster für
-         * PHP-Shell-Ausführung wurde ENTFERNT (siehe CHANGELOG.md): SQL mit Backtick-quotierten Spaltennamen (z.B. "CREATE TABLE ... `id` INT ...")
-         * ist der projektweite Standardstil (siehe tbl()-Helper) und hätte praktisch JEDES SQL-schreibende Addon fälschlich blockiert -
-         * die verbleibenden expliziten Funktionsmuster unten (shell_exec, system, exec, ...) decken den eigentlichen Bedrohungsfall bereits ab.
-         */
+        // WICHTIG: negativer Lookbehind (?<!->)(?<!::) vor jedem Funktionsnamen
+        // - verhindert Fehlalarme bei harmlosen METHODENAUFRUFEN gleichen
+        // Namens (z.B. PDO::exec() für SQL-Statements, $db->exec(...) - eine
+        // der in diesem Projekt allgegenwärtigsten Methoden, siehe
+        // src/Addon/AddonManager.php selbst). Nur der GLOBALE Funktionsaufruf
+        // (kein "->"/"::" davor) gilt als Treffer. Das Backtick-Muster für
+        // PHP-Shell-Ausführung wurde ENTFERNT (siehe CHANGELOG.md): SQL mit
+        // Backtick-quotierten Spaltennamen (z.B. "CREATE TABLE ... `id` INT
+        // ...") ist der projektweite Standardstil (siehe tbl()-Helper) und
+        // hätte praktisch JEDES SQL-schreibende Addon fälschlich blockiert -
+        // die verbleibenden expliziten Funktionsmuster unten (shell_exec,
+        // system, exec, ...) decken den eigentlichen Bedrohungsfall bereits ab.
         $dangerousPatterns = [
             '/(?<!->)(?<!::)\bsystem\s*\(/i', '/(?<!->)(?<!::)\bexec\s*\(/i', '/(?<!->)(?<!::)\bshell_exec\s*\(/i',
             '/(?<!->)(?<!::)\bpassthru\s*\(/i', '/(?<!->)(?<!::)\bproc_open\s*\(/i', '/(?<!->)(?<!::)\bpopen\s*\(/i',
@@ -1579,24 +1706,29 @@ Require all denied
             }
             $relPath = substr((string)$file->getPathname(), strlen($dir) + 1);
 
-            /**
-             * php -l-Syntaxcheck, ZWINGEND mit hartem Zeitlimit (siehe
-             * lintPhpFileWithTimeout()): PHP_BINARY zeigt auf vielen Shared-Hosting-Umgebungen mit PHP-FPM NICHT auf einen normal
-             * per exec() aufrufbaren CLI-Interpreter, sondern auf den FPM-Worker-Prozess - ein ungeschützter Aufruf kann dadurch
-             * UNBEGRENZT hängen bleiben (beobachtet: sehr lange Ladezeit, dann Timeout ohne jede Fehlermeldung, siehe CHANGELOG.md).
-             * Kann das Ergebnis nicht innerhalb des Zeitlimits ermittelt werden, wird NICHT blockiert (fail-open) - die übrigen
-             * Prüfungen (Dateityp-Whitelist, Zip-Slip, Muster-Suche unten) bleiben in jedem Fall wirksam.
-             */
+            // php -l-Syntaxcheck, ZWINGEND mit hartem Zeitlimit (siehe
+            // lintPhpFileWithTimeout()): PHP_BINARY zeigt auf vielen
+            // Shared-Hosting-Umgebungen mit PHP-FPM NICHT auf einen normal
+            // per exec() aufrufbaren CLI-Interpreter, sondern auf den
+            // FPM-Worker-Prozess - ein ungeschützter Aufruf kann dadurch
+            // UNBEGRENZT haengen bleiben (beobachtet: sehr lange Ladezeit,
+            // dann Timeout ohne jede Fehlermeldung, siehe CHANGELOG.md).
+            // Kann das Ergebnis nicht innerhalb des Zeitlimits ermittelt
+            // werden, wird NICHT blockiert (fail-open) - die übrigen
+            // Prüfungen (Dateityp-Whitelist, Zip-Slip, Muster-Suche unten)
+            // bleiben in jedem Fall wirksam.
             $lintResult = $this->lintPhpFileWithTimeout((string)$file->getPathname());
             if ($lintResult === false) {
                 return ['php_lint_failed', $relPath];
             }
 
-            /* Kommentare vor der Muster-Suche entfernen (nicht String- Literale - dort könnte verschleierter Code stecken, der
-               weiterhin erkannt werden soll). Verhindert Fehlalarme, wenn ein Funktionsname wie "eval(" nur in einem KOMMENTAR auftaucht
-               (z.B. "// kein eval()! Sicherer Ersatz für ...") - beobachtet beim player-Addon, das explizit dokumentiert, eval()
-               NICHT zu verwenden (siehe CHANGELOG.md).
-             */
+            // Kommentare vor der Muster-Suche entfernen (nicht String-
+            // Literale - dort könnte verschleierter Code stecken, der
+            // weiterhin erkannt werden soll). Verhindert Fehlalarme, wenn
+            // ein Funktionsname wie "eval(" nur in einem KOMMENTAR auftaucht
+            // (z.B. "// kein eval()! Sicherer Ersatz für ...") - beobachtet
+            // beim player-Addon, das explizit dokumentiert, eval() NICHT zu
+            // verwenden (siehe CHANGELOG.md).
             $content = (string)file_get_contents((string)$file->getPathname());
             $codeOnly = $this->stripPhpComments($content);
             foreach ($dangerousPatterns as $pattern) {
@@ -1609,9 +1741,12 @@ Require all denied
     }
 
     /**
-     * Entfernt // - und # -Zeilenkommentare sowie /* -Blockkommentare aus PHP-Quelltext (grobe, zeichenweise Näherung - kein vollständiger
-     * Tokenizer), OHNE String-Literale anzutasten. Wird von scanExtractedFiles() genutzt, damit Erwähnungen sicherheitsrelevanter
-     * Funktionsnamen INNERHALB von Kommentaren (z.B. erläuternde Docblocks) keine Fehlalarme auslösen.
+     * Entfernt // - und # -Zeilenkommentare sowie /* -Blockkommentare aus
+     * PHP-Quelltext (grobe, zeichenweise Näherung - kein vollständiger
+     * Tokenizer), OHNE String-Literale anzutasten. Wird von
+     * scanExtractedFiles() genutzt, damit Erwähnungen sicherheitsrelevanter
+     * Funktionsnamen INNERHALB von Kommentaren (z.B. erläuternde Docblocks)
+     * keine Fehlalarme auslösen.
      */
     private function stripPhpComments(string $content): string
     {
@@ -1657,13 +1792,17 @@ Require all denied
     }
 
     /**
-     * Führt "php -l" (Syntax-Lint, KEINE Ausführung) auf eine einzelne Datei aus, mit hartem Zeitlimit über proc_open()/proc_terminate() statt
-     * eines ungeschützten exec()-Aufrufs (siehe scanExtractedFiles() für den Hintergrund - ein simpler exec()-Aufruf kann auf manchen PHP-FPM-
-     * Umgebungen unbegrenzt haengen, weil PHP_BINARY dort nicht auf einen CLI-tauglichen Interpreter zeigt).
+     * Führt "php -l" (Syntax-Lint, KEINE Ausführung) auf eine einzelne Datei
+     * aus, mit hartem Zeitlimit über proc_open()/proc_terminate() statt
+     * eines ungeschützten exec()-Aufrufs (siehe scanExtractedFiles() für den
+     * Hintergrund - ein simpler exec()-Aufruf kann auf manchen PHP-FPM-
+     * Umgebungen unbegrenzt haengen, weil PHP_BINARY dort nicht auf einen
+     * CLI-tauglichen Interpreter zeigt).
      *
-     * @return bool|null true = gültige Syntax, false = ungültige Syntax (Upload ablehnen),
-     * null = konnte nicht geprüft werden (z.B. exec/proc_open gesperrt oder Timeout erreicht)
-     * - wird NICHT als Ablehnungsgrund gewertet.
+     * @return bool|null true = gültige Syntax, false = ungültige Syntax
+     *                    (Upload ablehnen), null = konnte nicht geprüft
+     *                    werden (z.B. exec/proc_open gesperrt oder Timeout
+     *                    erreicht) - wird NICHT als Ablehnungsgrund gewertet.
      */
     private function lintPhpFileWithTimeout(string $filePath, float $timeoutSeconds = 3.0)
     {
@@ -1698,7 +1837,8 @@ Require all denied
         } while ((microtime(true) - $start) < $timeoutSeconds);
 
         if ($status['running']) {
-            // Zeitlimit erreicht: Prozess zwangsweise beenden, KEIN Ablehnungsgrund - siehe Docblock oben.
+            // Zeitlimit erreicht: Prozess zwangsweise beenden, KEIN
+            // Ablehnungsgrund - siehe Docblock oben.
             @proc_terminate($process, 9);
             fclose($pipes[1]);
             fclose($pipes[2]);
@@ -1801,12 +1941,15 @@ Require all denied
             $currentVer      = $currentManifest['version'] ?? 'unknown';
             $backupPath      = $backupDir . '/' . $name . '_' . $currentVer . '_replace_' . date('Ymd-His') . '.zip';
             $this->zipDirectory($addonPath, $backupPath);
-            $this->rrmdir($addonPath);
         }
 
-        // ── Neue Dateien kopieren ──────────────────────────────────────────────
-        mkdir($addonPath, 0755, true);
-        $this->copyDirectory($sourceDir, $addonPath);
+        // ── Neue Dateien kopieren (ATOMAR, siehe atomicReplaceAddonDir() für
+        // den Hintergrund - wichtig gerade bei einem Selbst-Update von
+        // "addon-manager" über diesen ZIP-Upload-Weg) ──────────────────────
+        if (!$this->atomicReplaceAddonDir($addonPath, $sourceDir)) {
+            $this->rrmdir($tmpExtract);
+            return ['success' => false, 'error' => 'copy_failed'];
+        }
 
         // ── Aufräumen ────────────────────────────────────────────────────────────
         $this->rrmdir($tmpExtract);
